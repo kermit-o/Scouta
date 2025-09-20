@@ -1,0 +1,72 @@
+import os, time, requests, streamlit as st
+
+BACKEND_URL = os.getenv("BACKEND_URL", "http://backend:8000")
+
+st.set_page_config(page_title="Forge UI", page_icon="🛠️", layout="centered")
+st.title("Forge – Project Builder")
+
+st.sidebar.markdown(f"**Backend**: `{BACKEND_URL}`")
+if st.sidebar.button("Health check"):
+    try:
+        r = requests.get(f"{BACKEND_URL}/api/health", timeout=3)
+        st.sidebar.success(r.json())
+    except Exception as e:
+        st.sidebar.error(e)
+
+with st.form("create_project"):
+    user_id = st.text_input("User ID", "outman")
+    project_name = st.text_input("Project name", "Forge MVP")
+    requirements = st.text_area("Requirements", "Endpoints + UI wiring", height=150)
+    submitted = st.form_submit_button("Create project")
+    if submitted:
+        try:
+            r = requests.post(f"{BACKEND_URL}/api/projects", json={
+                "user_id": user_id,
+                "project_name": project_name,
+                "requirements": requirements
+            }, timeout=10)
+            if r.status_code >= 400:
+                st.error(r.text)
+            else:
+                st.success("Project created")
+                st.json(r.json())
+        except Exception as e:
+            st.exception(e)
+
+st.divider()
+
+try:
+    projects = requests.get(f"{BACKEND_URL}/api/projects", timeout=5).json()
+except Exception as e:
+    projects = []
+    st.warning(f"Can't load projects: {e}")
+
+for p in projects:
+    with st.expander(f"📦 {p['project_name']} — {p['status']} — {p['id']}", expanded=False):
+        st.code(p.get("requirements") or "")
+        cols = st.columns(4)
+        if cols[0].button("Generate plan", key=f"plan_{p['id']}"):
+            try:
+                # << CLAVE: enviar {} para evitar 422 >>
+                r = requests.post(f"{BACKEND_URL}/api/projects/{p['id']}/plan", json={}, timeout=10)
+                if r.status_code >= 400:
+                    st.error(r.text)
+                else:
+                    data = r.json()
+                    job_id = data["job_id"]
+                    st.info(f"Started job {job_id}")
+                    prog = st.progress(0)
+                    status_t = st.empty()
+                    for _ in range(300):
+                        pr = requests.get(f"{BACKEND_URL}/api/progress/{job_id}", timeout=5).json()
+                        prog.progress(int(pr.get("percent", 0)))
+                        status_t.write(pr.get("message", ""))
+                        if int(pr.get("percent", 0)) >= 100:
+                            break
+                        time.sleep(1)
+                    st.success("Done")
+            except Exception as e:
+                st.exception(e)
+        cols[1].json(p.get("technology_stack"))
+        cols[2].json(p.get("generated_plan"))
+        cols[3].json(p.get("result"))
