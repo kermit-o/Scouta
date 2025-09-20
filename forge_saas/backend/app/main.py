@@ -1,4 +1,5 @@
 
+from starlette.requests import Request
 import os, uuid, threading, time, logging, shutil, json
 from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
@@ -27,8 +28,23 @@ def get_db():
     finally:
         db.close()
 
-app = FastAPI(title="Forge Backend", openapi_url="/api/openapi.json", docs_url="/api/docs")
+app = FastAPI(redirect_slashes=False, title="Forge Backend", openapi_url="/api/openapi.json", docs_url="/api/docs")
 
+
+
+# PATCH 2025-09-20: progress guard
+@app.middleware("http")
+async def _progress_guard(request: Request, call_next):
+    p = request.url.path
+    # /api/progress o /api/progress/
+    if p.rstrip("/") == "/api/progress":
+        return JSONResponse(status_code=400, content={"detail": "Missing job_id"})
+    # /api/progress/<id> con valores nulos/comunes
+    if p.startswith("/api/progress/"):
+        last = p.split("/")[-1].lower()
+        if last in {"null", "none", "undefined", ""}:
+            return JSONResponse(status_code=400, content={"detail": "Invalid job_id"})
+    return await call_next(request)
 origins = [
     os.getenv("CORS_ORIGIN", "*"),
     "http://localhost",
