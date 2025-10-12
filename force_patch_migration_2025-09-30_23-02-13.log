@@ -1,0 +1,4 @@
+== Force patch agent_runs.id -> UUID ==
+Root: /workspaces/Scouta
+Backend container: forge_saas-backend-1
+✖ No pude localizar la migración a parchear en migrations/versions/*
