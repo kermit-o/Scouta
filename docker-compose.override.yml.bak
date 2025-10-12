@@ -1,0 +1,42 @@
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: forge_saas-postgres
+    environment:
+      POSTGRES_DB: forge
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: forge_saas-backend
+    environment:
+      DATABASE_URL: postgresql+psycopg2://forge:forge@postgres:5432/forge
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    command: >
+      sh -lc 'set -eux; alembic upgrade head || true; exec python -m uvicorn "${UVICORN_APP:-app.main:app}" --host 0.0.0.0 --port 8000 --log-level info'
+
+
+
+
+
+volumes:
+  pgdata: {}
+

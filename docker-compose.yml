@@ -1,0 +1,101 @@
+services:
+  # ------------------------------------------------------------------
+  # 1. SERVICIO DE BASE DE DATOS (POSTGRES)
+  # ------------------------------------------------------------------
+  postgres:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge
+      POSTGRES_DB: forge
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432" # Opcional: solo si necesitas acceder a la DB desde fuera de Docker
+
+  # ------------------------------------------------------------------
+  # 2. SERVICIO DE LA API PRINCIPAL (BACKEND)
+  # ------------------------------------------------------------------
+  backend:
+    # Busca ./backend/Dockerfile
+    build: ./backend
+    
+    # Comando de Uvicorn/FastAPI
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+    environment:
+      DATABASE_URL: postgresql+psycopg2://forge:forge@postgres:5432/forge
+      DEBUG: "true"
+      # Añade aquí otras variables de entorno de FastAPI (por ejemplo, claves de API, etc.)
+      
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    volumes:
+      # Monta el código fuente para desarrollo en caliente (si usas uvicorn reload)
+      - ./backend/app:/app/app
+      # Volumen compartido para la salida de código de la IA
+      - ./backend/generated:/app/generated
+    
+    ports:
+      - "8000:8000"
+      
+  # ------------------------------------------------------------------
+  # 3. SERVICIO DEL WORKER DE IA
+  # ------------------------------------------------------------------
+  worker:
+    # Usa el mismo Dockerfile de Python que el backend
+    build: ./backend
+    
+    # Comando específico del worker
+    command: ["python", "app/worker.py", "0.5"] # El '0.5' es el poll_seconds
+    
+    environment:
+      DATABASE_URL: postgresql+psycopg2://forge:forge@postgres:5432/forge
+      DEBUG: "true"
+      # Añade aquí otras variables de entorno específicas del worker (claves de IA, etc.)
+      
+    depends_on:
+      postgres:
+        condition: service_healthy 
+    
+    restart: unless-stopped
+    
+    volumes:
+      # Monta el código fuente para el script worker.py
+      - ./backend/app:/app/app
+      # Acceso a la carpeta 'generated' (CRÍTICO para que los agentes escriban ahí)
+      - ./backend/generated:/app/generated 
+
+  # ------------------------------------------------------------------
+  # 4. SERVICIO DE LA INTERFAZ DE USUARIO (FRONTEND/NEXT.JS)
+  # ------------------------------------------------------------------
+  frontend:
+    # Busca ./frontend/Dockerfile
+    build: ./frontend 
+    
+    # Puedes necesitar la variable de entorno para que el frontend sepa dónde está la API
+    environment:
+      # Asume que el frontend accede al backend a través del host/puerto expuesto
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    
+    volumes:
+      # Montar el código de la UI para desarrollo
+      - ./frontend:/app
+      - /app/node_modules # Prevención de conflictos de montaje de node_modules
+
+    ports:
+      - "3000:3000" # Puerto estándar de Next.js
+
+# ------------------------------------------------------------------
+# VOLÚMENES EXTERNOS (Almacenamiento persistente)
+# ------------------------------------------------------------------
+volumes:
+  pgdata:

@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  worker:
+    build: ./backend
+    command: >
+      bash -c "
+      while true; do
+        python -c 'from app.services.scheduler import worker_loop; from app.db import SessionLocal; db = SessionLocal(); worker_loop(poll_seconds=2.0)'
+        sleep 3
+      done"
+    environment:
+      DATABASE_URL: postgresql+psycopg2://forge:forge@postgres:5432/forge
+      DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    volumes:
+      - ./backend/generated:/app/generated
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"

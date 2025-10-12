@@ -1,0 +1,123 @@
+=== CÓDIGO PROYECTO: Froge Saas Ai ===
+Fecha: Sat Oct  4 21:03:37 UTC 2025
+======================================
+
+1. ESTRUCTURA PRINCIPAL:
+.
+./_extract
+./backup_structure_20251002_014937
+./config
+./config/__pycache__
+./generated
+./generated/final_fix_test
+./generated/final_fix_test/docs
+./generated/final_fix_test/backend
+./generated/final_fix_test/backend/app
+./generated/final_fix_test/backend/app/utils
+./generated/final_fix_test/backend/app/routes
+./generated/final_fix_test/backend/app/routes/__pycache__
+./generated/final_fix_test/backend/app/models
+./generated/final_fix_test/frontend
+./generated/final_test_1
+./generated/final_test_1/docs
+./generated/final_test_1/backend
+./generated/final_test_1/backend/app
+./generated/final_test_1/backend/app/utils
+./generated/final_test_1/backend/app/routes
+./generated/final_test_1/backend/app/routes/__pycache__
+./generated/final_test_1/backend/app/models
+./generated/final_test_1/frontend
+./scripts
+./dev
+./dev/__pycache__
+./ui
+./ui/ui
+./ui/__pycache__
+./migrations
+./migrations/versions
+./migrations/versions/__pycache__
+./migrations/__pycache__
+./__pycache__
+./backend
+./backend/services
+./backend/generators
+./backend/generators/__pycache__
+./backend/generated
+./backend/generated/598a1e25-5c0b-47b4-99b6-564c609c6475
+./backend/generated/test_project
+./backend/generated/eadb802b-c97a-47b5-9eb0-0e0a5ad182fb
+./backend/generated/aa0de138-a920-43aa-a764-6ffb38d84899
+./backend/generated/3a157c55-e34d-4238-a6ae-b074db84b366
+./backend/generated/5dd2b403-85a7-4344-bfc3-1f9b72a1a36b
+./backend/generated/inventory_management_sis
+./backend/generated/inventory_management_sis/app
+./backend/generated/inventory_management_sis/app/services
+./backend/generated/inventory_management_sis/app/services/__pycache__
+
+2. ARCHIVOS DE CÓDIGO FUENTE:
+
+--- Frontend/JS/TS ---
+
+--- Backend/Python ---
+./test_ai_integration_safe.py
+./config/__init__.py
+./config/logging.py
+./fix_ai_routes.py
+./audit_imports.py
+./generated/final_fix_test/backend/app/routes/main.py
+./generated/final_test_1/backend/app/routes/main.py
+./setup.py
+./dev/fix_runs_routes.py
+./dev/force_add_runs_routes.py
+./ui/99_Download.py
+./ui/01_Projects.py
+./ui/app.py
+./migrations/env.py
+./migrations/versions/731f548685d5_add_missing_project_columns.py
+./migrations/versions/20250928_0001_jobs_agent_runs_artifacts.py
+./migrations/versions/1f53bda92b4b_init.py
+./migrations/versions/1bb4a971bc3c_init.py
+./migrations/versions/a3683ddb987c_init.py
+./test_ai_integration.py
+./backend/debug_schema.py
+./backend/__init__.py
+./backend/generators/fastapi_generator.py
+./backend/generators/__init__.py
+./backend/generators/react_generator.py
+./backend/generators/database_generator.py
+./backend/generators/react_generator_fixed.py
+./backend/generated/inventory_management_sis/app/services/product_service.py
+./backend/generated/inventory_management_sis/app/routers/location.py
+./backend/generated/inventory_management_sis/app/models/product.py
+
+--- Configuraciones Proyecto ---
+./generated/final_fix_test/requirements.txt
+./generated/final_test_1/requirements.txt
+./requirements.txt
+./ui/requirements.txt
+./backend/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/requirements.txt
+./backend/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/requirements.txt
+./backend/generated/full-demo/requirements.txt
+./backend/requirements.txt
+
+3. CONFIGURACIONES CLAVE:
+
+--- requirements.txt ---
+fastapi
+uvicorn
+sqlalchemy
+alembic
+pytest
+pydantic
+
+psycopg[binary]==3.2.1
+alembic==1.16.5
+alembic==1.16.5
+
+openai 
+
+4. ARCHIVOS PRINCIPALES IDENTIFICADOS:
+
+5. DIRECTORIOS CLAVE Y CONTENIDO:
+
+=== ANÁLISIS COMPLETADO ===

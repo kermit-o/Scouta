@@ -1,0 +1,8 @@
+﻿# forge_saas/ui/.env.local
+
+# URL del backend (ya estaba correcta)
+NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# --- CLAVE PÚBLICA DE STRIPE (CRÍTICO) ---
+# Debe ser la clave pública (pk_test_...) para que el frontend funcione.
+NEXT_PUBLIC_STRIPE_KEY="pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka"

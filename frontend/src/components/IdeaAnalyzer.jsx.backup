@@ -1,0 +1,127 @@
+import { useState } from 'react';
+import { createProject } from '../services/api';
+import './IdeaAnalyzer.css';
+
+const IdeaAnalyzer = ({ onAnalysisComplete }) => {
+  const [idea, setIdea] = useState('');
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analysis, setAnalysis] = useState(null);
+  const [isCreating, setIsCreating] = useState(false);
+  const [creationResult, setCreationResult] = useState(null);
+
+  const analyzeIdea = async () => {
+    if (!idea.trim()) return;
+    
+    setIsAnalyzing(true);
+    
+    try {
+      // Usar DeepSeek para análisis real
+      const analysisResult = await analyzeWithDeepSeek(idea);
+      setAnalysis(analysisResult);
+      onAnalysisComplete(analysisResult);
+    } catch (error) {
+      console.error('Error en análisis:', error);
+      // Fallback a análisis simulado
+      const mockAnalysis = await simulateAnalysis(idea);
+      setAnalysis(mockAnalysis);
+      onAnalysisComplete(mockAnalysis);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const analyzeWithDeepSeek = async (userIdea) => {
+    try {
+      const response = await fetch('http://localhost:8000/api/ai/analyze-idea', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idea: userIdea }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        return result.analysis;
+      } else {
+        throw new Error(result.error || 'Error en análisis con IA');
+      }
+    } catch (error) {
+      console.error('Error con DeepSeek:', error);
+      throw error; // Propagar el error para que se use el fallback
+    }
+  };
+
+  const simulateAnalysis = async (userIdea) => {
+    // Simular delay de análisis
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    // Análisis básico mejorado (fallback)
+    const ideaLower = userIdea.toLowerCase();
+    
+    let projectType = 'nextjs_app';
+    let architecture = 'Aplicación web moderna con React y Next.js';
+    
+    if (idealower.includes('móvil') || idealower.includes('mobile') || idealower.includes('app')) {
+      projectType = 'react_native_mobile';
+      architecture = 'Aplicación móvil nativa para iOS y Android';
+    } else if (idealower.includes('api') || idealower.includes('backend') || idealower.includes('servicio')) {
+      projectType = 'fastapi_service';
+      architecture = 'API REST escalable con autenticación JWT';
+    } else if (idealower.includes('extensión') || idealower.includes('extension') || idealower.includes('chrome')) {
+      projectType = 'chrome_extension';
+      architecture = 'Extensión de navegador con background scripts';
+    }
+
+    const features = [];
+    if (idealower.includes('usuario') || idealower.includes('login') || idealower.includes('registro')) {
+      features.push('auth');
+    }
+    if (idealower.includes('pago') || idealower.includes('stripe') || idealower.includes('paypal')) {
+      features.push('payment');
+    }
+    if (idealower.includes('admin') || idealower.includes('dashboard') || idealower.includes('panel')) {
+      features.push('admin_panel');
+    }
+    if (idealower.includes('tiempo real') || idealower.includes('chat') || idealower.includes('notificaciones')) {
+      features.push('real_time');
+    }
+
+    const technologies = ['react', 'typescript'];
+    if (projectType === 'fastapi_service') {
+      technologies.push('python', 'postgresql');
+    } else if (projectType === 'react_native_mobile') {
+      technologies.push('nodejs');
+    } else {
+      technologies.push('tailwind', 'nodejs');
+    }
+
+    const complexity = features.length <= 2 ? 'Baja' : features.length <= 4 ? 'Media' : 'Alta';
+    const estimatedWeeks = features.length <= 2 ? 1 : features.length <= 4 ? 2 : 3;
+
+    return {
+      projectType,
+      architecture,
+      recommended_stack: technologies,
+      features,
+      complexity,
+      estimated_weeks: estimatedWeeks,
+      technical_considerations: [
+        'Arquitectura escalable desde el inicio',
+        'Considerar estrategia de testing',
+        'Planificar deployment y CI/CD'
+      ],
+      deployment_recommendation: 'vercel',
+      userIdea: userIdea,
+      description: `Proyecto basado en: ${userIdea}`,
+      estimatedTime: estimatedWeeks * 7, // días
+      ai_generated: false // Marcar como no generado por IA real
+    };
+  };
+
+  // ... (el resto del componente se mantiene igual)

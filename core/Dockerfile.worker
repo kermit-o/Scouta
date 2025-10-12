@@ -1,0 +1,21 @@
+﻿# Usa la misma imagen base que el API para consistencia
+FROM python:3.11-slim
+
+# Establece el directorio de trabajo
+WORKDIR /app
+
+# Copia e instala las dependencias (el mismo paso que el API)
+COPY requirements.txt .
+RUN apt-get update && apt-get install -y gcc libc-dev && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get purge -y gcc libc-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copia todo el código (incluye el core de los agentes)
+COPY . .
+
+# Comando para iniciar el Worker de Celery.
+# Asume que tiene un archivo 'backend/app/celery_worker.py' o similar.
+# La variable de entorno CELERY_APP debe apuntar a su instancia Celery.
+# CRÍTICO: Debe tener configurada la variable REDIS_URL para Celery.
+CMD ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]

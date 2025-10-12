@@ -1,0 +1,407 @@
+
+📄 CONTENIDO DE ARCHIVOS CRÍTICOS:
+=== main.py ===
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from pydantic import BaseModel
+from typing import List, Optional
+import os
+
+# Es CRÍTICO que la carga de variables de entorno se haga aquí (asumo que estaba antes)
+# from dotenv import load_dotenv 
+# load_dotenv() 
+
+from core.project_factory import ProjectRequirements, ProjectType
+from core.enhanced_project_factory import EnhancedProjectFactory
+from config.settings import settings
+# REMOVIDO: agents.deepseek_client, ya que se usa dentro del router
+
+# Importar Routers
+from core.app.routers import auth
+# Asumo que existe un router projects.py
+# from core.app.routers import projects 
+
+# IMPORTACIÓN DEL NUEVO ROUTER DE ANÁLISIS
+from core.app.routers.ai_analysis import router as ai_analysis_router 
+
+
+app = FastAPI(title=settings.APP_NAME, version=settings.APP_VERSION)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Initialize enhanced factory
+project_factory = EnhancedProjectFactory(openai_api_key=settings.OPENAI_API_KEY)
+
+# Esquemas de Proyectos
+# Estos esquemas pueden permanecer aquí o moverse a core/app/schemas/project.py
+class CreateProjectRequest(BaseModel):
+    name: str
+    description: str
+    project_type: str
+    features: List[str] = []
+    technologies: List[str] = []
+    database: str = "postgresql"
+    auth_required: bool = True
+    payment_integration: bool = False
+    deployment_target: str = "vercel"
+
+class ProjectResponse(BaseModel):
+    success: bool
+    project_id: str
+    project_name: str
+    project_path: Optional[str] = None
+    project_type: str
+    features_implemented: List[str] = []
+    next_steps: List[str] = []
+    error: Optional[str] = None
+    generated_at: Optional[str] = None
+
+# REMOVIDOS: AnalyzeIdeaRequest y AnalyzeIdeaResponse, ahora están en ai_analysis.py
+
+
+# Configuración para servir la UI estática
+UI_BUILD_PATH = "forge_ui/dist"
+
+if os.path.exists(UI_BUILD_PATH):
+    app.mount("/assets", StaticFiles(directory=f"{UI_BUILD_PATH}/assets"), name="assets")
+    
+    @app.get("/")
+    async def serve_index():
+        return FileResponse(os.path.join(UI_BUILD_PATH, "index.html"))
+    
+    @app.get("/{full_path:path}")
+    async def serve_spa_routes(full_path: str):
+        file_path = os.path.join(UI_BUILD_PATH, full_path)
+        if os.path.exists(file_path) and os.path.isfile(file_path):
+            return FileResponse(file_path)
+        return FileResponse(os.path.join(UI_BUILD_PATH, "index.html"))
+else:
+    @app.get("/")
+    async def root():
+        return {"message": "UI no construida"}
+
+# ------------------------------------------------------------------
+# MONTAJE DE ROUTERS MODULARIZADOS
+# ------------------------------------------------------------------
+
+# Router de Auth
+app.include_router(auth.router, prefix="/api/v1/auth") 
+# Router de Proyectos (Asumo que existe y se define en core/app/routers/projects.py)
+# app.include_router(projects.router, prefix="/api/v1/projects") 
+
+# INCLUIR EL ROUTER DE ANÁLISIS DE AI (Aquí se montan todos los endpoints /api/v1/ai/*)
+app.include_router(ai_analysis_router, prefix="/api/v1/ai") 
+
+# Endpoints de IA (REMOVIDOS DE AQUI Y MOVIDOS A ai_analysis.py)
+# @app.post("/api/ai/analyze-idea", ...)
+# @app.get("/api/ai/health", ...)
+
+
+# Endpoints existentes de proyectos (Estos pueden permanecer o moverse a un projects router)
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "forge_saas"}
+
+@app.get("/api/health")
+async def api_health():
+    return {"status": "healthy", "api": "forge_saas"}
+
+@app.post("/api/projects/create", response_model=ProjectResponse)
+async def create_project(request: CreateProjectRequest):
+    """Endpoint principal para crear proyectos"""
+    
+    try:
+        # Validar tipo de proyecto
+        try:
+            # Uso de ProjectType de core.project_factory
+            project_type = ProjectType(request.project_type)
+        except ValueError:
+            available_types = [pt.value for pt in ProjectType]
+            raise HTTPException(
+                status_code=400, 
+                detail=f"Tipo de proyecto no válido. Tipos disponibles: {available_types}"
+            )
+        
+        # Crear requirements
+        requirements = ProjectRequirements(
+            name=request.name,
+            description=request.description,
+            project_type=project_type,
+            features=request.features,
+            technologies=request.technologies,
+            database=request.database,
+            auth_required=request.auth_required,
+            payment_integration=request.payment_integration,
+            deployment_target=request.deployment_target
+        )
+        
+        # Generar proyecto
+        # NOTA: En un futuro, aquí es donde usarías la salida de DeepSeek para inicializar al SupervisorAgent
+        result = project_factory.create_project(requirements)
+        
+        # Convertir a response
+        response = ProjectResponse(
+            success=result.get("success", False),
+            project_id=result.get("project_id", "unknown"),
+            project_name=request.name,
+            project_path=result.get("project_path"),
+            project_type=request.project_type,
+            features_implemented=result.get("features_implemented", []),
+            next_steps=result.get("next_steps", []),
+            error=result.get("error"),
+            generated_at=result.get("generated_at")
+        )
+        
+        return response
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creando proyecto: {str(e)}")
+
+@app.get("/api/projects/types")
+async def get_project_types():
+    """Obtiene todos los tipos de proyecto disponibles"""
+    # ... (código sin cambios)
+    return {
+        "project_types": [
+            {
+                "value": pt.value,
+                "label": pt.name.replace("_", " ").title(),
+                "description": f"Proyecto de {pt.name.replace('_', ' ').title()}"
+            }
+            for pt in ProjectType
+        ]
+    }
+
+@app.get("/api/projects/technologies")
+async def get_available_technologies():
+    """Obtiene tecnologías disponibles por tipo de proyecto"""
+    # ... (código sin cambios)
+    return {
+        "technologies": {
+            "frontend": ["react", "vue", "angular", "svelte", "typescript", "javascript"],
+            "backend": ["nodejs", "fastapi", "express", "python", "java", "go"],
+            "styling": ["tailwind", "bootstrap", "material-ui", "css", "sass"],
+            "database": ["postgresql", "mongodb", "sqlite", "mysql", "redis"],
+            "deployment": ["vercel", "netlify", "heroku", "aws", "docker"]
+        }
+    }
+
+@app.get("/api/projects/list")
+async def list_generated_projects():
+    """Lista todos los proyectos generados"""
+    projects_dir = "generated_projects"
+    if not os.path.exists(projects_dir):
+        return {"projects": []}
+    
+    projects = []
+    for item in os.listdir(projects_dir):
+        item_path = os.path.join(projects_dir, item)
+        if os.path.isdir(item_path):
+            projects.append({
+                "name": item,
+                "path": item_path,
+                "created_at": str(os.path.getctime(item_path)),
+                "has_package_json": os.path.exists(os.path.join(item_path, "package.json"))
+            })
+    
+    return {"projects": projects, "count": len(projects)}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "main:app", 
+        host="0.0.0.0", 
+        port=8000, 
+        reload=True,
+        log_level="info"
+    )
+=== requirements.txt ===
+fastapi==0.104.1
+uvicorn==0.24.0
+sqlalchemy==2.0.23
+alembic==1.12.1
+pytest==7.4.3
+pydantic==2.5.0
+psycopg2-binary==2.9.9
+openai==1.3.0
+python-dotenv==1.0.0
+python-multipart==0.0.6
+jinja2==3.1.2
+aiofiles==23.2.1
+httpx==0.25.2
+websockets==12.0
+requests==2.31.0
+deepseek-api==0.1.5
+
+=== core/project_factory.py ===
+from enum import Enum
+from typing import Dict, Any, List
+from pydantic import BaseModel
+import json
+
+class ProjectType(Enum):
+    REACT_WEB_APP = "react_web_app"
+    NEXTJS_APP = "nextjs_app"
+    VUE_APP = "vue_app"
+    FASTAPI_SERVICE = "fastapi_service"
+    NODEJS_API = "nodejs_api"
+    REACT_NATIVE_MOBILE = "react_native_mobile"
+    FLUTTER_APP = "flutter_app"
+    ELECTRON_DESKTOP = "electron_desktop"
+    TAURI_DESKTOP = "tauri_desktop"
+    CHROME_EXTENSION = "chrome_extension"
+    AI_AGENT = "ai_agent"
+    BLOCKCHAIN_DAPP = "blockchain_dapp"
+    IOT_SYSTEM = "iot_system"
+    GAME_2D = "game_2d"
+    GAME_3D = "game_3d"
+    ECOMMERCE_STORE = "ecommerce_store"
+    SAAS_BOILERPLATE = "saas_boilerplate"
+
+class ProjectRequirements(BaseModel):
+    name: str
+    description: str
+    project_type: ProjectType
+    features: List[str]
+    technologies: List[str] = []
+    database: str = "postgresql"
+    auth_required: bool = True
+    payment_integration: bool = False
+    deployment_target: str = "vercel"
+
+class ProjectFactory:
+    def __init__(self):
+        self.technology_stacks = self._initialize_stacks()
+    
+    def _initialize_stacks(self) -> Dict[ProjectType, Dict[str, Any]]:
+        return {
+            ProjectType.REACT_WEB_APP: {
+                "frontend": ["react", "typescript", "tailwind"],
+                "backend": ["nodejs", "express"],
+                "database": ["postgresql"],
+                "deployment": ["vercel", "netlify"]
+            },
+            ProjectType.NEXTJS_APP: {
+                "frontend": ["nextjs", "typescript", "tailwind"],
+                "backend": ["nextjs_api", "prisma"],
+
+=== project_types/ ===
+total 68
+drwxrwxrwx+ 16 codespace codespace 4096 Oct  6 21:26 .
+drwxrwxrwx+ 26 codespace codespace 4096 Oct  7 16:18 ..
+-rw-rw-rw-   1 codespace codespace   23 Oct  6 21:26 __init__.py
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 ai
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 ai_agent
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 api
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 api_service
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 blockchain_dapp
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 chrome_extension
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 desktop
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 desktop_app
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 extension
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 game
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 mobile
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 mobile_app
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 web
+drwxrwxrwx+  2 codespace codespace 4096 Oct  6 21:26 web_app
+
+=== generators/ ===
+total 88
+drwxrwxrwx+ 10 codespace codespace  4096 Oct  7 10:48 .
+drwxrwxrwx+ 26 codespace codespace  4096 Oct  7 16:18 ..
+-rw-rw-rw-   1 codespace codespace    20 Oct  6 21:26 __init__.py
+drwxrwxrwx+  2 codespace codespace  4096 Oct  7 08:14 __pycache__
+drwxrwxrwx+  2 codespace codespace  4096 Oct  6 21:26 ai
+drwxrwxrwx+  2 codespace codespace  4096 Oct  6 21:26 backend
+drwxrwxrwx+  2 codespace codespace  4096 Oct  6 21:26 blockchain
+-rw-rw-rw-   1 codespace codespace 20284 Oct  6 22:46 code_validator.py
+drwxrwxrwx+  2 codespace codespace  4096 Oct  6 21:26 desktop
+drwxrwxrwx+  2 codespace codespace  4096 Oct  6 21:26 frontend
+-rw-rw-rw-   1 codespace codespace  5016 Oct  7 07:10 minimal_engine.py
+drwxrwxrwx+  2 codespace codespace  4096 Oct  6 21:26 mobile
+-rw-rw-rw-   1 codespace codespace  6399 Oct  7 08:13 simple_engine.py
+drwxrwxrwx+  3 codespace codespace  4096 Oct  7 10:55 specialized
+-rw-rw-rw-   1 codespace codespace  7324 Oct  6 22:00 template_engine.py
+
+=== ui/package.json ===
+{
+  "name": "ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "postcss.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^24.6.2",
+    "@types/react": "^19.2.0",
+    "next": "^15.5.4",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.14"
+  }
+}
+
+=== forge_ui/package.json ===
+{
+  "name": "forge-ui",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vite": "^4.4.0"
+  }
+}
+
+=== docker-compose.yml ===
+services:
+  # ... (postgres y backend quedan igual)
+
+  worker:
+    build: ./backend
+    # COMANDO CORREGIDO: Ejecuta el worker.py directamente. 
+    # worker.py contiene la función worker_loop() interna.
+    command: ["python", "app/worker.py", "0.5"] # El '0.5' es el poll_seconds
+    
+    environment:
+      DATABASE_URL: postgresql+psycopg2://forge:forge@postgres:5432/forge
+      DEBUG: "true"
+    depends_on:
+      postgres:
+        condition: service_healthy # Esperamos a que la DB esté lista
+    restart: unless-stopped
+    volumes:
+      # MUY IMPORTANTE: El worker DEBE tener acceso a 'generated' 
+      # porque los agentes escriben sus resultados ahí.
+      - ./backend/generated:/app/generated 
+      
+# ... (ui y volumes quedan igual)
+

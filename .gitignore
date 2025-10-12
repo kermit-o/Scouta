@@ -1,0 +1,24 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+
+# Node/Frontend
+node_modules/
+.next/
+dist/
+build/
+*.log
+
+# Artifacts & backups
+*.zip
+*.tar.gz
+*.rar
+*.7z
+logs/
+generated/
+generated_projects/
+ui/.next/
+frontend/.next/
