@@ -1,3 +1,0 @@
-PROJECT STRUCTURE - Sun Oct  5 09:42:34 UTC 2025
-Directory: /workspaces/Scouta/forge_saas
-==========================================

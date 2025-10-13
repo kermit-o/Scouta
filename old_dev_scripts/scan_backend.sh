@@ -1,1 +1,0 @@
-<PEGA_AQUÍ_EL_SCRIPT>
