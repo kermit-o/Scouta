@@ -84,7 +84,7 @@ services:
     # Puedes necesitar la variable de entorno para que el frontend sepa dónde está la API
     environment:
       # Asume que el frontend accede al backend a través del host/puerto expuesto
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://backend:8000
     
     volumes:
       # Montar el código de la UI para desarrollo

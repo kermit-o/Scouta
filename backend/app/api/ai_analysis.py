@@ -8,9 +8,9 @@ from typing import Dict, Any
 from agents.deepseek_client import DeepSeekClient 
 from config.ai_config import ai_config
 # Importación del agente de intake existente (necesario para el endpoint /analyze-requirements)
-from core.app.agents.intake_agent import IntakeAgent 
+from app.agents.intake_agent import IntakeAgent 
 # Importación del SUPERVISOR (CLAVE: basado en el archivo que me mostraste)
-from core.app.agents.supervisor_agent import ProjectSupervisor 
+from app.agents.supervisor_agent import ProjectSupervisor 
 
 router = APIRouter(tags=["AI Analysis"])
 deepseek_client = DeepSeekClient() 

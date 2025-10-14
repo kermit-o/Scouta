@@ -13,16 +13,16 @@ import os
 import time
 import threading # Usaremos threading para simular el trabajo en segundo plano
 import logging
-from core.app.routers.ai_analysis import router as ai_analysis_router 
-from core.app.routers import auth
-from core.app.routers import projects 
-from core.app.routers import ui_api
+from app.routers.ai_analysis import router as ai_analysis_router 
+from app.routers import auth
+from app.routers import projects 
+from app.routers import ui_api
 
 
 # Importar el NÚCLEO del sistema y el Supervisor
 from core.requirement_analyzer import RequirementAnalyzer
 # Importamos ProjectSupervisor en lugar de ProjectGenerator, ya que es el orquestador
-from core.app.agents.supervisor_agent import ProjectSupervisor 
+from app.agents.supervisor_agent import ProjectSupervisor 
 # Necesitamos la DB para interactuar con el supervisor y actualizar el estado
 # NOTA: En un entorno real se usaría un sistema de colas (Celery, Redis Queue, etc.)
 # Aquí simulamos la persistencia simple para que el supervisor funcione. 

@@ -2,7 +2,7 @@
 
 'use client'
 import React from 'react';
-import { ProjectResponse } from '../../lib/api/project';
+//import { ProjectResponse } from '../../lib/api/project';
 import { RefreshCcw } from 'lucide-react'; // Asumiendo que usas iconos, ej: lucide-react
 
 interface ProjectListProps {

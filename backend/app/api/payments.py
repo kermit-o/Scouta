@@ -14,7 +14,7 @@ from core.database.subscription_db import get_db
 from core.database.models import User
 
 # Importar el sistema de auth real
-from core.core.auth import AuthManager
+from app.auth import AuthManager
 
 router = APIRouter(prefix="/payments", tags=["payments"])
 

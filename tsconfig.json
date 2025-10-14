@@ -1,0 +1,38 @@
+﻿{
+  "compilerOptions": {
+    "target": "es2020",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    // Base URL es el directorio actual (frontend)
+    "baseUrl": ".", 
+    // Mapea `@/` para que apunte a la carpeta raíz del proyecto
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts", 
+    "**/*.ts", 
+    "**/*.tsx", 
+    ".next/types/**/*.ts",
+    // NUEVA INCLUSIÓN: Aseguramos que la carpeta components sea indexada
+    "components/**/*.tsx"
+  ],
+  "exclude": ["node_modules"]
+}

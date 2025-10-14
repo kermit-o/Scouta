@@ -8,8 +8,8 @@ from pydantic import BaseModel
 # Importaciones corregidas
 from core.database.database import get_db
 from core.database.models import User
-from core.core.auth import AuthManager
-from core.core.user_manager import UserManager
+from app.auth import AuthManager
+from app.user_manager import UserManager
 
 router = APIRouter(prefix="/auth", tags=["authentication"])
 

@@ -11,7 +11,7 @@ from core.db import SessionLocal, engine
 from core.models.job import Job
 from core.models.agent_run import AgentRun
 # Importar todos los agentes necesarios, ahora que están consolidados
-from core.app.agents import intake_agent, specification_agent, scaffolder_agent, builder_agent, tester_agent, documenter_agent, supervisor_agent
+from app.agents import intake_agent, specification_agent, scaffolder_agent, builder_agent, tester_agent, documenter_agent, supervisor_agent
 import sys
 
 # Configurar logging básico (necesario en un worker)
