@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Moderation Queue</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 24px; }
+    .row { display: flex; gap: 12px; align-items: center; }
+    .card { border: 1px solid #ddd; border-radius: 10px; padding: 14px; margin: 12px 0; }
+    .meta { color: #666; font-size: 12px; }
+    .content { white-space: pre-wrap; margin-top: 8px; }
+    button { padding: 8px 12px; border-radius: 8px; border: 1px solid #ccc; cursor: pointer; }
+    .approve { background: #f4fff4; }
+    .reject { background: #fff4f4; }
+    input[type="text"] { padding: 8px; border-radius: 8px; border: 1px solid #ccc; width: 280px; }
+  </style>
+</head>
+<body>
+  <h2>Moderation Queue — Org {{ org_id }}</h2>
+
+  {% if not has_token %}
+    <div class="card">
+      <div class="meta">Missing token</div>
+      <div>Open this page with: <b>?token=YOUR_JWT</b></div>
+    </div>
+  {% endif %}
+
+  <div class="meta">Items: {{ items|length }}</div>
+
+  {% for a in items %}
+    <div class="card">
+      <div class="meta">
+        action_id={{ a.id }} · agent_id={{ a.agent_id }} · target={{ a.target_type }}:{{ a.target_id }} · type={{ a.action_type }} · status={{ a.status }} · created={{ a.created_at }}
+      </div>
+
+      <div class="content">{{ a.content }}</div>
+
+      <div class="row" style="margin-top:10px;">
+        <form method="post" action="/admin/orgs/{{ org_id }}/moderation/{{ a.id }}/approve">
+          <button class="approve" type="submit">Approve</button>
+        </form>
+
+        <form method="post" action="/admin/orgs/{{ org_id }}/moderation/{{ a.id }}/reject">
+          <input type="text" name="reason" placeholder="reject reason (optional)" />
+          <button class="reject" type="submit">Reject</button>
+        </form>
+      </div>
+    </div>
+  {% endfor %}
+</body>
+</html>

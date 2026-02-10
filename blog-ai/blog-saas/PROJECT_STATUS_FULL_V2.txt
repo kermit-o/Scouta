@@ -1,0 +1,1595 @@
+
+====================
+[2026-02-05T19:22:39Z] 0) Context
+====================
+ROOT=/workspaces/Scouta/blog-ai/blog-saas
+API=/workspaces/Scouta/blog-ai/blog-saas/api
+OUT=/workspaces/Scouta/blog-ai/blog-saas/PROJECT_STATUS_FULL_V2.txt
+DB=/workspaces/Scouta/blog-ai/blog-saas/api/dev.db
+PWD=/workspaces/Scouta/blog-ai/blog-saas
+
+====================
+[2026-02-05T19:22:39Z] 1) ENV keys (redacted)
+====================
+SECRET_KEY=supersecret
+DATABASE_URL=sqlite:///./dev.db
+DEEPSEEK_API_KEY=sk-80292192538e463***************
+DEEPSEEK_MODEL=deepseek-chat
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MAX_TOKENS=350
+DEEPSEEK_TEMPERATURE=0.6
+DEEPSEEK_TIMEOUT=20
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+ALLOWED_ORIGINS=
+AUTO_MODE_ENABLED=true
+AUTO_MODE_ORG_ID=1
+AUTO_MODE_INTERVAL_SECONDS=120
+AUTO_MODE_MAX_POSTS_PER_TICK=3
+AUTO_MODE_ACTIONS_PER_POST=1
+AUTO_MODE_SPAWN_PROBABILITY=0.35
+AUTO_MODE_MIN_POST_AGE_MINUTES=2
+
+====================
+[2026-02-05T19:22:39Z] 2) Git + file hygiene
+====================
+ D .env
+ D .gitignore
+ D .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.23.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.23.dist-info/LICENSE
+ D .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.23.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.23.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.23.dist-info/REQUESTED
+ D .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.23.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.23.dist-info/top_level.txt
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/LICENSE
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/REQUESTED
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/entry_points.txt
+ D .venv/lib/python3.12/site-packages/alembic-1.12.1.dist-info/top_level.txt
+ M .venv/lib/python3.12/site-packages/alembic/__init__.py
+ M .venv/lib/python3.12/site-packages/alembic/autogenerate/__init__.py
+ M .venv/lib/python3.12/site-packages/alembic/autogenerate/api.py
+ M .venv/lib/python3.12/site-packages/alembic/autogenerate/compare.py
+ M .venv/lib/python3.12/site-packages/alembic/autogenerate/render.py
+ M .venv/lib/python3.12/site-packages/alembic/autogenerate/rewriter.py
+ M .venv/lib/python3.12/site-packages/alembic/command.py
+ M .venv/lib/python3.12/site-packages/alembic/config.py
+ M .venv/lib/python3.12/site-packages/alembic/context.pyi
+ M .venv/lib/python3.12/site-packages/alembic/ddl/__init__.py
+ M .venv/lib/python3.12/site-packages/alembic/ddl/base.py
+ M .venv/lib/python3.12/site-packages/alembic/ddl/impl.py
+ M .venv/lib/python3.12/site-packages/alembic/ddl/mssql.py
+ M .venv/lib/python3.12/site-packages/alembic/ddl/mysql.py
+ M .venv/lib/python3.12/site-packages/alembic/ddl/oracle.py
+ M .venv/lib/python3.12/site-packages/alembic/ddl/postgresql.py
+ M .venv/lib/python3.12/site-packages/alembic/ddl/sqlite.py
+ M .venv/lib/python3.12/site-packages/alembic/op.pyi
+ M .venv/lib/python3.12/site-packages/alembic/operations/base.py
+ M .venv/lib/python3.12/site-packages/alembic/operations/batch.py
+ M .venv/lib/python3.12/site-packages/alembic/operations/ops.py
+ M .venv/lib/python3.12/site-packages/alembic/operations/schemaobj.py
+ M .venv/lib/python3.12/site-packages/alembic/operations/toimpl.py
+ M .venv/lib/python3.12/site-packages/alembic/runtime/environment.py
+ M .venv/lib/python3.12/site-packages/alembic/runtime/migration.py
+ M .venv/lib/python3.12/site-packages/alembic/script/base.py
+ M .venv/lib/python3.12/site-packages/alembic/script/revision.py
+ M .venv/lib/python3.12/site-packages/alembic/script/write_hooks.py
+ M .venv/lib/python3.12/site-packages/alembic/templates/async/alembic.ini.mako
+ M .venv/lib/python3.12/site-packages/alembic/templates/generic/alembic.ini.mako
+ M .venv/lib/python3.12/site-packages/alembic/templates/multidb/alembic.ini.mako
+ M .venv/lib/python3.12/site-packages/alembic/testing/fixtures.py
+ M .venv/lib/python3.12/site-packages/alembic/testing/requirements.py
+ M .venv/lib/python3.12/site-packages/alembic/testing/schemacompare.py
+ M .venv/lib/python3.12/site-packages/alembic/testing/suite/test_autogen_computed.py
+ M .venv/lib/python3.12/site-packages/alembic/testing/suite/test_environment.py
+ M .venv/lib/python3.12/site-packages/alembic/util/__init__.py
+ M .venv/lib/python3.12/site-packages/alembic/util/compat.py
+ M .venv/lib/python3.12/site-packages/alembic/util/langhelpers.py
+ M .venv/lib/python3.12/site-packages/alembic/util/messaging.py
+ M .venv/lib/python3.12/site-packages/alembic/util/pyfiles.py
+ M .venv/lib/python3.12/site-packages/alembic/util/sqla_compat.py
+ M .venv/lib/python3.12/site-packages/dotenv/main.py
+ M .venv/lib/python3.12/site-packages/dotenv/version.py
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/REQUESTED
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/entry_points.txt
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/licenses/LICENSE
+ D .venv/lib/python3.12/site-packages/email_validator-2.3.0.dist-info/top_level.txt
+ M .venv/lib/python3.12/site-packages/email_validator/__init__.py
+ M .venv/lib/python3.12/site-packages/email_validator/__main__.py
+ M .venv/lib/python3.12/site-packages/email_validator/deliverability.py
+ D .venv/lib/python3.12/site-packages/email_validator/exceptions.py
+ M .venv/lib/python3.12/site-packages/email_validator/rfc_constants.py
+ M .venv/lib/python3.12/site-packages/email_validator/syntax.py
+ D .venv/lib/python3.12/site-packages/email_validator/types.py
+ M .venv/lib/python3.12/site-packages/email_validator/validate_email.py
+ M .venv/lib/python3.12/site-packages/email_validator/version.py
+ D .venv/lib/python3.12/site-packages/fastapi-0.104.1.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/fastapi-0.104.1.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/fastapi-0.104.1.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/fastapi-0.104.1.dist-info/REQUESTED
+ D .venv/lib/python3.12/site-packages/fastapi-0.104.1.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/fastapi-0.104.1.dist-info/licenses/LICENSE
+ M .venv/lib/python3.12/site-packages/fastapi/__init__.py
+ M .venv/lib/python3.12/site-packages/fastapi/_compat.py
+ M .venv/lib/python3.12/site-packages/fastapi/applications.py
+ M .venv/lib/python3.12/site-packages/fastapi/background.py
+ M .venv/lib/python3.12/site-packages/fastapi/concurrency.py
+ M .venv/lib/python3.12/site-packages/fastapi/datastructures.py
+ M .venv/lib/python3.12/site-packages/fastapi/dependencies/utils.py
+ M .venv/lib/python3.12/site-packages/fastapi/encoders.py
+ M .venv/lib/python3.12/site-packages/fastapi/exceptions.py
+ D .venv/lib/python3.12/site-packages/fastapi/middleware/asyncexitstack.py
+ M .venv/lib/python3.12/site-packages/fastapi/openapi/docs.py
+ M .venv/lib/python3.12/site-packages/fastapi/openapi/models.py
+ M .venv/lib/python3.12/site-packages/fastapi/openapi/utils.py
+ M .venv/lib/python3.12/site-packages/fastapi/param_functions.py
+ M .venv/lib/python3.12/site-packages/fastapi/params.py
+ M .venv/lib/python3.12/site-packages/fastapi/routing.py
+ M .venv/lib/python3.12/site-packages/fastapi/security/api_key.py
+ M .venv/lib/python3.12/site-packages/fastapi/security/http.py
+ M .venv/lib/python3.12/site-packages/fastapi/security/oauth2.py
+ M .venv/lib/python3.12/site-packages/fastapi/security/open_id_connect_url.py
+ M .venv/lib/python3.12/site-packages/fastapi/types.py
+ M .venv/lib/python3.12/site-packages/fastapi/utils.py
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/LICENSE
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/REQUESTED
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/entry_points.txt
+ D .venv/lib/python3.12/site-packages/python_dotenv-1.0.0.dist-info/top_level.txt
+ D .venv/lib/python3.12/site-packages/requests-2.32.5.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/requests-2.32.5.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/requests-2.32.5.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/requests-2.32.5.dist-info/REQUESTED
+ D .venv/lib/python3.12/site-packages/requests-2.32.5.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/requests-2.32.5.dist-info/licenses/LICENSE
+ D .venv/lib/python3.12/site-packages/requests-2.32.5.dist-info/top_level.txt
+ M .venv/lib/python3.12/site-packages/requests/__version__.py
+ M .venv/lib/python3.12/site-packages/requests/adapters.py
+ M .venv/lib/python3.12/site-packages/requests/compat.py
+ M .venv/lib/python3.12/site-packages/requests/models.py
+ M .venv/lib/python3.12/site-packages/requests/sessions.py
+ M .venv/lib/python3.12/site-packages/requests/utils.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/connectors/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/connectors/aioodbc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/connectors/asyncio.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/connectors/pyodbc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/collections.cpython-312-x86_64-linux-gnu.so
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/collections.pyx
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/immutabledict.cpython-312-x86_64-linux-gnu.so
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/immutabledict.pxd
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/immutabledict.pyx
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/processors.cpython-312-x86_64-linux-gnu.so
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/processors.pyx
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/resultproxy.cpython-312-x86_64-linux-gnu.so
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/resultproxy.pyx
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/util.cpython-312-x86_64-linux-gnu.so
+ M .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/util.pyx
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/_typing.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/aioodbc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/information_schema.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/json.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/provision.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/pymssql.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/pyodbc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/aiomysql.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/asyncmy.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/cymysql.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/dml.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/enumerated.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/expression.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/json.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/mariadb.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/mariadbconnector.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/mysqlconnector.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/mysqldb.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/provision.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/pymysql.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/pyodbc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/reflection.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/reserved_words.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/types.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/cx_oracle.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/dictionary.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/oracledb.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/provision.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/types.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/_psycopg_common.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/array.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/asyncpg.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/dml.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/ext.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/hstore.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/json.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/named_types.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/operators.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/pg8000.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/pg_catalog.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/provision.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg2cffi.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/ranges.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/types.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/aiosqlite.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/dml.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/json.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/provision.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/pysqlcipher.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/pysqlite.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/_py_processors.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/_py_row.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/_py_util.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/characteristics.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/create.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/cursor.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/default.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/events.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/interfaces.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/mock.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/processors.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/reflection.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/result.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/row.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/strategies.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/url.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/engine/util.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/event/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/event/api.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/event/attr.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/event/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/event/legacy.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/event/registry.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/events.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/exc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/associationproxy.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/engine.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/exc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/result.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/scoping.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/session.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/automap.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/baked.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/compiler.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/declarative/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/declarative/extensions.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/horizontal_shard.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/hybrid.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/indexable.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/instrumentation.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mutable.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/apply.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/decl_class.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/infer.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/names.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/plugin.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/util.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/orderinglist.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/ext/serializer.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/future/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/future/engine.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/inspection.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/log.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/_orm_constructors.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/_typing.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/attributes.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/bulk_persistence.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/clsregistry.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/collections.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/context.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/decl_api.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/decl_base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/dependency.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/descriptor_props.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/dynamic.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/evaluator.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/events.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/exc.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/identity.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/instrumentation.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/interfaces.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/loading.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/mapped_collection.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/mapper.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/path_registry.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/persistence.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/properties.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/query.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/relationships.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/scoping.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/session.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/state.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/state_changes.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/strategies.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/strategy_options.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/sync.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/unitofwork.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/util.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/orm/writeonly.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/pool/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/pool/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/pool/events.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/pool/impl.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/schema.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/_dml_constructors.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/_elements_constructors.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/_orm_types.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/_py_util.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/_selectable_constructors.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/_typing.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/annotation.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/cache_key.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/coercions.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/compiler.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/crud.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/ddl.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/default_comparator.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/dml.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/elements.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/events.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/expression.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/functions.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/lambdas.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/naming.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/operators.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/roles.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/schema.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/selectable.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/sqltypes.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/traversals.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/type_api.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/util.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/sql/visitors.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/assertions.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/assertsql.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/asyncio.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/config.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/engines.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/entities.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/exclusions.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/fixtures/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/fixtures/base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/fixtures/mypy.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/fixtures/orm.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/fixtures/sql.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/pickleable.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/plugin/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/plugin/bootstrap.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/plugin/plugin_base.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/plugin/pytestplugin.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/profiling.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/provision.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/requirements.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/schema.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_cte.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_ddl.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_deprecations.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_dialect.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_insert.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_reflection.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_results.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_rowcount.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_select.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_sequence.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_types.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_unicode_ddl.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/test_update_delete.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/util.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/testing/warnings.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/types.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/__init__.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/_collections.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/_concurrency_py3k.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/_has_cy.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/_py_collections.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/compat.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/concurrency.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/deprecations.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/langhelpers.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/preloaded.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/queue.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/tool_support.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/topological.py
+ M .venv/lib/python3.12/site-packages/sqlalchemy/util/typing.py
+ D .venv/lib/python3.12/site-packages/starlette-0.27.0.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/starlette-0.27.0.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/starlette-0.27.0.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/starlette-0.27.0.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/starlette-0.27.0.dist-info/licenses/LICENSE.md
+ M .venv/lib/python3.12/site-packages/starlette/__init__.py
+ M .venv/lib/python3.12/site-packages/starlette/_compat.py
+ M .venv/lib/python3.12/site-packages/starlette/_utils.py
+ M .venv/lib/python3.12/site-packages/starlette/applications.py
+ M .venv/lib/python3.12/site-packages/starlette/authentication.py
+ M .venv/lib/python3.12/site-packages/starlette/background.py
+ M .venv/lib/python3.12/site-packages/starlette/concurrency.py
+ M .venv/lib/python3.12/site-packages/starlette/config.py
+ M .venv/lib/python3.12/site-packages/starlette/convertors.py
+ M .venv/lib/python3.12/site-packages/starlette/datastructures.py
+ M .venv/lib/python3.12/site-packages/starlette/endpoints.py
+ M .venv/lib/python3.12/site-packages/starlette/exceptions.py
+ M .venv/lib/python3.12/site-packages/starlette/formparsers.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/__init__.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/authentication.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/base.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/cors.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/errors.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/exceptions.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/gzip.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/sessions.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/trustedhost.py
+ M .venv/lib/python3.12/site-packages/starlette/middleware/wsgi.py
+ M .venv/lib/python3.12/site-packages/starlette/requests.py
+ M .venv/lib/python3.12/site-packages/starlette/responses.py
+ M .venv/lib/python3.12/site-packages/starlette/routing.py
+ M .venv/lib/python3.12/site-packages/starlette/schemas.py
+ M .venv/lib/python3.12/site-packages/starlette/staticfiles.py
+ M .venv/lib/python3.12/site-packages/starlette/status.py
+ M .venv/lib/python3.12/site-packages/starlette/templating.py
+ M .venv/lib/python3.12/site-packages/starlette/testclient.py
+ M .venv/lib/python3.12/site-packages/starlette/types.py
+ M .venv/lib/python3.12/site-packages/starlette/websockets.py
+ D .venv/lib/python3.12/site-packages/uvicorn-0.24.0.dist-info/INSTALLER
+ D .venv/lib/python3.12/site-packages/uvicorn-0.24.0.dist-info/METADATA
+ D .venv/lib/python3.12/site-packages/uvicorn-0.24.0.dist-info/RECORD
+ D .venv/lib/python3.12/site-packages/uvicorn-0.24.0.dist-info/REQUESTED
+ D .venv/lib/python3.12/site-packages/uvicorn-0.24.0.dist-info/WHEEL
+ D .venv/lib/python3.12/site-packages/uvicorn-0.24.0.dist-info/entry_points.txt
+ D .venv/lib/python3.12/site-packages/uvicorn-0.24.0.dist-info/licenses/LICENSE.md
+ M .venv/lib/python3.12/site-packages/uvicorn/__init__.py
+ M .venv/lib/python3.12/site-packages/uvicorn/_subprocess.py
+ M .venv/lib/python3.12/site-packages/uvicorn/_types.py
+ M .venv/lib/python3.12/site-packages/uvicorn/config.py
+ M .venv/lib/python3.12/site-packages/uvicorn/importer.py
+ M .venv/lib/python3.12/site-packages/uvicorn/lifespan/off.py
+ M .venv/lib/python3.12/site-packages/uvicorn/lifespan/on.py
+ M .venv/lib/python3.12/site-packages/uvicorn/logging.py
+ M .venv/lib/python3.12/site-packages/uvicorn/loops/asyncio.py
+ M .venv/lib/python3.12/site-packages/uvicorn/main.py
+ M .venv/lib/python3.12/site-packages/uvicorn/middleware/asgi2.py
+ M .venv/lib/python3.12/site-packages/uvicorn/middleware/proxy_headers.py
+ M .venv/lib/python3.12/site-packages/uvicorn/middleware/wsgi.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/http/auto.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/http/flow_control.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/http/h11_impl.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/http/httptools_impl.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/utils.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/auto.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/websockets_impl.py
+ M .venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/wsproto_impl.py
+ M .venv/lib/python3.12/site-packages/uvicorn/server.py
+ M .venv/lib/python3.12/site-packages/uvicorn/supervisors/__init__.py
+ M .venv/lib/python3.12/site-packages/uvicorn/supervisors/basereload.py
+ M .venv/lib/python3.12/site-packages/uvicorn/supervisors/multiprocess.py
+ M .venv/lib/python3.12/site-packages/uvicorn/supervisors/statreload.py
+ M .venv/lib/python3.12/site-packages/uvicorn/supervisors/watchfilesreload.py
+ M .venv/lib/python3.12/site-packages/uvicorn/supervisors/watchgodreload.py
+ M .venv/lib/python3.12/site-packages/uvicorn/workers.py
+ D audit.sh
+ D backend/app/__init__.py
+ D backend/app/agents/__init__.py
+ D backend/app/agents/planning_agent.py
+ D backend/app/agents/supervisor.py
+ D backend/app/agents/supervisor_simple.py
+ D backend/app/api/__init__.py
+ D backend/app/api/ai_analysis.py
+ D backend/app/api/auth.py
+ D backend/app/api/billing.py
+ D backend/app/api/payments.py
+ D backend/app/api/projects.py
+ D backend/app/api/ui_api.py
+ D backend/app/auth.py
+ D backend/app/config/__init__.py
+ D backend/app/config/ai_config.py
+ D backend/app/config/db.py
+ D backend/app/config/logging.py
+ D backend/app/config/paths.py
+ D backend/app/config/settings.py
+ D backend/app/core/Dockerfile.api
+ D backend/app/core/Dockerfile.worker
+ D backend/app/core/__init__.py
+ D backend/app/core/alembic.ini
+ D backend/app/core/app/__init__.py
+ D backend/app/core/app/agents/__init__.py
+ D backend/app/core/app/agents/agent_base.py
+ D backend/app/core/app/agents/builder_agent.py
+ D backend/app/core/app/agents/data_design_agent.py
+ D backend/app/core/app/agents/documenter_agent.py
+ D backend/app/core/app/agents/intake_agent.py
+ D backend/app/core/app/agents/mockup_agent.py
+ D backend/app/core/app/agents/packager_agent.py
+ D backend/app/core/app/agents/planning_agent.py
+ D backend/app/core/app/agents/scaffolder_agent.py
+ D backend/app/core/app/agents/security_agent.py
+ D backend/app/core/app/agents/specification_agent.py
+ D backend/app/core/app/agents/supervisor_agent.py
+ D backend/app/core/app/agents/supervisor_simple.py
+ D backend/app/core/app/agents/tester_agent.py
+ D backend/app/core/app/agents/validation_agent.py
+ D backend/app/core/app/config/__init__.py
+ D backend/app/core/app/config/paths.py
+ D backend/app/core/app/db/__init__.py
+ D backend/app/core/app/db/__init__.py.backup.1759370144
+ D backend/app/core/app/db/session.py
+ D backend/app/core/app/db/session.py.backup.init_db
+ D backend/app/core/app/models.py
+ D backend/app/core/app/models/__init__.py
+ D backend/app/core/app/models/agent_run.py
+ D backend/app/core/app/models/artifact.py
+ D backend/app/core/app/models/job.py
+ D backend/app/core/app/models/project.py
+ D backend/app/core/app/routers/__init__.py
+ D backend/app/core/app/routes/__init__.py
+ D backend/app/core/app/schemas.py
+ D backend/app/core/app/schemas/__init__.py
+ D backend/app/core/app/schemas/project.py
+ D backend/app/core/app/services/__init__.py
+ D backend/app/core/app/services/database_service.py
+ D backend/app/core/app/services/download_service.py
+ D backend/app/core/app/services/file_storage_service.py
+ D backend/app/core/app/services/payment_service.py
+ D backend/app/core/app/services/planner_service.py
+ D backend/app/core/app/services/progress_service.py
+ D backend/app/core/app/services/requirements_validator.py
+ D backend/app/core/app/services/scheduler_service.py
+ D backend/app/core/app/services/ui_orchestrator.py
+ D backend/app/core/app/services/ui_orchestrator_real.py
+ D backend/app/core/app/services/validation_service.py
+ D backend/app/core/app/utils/__init__.py
+ D backend/app/core/app/utils/config.py
+ D backend/app/core/auth/__init__.py
+ D backend/app/core/auth/user_manager.py
+ D backend/app/core/core/__init__.py
+ D backend/app/core/core/ai_orchestrator.py
+ D backend/app/core/core/auth.py
+ D backend/app/core/core/project_factory.py
+ D backend/app/core/core/project_generator.py
+ D backend/app/core/core/project_manager.py
+ D backend/app/core/core/requirement_analyzer.py
+ D backend/app/core/core/user_manager.py
+ D backend/app/core/database/__init__.py
+ D backend/app/core/database/configure_relationships.py
+ D backend/app/core/database/database.py
+ D backend/app/core/database/database_fixed.py
+ D backend/app/core/database/models.py
+ D backend/app/core/database/models_fixed.py
+ D backend/app/core/database/models_patch.py
+ D backend/app/core/database/relationships.py
+ D backend/app/core/database/sqlite_db.py
+ D backend/app/core/database/subscription_db.py
+ D backend/app/core/database/subscription_models.py
+ D backend/app/core/database/subscription_models_final.py
+ D backend/app/core/db/__init__.py
+ D backend/app/core/db/__init__.py.backup.1759370144
+ D backend/app/core/db/session.py
+ D backend/app/core/db/session.py.backup.init_db
+ D backend/app/core/entrypoint.sh
+ D backend/app/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/README.md
+ D backend/app/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/SPECIFICATION.md
+ D backend/app/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/__init__.py
+ D backend/app/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/config.json
+ D backend/app/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/database_schema.json
+ D backend/app/core/generated/04dc6b57-9773-4ec8-bbad-5fe541204be5/README.md
+ D backend/app/core/generated/04dc6b57-9773-4ec8-bbad-5fe541204be5/__init__.py
+ D backend/app/core/generated/04dc6b57-9773-4ec8-bbad-5fe541204be5/plan.json
+ D backend/app/core/generated/05823fa3-1a26-4e3c-8567-60215b3168b7/README.md
+ D backend/app/core/generated/05823fa3-1a26-4e3c-8567-60215b3168b7/__init__.py
+ D backend/app/core/generated/05823fa3-1a26-4e3c-8567-60215b3168b7/plan.json
+ D backend/app/core/generated/33077689-3c9d-4278-ae6f-62ec94e25f66/README.md
+ D backend/app/core/generated/33077689-3c9d-4278-ae6f-62ec94e25f66/__init__.py
+ D backend/app/core/generated/33077689-3c9d-4278-ae6f-62ec94e25f66/plan.json
+ D backend/app/core/generated/3a157c55-e34d-4238-a6ae-b074db84b366/README.md
+ D backend/app/core/generated/3a157c55-e34d-4238-a6ae-b074db84b366/__init__.py
+ D backend/app/core/generated/3a157c55-e34d-4238-a6ae-b074db84b366/plan.json
+ D backend/app/core/generated/486d165c-b337-45f6-bd22-270d58ec6a29/README.md
+ D backend/app/core/generated/486d165c-b337-45f6-bd22-270d58ec6a29/__init__.py
+ D backend/app/core/generated/486d165c-b337-45f6-bd22-270d58ec6a29/plan.json
+ D backend/app/core/generated/598a1e25-5c0b-47b4-99b6-564c609c6475/README.md
+ D backend/app/core/generated/598a1e25-5c0b-47b4-99b6-564c609c6475/__init__.py
+ D backend/app/core/generated/598a1e25-5c0b-47b4-99b6-564c609c6475/plan.json
+ D backend/app/core/generated/5dd2b403-85a7-4344-bfc3-1f9b72a1a36b/README.md
+ D backend/app/core/generated/5dd2b403-85a7-4344-bfc3-1f9b72a1a36b/__init__.py
+ D backend/app/core/generated/5dd2b403-85a7-4344-bfc3-1f9b72a1a36b/plan.json
+ D backend/app/core/generated/5e36db63-e571-4cbb-8abf-70b2bc56fe6c/README.md
+ D backend/app/core/generated/5e36db63-e571-4cbb-8abf-70b2bc56fe6c/__init__.py
+ D backend/app/core/generated/5e36db63-e571-4cbb-8abf-70b2bc56fe6c/plan.json
+ D backend/app/core/generated/631d2cd9-9c64-405f-8526-8b7fbb7e9779/README.md
+ D backend/app/core/generated/631d2cd9-9c64-405f-8526-8b7fbb7e9779/__init__.py
+ D backend/app/core/generated/631d2cd9-9c64-405f-8526-8b7fbb7e9779/plan.json
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/README.md
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/__init__.py
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/Dockerfile
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/__init__.py
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/app.py
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/requirements.txt
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/frontend/README.md
+ D backend/app/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/frontend/__init__.py
+ D backend/app/core/generated/72035111-4b80-48ca-ad0f-616fee0bffa7/README.md
+ D backend/app/core/generated/72035111-4b80-48ca-ad0f-616fee0bffa7/__init__.py
+ D backend/app/core/generated/72035111-4b80-48ca-ad0f-616fee0bffa7/plan.json
+ D backend/app/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/__init__.py
+ D backend/app/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/backend/__init__.py
+ D backend/app/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/database/__init__.py
+ D backend/app/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/deployment/__init__.py
+ D backend/app/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/frontend/__init__.py
+ D backend/app/core/generated/8022f1f2-4ff2-4a02-b767-08d95c206a64/README.md
+ D backend/app/core/generated/8022f1f2-4ff2-4a02-b767-08d95c206a64/__init__.py
+ D backend/app/core/generated/8022f1f2-4ff2-4a02-b767-08d95c206a64/plan.json
+ D backend/app/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/__init__.py
+ D backend/app/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/backend/__init__.py
+ D backend/app/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/database/__init__.py
+ D backend/app/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/deployment/__init__.py
+ D backend/app/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/frontend/__init__.py
+ D backend/app/core/generated/95988b2a-5fb7-4221-93a9-f9831e45d230/README.md
+ D backend/app/core/generated/95988b2a-5fb7-4221-93a9-f9831e45d230/__init__.py
+ D backend/app/core/generated/95988b2a-5fb7-4221-93a9-f9831e45d230/plan.json
+ D backend/app/core/generated/97ccda10-e89f-4acd-99e4-20632d499f0c/README.md
+ D backend/app/core/generated/97ccda10-e89f-4acd-99e4-20632d499f0c/__init__.py
+ D backend/app/core/generated/97ccda10-e89f-4acd-99e4-20632d499f0c/plan.json
+ D backend/app/core/generated/9d343232-9bb5-494c-8095-7781557a57e2/README.md
+ D backend/app/core/generated/9d343232-9bb5-494c-8095-7781557a57e2/__init__.py
+ D backend/app/core/generated/9d343232-9bb5-494c-8095-7781557a57e2/plan.json
+ D backend/app/core/generated/__init__.py
+ D backend/app/core/generated/a95cd168-2a53-4300-a00d-4cdb58451ad7/README.md
+ D backend/app/core/generated/a95cd168-2a53-4300-a00d-4cdb58451ad7/__init__.py
+ D backend/app/core/generated/a95cd168-2a53-4300-a00d-4cdb58451ad7/plan.json
+ D backend/app/core/generated/aa0de138-a920-43aa-a764-6ffb38d84899/README.md
+ D backend/app/core/generated/aa0de138-a920-43aa-a764-6ffb38d84899/__init__.py
+ D backend/app/core/generated/aa0de138-a920-43aa-a764-6ffb38d84899/plan.json
+ D backend/app/core/generated/b432317c-ed39-467a-ac22-ca3adc54215a/README.md
+ D backend/app/core/generated/b432317c-ed39-467a-ac22-ca3adc54215a/__init__.py
+ D backend/app/core/generated/b432317c-ed39-467a-ac22-ca3adc54215a/plan.json
+ D backend/app/core/generated/ba454f1f-57bb-4971-937b-f3521e97b067/README.md
+ D backend/app/core/generated/ba454f1f-57bb-4971-937b-f3521e97b067/__init__.py
+ D backend/app/core/generated/ba454f1f-57bb-4971-937b-f3521e97b067/plan.json
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/README.md
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/__init__.py
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/Dockerfile
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/__init__.py
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/app.py
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/requirements.txt
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/frontend/README.md
+ D backend/app/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/frontend/__init__.py
+ D backend/app/core/generated/e72acdbd-2039-4ab0-8bd8-ad39a694e6f9/README.md
+ D backend/app/core/generated/e72acdbd-2039-4ab0-8bd8-ad39a694e6f9/__init__.py
+ D backend/app/core/generated/e72acdbd-2039-4ab0-8bd8-ad39a694e6f9/plan.json
+ D backend/app/core/generated/eadb802b-c97a-47b5-9eb0-0e0a5ad182fb/README.md
+ D backend/app/core/generated/eadb802b-c97a-47b5-9eb0-0e0a5ad182fb/__init__.py
+ D backend/app/core/generated/eadb802b-c97a-47b5-9eb0-0e0a5ad182fb/plan.json
+ D backend/app/core/generated/f1f97504-b34b-4f9c-8fe6-9440891248ce/README.md
+ D backend/app/core/generated/f1f97504-b34b-4f9c-8fe6-9440891248ce/__init__.py
+ D backend/app/core/generated/f1f97504-b34b-4f9c-8fe6-9440891248ce/plan.json
+ D backend/app/core/generated/full-demo/API_DOCS.md
+ D backend/app/core/generated/full-demo/ARCHITECTURE.md
+ D backend/app/core/generated/full-demo/Dockerfile
+ D backend/app/core/generated/full-demo/README.md
+ D backend/app/core/generated/full-demo/__init__.py
+ D backend/app/core/generated/full-demo/dependencies.json
+ D backend/app/core/generated/full-demo/main.py
+ D backend/app/core/generated/full-demo/project.json
+ D backend/app/core/generated/full-demo/requirements.txt
+ D backend/app/core/generated/inventory_management_sis/__init__.py
+ D backend/app/core/generated/inventory_management_sis/app/__init__.py
+ D backend/app/core/generated/inventory_management_sis/app/models/__init__.py
+ D backend/app/core/generated/inventory_management_sis/app/models/location.py
+ D backend/app/core/generated/inventory_management_sis/app/models/product.py
+ D backend/app/core/generated/inventory_management_sis/app/routers/__init__.py
+ D backend/app/core/generated/inventory_management_sis/app/routers/location.py
+ D backend/app/core/generated/inventory_management_sis/app/services/__init__.py
+ D backend/app/core/generated/inventory_management_sis/app/services/product_service.py
+ D backend/app/core/generated/test-123/README.md
+ D backend/app/core/generated/test-123/SPECIFICATION.md
+ D backend/app/core/generated/test-123/__init__.py
+ D backend/app/core/generated/test-123/config.json
+ D backend/app/core/generated/test-123/database_schema.json
+ D backend/app/core/generated/test_project/README.md
+ D backend/app/core/generated/test_project/__init__.py
+ D backend/app/core/generated/test_project/config.json
+ D backend/app/core/generators/__init__.py
+ D backend/app/core/generators/database_generator.py
+ D backend/app/core/generators/fastapi_generator.py
+ D backend/app/core/generators/project_factory.py
+ D backend/app/core/generators/react_generator.py
+ D backend/app/core/generators/react_generator_fixed.py
+ D backend/app/core/integrations/__init__.py
+ D backend/app/core/integrations/auth_integrator.sh
+ D backend/app/core/migrations/README
+ D backend/app/core/migrations/__init__.py
+ D backend/app/core/migrations/versions/.731f548685d5_add_missing_project_columns.py.swp
+ D backend/app/core/migrations/versions/__init__.py
+ D backend/app/core/models/__init__.py
+ D backend/app/core/package-lock.json
+ D backend/app/core/payments/__init__.py
+ D backend/app/core/payments/stripe_manager.py
+ D backend/app/core/payments/subscription_middleware.py
+ D backend/app/core/payments/subscription_service.py
+ D backend/app/core/scripts/__init__.py
+ D backend/app/core/scripts/init_database.py
+ D backend/app/core/services/__init__.py
+ D backend/app/core/utils/__init__.py
+ D backend/app/debug_schema.py
+ D backend/app/enhanced_project_factory.py
+ D backend/app/init_db.py
+ D backend/app/main.py
+ D backend/app/main_core.py
+ D backend/app/main_development.py
+ D backend/app/main_intermediate.py
+ D backend/app/main_simple.py
+ D backend/app/main_simple_fixed.py
+ D backend/app/models/__init__.py
+ D backend/app/models/project.py
+ D backend/app/project_factory.py
+ D backend/app/schemas/__init__.py
+ D backend/app/schemas/project.py
+ D backend/app/services/__init__.py
+ D backend/app/services/database_service.py
+ D backend/app/services/file_storage_service.py
+ D backend/app/services/planner_service.py
+ D backend/app/services/progress_service.py
+ D backend/app/services/validation_service.py
+ D backend/app/test_backend.py
+ D backend/app/utils/__init__.py
+ D backend/app/utils/config.py
+ D backend/app/worker.py
+ D backend/migrations/env.py
+ D backend/migrations/env_core.py
+ D backend/migrations/script.py.mako
+ D backend/migrations/script_core.py.mako
+ D backend/migrations/versions/1bb4a971bc3c_init.py
+ D backend/migrations/versions/1f53bda92b4b_init.py
+ D backend/migrations/versions/20250928_0001_jobs_agent_runs_artifacts.py
+ D backend/migrations/versions/731f548685d5_add_missing_project_columns.py
+ D backend/migrations/versions/a3683ddb987c_init.py
+ D backend/migrations/versions/a5d3661ccee5_add_size_and_sha256_columns_to_artifacts.py
+ D backend/migrations/versions/ba37eabeee95_fix_artifact_model.py
+ D backend/migrations/versions/bd142ee8c0ea_initial_migration.py
+ D backend/requirements.txt
+ D backup_repo
+ D backup_repo_a
+ M forge_saas/core/app/agents/supervisor_agent.py
+ D monorepo_v2/README.md
+ D monorepo_v2/backend/Dockerfile
+ D monorepo_v2/backend/__init__.py
+ D monorepo_v2/backend/alembic.ini
+ D monorepo_v2/backend/app/__init__.py
+ D monorepo_v2/backend/app/agents/__init__.py
+ D monorepo_v2/backend/app/agents/planning_agent.py
+ D monorepo_v2/backend/app/agents/supervisor.py
+ D monorepo_v2/backend/app/agents/supervisor_simple.py
+ D monorepo_v2/backend/app/api/__init__.py
+ D monorepo_v2/backend/app/api/ai_analysis.py
+ D monorepo_v2/backend/app/api/auth.py
+ D monorepo_v2/backend/app/api/billing.py
+ D monorepo_v2/backend/app/api/payments.py
+ D monorepo_v2/backend/app/api/projects.py
+ D monorepo_v2/backend/app/api/ui_api.py
+ D monorepo_v2/backend/app/auth.py
+ D monorepo_v2/backend/app/config/__init__.py
+ D monorepo_v2/backend/app/config/db.py
+ D monorepo_v2/backend/app/config/paths.py
+ D monorepo_v2/backend/app/debug_schema.py
+ D monorepo_v2/backend/app/enhanced_project_factory.py
+ D monorepo_v2/backend/app/init_db.py
+ D monorepo_v2/backend/app/main.py
+ D monorepo_v2/backend/app/main_core.py
+ D monorepo_v2/backend/app/main_development.py
+ D monorepo_v2/backend/app/main_intermediate.py
+ D monorepo_v2/backend/app/main_simple.py
+ D monorepo_v2/backend/app/main_simple_fixed.py
+ D monorepo_v2/backend/app/models/__init__.py
+ D monorepo_v2/backend/app/models/_compat.py
+ D monorepo_v2/backend/app/models/project.py
+ D monorepo_v2/backend/app/models/project.py.bak
+ D monorepo_v2/backend/app/project_factory.py
+ D monorepo_v2/backend/app/schemas/__init__.py
+ D monorepo_v2/backend/app/schemas/project.py
+ D monorepo_v2/backend/app/services/__init__.py
+ D monorepo_v2/backend/app/services/database_service.py
+ D monorepo_v2/backend/app/services/file_storage_service.py
+ D monorepo_v2/backend/app/services/planner_service.py
+ D monorepo_v2/backend/app/services/progress_service.py
+ D monorepo_v2/backend/app/services/validation_service.py
+ D monorepo_v2/backend/app/test_backend.py
+ D monorepo_v2/backend/app/utils/__init__.py
+ D monorepo_v2/backend/app/utils/config.py
+ D monorepo_v2/backend/app/worker.py
+ D monorepo_v2/backend/config/__init__.py
+ D monorepo_v2/backend/config/ai_config.py
+ D monorepo_v2/backend/config/logging.py
+ D monorepo_v2/backend/config/settings.py
+ D monorepo_v2/backend/core/Dockerfile.api
+ D monorepo_v2/backend/core/Dockerfile.worker
+ D monorepo_v2/backend/core/__init__.py
+ D monorepo_v2/backend/core/alembic.ini
+ D monorepo_v2/backend/core/app/__init__.py
+ D monorepo_v2/backend/core/app/agents/__init__.py
+ D monorepo_v2/backend/core/app/agents/agent_base.py
+ D monorepo_v2/backend/core/app/agents/builder_agent.py
+ D monorepo_v2/backend/core/app/agents/data_design_agent.py
+ D monorepo_v2/backend/core/app/agents/documenter_agent.py
+ D monorepo_v2/backend/core/app/agents/intake_agent.py
+ D monorepo_v2/backend/core/app/agents/mockup_agent.py
+ D monorepo_v2/backend/core/app/agents/packager_agent.py
+ D monorepo_v2/backend/core/app/agents/planning_agent.py
+ D monorepo_v2/backend/core/app/agents/scaffolder_agent.py
+ D monorepo_v2/backend/core/app/agents/security_agent.py
+ D monorepo_v2/backend/core/app/agents/specification_agent.py
+ D monorepo_v2/backend/core/app/agents/supervisor_agent.py
+ D monorepo_v2/backend/core/app/agents/supervisor_simple.py
+ D monorepo_v2/backend/core/app/agents/tester_agent.py
+ D monorepo_v2/backend/core/app/agents/validation_agent.py
+ D monorepo_v2/backend/core/app/config/__init__.py
+ D monorepo_v2/backend/core/app/config/paths.py
+ D monorepo_v2/backend/core/app/db/__init__.py
+ D monorepo_v2/backend/core/app/db/__init__.py.backup.1759370144
+ D monorepo_v2/backend/core/app/db/session.py
+ D monorepo_v2/backend/core/app/db/session.py.backup.init_db
+ D monorepo_v2/backend/core/app/models.py
+ D monorepo_v2/backend/core/app/models/__init__.py
+ D monorepo_v2/backend/core/app/models/agent_run.py
+ D monorepo_v2/backend/core/app/models/artifact.py
+ D monorepo_v2/backend/core/app/models/job.py
+ D monorepo_v2/backend/core/app/models/project.py
+ D monorepo_v2/backend/core/app/routers/__init__.py
+ D monorepo_v2/backend/core/app/routes/__init__.py
+ D monorepo_v2/backend/core/app/schemas.py
+ D monorepo_v2/backend/core/app/schemas/__init__.py
+ D monorepo_v2/backend/core/app/schemas/project.py
+ D monorepo_v2/backend/core/app/services/__init__.py
+ D monorepo_v2/backend/core/app/services/database_service.py
+ D monorepo_v2/backend/core/app/services/download_service.py
+ D monorepo_v2/backend/core/app/services/file_storage_service.py
+ D monorepo_v2/backend/core/app/services/payment_service.py
+ D monorepo_v2/backend/core/app/services/planner_service.py
+ D monorepo_v2/backend/core/app/services/progress_service.py
+ D monorepo_v2/backend/core/app/services/requirements_validator.py
+ D monorepo_v2/backend/core/app/services/scheduler_service.py
+ D monorepo_v2/backend/core/app/services/ui_orchestrator.py
+ D monorepo_v2/backend/core/app/services/ui_orchestrator_real.py
+ D monorepo_v2/backend/core/app/services/validation_service.py
+ D monorepo_v2/backend/core/app/utils/__init__.py
+ D monorepo_v2/backend/core/app/utils/config.py
+ D monorepo_v2/backend/core/auth/__init__.py
+ D monorepo_v2/backend/core/auth/user_manager.py
+ D monorepo_v2/backend/core/core/__init__.py
+ D monorepo_v2/backend/core/core/ai_orchestrator.py
+ D monorepo_v2/backend/core/core/auth.py
+ D monorepo_v2/backend/core/core/project_factory.py
+ D monorepo_v2/backend/core/core/project_generator.py
+ D monorepo_v2/backend/core/core/project_manager.py
+ D monorepo_v2/backend/core/core/requirement_analyzer.py
+ D monorepo_v2/backend/core/core/user_manager.py
+ D monorepo_v2/backend/core/database/__init__.py
+ D monorepo_v2/backend/core/database/configure_relationships.py
+ D monorepo_v2/backend/core/database/database.py
+ D monorepo_v2/backend/core/database/database_fixed.py
+ D monorepo_v2/backend/core/database/models.py
+ D monorepo_v2/backend/core/database/models_fixed.py
+ D monorepo_v2/backend/core/database/models_patch.py
+ D monorepo_v2/backend/core/database/relationships.py
+ D monorepo_v2/backend/core/database/sqlite_db.py
+ D monorepo_v2/backend/core/database/subscription_db.py
+ D monorepo_v2/backend/core/database/subscription_models.py
+ D monorepo_v2/backend/core/database/subscription_models_final.py
+ D monorepo_v2/backend/core/db/__init__.py
+ D monorepo_v2/backend/core/db/__init__.py.backup.1759370144
+ D monorepo_v2/backend/core/db/session.py
+ D monorepo_v2/backend/core/db/session.py.backup.init_db
+ D monorepo_v2/backend/core/entrypoint.sh
+ D monorepo_v2/backend/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/README.md
+ D monorepo_v2/backend/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/SPECIFICATION.md
+ D monorepo_v2/backend/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/__init__.py
+ D monorepo_v2/backend/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/config.json
+ D monorepo_v2/backend/core/generated/01edd702-21c0-42ce-9219-afa5f1b9c546/database_schema.json
+ D monorepo_v2/backend/core/generated/04dc6b57-9773-4ec8-bbad-5fe541204be5/README.md
+ D monorepo_v2/backend/core/generated/04dc6b57-9773-4ec8-bbad-5fe541204be5/__init__.py
+ D monorepo_v2/backend/core/generated/04dc6b57-9773-4ec8-bbad-5fe541204be5/plan.json
+ D monorepo_v2/backend/core/generated/05823fa3-1a26-4e3c-8567-60215b3168b7/README.md
+ D monorepo_v2/backend/core/generated/05823fa3-1a26-4e3c-8567-60215b3168b7/__init__.py
+ D monorepo_v2/backend/core/generated/05823fa3-1a26-4e3c-8567-60215b3168b7/plan.json
+ D monorepo_v2/backend/core/generated/33077689-3c9d-4278-ae6f-62ec94e25f66/README.md
+ D monorepo_v2/backend/core/generated/33077689-3c9d-4278-ae6f-62ec94e25f66/__init__.py
+ D monorepo_v2/backend/core/generated/33077689-3c9d-4278-ae6f-62ec94e25f66/plan.json
+ D monorepo_v2/backend/core/generated/3a157c55-e34d-4238-a6ae-b074db84b366/README.md
+ D monorepo_v2/backend/core/generated/3a157c55-e34d-4238-a6ae-b074db84b366/__init__.py
+ D monorepo_v2/backend/core/generated/3a157c55-e34d-4238-a6ae-b074db84b366/plan.json
+ D monorepo_v2/backend/core/generated/486d165c-b337-45f6-bd22-270d58ec6a29/README.md
+ D monorepo_v2/backend/core/generated/486d165c-b337-45f6-bd22-270d58ec6a29/__init__.py
+ D monorepo_v2/backend/core/generated/486d165c-b337-45f6-bd22-270d58ec6a29/plan.json
+ D monorepo_v2/backend/core/generated/598a1e25-5c0b-47b4-99b6-564c609c6475/README.md
+ D monorepo_v2/backend/core/generated/598a1e25-5c0b-47b4-99b6-564c609c6475/__init__.py
+ D monorepo_v2/backend/core/generated/598a1e25-5c0b-47b4-99b6-564c609c6475/plan.json
+ D monorepo_v2/backend/core/generated/5dd2b403-85a7-4344-bfc3-1f9b72a1a36b/README.md
+ D monorepo_v2/backend/core/generated/5dd2b403-85a7-4344-bfc3-1f9b72a1a36b/__init__.py
+ D monorepo_v2/backend/core/generated/5dd2b403-85a7-4344-bfc3-1f9b72a1a36b/plan.json
+ D monorepo_v2/backend/core/generated/5e36db63-e571-4cbb-8abf-70b2bc56fe6c/README.md
+ D monorepo_v2/backend/core/generated/5e36db63-e571-4cbb-8abf-70b2bc56fe6c/__init__.py
+ D monorepo_v2/backend/core/generated/5e36db63-e571-4cbb-8abf-70b2bc56fe6c/plan.json
+ D monorepo_v2/backend/core/generated/631d2cd9-9c64-405f-8526-8b7fbb7e9779/README.md
+ D monorepo_v2/backend/core/generated/631d2cd9-9c64-405f-8526-8b7fbb7e9779/__init__.py
+ D monorepo_v2/backend/core/generated/631d2cd9-9c64-405f-8526-8b7fbb7e9779/plan.json
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/README.md
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/__init__.py
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/Dockerfile
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/__init__.py
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/app.py
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/backend/requirements.txt
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/frontend/README.md
+ D monorepo_v2/backend/core/generated/7187fc2e-b0e9-4fec-84cd-e47ab93b75f9/frontend/__init__.py
+ D monorepo_v2/backend/core/generated/72035111-4b80-48ca-ad0f-616fee0bffa7/README.md
+ D monorepo_v2/backend/core/generated/72035111-4b80-48ca-ad0f-616fee0bffa7/__init__.py
+ D monorepo_v2/backend/core/generated/72035111-4b80-48ca-ad0f-616fee0bffa7/plan.json
+ D monorepo_v2/backend/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/__init__.py
+ D monorepo_v2/backend/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/backend/__init__.py
+ D monorepo_v2/backend/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/database/__init__.py
+ D monorepo_v2/backend/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/deployment/__init__.py
+ D monorepo_v2/backend/core/generated/75c33659-69da-4f22-af32-eb21ed6befe3/frontend/__init__.py
+ D monorepo_v2/backend/core/generated/8022f1f2-4ff2-4a02-b767-08d95c206a64/README.md
+ D monorepo_v2/backend/core/generated/8022f1f2-4ff2-4a02-b767-08d95c206a64/__init__.py
+ D monorepo_v2/backend/core/generated/8022f1f2-4ff2-4a02-b767-08d95c206a64/plan.json
+ D monorepo_v2/backend/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/__init__.py
+ D monorepo_v2/backend/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/backend/__init__.py
+ D monorepo_v2/backend/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/database/__init__.py
+ D monorepo_v2/backend/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/deployment/__init__.py
+ D monorepo_v2/backend/core/generated/92abc55f-fa72-45df-b28d-ecc4914bab0c/frontend/__init__.py
+ D monorepo_v2/backend/core/generated/95988b2a-5fb7-4221-93a9-f9831e45d230/README.md
+ D monorepo_v2/backend/core/generated/95988b2a-5fb7-4221-93a9-f9831e45d230/__init__.py
+ D monorepo_v2/backend/core/generated/95988b2a-5fb7-4221-93a9-f9831e45d230/plan.json
+ D monorepo_v2/backend/core/generated/97ccda10-e89f-4acd-99e4-20632d499f0c/README.md
+ D monorepo_v2/backend/core/generated/97ccda10-e89f-4acd-99e4-20632d499f0c/__init__.py
+ D monorepo_v2/backend/core/generated/97ccda10-e89f-4acd-99e4-20632d499f0c/plan.json
+ D monorepo_v2/backend/core/generated/9d343232-9bb5-494c-8095-7781557a57e2/README.md
+ D monorepo_v2/backend/core/generated/9d343232-9bb5-494c-8095-7781557a57e2/__init__.py
+ D monorepo_v2/backend/core/generated/9d343232-9bb5-494c-8095-7781557a57e2/plan.json
+ D monorepo_v2/backend/core/generated/__init__.py
+ D monorepo_v2/backend/core/generated/a95cd168-2a53-4300-a00d-4cdb58451ad7/README.md
+ D monorepo_v2/backend/core/generated/a95cd168-2a53-4300-a00d-4cdb58451ad7/__init__.py
+ D monorepo_v2/backend/core/generated/a95cd168-2a53-4300-a00d-4cdb58451ad7/plan.json
+ D monorepo_v2/backend/core/generated/aa0de138-a920-43aa-a764-6ffb38d84899/README.md
+ D monorepo_v2/backend/core/generated/aa0de138-a920-43aa-a764-6ffb38d84899/__init__.py
+ D monorepo_v2/backend/core/generated/aa0de138-a920-43aa-a764-6ffb38d84899/plan.json
+ D monorepo_v2/backend/core/generated/b432317c-ed39-467a-ac22-ca3adc54215a/README.md
+ D monorepo_v2/backend/core/generated/b432317c-ed39-467a-ac22-ca3adc54215a/__init__.py
+ D monorepo_v2/backend/core/generated/b432317c-ed39-467a-ac22-ca3adc54215a/plan.json
+ D monorepo_v2/backend/core/generated/ba454f1f-57bb-4971-937b-f3521e97b067/README.md
+ D monorepo_v2/backend/core/generated/ba454f1f-57bb-4971-937b-f3521e97b067/__init__.py
+ D monorepo_v2/backend/core/generated/ba454f1f-57bb-4971-937b-f3521e97b067/plan.json
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/README.md
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/__init__.py
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/Dockerfile
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/__init__.py
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/app.py
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/backend/requirements.txt
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/frontend/README.md
+ D monorepo_v2/backend/core/generated/d6132443-6d6d-4bee-bcaa-b18ee1708747/frontend/__init__.py
+ D monorepo_v2/backend/core/generated/e72acdbd-2039-4ab0-8bd8-ad39a694e6f9/README.md
+ D monorepo_v2/backend/core/generated/e72acdbd-2039-4ab0-8bd8-ad39a694e6f9/__init__.py
+ D monorepo_v2/backend/core/generated/e72acdbd-2039-4ab0-8bd8-ad39a694e6f9/plan.json
+ D monorepo_v2/backend/core/generated/eadb802b-c97a-47b5-9eb0-0e0a5ad182fb/README.md
+ D monorepo_v2/backend/core/generated/eadb802b-c97a-47b5-9eb0-0e0a5ad182fb/__init__.py
+ D monorepo_v2/backend/core/generated/eadb802b-c97a-47b5-9eb0-0e0a5ad182fb/plan.json
+ D monorepo_v2/backend/core/generated/f1f97504-b34b-4f9c-8fe6-9440891248ce/README.md
+ D monorepo_v2/backend/core/generated/f1f97504-b34b-4f9c-8fe6-9440891248ce/__init__.py
+ D monorepo_v2/backend/core/generated/f1f97504-b34b-4f9c-8fe6-9440891248ce/plan.json
+ D monorepo_v2/backend/core/generated/full-demo/API_DOCS.md
+ D monorepo_v2/backend/core/generated/full-demo/ARCHITECTURE.md
+ D monorepo_v2/backend/core/generated/full-demo/Dockerfile
+ D monorepo_v2/backend/core/generated/full-demo/README.md
+ D monorepo_v2/backend/core/generated/full-demo/__init__.py
+ D monorepo_v2/backend/core/generated/full-demo/dependencies.json
+ D monorepo_v2/backend/core/generated/full-demo/main.py
+ D monorepo_v2/backend/core/generated/full-demo/project.json
+ D monorepo_v2/backend/core/generated/full-demo/requirements.txt
+ D monorepo_v2/backend/core/generated/inventory_management_sis/__init__.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/__init__.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/models/__init__.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/models/location.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/models/product.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/routers/__init__.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/routers/location.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/services/__init__.py
+ D monorepo_v2/backend/core/generated/inventory_management_sis/app/services/product_service.py
+ D monorepo_v2/backend/core/generated/test-123/README.md
+ D monorepo_v2/backend/core/generated/test-123/SPECIFICATION.md
+ D monorepo_v2/backend/core/generated/test-123/__init__.py
+ D monorepo_v2/backend/core/generated/test-123/config.json
+ D monorepo_v2/backend/core/generated/test-123/database_schema.json
+ D monorepo_v2/backend/core/generated/test_project/README.md
+ D monorepo_v2/backend/core/generated/test_project/__init__.py
+ D monorepo_v2/backend/core/generated/test_project/config.json
+ D monorepo_v2/backend/core/generators/__init__.py
+ D monorepo_v2/backend/core/generators/ai/__init__.py
+ D monorepo_v2/backend/core/generators/backend/__init__.py
+ D monorepo_v2/backend/core/generators/blockchain/__init__.py
+ D monorepo_v2/backend/core/generators/code_validator.py
+ D monorepo_v2/backend/core/generators/database_generator.py
+ D monorepo_v2/backend/core/generators/desktop/__init__.py
+ D monorepo_v2/backend/core/generators/fastapi_generator.py
+ D monorepo_v2/backend/core/generators/frontend/__init__.py
+ D monorepo_v2/backend/core/generators/minimal_engine.py
+ D monorepo_v2/backend/core/generators/mobile/__init__.py
+ D monorepo_v2/backend/core/generators/project_factory.py
+ D monorepo_v2/backend/core/generators/react_generator.py
+ D monorepo_v2/backend/core/generators/react_generator_fixed.py
+ D monorepo_v2/backend/core/generators/simple_engine.py
+ D monorepo_v2/backend/core/generators/specialized/__init__.py
+ D monorepo_v2/backend/core/generators/specialized/ai_agent_generator.py
+ D monorepo_v2/backend/core/generators/specialized/chrome_extension_generator.py
+ D monorepo_v2/backend/core/generators/specialized/fastapi_generator.py
+ D monorepo_v2/backend/core/generators/specialized/nextjs_generator.py
+ D monorepo_v2/backend/core/generators/specialized/react_native_generator.py
+ D monorepo_v2/backend/core/generators/template_engine.py
+ D monorepo_v2/backend/core/integrations/__init__.py
+ D monorepo_v2/backend/core/integrations/auth_integrator.sh
+ D monorepo_v2/backend/core/migrations/README
+ D monorepo_v2/backend/core/migrations/__init__.py
+ D monorepo_v2/backend/core/migrations/versions/.731f548685d5_add_missing_project_columns.py.swp
+ D monorepo_v2/backend/core/migrations/versions/__init__.py
+ D monorepo_v2/backend/core/models/__init__.py
+ D monorepo_v2/backend/core/package-lock.json
+ D monorepo_v2/backend/core/payments/__init__.py
+ D monorepo_v2/backend/core/payments/stripe_manager.py
+ D monorepo_v2/backend/core/payments/subscription_middleware.py
+ D monorepo_v2/backend/core/payments/subscription_service.py
+ D monorepo_v2/backend/core/project_types/__init__.py
+ D monorepo_v2/backend/core/project_types/ai/__init__.py
+ D monorepo_v2/backend/core/project_types/ai_agent/__init__.py
+ D monorepo_v2/backend/core/project_types/api/__init__.py
+ D monorepo_v2/backend/core/project_types/api_service/__init__.py
+ D monorepo_v2/backend/core/project_types/blockchain_dapp/__init__.py
+ D monorepo_v2/backend/core/project_types/chrome_extension/__init__.py
+ D monorepo_v2/backend/core/project_types/desktop/__init__.py
+ D monorepo_v2/backend/core/project_types/desktop_app/__init__.py
+ D monorepo_v2/backend/core/project_types/extension/__init__.py
+ D monorepo_v2/backend/core/project_types/game/__init__.py
+ D monorepo_v2/backend/core/project_types/mobile/__init__.py
+ D monorepo_v2/backend/core/project_types/mobile_app/__init__.py
+ D monorepo_v2/backend/core/project_types/web/__init__.py
+ D monorepo_v2/backend/core/project_types/web_app/__init__.py
+ D monorepo_v2/backend/core/scripts/__init__.py
+ D monorepo_v2/backend/core/scripts/init_database.py
+ D monorepo_v2/backend/core/services/__init__.py
+ D monorepo_v2/backend/core/utils/__init__.py
+ D monorepo_v2/backend/debug_schema.py
+ D monorepo_v2/backend/dev.sqlite3
+ D monorepo_v2/backend/forge_dev.db
+ D monorepo_v2/backend/generated/__init__.py
+ D monorepo_v2/backend/init_db.py
+ D monorepo_v2/backend/migrations/__init__.py
+ D monorepo_v2/backend/migrations/env.py
+ D monorepo_v2/backend/migrations/env_core.py
+ D monorepo_v2/backend/migrations/script.py.mako
+ D monorepo_v2/backend/migrations/script_core.py.mako
+ D monorepo_v2/backend/migrations/versions/1bb4a971bc3c_init.py
+ D monorepo_v2/backend/migrations/versions/1f53bda92b4b_init.py
+ D monorepo_v2/backend/migrations/versions/20250928_0001_jobs_agent_runs_artifacts.py
+ D monorepo_v2/backend/migrations/versions/731f548685d5_add_missing_project_columns.py
+ D monorepo_v2/backend/migrations/versions/__init__.py
+ D monorepo_v2/backend/migrations/versions/a3683ddb987c_init.py
+ D monorepo_v2/backend/migrations/versions/a5d3661ccee5_add_size_and_sha256_columns_to_artifacts.py
+ D monorepo_v2/backend/migrations/versions/ba37eabeee95_fix_artifact_model.py
+ D monorepo_v2/backend/migrations/versions/bd142ee8c0ea_initial_migration.py
+ D monorepo_v2/backend/models/__init__.py
+ D monorepo_v2/backend/requirements.txt
+ D monorepo_v2/backend/schemas/__init__.py
+ D monorepo_v2/backend/services/__init__.py
+ D monorepo_v2/backend/services/shared/__init__.py
+ D monorepo_v2/backend/services/shared/auth/__init__.py
+ D monorepo_v2/backend/services/shared/database/__init__.py
+ D monorepo_v2/backend/services/shared/email/__init__.py
+ D monorepo_v2/backend/services/shared/payment/__init__.py
+ D monorepo_v2/backend/services/shared/storage/__init__.py
+ D monorepo_v2/backend/utils/__init__.py
+ D monorepo_v2/dev.sqlite3
+ D monorepo_v2/docker/Dockerfile.backend
+ D monorepo_v2/docker/Dockerfile.frontend
+ D monorepo_v2/docker/Dockerfile.streamlit
+ D monorepo_v2/docker/docker-compose-clean.yml
+ D monorepo_v2/docker/docker-compose.prod.yml
+ D monorepo_v2/docker/docker-compose.worker.yml
+ D monorepo_v2/docker/docker-compose.yml
+ D monorepo_v2/frontend/.dockerignore
+ D monorepo_v2/frontend/Dockerfile
+ D monorepo_v2/frontend/app/(app)/billing/page.tsx
+ D monorepo_v2/frontend/app/(app)/create/page.tsx
+ D monorepo_v2/frontend/app/(app)/layout.tsx
+ D monorepo_v2/frontend/app/(app)/project/[id]/page.tsx
+ D monorepo_v2/frontend/app/(auth)/login/page.tsx
+ D monorepo_v2/frontend/app/(auth)/signup/SignupForm.tsx
+ D monorepo_v2/frontend/app/(auth)/signup/page.tsx
+ D monorepo_v2/frontend/app/dashboard/page.tsx
+ D monorepo_v2/frontend/app/globals.css
+ D monorepo_v2/frontend/app/layout.tsx
+ D monorepo_v2/frontend/app/page.tsx
+ D monorepo_v2/frontend/components/Agent/PromptEditor.tsx
+ D monorepo_v2/frontend/components/Auth/AuthProvider.tsx
+ D monorepo_v2/frontend/components/Auth/SignupForm.tsx
+ D monorepo_v2/frontend/components/Layout/Navbar.tsx
+ D monorepo_v2/frontend/components/Project/CodeEditor.tsx
+ D monorepo_v2/frontend/components/Project/ProjectCreationForm.tsx
+ D monorepo_v2/frontend/components/Project/ProjectList.tsx
+ D monorepo_v2/frontend/components/UI/PremiumButton.tsx
+ D monorepo_v2/frontend/components/UI/PremiumCard.tsx
+ D monorepo_v2/frontend/index.html
+ D monorepo_v2/frontend/jsconfig.json
+ D monorepo_v2/frontend/lib/api/project.ts
+ D monorepo_v2/frontend/lib/config.ts
+ D monorepo_v2/frontend/lib/firebase.ts
+ D monorepo_v2/frontend/next-env.d.ts
+ D monorepo_v2/frontend/next.config.mjs
+ D monorepo_v2/frontend/package-lock.json
+ D monorepo_v2/frontend/package.json
+ D monorepo_v2/frontend/tsconfig.json
+ D monorepo_v2/frontend/vite.config.js
+ D monorepo_v2/notes/NEXT_STEPS.md
+ D repo_audit/deps.txt
+ D repo_audit/dirs_size.txt
+ D repo_audit/docker.txt
+ D repo_audit/endpoints.txt
+ D repo_audit/loc.txt
+ D repo_audit/migrations.txt
+ D repo_audit/report.md
+ D repo_audit/secrets.txt
+ D repo_audit/security_headers.txt
+ D repo_audit/stripe_webhooks.txt
+ D repo_audit/todos.txt
+ D repo_audit/tree.txt
+ D scans/scan-20251014-2247.md
+?? .venv/bin/fastapi
+?? .venv/bin/pyrsa-decrypt
+?? .venv/bin/pyrsa-encrypt
+?? .venv/bin/pyrsa-keygen
+?? .venv/bin/pyrsa-priv2pub
+?? .venv/bin/pyrsa-sign
+?? .venv/bin/pyrsa-verify
+?? .venv/lib/python3.12/site-packages/SQLAlchemy-2.0.32.dist-info/
+?? .venv/lib/python3.12/site-packages/__pycache__/
+?? .venv/lib/python3.12/site-packages/_cffi_backend.cpython-312-x86_64-linux-gnu.so
+?? .venv/lib/python3.12/site-packages/_pytest/__pycache__/
+?? .venv/lib/python3.12/site-packages/_pytest/_code/__pycache__/
+?? .venv/lib/python3.12/site-packages/_pytest/_io/__pycache__/
+?? .venv/lib/python3.12/site-packages/_pytest/_py/__pycache__/
+?? .venv/lib/python3.12/site-packages/_pytest/assertion/__pycache__/
+?? .venv/lib/python3.12/site-packages/_pytest/config/__pycache__/
+?? .venv/lib/python3.12/site-packages/_pytest/mark/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic-1.13.2.dist-info/
+?? .venv/lib/python3.12/site-packages/alembic/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/autogenerate/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/ddl/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/ddl/_autogen.py
+?? .venv/lib/python3.12/site-packages/alembic/operations/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/runtime/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/script/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/templates/async/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/templates/generic/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/templates/multidb/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/testing/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/testing/plugin/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/testing/suite/__pycache__/
+?? .venv/lib/python3.12/site-packages/alembic/util/__pycache__/
+?? .venv/lib/python3.12/site-packages/annotated_types/__pycache__/
+?? .venv/lib/python3.12/site-packages/anyio/__pycache__/
+?? .venv/lib/python3.12/site-packages/anyio/_backends/__pycache__/
+?? .venv/lib/python3.12/site-packages/anyio/_core/__pycache__/
+?? .venv/lib/python3.12/site-packages/anyio/abc/__pycache__/
+?? .venv/lib/python3.12/site-packages/anyio/streams/__pycache__/
+?? .venv/lib/python3.12/site-packages/bcrypt/__pycache__/
+?? .venv/lib/python3.12/site-packages/certifi/__pycache__/
+?? .venv/lib/python3.12/site-packages/cffi-2.0.0.dist-info/
+?? .venv/lib/python3.12/site-packages/cffi/
+?? .venv/lib/python3.12/site-packages/charset_normalizer/__pycache__/
+?? .venv/lib/python3.12/site-packages/click/__pycache__/
+?? .venv/lib/python3.12/site-packages/cryptography-46.0.4.dist-info/
+?? .venv/lib/python3.12/site-packages/cryptography/
+?? .venv/lib/python3.12/site-packages/dotenv/__pycache__/
+?? .venv/lib/python3.12/site-packages/ecdsa-0.19.1.dist-info/
+?? .venv/lib/python3.12/site-packages/ecdsa/
+?? .venv/lib/python3.12/site-packages/email_validator-2.2.0.dist-info/
+?? .venv/lib/python3.12/site-packages/email_validator/__pycache__/
+?? .venv/lib/python3.12/site-packages/email_validator/exceptions_types.py
+?? .venv/lib/python3.12/site-packages/fastapi-0.112.2.dist-info/
+?? .venv/lib/python3.12/site-packages/fastapi/__main__.py
+?? .venv/lib/python3.12/site-packages/fastapi/__pycache__/
+?? .venv/lib/python3.12/site-packages/fastapi/cli.py
+?? .venv/lib/python3.12/site-packages/fastapi/dependencies/__pycache__/
+?? .venv/lib/python3.12/site-packages/fastapi/middleware/__pycache__/
+?? .venv/lib/python3.12/site-packages/fastapi/openapi/__pycache__/
+?? .venv/lib/python3.12/site-packages/fastapi/security/__pycache__/
+?? .venv/lib/python3.12/site-packages/greenlet/__pycache__/
+?? .venv/lib/python3.12/site-packages/httptools/__pycache__/
+?? .venv/lib/python3.12/site-packages/httptools/parser/__pycache__/
+?? .venv/lib/python3.12/site-packages/idna/__pycache__/
+?? .venv/lib/python3.12/site-packages/iniconfig/__pycache__/
+?? .venv/lib/python3.12/site-packages/jinja2/__pycache__/
+?? .venv/lib/python3.12/site-packages/jose/
+?? .venv/lib/python3.12/site-packages/mako/__pycache__/
+?? .venv/lib/python3.12/site-packages/mako/ext/__pycache__/
+?? .venv/lib/python3.12/site-packages/markupsafe/__pycache__/
+?? .venv/lib/python3.12/site-packages/multipart/__pycache__/
+?? .venv/lib/python3.12/site-packages/passlib/__pycache__/
+?? .venv/lib/python3.12/site-packages/passlib/crypto/__pycache__/
+?? .venv/lib/python3.12/site-packages/passlib/handlers/__pycache__/
+?? .venv/lib/python3.12/site-packages/passlib/utils/__pycache__/
+?? .venv/lib/python3.12/site-packages/passlib/utils/compat/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/cli/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/commands/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/distributions/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/index/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/locations/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/metadata/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/metadata/importlib/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/models/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/network/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/operations/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/operations/build/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/operations/install/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/req/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/resolution/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/resolution/resolvelib/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/utils/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_internal/vcs/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/cachecontrol/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/cachecontrol/caches/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/certifi/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/dependency_groups/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/distlib/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/distro/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/idna/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/msgpack/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/packaging/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/platformdirs/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/pygments/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/pygments/filters/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/pygments/lexers/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/pygments/styles/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/pyproject_hooks/_in_process/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/requests/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/resolvelib/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/resolvelib/resolvers/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/rich/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/truststore/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/urllib3/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/urllib3/contrib/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/urllib3/packages/__pycache__/
+?? .venv/lib/python3.12/site-packages/pip/_vendor/urllib3/util/__pycache__/
+?? .venv/lib/python3.12/site-packages/pluggy/__pycache__/
+?? .venv/lib/python3.12/site-packages/pyasn1-0.6.2.dist-info/
+?? .venv/lib/python3.12/site-packages/pyasn1/
+?? .venv/lib/python3.12/site-packages/pycparser-3.0.dist-info/
+?? .venv/lib/python3.12/site-packages/pycparser/
+?? .venv/lib/python3.12/site-packages/pydantic/__pycache__/
+?? .venv/lib/python3.12/site-packages/pydantic/_internal/__pycache__/
+?? .venv/lib/python3.12/site-packages/pydantic/plugin/__pycache__/
+?? .venv/lib/python3.12/site-packages/pydantic_core/__pycache__/
+?? .venv/lib/python3.12/site-packages/pytest/__pycache__/
+?? .venv/lib/python3.12/site-packages/python_dotenv-1.0.1.dist-info/
+?? .venv/lib/python3.12/site-packages/python_jose-3.3.0.dist-info/
+?? .venv/lib/python3.12/site-packages/requests-2.32.3.dist-info/
+?? .venv/lib/python3.12/site-packages/requests/__pycache__/
+?? .venv/lib/python3.12/site-packages/rsa-4.9.1.dist-info/
+?? .venv/lib/python3.12/site-packages/rsa/
+?? .venv/lib/python3.12/site-packages/six-1.17.0.dist-info/
+?? .venv/lib/python3.12/site-packages/six.py
+?? .venv/lib/python3.12/site-packages/sniffio/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/connectors/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/cyextension/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/dialects/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mssql/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/dialects/mysql/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/dialects/oracle/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/dialects/sqlite/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/engine/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/event/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/ext/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/ext/asyncio/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/ext/declarative/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/ext/mypy/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/future/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/orm/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/pool/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/sql/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/testing/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/testing/fixtures/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/testing/plugin/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/testing/suite/__pycache__/
+?? .venv/lib/python3.12/site-packages/sqlalchemy/util/__pycache__/
+?? .venv/lib/python3.12/site-packages/starlette-0.38.6.dist-info/
+?? .venv/lib/python3.12/site-packages/starlette/__pycache__/
+?? .venv/lib/python3.12/site-packages/starlette/_exception_handler.py
+?? .venv/lib/python3.12/site-packages/starlette/middleware/__pycache__/
+?? .venv/lib/python3.12/site-packages/tenacity-9.1.2.dist-info/
+?? .venv/lib/python3.12/site-packages/tenacity/
+?? .venv/lib/python3.12/site-packages/urllib3/__pycache__/
+?? .venv/lib/python3.12/site-packages/urllib3/contrib/__pycache__/
+?? .venv/lib/python3.12/site-packages/urllib3/http2/__pycache__/
+?? .venv/lib/python3.12/site-packages/urllib3/util/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn-0.30.6.dist-info/
+?? .venv/lib/python3.12/site-packages/uvicorn/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn/lifespan/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn/loops/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn/middleware/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn/protocols/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn/protocols/http/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn/protocols/websockets/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvicorn/supervisors/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvloop/__pycache__/
+?? .venv/lib/python3.12/site-packages/uvloop/includes/__pycache__/
+?? .venv/lib/python3.12/site-packages/watchfiles/__pycache__/
+?? .venv/lib/python3.12/site-packages/websockets/__pycache__/
+?? .venv/lib/python3.12/site-packages/websockets/extensions/__pycache__/
+?? .venv/lib/python3.12/site-packages/websockets/legacy/__pycache__/
+?? .vscode/
+?? FO/
+?? backend
+?? backend_consolidate_20251015-1755/
+?? blog-ai/
+?? cd.sh
+?? diag_supervisor_conflict.sh
+?? diet_ai/
+?? diet_ai_production_backup.zip
+?? diet_ai_production_code_only.zip
+?? forge_fix_consolidate.sh
+?? forge_fix_consolidate_v2.sh
+?? forge_meta_prompt.json
+?? forge_repair_compose.sh
+?? forge_saas.db
+?? main_unified_clean.py
+?? reorg_plan_20251015-0021/
+?? reorg_stage_20251015-0036/
+?? stripe.tar.gz
+
+Backup/suspect files:
+/workspaces/Scouta/blog-ai/blog-saas/api/app/services/action_spawner.py.bak_20260205_105715
+/workspaces/Scouta/blog-ai/blog-saas/api/app/core/security.py.bak.2026-02-05_185000
+
+====================
+[2026-02-05T19:22:39Z] 3) Python/uvicorn env
+====================
+which python: /workspaces/Scouta/blog-ai/blog-saas/api/.venv/bin/python
+python version: Python 3.12.1
+API python: Python 3.12.1
+pip freeze (api venv head):
+alembic==1.13.2
+annotated-types==0.7.0
+anyio==4.12.1
+bcrypt==3.2.2
+certifi==2026.1.4
+cffi==2.0.0
+charset-normalizer==3.4.4
+click==8.3.1
+cryptography==46.0.4
+dnspython==2.8.0
+ecdsa==0.19.1
+email_validator==2.2.0
+fastapi==0.112.2
+greenlet==3.3.1
+h11==0.16.0
+httptools==0.7.1
+idna==3.11
+Jinja2==3.1.6
+Mako==1.3.10
+MarkupSafe==3.0.3
+passlib==1.7.4
+psycopg==3.2.1
+psycopg-binary==3.2.1
+pyasn1==0.6.2
+pycparser==3.0
+pydantic==2.12.5
+pydantic_core==2.41.5
+python-dotenv==1.0.1
+python-jose==3.5.0
+python-multipart==0.0.22
+PyYAML==6.0.3
+requests==2.32.5
+rsa==4.9.1
+six==1.17.0
+SQLAlchemy==2.0.32
+starlette==0.38.6
+typing-inspection==0.4.2
+typing_extensions==4.15.0
+urllib3==2.6.3
+uvicorn==0.30.6
+
+====================
+[2026-02-05T19:22:39Z] 4) Dependency smoke (import checks)
+====================
+OK import fastapi
+OK import starlette
+OK import jinja2
+OK import requests
+OK import passlib
+OK import bcrypt
+OK import jose
+
+====================
+[2026-02-05T19:22:40Z] 5) Syntax check (only API app/)
+====================
+
+====================
+[2026-02-05T19:22:40Z] 6) Alembic status (if present)
+====================
+d9fbf3ad2165
+d9e2dd518d28 (head)
+
+====================
+[2026-02-05T19:22:41Z] 7) DB tables + columns (SQLite)
+====================
+tables_count: 13
+
+== agent_actions
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- agent_id INTEGER notnull=True pk=False default=None
+- target_type VARCHAR(20) notnull=True pk=False default=None
+- target_id INTEGER notnull=True pk=False default=None
+- action_type VARCHAR(30) notnull=True pk=False default=None
+- status VARCHAR(20) notnull=True pk=False default=None
+- content TEXT notnull=True pk=False default=None
+- policy_score INTEGER notnull=True pk=False default=None
+- policy_reason VARCHAR(500) notnull=True pk=False default=None
+- llm_provider VARCHAR(50) notnull=True pk=False default=None
+- llm_model VARCHAR(80) notnull=True pk=False default=None
+- prompt_hash VARCHAR(80) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- published_at DATETIME notnull=False pk=False default=None
+
+== agent_policies
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- allow_replies BOOLEAN notnull=True pk=False default=None
+- allow_reactions BOOLEAN notnull=True pk=False default=None
+- allow_critique BOOLEAN notnull=True pk=False default=None
+- max_risk_score INTEGER notnull=True pk=False default=None
+- require_human_review BOOLEAN notnull=True pk=False default=None
+- banned_topics VARCHAR(500) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- updated_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- auto_approve_threshold INTEGER notnull=True pk=False default=20
+- auto_reject_threshold INTEGER notnull=True pk=False default=80
+- enable_llm_moderation BOOLEAN notnull=True pk=False default=1
+
+== agent_profiles
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- display_name VARCHAR(120) notnull=True pk=False default=None
+- handle VARCHAR(60) notnull=True pk=False default=None
+- avatar_url VARCHAR(500) notnull=True pk=False default=None
+- persona_seed TEXT notnull=True pk=False default=None
+- topics VARCHAR(500) notnull=True pk=False default=None
+- style VARCHAR(200) notnull=True pk=False default=None
+- risk_level INTEGER notnull=True pk=False default=None
+- is_enabled BOOLEAN notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- updated_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- is_shadow_banned BOOLEAN notnull=True pk=False default=0
+
+== alembic_version
+- version_num VARCHAR(32) notnull=True pk=True default=None
+
+== comments
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- post_id INTEGER notnull=True pk=False default=None
+- parent_comment_id INTEGER notnull=False pk=False default=None
+- author_type VARCHAR(10) notnull=True pk=False default=None
+- author_user_id INTEGER notnull=False pk=False default=None
+- author_agent_id INTEGER notnull=False pk=False default=None
+- body TEXT notnull=True pk=False default=None
+- status VARCHAR(20) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== org_members
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- user_id INTEGER notnull=True pk=False default=None
+- role VARCHAR(20) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== org_settings
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- agents_enabled BOOLEAN notnull=True pk=False default=None
+- auto_publish BOOLEAN notnull=True pk=False default=None
+- max_agents_per_post INTEGER notnull=True pk=False default=None
+- max_actions_per_day INTEGER notnull=True pk=False default=None
+- spawn_probability_base FLOAT notnull=True pk=False default=None
+- locale VARCHAR(10) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- updated_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== org_usage_daily
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- day_utc DATE notnull=True pk=False default=None
+- actions_spawned INTEGER notnull=True pk=False default=None
+- actions_published INTEGER notnull=True pk=False default=None
+
+== orgs
+- id INTEGER notnull=True pk=True default=None
+- name VARCHAR(200) notnull=True pk=False default=None
+- slug VARCHAR(80) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== post_tags
+- id INTEGER notnull=True pk=True default=None
+- post_id INTEGER notnull=True pk=False default=None
+- tag_id INTEGER notnull=True pk=False default=None
+
+== posts
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- author_user_id INTEGER notnull=False pk=False default=None
+- title VARCHAR(200) notnull=True pk=False default=None
+- slug VARCHAR(120) notnull=True pk=False default=None
+- body_md TEXT notnull=True pk=False default=None
+- status VARCHAR(20) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- published_at DATETIME notnull=False pk=False default=None
+
+== tags
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- name VARCHAR(60) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== users
+- id INTEGER notnull=True pk=True default=None
+- email VARCHAR(255) notnull=True pk=False default=None
+- password_hash VARCHAR(255) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+====================
+[2026-02-05T19:22:41Z] 8) HTTP smoke (server must be running on :8000)
+====================
+openapi_head:
+{"openapi":"3.1.0","info":{"title":"Blog SaaS API","version":"0.1.0"},"paths":{"/health":{"get":{"summary":"Health","operationId":"health_health_get","responses":{"200":{"description":"Successful Resp
+login_status:
+200
+login_body_head:
+{"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzcwMzIyOTYxfQ.5gb5HNl6dARqK0WUGWswmJZOQZNjmIFzC6sJmuhgzrs","token_type":"bearer"}
+parsed_access_token_prefix:
+eyJhbGciOiJIUzI1NiIs
+
+====================
+[2026-02-05T19:22:41Z] DONE
+====================

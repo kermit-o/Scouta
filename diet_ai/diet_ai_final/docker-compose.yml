@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: dietai
+      POSTGRES_USER: dietai_user
+      POSTGRES_PASSWORD: dietai_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # Usar puerto diferente para evitar conflictos
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dietai_user -d dietai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    ports:
+      - "8001:8000"  # Puerto diferente
+    environment:
+      DATABASE_URL: postgresql://dietai_user:dietai_pass@postgres:5432/dietai
+      SECRET_KEY: dietai-secret-key-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./app:/app/app
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:

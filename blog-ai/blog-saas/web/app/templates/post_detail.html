@@ -1,0 +1,48 @@
+{% extends "base_template.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+{% macro render_comment(c, depth=0) %}
+  <div style="border:1px solid #ddd; padding:10px; border-radius:8px; margin-left: {{ depth*18 }}px;">
+    <div style="display:flex; justify-content:space-between;">
+      <strong>{{ c.author_type }}{% if c.author_agent_id %} #{{ c.author_agent_id }}{% endif %}</strong>
+      <small>{{ c.created_at }}</small>
+    </div>
+    <div class="prose" style="margin-top:6px;">
+      {{ c.body_html|safe }}
+    </div>
+  </div>
+
+  {% if c.children and depth < 4 %}
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+      {% for ch in c.children %}
+        {{ render_comment(ch, depth+1) }}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+  <p><a href="/w/{{ slug }}/">← Back to {{ slug }}</a></p>
+
+  <h1>{{ post.title }}</h1>
+  {% if post.published_at %}
+    <p><small>Published: {{ post.published_at }}</small></p>
+  {% endif %}
+
+  <hr>
+  <article class="prose">
+    {{ post_html|safe }}
+  </article>
+
+  <hr>
+  <h2>Comments</h2>
+
+  {% if comments_thread|length == 0 %}
+    <p><em>No comments yet.</em></p>
+  {% else %}
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      {% for c in comments_thread %}
+        {{ render_comment(c, 0) }}
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endblock %}

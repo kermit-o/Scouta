@@ -1,0 +1,328 @@
+"""
+Dual Pipeline Supervisor - Compatible with existing system
+Integrates with existing UX pause and correction cycles
+"""
+import logging
+import uuid
+from datetime import datetime
+from typing import Dict, Any, Optional, List, Tuple
+import json
+
+from sqlalchemy.orm import Session
+
+from core.database.models import Project, Job, AgentRun
+from core.database.database import SessionLocal
+
+# Import agents
+from core.agents.intake_agent import IntakeAgent
+from core.agents.enhanced_intake_agent import EnhancedIntakeAgent
+from core.agents.specification_agent import SpecificationAgent
+from core.agents.data_design_agent import DataDesignAgent
+from core.agents.planning_agent import PlanningAgent
+from core.agents.builder_agent import BuilderAgent
+from core.agents.documenter_agent import DocumenterAgent
+from core.agents.tester_agent import TesterAgent
+from core.agents.mockup_agent import MockupAgent
+from core.agents.security_agent import SecurityAgent
+from core.agents.scaffolder_agent import ScaffolderAgent
+from core.agents.validation_agent import ValidationAgent
+
+logger = logging.getLogger(__name__)
+
+class DualPipelineSupervisor:
+    """
+    Dual Pipeline System that works with existing UX pause and correction cycles
+    - Maintains all existing functionality
+    - Adds intelligent pipeline routing
+    - Enhanced analysis for complex projects
+    """
+    
+    def __init__(self, db: Optional[Session] = None):
+        self.name = "Dual Pipeline Supervisor"  # Agregar atributo name
+        self.db = db if db else SessionLocal()
+        self.MAX_CORRECTION_CYCLES = 3
+        
+        # Define pipeline sequences (compatible with existing system)
+        self.simple_sequence = [
+            ("intake", "Requirements Analysis", IntakeAgent()),
+            ("spec", "Specification Drafting", SpecificationAgent()),
+            ("data_design", "Database Design", DataDesignAgent()), 
+            ("planning", "Architecture Planning", PlanningAgent()),
+            ("mockup", "Frontend Mockup Generation (UX Review)", MockupAgent()),
+            ("builder", "Code Generation", BuilderAgent()),
+            ("tester", "Functional Testing", TesterAgent()), 
+            ("security", "Security Audit (SAST)", SecurityAgent()),
+            ("documenter", "Documentation", DocumenterAgent()),
+        ]
+        
+        self.enhanced_sequence = [
+            ("enhanced_intake", "Enhanced Requirements Analysis", EnhancedIntakeAgent()),
+            ("spec", "Detailed Specification", SpecificationAgent()),
+            ("data_design", "Advanced Database Design", DataDesignAgent()), 
+            ("planning", "Enterprise Architecture Planning", PlanningAgent()),
+            ("mockup", "UI/UX Mockup Generation (UX Review)", MockupAgent()),
+            ("builder", "Enterprise Code Generation", BuilderAgent()),
+            ("tester", "Comprehensive Testing", TesterAgent()), 
+            ("security", "Advanced Security Audit", SecurityAgent()),
+            ("validation", "Quality Validation", ValidationAgent()),
+            ("documenter", "Enterprise Documentation", DocumenterAgent()),
+        ]
+    
+    def run_dual_pipeline(self, project_id: uuid.UUID) -> dict:
+        """
+        Main entry point - replaces existing run_pipeline with dual system
+        Maintains compatibility with existing UX pause and correction cycles
+        """
+        logger.info(f"Starting dual pipeline for project {project_id}")
+        
+        # Get project
+        project = self.db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            logger.error(f"Project {project_id} not found")
+            return {"project_id": project_id, "pipeline_status": "failed"}
+        
+        # Step 1: Determine pipeline type
+        pipeline_type = self._determine_pipeline_type(project)
+        logger.info(f"Selected pipeline: {pipeline_type}")
+        
+        # Step 2: Run appropriate pipeline
+        if pipeline_type == "enhanced":
+            return self._run_enhanced_pipeline_with_correction(project_id)
+        else:
+            return self._run_simple_pipeline_with_correction(project_id)
+    
+    def _determine_pipeline_type(self, project: Project) -> str:
+        """Determine which pipeline to use based on project analysis"""
+        
+        # If project already has enhanced analysis, use that
+        if project.specification and project.specification.get("enhanced_analysis"):
+            complexity = project.specification.get("complexity_score", 5)
+            return "enhanced" if complexity > 5 else "simple"
+        
+        # Otherwise, run quick enhanced intake analysis
+        try:
+            enhanced_agent = EnhancedIntakeAgent()
+            current_requirements = {
+                "raw_requirements": project.requirements,
+                "project_id": str(project.id)
+            }
+            
+            result = enhanced_agent.run(str(project.id), current_requirements)
+            
+            if result['status'] == 'completed':
+                complexity = result.get('complexity_score', 5)
+                
+                # Store analysis for future use
+                if not project.specification:
+                    project.specification = {}
+                project.specification.update({
+                    "enhanced_analysis": result.get('enhanced_analysis', {}),
+                    "complexity_score": complexity
+                })
+                self.db.commit()
+                
+                return "enhanced" if complexity > 5 else "simple"
+            
+        except Exception as e:
+            logger.error(f"Enhanced intake failed: {e}")
+        
+        # Default to simple pipeline
+        return "simple"
+    
+    def _run_simple_pipeline_with_correction(self, project_id: uuid.UUID) -> dict:
+        """Run simple pipeline with correction cycles (compatible with existing system)"""
+        return self._run_pipeline_with_correction(project_id, self.simple_sequence, "simple")
+    
+    def _run_enhanced_pipeline_with_correction(self, project_id: uuid.UUID) -> dict:
+        """Run enhanced pipeline with correction cycles"""
+        return self._run_pipeline_with_correction(project_id, self.enhanced_sequence, "enhanced")
+    
+    def _run_pipeline_with_correction(self, project_id: uuid.UUID, 
+                                    agent_sequence: List[Tuple[str, str, Any]], 
+                                    pipeline_type: str) -> dict:
+        """
+        Generic pipeline runner with correction cycles
+        Maintains compatibility with existing UX pause system
+        """
+        logger.info(f"Running {pipeline_type} pipeline for project {project_id}")
+        
+        project = self.db.query(Project).filter(Project.id == project_id).first()
+        current_requirements = {
+            "raw_requirements": project.requirements,
+            "project_id": str(project_id),
+            "pipeline_type": pipeline_type
+        }
+        
+        pipeline_successful = True
+        needs_rebuild = False
+        correction_cycle = 0
+        
+        # Determine start index (for resumption/correction)
+        start_agent_index = 0
+        if project.status == "MOCKUP_APPROVED" or "CORRECTION" in project.status:
+            start_agent_index = next((i for i, (aid, *_) in enumerate(agent_sequence) if aid == "builder"), 0)
+        
+        # Correction cycle loop
+        while correction_cycle < self.MAX_CORRECTION_CYCLES:
+            if not pipeline_successful:
+                break
+            
+            needs_rebuild = False
+            
+            # Execute agent sequence
+            for i in range(start_agent_index, len(agent_sequence)):
+                agent_id, description, agent_instance = agent_sequence[i]
+                
+                try:
+                    # UX Pause logic (compatible with existing system)
+                    if project.status == "UX_REVIEW_PENDING" and agent_id != "mockup":
+                        logger.info("Pipeline paused for UX review. Skipping agent execution.")
+                        continue
+                    
+                    # Skip documenter during correction cycles
+                    if correction_cycle > 0 and agent_id == "documenter":
+                        logger.info("Skipping Documenter during correction cycle.")
+                        continue
+                    
+                    logger.info(f"Running {agent_id} agent ({pipeline_type} pipeline, Cycle {correction_cycle + 1}): {description}")
+                    
+                    # Create agent run record
+                    agent_run = AgentRun(
+                        job_id=project.job_id,
+                        agent_name=agent_id,
+                        status="running",
+                        started_at=datetime.utcnow(),
+                    )
+                    self.db.add(agent_run)
+                    self.db.commit()
+                    
+                    # Run agent
+                    start_time = datetime.utcnow()
+                    agent_result = agent_instance.run(str(project_id), current_requirements)
+                    end_time = datetime.utcnow()
+                    
+                    # Update agent run
+                    duration = (end_time - start_time).total_seconds()
+                    agent_run.status = agent_result.get("status", "completed")
+                    agent_run.completed_at = end_time
+                    agent_run.duration_seconds = duration
+                    agent_run.response_raw = json.dumps(agent_result)
+                    
+                    if agent_run.status == "failed":
+                        pipeline_successful = False
+                        break
+                    
+                    # Handle special cases (UX pause, correction triggers)
+                    if agent_id == "mockup" and agent_run.status == "mockup_generated":
+                        project.status = "UX_REVIEW_PENDING"
+                        pipeline_successful = True
+                        break
+                    
+                    elif agent_id == "tester":
+                        report = agent_result.get("validation_report", {})
+                        if report.get("critical_failures", 0) > 0:
+                            logger.warning("Tester found critical issues. Requiring code correction.")
+                            current_requirements["validation_report"] = report
+                            needs_rebuild = True
+                            break
+                    
+                    elif agent_id == "security":
+                        report = agent_result.get("security_report", {})
+                        if report.get("critical_vulnerabilities", 0) > 0:
+                            logger.warning("Security Agent found critical vulnerabilities. Requiring code correction.")
+                            current_requirements["security_report"] = report
+                            needs_rebuild = True
+                            break
+                    
+                    # Update requirements for next agent
+                    current_requirements.update(agent_result)
+                    self.db.commit()
+                    
+                except Exception as e:
+                    logger.error(f"Error in {agent_id} agent: {e}")
+                    pipeline_successful = False
+                    break
+            
+            # Correction cycle logic
+            if needs_rebuild and correction_cycle < self.MAX_CORRECTION_CYCLES:
+                correction_cycle += 1
+                start_agent_index = next((i for i, (aid, *_) in enumerate(agent_sequence) if aid == "builder"), 0)
+                project.status = f"CODE_CORRECTION_CYCLE_{correction_cycle}_IN_PROGRESS"
+                self.db.add(project)
+                self.db.commit()
+                logger.info(f"Starting correction cycle {correction_cycle}")
+            else:
+                break
+        
+        # Update final project status
+        if not needs_rebuild and project.status not in ["UX_REVIEW_PENDING"]:
+            final_status = "COMPLETED" if pipeline_successful and correction_cycle < self.MAX_CORRECTION_CYCLES else "FAILED"
+            project.status = final_status
+            if pipeline_successful:
+                project.completed_at = datetime.utcnow()
+            self.db.commit()
+        
+        return {
+            "project_id": project_id,
+            "pipeline_type": pipeline_type,
+            "pipeline_status": project.status,
+            "correction_cycles": correction_cycle,
+            "complexity_score": current_requirements.get('complexity_score', 5)
+        }
+    
+    def get_pipeline_analysis(self, requirements: str) -> Dict[str, Any]:
+        """Get pipeline analysis without creating project"""
+        try:
+            enhanced_agent = EnhancedIntakeAgent()
+            test_id = str(uuid.uuid4())
+            
+            result = enhanced_agent.run(test_id, {"raw_requirements": requirements})
+            
+            if result['status'] == 'completed':
+                complexity = result['complexity_score']
+                analysis = result['enhanced_analysis']
+                
+                return {
+                    "recommended_pipeline": "enhanced" if complexity > 5 else "simple",
+                    "complexity_score": complexity,
+                    "estimated_timeline": result['estimated_timeline'],
+                    "resource_recommendations": result['resource_recommendations'],
+                    "architecture_style": analysis.get('architecture_style', 'monolith'),
+                    "analysis_summary": analysis.get('project_summary', ''),
+                    "key_risks": analysis.get('technical_risks', [])[:3]  # Top 3 risks
+                }
+            
+        except Exception as e:
+            logger.error(f"Pipeline analysis failed: {e}")
+        
+        # Fallback
+        return {
+            "recommended_pipeline": "simple",
+            "complexity_score": 5,
+            "estimated_timeline": {"min": "1 month", "max": "3 months"},
+            "resource_recommendations": {"developers": 2, "devops": 1, "qa": 1},
+            "architecture_style": "monolith",
+            "analysis_summary": "Basic project analysis",
+            "key_risks": ["Standard development risks"]
+        }
+    
+    # Compatibility methods with existing system
+    def resume_after_ux_review(self, project_id: uuid.UUID) -> dict:
+        """Resume pipeline after UX review (compatible with existing system)"""
+        project = self.db.query(Project).filter(Project.id == project_id).first()
+        if not project:
+            return {"project_id": project_id, "status": "failed", "message": "Project not found"}
+        
+        if project.status == "UX_REVIEW_PENDING":
+            project.status = "MOCKUP_APPROVED"
+            self.db.commit()
+            logger.info(f"Project {project_id} UX review approved")
+            
+            # Continue with pipeline
+            return self.run_dual_pipeline(project_id)
+        else:
+            return {
+                "project_id": project_id,
+                "status": "no_change", 
+                "message": f"Project not in UX review. Current status: {project.status}"
+            }

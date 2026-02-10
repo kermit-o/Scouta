@@ -1,0 +1,13 @@
+FROM node:20-alpine
+WORKDIR /app
+
+# Solo copiamos los archivos si existen (usando la bandera --ignore)
+# Docker 24+ soporta patrones, así que simplemente omitimos los inexistentes
+COPY frontend/package.json /app/frontend/package.json
+
+RUN npm install --prefix /app/frontend
+
+COPY frontend /app/frontend
+WORKDIR /app/frontend
+EXPOSE 3000
+CMD ["npm", "run", "dev", "--", "-p", "3000", "-H", "0.0.0.0"]

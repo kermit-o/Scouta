@@ -1,0 +1,7 @@
+services:
+  app:
+    build: .
+    ports: ["8080:8080"]
+    volumes: ["./backend:/app/backend"]
+    environment:
+      - DATABASE_URL=sqlite:///./app.db

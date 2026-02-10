@@ -1,0 +1,1 @@
+# Archivo generado para api-ecommerce-real

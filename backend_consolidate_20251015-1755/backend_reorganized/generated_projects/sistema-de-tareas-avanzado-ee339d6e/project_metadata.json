@@ -1,0 +1,18 @@
+{
+  "project_id": "ee339d6e",
+  "name": "Sistema de Tareas Avanzado",
+  "description": "Una aplicación web completa para gestión de tareas con drag-and-drop, categorías y notificaciones",
+  "type": "web",
+  "pipeline_type": "simple",
+  "complexity_analysis": {},
+  "features": [
+    "interfaz drag-and-drop",
+    "categorías y etiquetas",
+    "notificaciones en tiempo real",
+    "base de datos",
+    "autenticación de usuarios"
+  ],
+  "generated_at": 1761061072.789543,
+  "file_count": 4,
+  "status": "completed"
+}

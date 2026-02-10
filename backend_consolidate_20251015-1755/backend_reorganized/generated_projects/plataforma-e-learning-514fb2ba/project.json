@@ -1,0 +1,21 @@
+{
+  "project_id": "plataforma-e-learning-514fb2ba",
+  "name": "Plataforma E-learning",
+  "description": "Sistema completo de cursos online con video y evaluaciones",
+  "type": "web_app",
+  "features": [
+    "video streaming",
+    "quizzes",
+    "user progress",
+    "payment integration",
+    "admin dashboard"
+  ],
+  "technologies": [
+    "react",
+    "nodejs",
+    "mongodb",
+    "stripe",
+    "aws"
+  ],
+  "created_at": "2025-10-18T23:56:23.092074"
+}

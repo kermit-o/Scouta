@@ -1,0 +1,19 @@
+{
+  "project_id": "api-de-an\u00e1lisis-de-datos-58fa7e1b",
+  "name": "API de An\u00e1lisis de Datos",
+  "description": "API REST para an\u00e1lisis de datos con machine learning",
+  "type": "api_service",
+  "features": [
+    "ML models",
+    "data processing",
+    "REST API",
+    "authentication"
+  ],
+  "technologies": [
+    "fastapi",
+    "scikit-learn",
+    "pandas",
+    "jwt"
+  ],
+  "created_at": "2025-10-19T00:58:53.109834"
+}

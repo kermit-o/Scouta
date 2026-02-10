@@ -1,0 +1,33 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: dietai
+      POSTGRES_USER: dietai_user
+      POSTGRES_PASSWORD: dietai_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dietai_user -d dietai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://dietai_user:dietai_pass@postgres/dietai
+      SECRET_KEY: development-secret-key-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app/backend
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:

@@ -1,0 +1,64 @@
+"""
+Auto-generated CRUD service for {{ model_class_name }}.
+
+Generated from lego_backend/service_crud.py.j2.
+"""
+
+from typing import List, Optional
+from sqlalchemy.orm import Session
+
+from {{ model_module }} import {{ model_class_name }}
+from {{ schemas_module }} import (
+    {{ schema_create_name }},
+    {{ schema_update_name }},
+    {{ schema_read_name }},
+)
+
+
+def get_{{ resource_name }}(db: Session, {{ pk_name }}: int) -> Optional[{{ model_class_name }}]:
+    return (
+        db.query({{ model_class_name }})
+        .filter({{ model_class_name }}.{{ pk_name }} == {{ pk_name }})
+        .first()
+    )
+
+
+def list_{{ resource_name_plural }}(db: Session, skip: int = 0, limit: int = 100) -> List[{{ model_class_name }}]:
+    return db.query({{ model_class_name }}).offset(skip).limit(limit).all()
+
+
+def create_{{ resource_name }}(db: Session, data: {{ schema_create_name }}) -> {{ model_class_name }}:
+    obj = {{ model_class_name }}(**data.model_dump())
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+def update_{{ resource_name }}(
+    db: Session,
+    {{ pk_name }}: int,
+    data: {{ schema_update_name }},
+) -> Optional[{{ model_class_name }}]:
+    obj = get_{{ resource_name }}(db, {{ pk_name }})
+    if not obj:
+        return None
+
+    update_data = data.model_dump(exclude_unset=True)
+    for key, value in update_data.items():
+        setattr(obj, key, value)
+
+    db.add(obj)
+    db.commit()
+    db.refresh(obj)
+    return obj
+
+
+def delete_{{ resource_name }}(db: Session, {{ pk_name }}: int) -> bool:
+    obj = get_{{ resource_name }}(db, {{ pk_name }})
+    if not obj:
+        return False
+
+    db.delete(obj)
+    db.commit()
+    return True

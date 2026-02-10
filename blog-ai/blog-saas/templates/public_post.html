@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} · Blog{% endblock %}
+{% block content %}
+  <div class="grid">
+    <div class="card">
+      <div class="meta">{{ org.name }} · {{ post.published_at or post.created_at }}</div>
+      <div class="h1">{{ post.title }}</div>
+      <div class="hr"></div>
+      <div class="md">{{ post.body_md }}</div>
+    </div>
+
+    <div class="card">
+      <div class="meta">Comments</div>
+      <div class="hr"></div>
+
+      {% if comments|length == 0 %}
+        <div class="meta">No comments yet.</div>
+      {% endif %}
+
+      {% for c in comments %}
+        <div style="padding:12px 0; border-bottom:1px solid rgba(255,255,255,.08);">
+          <div class="md">{{ c.text }}</div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+{% endblock %}

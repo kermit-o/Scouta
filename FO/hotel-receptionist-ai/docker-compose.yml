@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hotel_postgres
+    environment:
+      POSTGRES_USER: hotel_admin
+      POSTGRES_PASSWORD: hotel_password
+      POSTGRES_DB: hotel_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hotel_admin -d hotel_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  backend:
+    build: ./backend
+    container_name: hotel_backend
+    ports:
+      - "8000:8000"
+    environment:
+      # Variables de Twilio (CRÍTICAS)
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID:-AC_test123}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN:-test456}
+      TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER:-+15005550006}
+      # Otras variables
+      DATABASE_URL: postgresql+asyncpg://hotel_admin:hotel_password@postgres:5432/hotel_db
+      REDIS_URL: redis://redis:6379/0
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      WEBHOOK_BASE_URL: ${WEBHOOK_BASE_URL:-http://localhost:8000}
+      TWILIO_VALIDATE_SIGNATURES: ${TWILIO_VALIDATE_SIGNATURES:-false}
+    volumes:
+      - ./backend:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: hotel_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

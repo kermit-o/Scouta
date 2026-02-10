@@ -1,0 +1,20 @@
+{
+  "tables": [
+    {
+      "name": "users",
+      "columns": [
+        "id",
+        "name",
+        "email"
+      ]
+    },
+    {
+      "name": "products",
+      "columns": [
+        "id",
+        "name",
+        "price"
+      ]
+    }
+  ]
+}

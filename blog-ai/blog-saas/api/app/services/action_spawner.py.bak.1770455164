@@ -1,0 +1,242 @@
+import hashlib
+import os
+import random
+from datetime import datetime, timezone, date, timedelta
+
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+
+from app.models.agent_profile import AgentProfile
+from app.models.agent_action import AgentAction
+from app.models.org_settings import OrgSettings
+from app.models.agent_policy import AgentPolicy
+from app.models.post import Post
+from app.models.comment import Comment
+from app.models.org_usage_daily import OrgUsageDaily
+from app.services.persona_writer import Persona, write_comment
+from app.services.moderation_scorer import score_text_with_deepseek
+
+
+def _h(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+
+
+def _today_utc() -> date:
+    return datetime.now(timezone.utc).date()
+
+
+def _get_or_create_usage(db: Session, org_id: int) -> OrgUsageDaily:
+    d = _today_utc()
+    row = (
+        db.query(OrgUsageDaily)
+        .filter(OrgUsageDaily.org_id == org_id, OrgUsageDaily.day_utc == d)
+        .one_or_none()
+    )
+    if row:
+        return row
+    row = OrgUsageDaily(org_id=org_id, day_utc=d, actions_spawned=0, actions_published=0)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+
+def _enforce_org_quotas(db, org_settings, org_id: int) -> None:
+    # agents_enabled
+    if hasattr(org_settings, "agents_enabled") and (not org_settings.agents_enabled):
+        raise ValueError("Agents disabled")
+
+    # max_actions_per_day
+    max_per_day = getattr(org_settings, "max_actions_per_day", None)
+    if max_per_day:
+        from app.models.agent_action import AgentAction  # local import to avoid cycles
+        # count actions in last 24h
+        since = datetime.utcnow() - timedelta(days=1)
+        cnt = (
+            db.query(AgentAction)
+            .filter(AgentAction.org_id == org_id)
+            .filter(AgentAction.created_at >= since)
+            .count()
+        )
+        if cnt >= int(max_per_day):
+            raise ValueError(f"Daily actions quota reached ({cnt}/{max_per_day})")
+
+def _enforce_post_agent_cap(db, org_settings, org_id: int, post_id: int) -> None:
+    cap = getattr(org_settings, "max_agents_per_post", None)
+    if not cap:
+        return
+    from app.models.agent_action import AgentAction
+    # count distinct agents that already produced actions for this post
+    rows = (
+        db.query(AgentAction.agent_id)
+        .filter(AgentAction.org_id == org_id)
+        .filter(AgentAction.target_type == "post")
+        .filter(AgentAction.target_id == post_id)
+        .distinct()
+        .all()
+    )
+    if len(rows) >= int(cap):
+        raise ValueError(f"max_agents_per_post reached ({len(rows)}/{cap})")
+
+
+def spawn_actions_for_post(
+    db: Session,
+    org_id: int,
+    post_id: int,
+    max_n: int,
+    force: bool = False,
+) -> list[AgentAction]:
+    settings = db.query(OrgSettings).filter(OrgSettings.org_id == org_id).one_or_none()
+    if not settings:
+        settings = OrgSettings(org_id=org_id)
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
+
+    policy = db.query(AgentPolicy).filter(AgentPolicy.org_id == org_id).one_or_none()
+    if not policy:
+        policy = AgentPolicy(org_id=org_id)
+        db.add(policy)
+        db.commit()
+        db.refresh(policy)
+
+    post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).one_or_none()
+    if not post or post.status != "published":
+        raise ValueError("Target post not found or not published")
+
+    if not settings.agents_enabled:
+        return []
+
+    if not force and random.random() > float(settings.spawn_probability_base):
+        return []
+
+    usage = _get_or_create_usage(db, org_id)
+    if usage.actions_spawned >= int(settings.max_actions_per_day):
+        return []
+
+    # agents (filter shadow-banned if column exists in model)
+    q = (
+        db.query(AgentProfile)
+        .filter(AgentProfile.org_id == org_id, AgentProfile.is_enabled == True)  # noqa: E712
+        .order_by(AgentProfile.id.asc())
+    )
+    if hasattr(AgentProfile, "is_shadow_banned"):
+        q = q.filter(AgentProfile.is_shadow_banned == False)  # noqa: E712
+    agents = q.all()
+
+    if not agents:
+        return []
+
+    # cooldown: agent can't spawn again on same post within last 10 minutes
+    cooldown_since = datetime.now(timezone.utc) - timedelta(minutes=10)
+    recent_agent_ids = {
+        r[0]
+        for r in db.query(AgentAction.agent_id)
+        .filter(
+            AgentAction.org_id == org_id,
+            AgentAction.target_type == "post",
+            AgentAction.target_id == post.id,
+            AgentAction.created_at >= cooldown_since,
+        )
+        .all()
+    }
+    available = [a for a in agents if a.id not in recent_agent_ids]
+    if not available:
+        available = agents[:]
+
+    n = min(int(max_n), int(settings.max_agents_per_post), len(available))
+    if n <= 0:
+        return []
+
+    chosen = random.sample(available, k=n)
+
+    # replies: 30% chance if there are existing published comments
+    published_comments = (
+        db.query(Comment)
+        .filter(Comment.org_id == org_id, Comment.post_id == post.id, Comment.status == "published")
+        .order_by(desc(Comment.created_at))
+        .limit(50)
+        .all()
+    )
+    do_replies = bool(published_comments) and (random.random() < 0.30)
+
+    # dedupe by prompt_hash (org-wide for post/comment targets)
+    existing_hashes = {
+        r[0]
+        for r in db.query(AgentAction.prompt_hash)
+        .filter(AgentAction.org_id == org_id, AgentAction.target_type.in_(["post", "comment"]))
+        .all()
+        if r[0]
+    }
+
+    created: list[AgentAction] = []
+
+    for a in chosen:
+        persona = Persona(
+            display_name=a.display_name,
+            style=a.style or "concise",
+            topics=a.topics or "",
+            persona_seed=a.persona_seed or "",
+        )
+
+        content = write_comment(persona, post_title=post.title, post_body=post.body_md)
+
+        # Moderation scoring
+        mod = score_text_with_deepseek(content)
+        policy_score = int(mod.score)
+        policy_reason = str(mod.reason)
+
+        # AUTO moderation -> status
+        if policy_score <= 20:
+            status = "published"
+        elif policy_score >= 80:
+            status = "rejected"
+        else:
+            status = "needs_review" if policy.require_human_review else "published"
+
+        # target selection
+        target_type = "post"
+        target_id = post.id
+        action_type = "comment"
+        if do_replies:
+            parent = random.choice(published_comments)
+            target_type = "comment"
+            target_id = parent.id
+            action_type = "reply"
+
+        # dedupe prompt hash
+        ph = _h(f"{org_id}:{target_type}:{target_id}:{a.id}:{content}")
+        if ph in existing_hashes:
+            content = content + "\n\n(variant)"
+            ph = _h(f"{org_id}:{target_type}:{target_id}:{a.id}:{content}")
+
+        aa = AgentAction(
+            org_id=org_id,
+            agent_id=a.id,
+            target_type=target_type,
+            target_id=target_id,
+            action_type=action_type,
+            status=status,
+            content=content,
+            policy_score=policy_score,
+            policy_reason=policy_reason,
+            llm_provider="deepseek" if os.getenv("DEEPSEEK_API_KEY") else "",
+            llm_model=os.getenv("DEEPSEEK_MODEL", "") if os.getenv("DEEPSEEK_API_KEY") else "",
+            prompt_hash=ph,
+            published_at = datetime.utcnow()
+        )
+        db.add(aa)
+        created.append(aa)
+        existing_hashes.add(ph)
+
+    db.commit()
+    for x in created:
+        db.refresh(x)
+
+    usage.actions_spawned += len(created)
+    usage.actions_published += sum(1 for x in created if x.status == "published")
+    db.add(usage)
+    db.commit()
+
+    return created

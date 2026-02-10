@@ -1,0 +1,10 @@
+{
+  "project_name": "API de Gesti\u00f3n de Usuarios",
+  "version": "1.0.0",
+  "pipeline": "enhanced",
+  "tech_stack": [
+    "html",
+    "css",
+    "javascript"
+  ]
+}

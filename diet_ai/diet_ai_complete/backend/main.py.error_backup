@@ -1,0 +1,416 @@
+"""
+DietAI API v2.3 - Corregida para errores de dependencias
+"""
+import logging
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+from datetime import datetime
+import uvicorn
+from typing import Optional
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Importar configuración de base de datos
+try:
+    from database import get_db, test_connection, init_db
+    from models import Base
+    HAS_DATABASE = True
+    logger.info("✅ Módulo de base de datos cargado")
+except ImportError as e:
+    logger.warning(f"❌ No se pudo cargar módulo de base de datos: {e}")
+    HAS_DATABASE = False
+
+# Crear aplicación
+app = FastAPI(
+    title="DietAI API v2.3",
+    version="2.3.0",
+    description="API inteligente para gestión de dietas con PostgreSQL integrada",
+    docs_url="/docs",
+    redoc_url="/redoc"
+)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ================= FUNCIONES AUXILIARES =================
+
+def get_database():
+    """Obtener sesión de base de datos de manera segura"""
+    if not HAS_DATABASE:
+        return None
+    
+    try:
+        from database import get_db
+        db_gen = get_db()
+        return next(db_gen)
+    except Exception as e:
+        logger.error(f"Error obteniendo sesión de BD: {e}")
+        return None
+
+# ================= ENDPOINTS =================
+
+@app.get("/")
+async def root():
+    """Endpoint raíz"""
+    logger.info("Acceso a endpoint raíz")
+    
+    db_status = "checking..."
+    if HAS_DATABASE:
+        success, message = test_connection()
+        db_status = f"✅ {message}" if success else f"❌ {message}"
+    
+    return {
+        "message": "DietAI API v2.3",
+        "timestamp": datetime.utcnow().isoformat(),
+        "status": "online",
+        "version": "2.3.0",
+        "database": db_status,
+        "endpoints": {
+            "docs": "/docs",
+            "health": "/health",
+            "database": "/db/status",
+            "users": "/db/users",
+            "foods": "/db/foods",
+            "diets": "/diets/generate"
+        }
+    }
+
+@app.get("/health")
+async def health():
+    """Health check"""
+    return {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "dietai-api",
+        "version": "2.3.0"
+    }
+
+@app.get("/db/status")
+async def db_status():
+    """Estado de la base de datos"""
+    db = get_database()
+    
+    if not HAS_DATABASE or db is None:
+        return {
+            "database": "not_available",
+            "message": "Base de datos no configurada",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+    
+    try:
+        # Obtener información de la base de datos
+        tables = db.execute("""
+            SELECT table_name, 
+                   (SELECT COUNT(*) FROM information_schema.columns 
+                    WHERE table_name = t.table_name) as columns
+            FROM information_schema.tables t
+            WHERE table_schema = 'public'
+            ORDER BY table_name
+        """).fetchall()
+        
+        # Contar registros en cada tabla
+        table_counts = []
+        for table in tables:
+            try:
+                count = db.execute(f"SELECT COUNT(*) FROM {table[0]}").scalar()
+                table_counts.append({
+                    "table": table[0],
+                    "columns": table[1],
+                    "records": count
+                })
+            except Exception as e:
+                logger.warning(f"Error contando registros en {table[0]}: {e}")
+                table_counts.append({
+                    "table": table[0],
+                    "columns": table[1],
+                    "records": "error"
+                })
+        
+        db.close()
+        
+        return {
+            "database": "connected",
+            "timestamp": datetime.utcnow().isoformat(),
+            "tables": table_counts,
+            "total_tables": len(tables)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo estado de BD: {e}")
+        if db:
+            db.close()
+        return {
+            "database": "error",
+            "message": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
+@app.get("/db/users")
+async def get_users():
+    """Obtener usuarios de la base de datos"""
+    db = get_database()
+    
+    if not HAS_DATABASE or db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Base de datos no disponible"
+        )
+    
+    try:
+        users = db.execute("""
+            SELECT id, email, username, is_active, created_at 
+            FROM users 
+            ORDER BY created_at DESC
+            LIMIT 10
+        """).fetchall()
+        
+        db.close()
+        
+        return {
+            "count": len(users),
+            "users": [
+                {
+                    "id": u[0],
+                    "email": u[1],
+                    "username": u[2],
+                    "is_active": u[3],
+                    "created_at": u[4].isoformat() if u[4] else None
+                }
+                for u in users
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo usuarios: {e}")
+        if db:
+            db.close()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error de base de datos: {str(e)}"
+        )
+
+@app.get("/db/foods")
+async def get_foods(category: Optional[str] = None, limit: int = 20):
+    """Obtener alimentos de la base de datos"""
+    db = get_database()
+    
+    if not HAS_DATABASE or db is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Base de datos no disponible"
+        )
+    
+    try:
+        query = "SELECT name, category, calories, protein_g, carbs_g, fat_g FROM food_items"
+        params = {}
+        
+        if category:
+            query += " WHERE category = :category"
+            params["category"] = category
+        
+        query += " ORDER BY name LIMIT :limit"
+        params["limit"] = limit
+        
+        foods = db.execute(query, params).fetchall()
+        
+        db.close()
+        
+        return {
+            "count": len(foods),
+            "foods": [
+                {
+                    "name": f[0],
+                    "category": f[1],
+                    "calories": float(f[2]) if f[2] else 0,
+                    "protein_g": float(f[3]) if f[3] else 0,
+                    "carbs_g": float(f[4]) if f[4] else 0,
+                    "fat_g": float(f[5]) if f[5] else 0
+                }
+                for f in foods
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error obteniendo alimentos: {e}")
+        if db:
+            db.close()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error de base de datos: {str(e)}"
+        )
+
+@app.get("/diets/generate")
+async def generate_diet(
+    age: int,
+    gender: str,
+    height: float,
+    weight: float,
+    activity: str = "moderate",
+    goal: str = "weight_loss"
+):
+    """Generar dieta personalizada usando alimentos de la base de datos"""
+    logger.info(f"Generando dieta para: {age}años, {gender}, {height}cm, {weight}kg")
+    
+    # Validaciones básicas
+    if age < 1 or age > 120:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La edad debe estar entre 1 y 120 años"
+        )
+    
+    if height <= 0 or weight <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="La altura y peso deben ser valores positivos"
+        )
+    
+    # Cálculo básico de calorías
+    if gender.lower() == "male":
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5
+    else:
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161
+    
+    activity_multipliers = {
+        "sedentary": 1.2,
+        "light": 1.375,
+        "moderate": 1.55,
+        "active": 1.725,
+        "very_active": 1.9
+    }
+    
+    calories = bmr * activity_multipliers.get(activity.lower(), 1.55)
+    
+    # Ajuste por objetivo
+    if goal == "weight_loss":
+        calories -= 500
+        protein_ratio = 0.35
+        meals_per_day = 5
+    elif goal == "muscle_gain":
+        calories += 300
+        protein_ratio = 0.40
+        meals_per_day = 6
+    else:  # maintenance
+        protein_ratio = 0.30
+        meals_per_day = 4
+    
+    carb_ratio = 0.45
+    fat_ratio = 0.25
+    
+    # Obtener alimentos sugeridos de la base de datos
+    suggested_foods = []
+    db = get_database()
+    
+    if HAS_DATABASE and db:
+        try:
+            # Obtener alimentos por categoría según el objetivo
+            if goal == "weight_loss":
+                # Más proteínas y vegetales para pérdida de peso
+                proteins = db.execute(
+                    "SELECT name, calories, protein_g FROM food_items WHERE category = 'protein' ORDER BY protein_g DESC LIMIT 5"
+                ).fetchall()
+                vegetables = db.execute(
+                    "SELECT name, calories FROM food_items WHERE category = 'vegetable' ORDER BY calories ASC LIMIT 5"
+                ).fetchall()
+                suggested_foods = proteins + vegetables
+            elif goal == "muscle_gain":
+                # Más calorías y proteínas para ganancia muscular
+                high_calorie = db.execute(
+                    "SELECT name, calories, protein_g FROM food_items ORDER BY calories DESC LIMIT 5"
+                ).fetchall()
+                suggested_foods = high_calorie
+            else:
+                # Balanceado para mantenimiento
+                balanced = db.execute(
+                    "SELECT name, category, calories FROM food_items ORDER BY RANDOM() LIMIT 8"
+                ).fetchall()
+                suggested_foods = balanced
+        except Exception as e:
+            logger.warning(f"No se pudieron obtener alimentos sugeridos: {e}")
+            suggested_foods = []
+        finally:
+            if db:
+                db.close()
+    
+    # Formatear alimentos sugeridos
+    formatted_foods = []
+    for f in suggested_foods:
+        food_dict = {"name": f[0]}
+        if len(f) > 1 and f[1] is not None:
+            food_dict["calories"] = float(f[1])
+        if len(f) > 2 and f[2] is not None:
+            food_dict["protein_g"] = float(f[2])
+        if len(f) > 3 and f[3] is not None:
+            food_dict["category"] = f[3]
+        formatted_foods.append(food_dict)
+    
+    return {
+        "success": True,
+        "calculated_values": {
+            "bmr": round(bmr),
+            "daily_calories": round(calories),
+            "macros": {
+                "protein_g": round((calories * protein_ratio) / 4),
+                "carbs_g": round((calories * carb_ratio) / 4),
+                "fat_g": round((calories * fat_ratio) / 9)
+            },
+            "meals_per_day": meals_per_day
+        },
+        "user_info": {
+            "age": age,
+            "gender": gender,
+            "height_cm": height,
+            "weight_kg": weight,
+            "activity_level": activity,
+            "goal": goal
+        },
+        "suggested_foods": formatted_foods,
+        "recommendations": [
+            f"Consume {round(calories)} calorías diarias",
+            f"Objetivo: {goal.replace('_', ' ').title()}",
+            f"Nivel de actividad: {activity.title()}",
+            f"Distribuye en {meals_per_day} comidas al día",
+            "Consulta con un profesional de la salud para un plan personalizado"
+        ]
+    }
+
+# ================= INICIALIZACIÓN =================
+@app.on_event("startup")
+async def startup_event():
+    """Evento de inicio de la aplicación"""
+    logger.info("🚀 DietAI API v2.3 iniciando...")
+    
+    if HAS_DATABASE:
+        logger.info("📊 Probando conexión a base de datos...")
+        success, message = test_connection()
+        if success:
+            logger.info(f"✅ {message}")
+            # Inicializar base de datos (crear tablas si no existen)
+            try:
+                init_db()
+                logger.info("✅ Base de datos inicializada")
+            except Exception as e:
+                logger.error(f"❌ Error inicializando base de datos: {e}")
+        else:
+            logger.error(f"❌ Error de conexión a base de datos: {message}")
+    else:
+        logger.warning("⚠️ Base de datos no configurada, funcionando en modo simulado")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Evento de apagado de la aplicación"""
+    logger.info("🛑 DietAI API deteniéndose...")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

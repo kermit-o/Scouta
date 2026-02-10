@@ -1,0 +1,189 @@
+import hashlib
+import random
+from datetime import datetime, timezone, date, timedelta
+
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+
+from app.models.agent_profile import AgentProfile
+from app.models.agent_action import AgentAction
+from app.models.org_settings import OrgSettings
+from app.models.agent_policy import AgentPolicy
+from app.models.post import Post
+from app.models.comment import Comment
+from app.models.org_usage_daily import OrgUsageDaily
+from app.services.persona_writer import Persona, write_comment
+import os
+from app.services.moderation_scorer import score_text_with_deepseek
+
+def _h(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
+
+def _today_utc() -> date:
+    return datetime.now(timezone.utc).date()
+
+def _get_or_create_usage(db: Session, org_id: int) -> OrgUsageDaily:
+    d = _today_utc()
+    row = db.query(OrgUsageDaily).filter(OrgUsageDaily.org_id == org_id, OrgUsageDaily.day_utc == d).one_or_none()
+    if row:
+        return row
+    row = OrgUsageDaily(org_id=org_id, day_utc=d, actions_spawned=0, actions_published=0)
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, force: bool = False) -> list[AgentAction]:
+    settings = db.query(OrgSettings).filter(OrgSettings.org_id == org_id).one_or_none()
+    if not settings:
+        settings = OrgSettings(org_id=org_id)
+        db.add(settings); db.commit(); db.refresh(settings)
+
+    policy = db.query(AgentPolicy).filter(AgentPolicy.org_id == org_id).one_or_none()
+    if not policy:
+        policy = AgentPolicy(org_id=org_id)
+        db.add(policy); db.commit(); db.refresh(policy)
+
+    post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).one_or_none()
+    if not post or post.status != "published":
+        raise ValueError("Target post not found or not published")
+
+    if not settings.agents_enabled:
+        return []
+
+    if not force and random.random() > float(settings.spawn_probability_base):
+        return []
+
+    usage = _get_or_create_usage(db, org_id)
+    if usage.actions_spawned >= int(settings.max_actions_per_day):
+        return []
+
+    agents = (
+        db.query(AgentProfile)
+        .filter(AgentProfile.org_id == org_id, AgentProfile.is_enabled == True)  # noqa: E712
+        .order_by(AgentProfile.id.asc())
+        .all()
+    )
+    if not agents:
+        return []
+
+    # cooldown: agent can't spawn again on same post within last 10 minutes
+    cooldown_since = datetime.now(timezone.utc) - timedelta(minutes=10)
+    recent_agent_ids = {
+        r[0]
+        for r in db.query(AgentAction.agent_id)
+        .filter(
+            AgentAction.org_id == org_id,
+            AgentAction.target_type == "post",
+            AgentAction.target_id == post.id,
+            AgentAction.created_at >= cooldown_since,
+        )
+        .all()
+    }
+    available = [a for a in agents if a.id not in recent_agent_ids]
+    if not available:
+        available = agents[:]
+
+    n = min(max_n, settings.max_agents_per_post, len(available))
+
+    # replies: 30% chance if there are existing published comments
+    published_comments = (
+        db.query(Comment)
+        .filter(Comment.org_id == org_id, Comment.post_id == post.id, Comment.status == "published")
+        .order_by(desc(Comment.created_at))
+        .limit(50)
+        .all()
+    )
+    do_replies = bool(published_comments) and (random.random() < 0.30)
+
+chosen = random.sample(available, k=n)
+
+# dedupe by prompt_hash
+existing_hashes = {
+    r[0]
+    for r in db.query(AgentAction.prompt_hash)
+    .filter(AgentAction.org_id == org_id, AgentAction.target_type.in_(["post", "comment"]))
+    .all()
+    if r[0]
+}
+
+created: list[AgentAction] = []
+for a in chosen:
+    persona = Persona(
+        display_name=a.display_name,
+        style=a.style or "concise",
+        topics=a.topics or "",
+        persona_seed=a.persona_seed or "",
+    )
+
+    content = write_comment(persona, post_title=post.title, post_body=post.body_md)
+    policy_score = score_text_with_deepseek(content)
+    
+    if (policy_score <= 20):
+        status = "published"
+    elif (policy_score >= 80):
+        status = "rejected"
+    else:
+        status = "needs_review" if policy.require_human_review else "published"
+
+    # dedupe by prompt_hash
+    existing_hashes = {
+        r[0]
+        for r in db.query(AgentAction.prompt_hash)
+        .filter(AgentAction.org_id == org_id, AgentAction.target_type.in_(["post", "comment"]))
+        .all()
+        if r[0]
+    }
+
+    created: list[AgentAction] = []
+    for a in chosen:
+        persona = Persona(
+            display_name=a.display_name,
+            style=a.style or "concise",
+            topics=a.topics or "",
+            persona_seed=a.persona_seed or "",
+        )
+
+        content = write_comment(persona, post_title=post.title, post_body=post.body_md)
+        ph = _h(f"{org_id}:{post.id}:{a.id}:{content}")
+        if ph in existing_hashes:
+            # small variation fallback
+            content = content + "\n\n(variant)"
+            ph = _h(f"{org_id}:{post.id}:{a.id}:{content}")
+
+        target_type = "post"
+        target_id = post.id
+        action_type = "comment"
+
+        if do_replies:
+            parent = random.choice(published_comments)
+            target_type = "comment"
+            target_id = parent.id
+            action_type = "reply"
+
+        aa = AgentAction(
+            org_id=org_id,
+            agent_id=a.id,
+            target_type=target_type,
+            target_id=target_id,
+            action_type=action_type,
+            status=status,
+            content=content,
+            policy_score = moderate(content),
+            policy_reason="deepseek" if os.getenv("DEEPSEEK_API_KEY") else "persona_template",
+            llm_provider="deepseek" if os.getenv("DEEPSEEK_API_KEY") else "",
+            llm_model=os.getenv("DEEPSEEK_MODEL", "") if os.getenv("DEEPSEEK_API_KEY") else "",
+            prompt_hash=ph,
+        )
+        db.add(aa)
+        created.append(aa)
+
+    db.commit()
+    for x in created:
+        db.refresh(x)
+
+    usage.actions_spawned += len(created)
+    db.add(usage)
+    db.commit()
+
+    return created

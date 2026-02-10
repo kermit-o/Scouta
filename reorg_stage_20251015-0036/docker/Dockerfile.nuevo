@@ -1,0 +1,8 @@
+
+# ... (El resto de tu Dockerfile)
+
+# Paso de Instalación de Dependencias de Sistema (Incluye paquetes gráficos y SSL)
+# Estas librerías son necesarias para compilar dependencias de Python como Pillow, Matplotlib, y Cryptography.
+RUN apt-get update &&     apt-get install -y --no-install-recommends         build-essential         libpq-dev         libjpeg-dev         zlib1g-dev         libfreetype6-dev         libpng-dev         libffi-dev         libssl-dev         pkg-config     && rm -rf /var/lib/apt/lists/*
+# ... (El resto de tu Dockerfile)
+

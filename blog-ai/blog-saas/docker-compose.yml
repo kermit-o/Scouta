@@ -1,0 +1,21 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    env_file:
+      - ./api/.env
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist SQLite DB + allow hot editing if you want (optional)
+      - api_data:/data
+      - ./templates:/app/../templates:ro
+    environment:
+      # Force sqlite path into the volume (if your app reads DATABASE_URL from env)
+      # If your .env already sets DATABASE_URL, keep it there. This is fallback.
+      - DATABASE_URL=${DATABASE_URL:-sqlite:////data/dev.db}
+    restart: unless-stopped
+
+volumes:
+  api_data:

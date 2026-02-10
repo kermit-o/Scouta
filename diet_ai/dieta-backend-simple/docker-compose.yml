@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  api:
+    image: python:3.11-alpine
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+      pip install fastapi uvicorn &&
+      echo 'from fastapi import FastAPI
+      import time
+      app = FastAPI()
+      @app.get(\"/\")
+      def root(): return {\"msg\": \"API OK\"}
+      @app.get(\"/health\")
+      def health(): return {\"status\": \"healthy\", \"time\": time.time()}' > app.py &&
+      uvicorn app:app --host 0.0.0.0 --port 8000
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

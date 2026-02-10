@@ -1,0 +1,10 @@
+{
+  "project_name": "Mi Landing Page Profesional",
+  "version": "1.0.0",
+  "pipeline": "simple",
+  "tech_stack": [
+    "html",
+    "css",
+    "javascript"
+  ]
+}

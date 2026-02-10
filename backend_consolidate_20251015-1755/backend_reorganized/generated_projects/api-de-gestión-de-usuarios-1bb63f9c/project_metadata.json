@@ -1,0 +1,18 @@
+{
+  "project_id": "1bb63f9c",
+  "name": "API de Gestión de Usuarios",
+  "description": "Una API REST completa para gestión de usuarios con autenticación JWT, base de datos y documentación Swagger",
+  "type": "api",
+  "pipeline_type": "enhanced",
+  "complexity_analysis": {},
+  "features": [
+    "autenticación JWT",
+    "base de datos",
+    "CRUD usuarios",
+    "documentación API",
+    "validación de datos"
+  ],
+  "generated_at": 1761060908.3090158,
+  "file_count": 5,
+  "status": "completed"
+}

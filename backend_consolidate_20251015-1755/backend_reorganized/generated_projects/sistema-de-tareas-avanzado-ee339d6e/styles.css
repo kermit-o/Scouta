@@ -1,0 +1,9 @@
+/* Estilos adicionales para proyectos complejos */
+@media (max-width: 768px) {
+    .features {
+        grid-template-columns: 1fr;
+    }
+    .container {
+        padding: 20px 10px;
+    }
+}

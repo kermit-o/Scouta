@@ -1,0 +1,178 @@
+
+====================
+[2026-02-05T19:18:02Z] 0) Context
+====================
+ROOT=/workspaces/Scouta/blog-ai/blog-saas
+API=/workspaces/Scouta/blog-ai/blog-saas/api
+OUT=/workspaces/Scouta/blog-ai/blog-saas/PROJECT_STATUS_FULL.txt
+DB=/workspaces/Scouta/blog-ai/blog-saas/api/dev.db
+
+====================
+[2026-02-05T19:18:02Z] 1) ENV keys (redacted)
+====================
+SECRET_KEY=***REDACTED***
+DATABASE_URL=***REDACTED***
+DEEPSEEK_API_KEY=***REDACTED***
+DEEPSEEK_MODEL=***REDACTED***
+DEEPSEEK_BASE_URL=***REDACTED***
+DEEPSEEK_MAX_TOKENS=***REDACTED***
+DEEPSEEK_TEMPERATURE=***REDACTED***
+DEEPSEEK_TIMEOUT=***REDACTED***
+ACCESS_TOKEN_EXPIRE_MINUTES=***REDACTED***
+ALLOWED_ORIGINS=***REDACTED***
+AUTO_MODE_ENABLED=***REDACTED***
+AUTO_MODE_ORG_ID=***REDACTED***
+AUTO_MODE_INTERVAL_SECONDS=***REDACTED***
+AUTO_MODE_MAX_POSTS_PER_TICK=***REDACTED***
+AUTO_MODE_ACTIONS_PER_POST=***REDACTED***
+AUTO_MODE_SPAWN_PROBABILITY=***REDACTED***
+AUTO_MODE_MIN_POST_AGE_MINUTES=***REDACTED***
+
+====================
+[2026-02-05T19:18:02Z] 2) Alembic status
+====================
+d9fbf3ad2165
+d9e2dd518d28 (head)
+
+====================
+[2026-02-05T19:18:03Z] 3) DB tables + columns
+====================
+tables_count: 13
+
+== agent_actions
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- agent_id INTEGER notnull=True pk=False default=None
+- target_type VARCHAR(20) notnull=True pk=False default=None
+- target_id INTEGER notnull=True pk=False default=None
+- action_type VARCHAR(30) notnull=True pk=False default=None
+- status VARCHAR(20) notnull=True pk=False default=None
+- content TEXT notnull=True pk=False default=None
+- policy_score INTEGER notnull=True pk=False default=None
+- policy_reason VARCHAR(500) notnull=True pk=False default=None
+- llm_provider VARCHAR(50) notnull=True pk=False default=None
+- llm_model VARCHAR(80) notnull=True pk=False default=None
+- prompt_hash VARCHAR(80) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- published_at DATETIME notnull=False pk=False default=None
+
+== agent_policies
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- allow_replies BOOLEAN notnull=True pk=False default=None
+- allow_reactions BOOLEAN notnull=True pk=False default=None
+- allow_critique BOOLEAN notnull=True pk=False default=None
+- max_risk_score INTEGER notnull=True pk=False default=None
+- require_human_review BOOLEAN notnull=True pk=False default=None
+- banned_topics VARCHAR(500) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- updated_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- auto_approve_threshold INTEGER notnull=True pk=False default=20
+- auto_reject_threshold INTEGER notnull=True pk=False default=80
+- enable_llm_moderation BOOLEAN notnull=True pk=False default=1
+
+== agent_profiles
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- display_name VARCHAR(120) notnull=True pk=False default=None
+- handle VARCHAR(60) notnull=True pk=False default=None
+- avatar_url VARCHAR(500) notnull=True pk=False default=None
+- persona_seed TEXT notnull=True pk=False default=None
+- topics VARCHAR(500) notnull=True pk=False default=None
+- style VARCHAR(200) notnull=True pk=False default=None
+- risk_level INTEGER notnull=True pk=False default=None
+- is_enabled BOOLEAN notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- updated_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- is_shadow_banned BOOLEAN notnull=True pk=False default=0
+
+== alembic_version
+- version_num VARCHAR(32) notnull=True pk=True default=None
+
+== comments
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- post_id INTEGER notnull=True pk=False default=None
+- parent_comment_id INTEGER notnull=False pk=False default=None
+- author_type VARCHAR(10) notnull=True pk=False default=None
+- author_user_id INTEGER notnull=False pk=False default=None
+- author_agent_id INTEGER notnull=False pk=False default=None
+- body TEXT notnull=True pk=False default=None
+- status VARCHAR(20) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== org_members
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- user_id INTEGER notnull=True pk=False default=None
+- role VARCHAR(20) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== org_settings
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- agents_enabled BOOLEAN notnull=True pk=False default=None
+- auto_publish BOOLEAN notnull=True pk=False default=None
+- max_agents_per_post INTEGER notnull=True pk=False default=None
+- max_actions_per_day INTEGER notnull=True pk=False default=None
+- spawn_probability_base FLOAT notnull=True pk=False default=None
+- locale VARCHAR(10) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- updated_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== org_usage_daily
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- day_utc DATE notnull=True pk=False default=None
+- actions_spawned INTEGER notnull=True pk=False default=None
+- actions_published INTEGER notnull=True pk=False default=None
+
+== orgs
+- id INTEGER notnull=True pk=True default=None
+- name VARCHAR(200) notnull=True pk=False default=None
+- slug VARCHAR(80) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== post_tags
+- id INTEGER notnull=True pk=True default=None
+- post_id INTEGER notnull=True pk=False default=None
+- tag_id INTEGER notnull=True pk=False default=None
+
+== posts
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- author_user_id INTEGER notnull=False pk=False default=None
+- title VARCHAR(200) notnull=True pk=False default=None
+- slug VARCHAR(120) notnull=True pk=False default=None
+- body_md TEXT notnull=True pk=False default=None
+- status VARCHAR(20) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+- published_at DATETIME notnull=False pk=False default=None
+
+== tags
+- id INTEGER notnull=True pk=True default=None
+- org_id INTEGER notnull=True pk=False default=None
+- name VARCHAR(60) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+== users
+- id INTEGER notnull=True pk=True default=None
+- email VARCHAR(255) notnull=True pk=False default=None
+- password_hash VARCHAR(255) notnull=True pk=False default=None
+- created_at DATETIME notnull=True pk=False default=CURRENT_TIMESTAMP
+
+====================
+[2026-02-05T19:18:03Z] 4) Quick auth+spawn smoke
+====================
+login_resp_head: {"access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzcwMzIyNjgzfQ.i_I-6JrxGAKkCTeTiZIDn6TTmyHtei0TdEAwaq_JyUU","token_type":"bearer"}
+login: FAIL (no access_token)
+
+====================
+[2026-02-05T19:18:03Z] 5) Suspect files
+====================
+app/services/action_spawner.py.bak_20260205_105715
+app/core/security.py.bak.2026-02-05_185000
+
+====================
+[2026-02-05T19:18:03Z] DONE
+====================

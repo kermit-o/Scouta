@@ -1,0 +1,15 @@
+{
+  "project_id": "sistema-ia-test-a55a6aa3",
+  "name": "Sistema IA Test",
+  "description": "Proyecto de prueba para verificar integraci\u00f3n IA",
+  "type": "web_app",
+  "features": [
+    "IA integration",
+    "test feature"
+  ],
+  "technologies": [
+    "react",
+    "fastapi"
+  ],
+  "created_at": "2025-10-19T01:31:57.314116"
+}

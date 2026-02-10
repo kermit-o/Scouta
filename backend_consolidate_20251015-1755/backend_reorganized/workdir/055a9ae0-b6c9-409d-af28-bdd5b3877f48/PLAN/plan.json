@@ -1,0 +1,38 @@
+{
+  "project_name": "Mi E-commerce Demo 2",
+  "stack": "fastapi_pg_ecommerce",
+  "features": [
+    "ecommerce",
+    "products_crud",
+    "orders",
+    "postgres",
+    "alembic"
+  ],
+  "variables": {
+    "python_version": "3.12",
+    "service_name": "ecommerce-app"
+  },
+  "structure": [
+    {
+      "path": "backend/app/requirements.txt"
+    },
+    {
+      "path": "backend/app/routers/health.py"
+    },
+    {
+      "path": "README.md"
+    },
+    {
+      "path": "backend/app/main.py"
+    },
+    {
+      "path": "alembic.ini"
+    },
+    {
+      "path": "alembic/env.py"
+    },
+    {
+      "path": "alembic/versions/0001_init.py"
+    }
+  ]
+}

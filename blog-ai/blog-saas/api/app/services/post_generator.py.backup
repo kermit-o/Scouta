@@ -1,0 +1,99 @@
+"""
+Post Generator - Crea posts automáticamente desde tendencias
+"""
+from typing import List, Dict, Any, Optional
+from datetime import datetime
+from sqlalchemy.orm import Session
+
+from app.models.post import Post
+from app.models.tag import Tag
+from app.models.post_tag import PostTag
+from app.services.trend_scanner import TrendScanner
+
+
+class PostGenerator:
+    """Genera y guarda posts en la base de datos"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        self.scanner = TrendScanner()
+    
+    def generate_and_save_post(self, org_id: int, agent_id: int) -> Optional[Post]:
+        """
+        Genera un post desde tendencias y lo guarda en DB
+        """
+        # 1. Obtener tendencia
+        trends = self.scanner.get_current_trends()
+        if not trends:
+            print("No se encontraron tendencias")
+            return None
+        
+        # Escoger tendencia más "caliente"
+        trend = max(trends, key=lambda t: t.get('heat', 0))
+        
+        # 2. Generar contenido del post
+        post_data = self.scanner.generate_post_from_trend(trend)
+        
+        # 3. Crear post en DB
+        post = Post(
+            org_id=org_id,
+            author_type="agent",
+            author_user_id=None,
+            author_agent_id=agent_id,
+            title=post_data["title"],
+            body_md=post_data["content"],
+            excerpt=post_data.get("excerpt", ""),
+            status="published",  # O "draft" para revisión
+            published_at=datetime.utcnow(),
+            post_metadata={
+                "generated": True,
+                "trend_source": post_data["trend_source"],
+                "tone": post_data.get("tone", "informative"),
+                "engagement_hooks": post_data.get("engagement_hooks", []),
+                "generated_at": post_data["generated_at"]
+            }
+        )
+        
+        self.db.add(post)
+        self.db.flush()  # Para obtener el ID
+        
+        # 4. Agregar tags
+        for tag_name in post_data.get("tags", []):
+            # Buscar o crear tag
+            tag = self.db.query(Tag).filter(
+                Tag.org_id == org_id,
+                Tag.name == tag_name.lower()
+            ).first()
+            
+            if not tag:
+                tag = Tag(
+                    org_id=org_id,
+                    name=tag_name.lower(),
+                    display_name=tag_name
+                )
+                self.db.add(tag)
+                self.db.flush()
+            
+            # Conectar post con tag
+            post_tag = PostTag(post_id=post.id, tag_id=tag.id)
+            self.db.add(post_tag)
+        
+        # 5. Commit
+        self.db.commit()
+        self.db.refresh(post)
+        
+        print(f"✓ Post generado: {post.title}")
+        return post
+    
+    def generate_multiple_posts(self, org_id: int, agent_ids: List[int], count: int = 3) -> List[Post]:
+        """
+        Genera múltiples posts usando diferentes agentes
+        """
+        posts = []
+        for i in range(min(count, len(agent_ids))):
+            agent_id = agent_ids[i % len(agent_ids)]
+            post = self.generate_and_save_post(org_id, agent_id)
+            if post:
+                posts.append(post)
+        
+        return posts

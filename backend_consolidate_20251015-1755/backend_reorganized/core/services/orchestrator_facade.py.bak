@@ -1,0 +1,87 @@
+from __future__ import annotations
+from typing import Dict, Any
+from uuid import uuid4
+
+from core.services.builder_facade import build as build_with_facade
+from core.agents.packager_agent import PackagerAgent
+
+from core.services.plan_manifest import ensure_rich_structure, validate_plan, write_plan_manifest
+def _try_intake(requirements: Dict[str, Any]) -> Dict[str, Any]:
+    try:
+        from core.agents.llm_intake_agent import LLMIntakeAgent
+        agent = LLMIntakeAgent()
+        if hasattr(agent, "analyze_requirements"):
+            return agent.analyze_requirements(requirements) or requirements
+        if hasattr(agent, "normalize_for_planning"):
+            return agent.normalize_for_planning(requirements) or requirements
+    except Exception:
+        pass
+    return requirements
+
+def _try_planning(intake_payload: Dict[str, Any]) -> Dict[str, Any]:
+    fallback = {
+        "project_name": intake_payload.get("name") or "Forge Project",
+        "stack": intake_payload.get("stack_hint") or "fastapi_postgres_docker",
+        # sin structure: lo delegamos al LLM Synth Builder
+        "variables": {"python_version": "3.11", "require_rich_structure": True}
+    }
+    try:
+        from core.agents.llm_planning_agent import LLMPlanningAgent
+        planner = LLMPlanningAgent()
+        if hasattr(planner, "produce_plan_json"):
+            plan = planner.produce_plan_json(intake_payload) or fallback
+            return plan
+        if hasattr(planner, "plan_project"):
+            plan = planner.plan_project(intake_payload) or fallback
+            return plan
+    except Exception:
+        pass
+    return fallback
+
+def plan_and_generate(requirements: Dict[str, Any]) -> Dict[str, Any]:
+    # post-proceso: si la estructura es muy corta, dejar que el Synth la proponga
+    # Esto evita proyectos minimalistas de 1-2 ficheros.
+    # Se aplica solo si el planner devolvió structure explícita pero insuficiente.
+    normalized = _try_intake(requirements)
+    plan = _try_planning(normalized)
+    # enforce rich structure, validate and persist plan.json
+    plan = ensure_rich_structure(plan)
+    errors = validate_plan(plan)
+    if errors:
+        # En entorno real devolverías 400/422; aquí seguimos pero lo anotamos
+        plan.setdefault('meta', {})['plan_warnings'] = errors
+    manifest_path = write_plan_manifest(project_id, plan)
+    plan.setdefault('meta', {})['manifest_path'] = manifest_path
+    if isinstance(plan, dict):
+        st = plan.get('structure')
+        if isinstance(st, list) and len(st) < 4:
+            plan.pop('structure', None)
+            plan.setdefault('variables', {}).update({'require_rich_structure': True})
+    project_id = str(uuid4())
+    build_res = build_with_facade(project_id, plan)
+    pkg = PackagerAgent().run(project_id, {"workdir": build_res["workdir"]})
+    return {
+        "project_id": project_id,
+        "plan_stack": plan.get("stack"),
+        "workdir": build_res["workdir"],
+        "artifact": pkg.get("zip_path"),
+        "status": pkg.get("status", "unknown")
+    }
+
+def persist_plan_manifest(project_id: str, plan: Dict[str, Any]) -> Dict[str, Any]:
+    """Enriquece, valida y guarda plan.json en WORKDIR/<id>/PLAN/. Devuelve {plan, manifest_path, warnings?}."""
+    plan = ensure_rich_structure(plan)
+    warnings = validate_plan(plan)
+    try:
+        manifest_path = write_plan_manifest(project_id, plan)
+    except Exception as e:
+        manifest_path = None
+        warnings = (warnings or []) + [f"manifest_write_error: {e}"]
+    return {"plan": plan, "manifest_path": manifest_path, "warnings": warnings or None}
+
+def build_only(project_id: str, plan: Dict[str, Any]) -> Dict[str, Any]:
+    """Solo build + package usando el plan dado."""
+    build_res = build_with_facade(project_id, plan)
+    from core.agents.packager_agent import PackagerAgent
+    pkg = PackagerAgent().run(project_id, {"workdir": build_res["workdir"]})
+    return {"build": build_res, "package": pkg}

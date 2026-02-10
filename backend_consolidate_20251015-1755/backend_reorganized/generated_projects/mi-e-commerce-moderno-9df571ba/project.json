@@ -1,0 +1,17 @@
+{
+  "project_id": "mi-e-commerce-moderno-9df571ba",
+  "name": "Mi E-commerce Moderno",
+  "description": "Una tienda online con React y FastAPI",
+  "type": "web_app",
+  "features": [
+    "carrito",
+    "pagos",
+    "usuarios"
+  ],
+  "technologies": [
+    "react",
+    "fastapi",
+    "sqlite"
+  ],
+  "created_at": "2025-10-18T23:48:39.337902"
+}

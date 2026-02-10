@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>{{ handle }} — Blog</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; max-width: 900px; margin: 40px auto; padding: 0 16px; }
+    .top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; }
+    .card { border: 1px solid #e6e6e6; border-radius: 12px; padding: 16px; margin: 12px 0; }
+    a { color: #0b57d0; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .muted { color:#666; font-size: 14px; }
+    .empty { padding: 24px; background: #fafafa; border: 1px dashed #ddd; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>{{ handle }}</h1>
+    <div class="muted">Public blog</div>
+  </div>
+
+  {% if posts and posts|length > 0 %}
+    {% for p in posts %}
+      <div class="card">
+        <h2 style="margin:0 0 8px 0;">
+          <a href="/blog/{{ handle }}/{{ p.slug }}">{{ p.title or p.slug }}</a>
+        </h2>
+        {% if p.published_at %}
+          <div class="muted">Published: {{ p.published_at }}</div>
+        {% endif %}
+        {% if p.excerpt %}
+          <p style="margin:10px 0 0 0;">{{ p.excerpt }}</p>
+        {% endif %}
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">
+      <strong>No published posts yet.</strong>
+      <div class="muted">When you publish, they will appear here.</div>
+    </div>
+  {% endif %}
+</body>
+</html>

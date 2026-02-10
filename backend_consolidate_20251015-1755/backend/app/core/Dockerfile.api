@@ -1,0 +1,24 @@
+﻿# Usa una imagen base oficial de Python
+FROM python:3.11-slim
+
+# Establece el directorio de trabajo
+WORKDIR /app
+
+# Copia los archivos de requerimientos y los instala primero (para usar el cache de Docker)
+COPY requirements.txt .
+# Incluye los paquetes necesarios para la DB y CFFI/cryptography
+RUN apt-get update && apt-get install -y gcc libc-dev && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get purge -y gcc libc-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copia todo el código del backend
+COPY . .
+
+# Expone el puerto por defecto de Uvicorn
+EXPOSE 8000
+
+# Comando para ejecutar el servidor API con Uvicorn en modo de producción.
+# 'backend.app.main:app' asume que su objeto FastAPI se llama 'app' en el archivo 'backend/app/main.py'.
+# Workers deben ajustarse según la carga esperada (ej: 2*CPU + 1).
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

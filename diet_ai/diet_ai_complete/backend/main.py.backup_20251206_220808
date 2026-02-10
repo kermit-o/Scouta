@@ -1,0 +1,278 @@
+"""
+DietAI API - Versión Mejorada
+Mantiene compatibilidad con endpoints existentes pero agrega:
+1. Mejor logging
+2. Estructura para expansión
+3. Preparación para base de datos
+"""
+import logging
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel
+from typing import Optional, List
+from datetime import datetime
+import sys
+import os
+
+# Configurar logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Crear aplicación
+app = FastAPI(
+    title="DietAI API Mejorada",
+    version="2.1.0",
+    description="API inteligente para gestión de dietas - Versión mejorada"
+)
+
+# Modelos (compatibles con versión anterior)
+class User(BaseModel):
+    email: str
+    username: str
+    password: str
+
+class DietRequest(BaseModel):
+    age: int
+    gender: str
+    height: float
+    weight: float
+    activity: str = "moderate"
+    goal: str = "weight_loss"
+
+# ================= ENDPOINTS EXISTENTES (MANTENER COMPATIBILIDAD) =================
+@app.get("/")
+async def root():
+    """Endpoint raíz - Mejorado con logging"""
+    logger.info("Acceso a endpoint raíz")
+    return {
+        "message": "DietAI API Mejorada",
+        "timestamp": datetime.utcnow().isoformat(),
+        "status": "online",
+        "version": "2.1.0",
+        "features": [
+            "Generación de dietas personalizadas",
+            "Análisis de imágenes (próximamente)",
+            "Gestión de inventario (próximamente)",
+            "Base de datos PostgreSQL (próximamente)"
+        ]
+    }
+
+@app.get("/health")
+async def health():
+    """Health check mejorado"""
+    health_status = {
+        "status": "healthy",
+        "timestamp": datetime.utcnow().isoformat(),
+        "service": "dietai-api",
+        "version": "2.1.0",
+        "database": "postgresql://localhost:5432/dietai (simulado)",
+        "uptime": "running"
+    }
+    logger.info(f"Health check: {health_status}")
+    return health_status
+
+@app.get("/test")
+async def test():
+    """Endpoint de prueba"""
+    return {"test": "ok", "python_version": sys.version}
+
+@app.post("/auth/register")
+async def register(email: str, username: str, password: str):
+    """Registro mejorado con logging"""
+    logger.info(f"Intento de registro: {email}, {username}")
+    
+    # Simulación de validación
+    if len(password) < 6:
+        logger.warning(f"Contraseña muy corta para {email}")
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
+    
+    return {
+        "message": "Usuario registrado exitosamente",
+        "user": {
+            "email": email,
+            "username": username,
+            "id": 1,
+            "created_at": datetime.utcnow().isoformat()
+        },
+        "next_steps": [
+            "Completar perfil en /profile/create",
+            "Generar primera dieta en /diets/generate"
+        ]
+    }
+
+@app.post("/diets/generate")
+async def generate_diet(
+    age: int,
+    gender: str,
+    height: float,
+    weight: float,
+    activity: str = "moderate",
+    goal: str = "weight_loss"
+):
+    """Generador de dietas mejorado"""
+    logger.info(f"Generando dieta para: {age}años, {gender}, {height}cm, {weight}kg, {activity}, {goal}")
+    
+    # Cálculo mejorado
+    if gender.lower() == "male":
+        bmr = 10 * weight + 6.25 * height - 5 * age + 5
+    else:
+        bmr = 10 * weight + 6.25 * height - 5 * age - 161
+    
+    # Multiplicadores de actividad más precisos
+    activity_multipliers = {
+        "sedentary": 1.2,
+        "light": 1.375,
+        "moderate": 1.55,
+        "active": 1.725,
+        "very_active": 1.9
+    }
+    
+    calories = bmr * activity_multipliers.get(activity.lower(), 1.55)
+    
+    # Ajuste por objetivo
+    if goal == "weight_loss":
+        calories -= 500
+        meals_per_day = 5
+        protein_ratio = 0.35
+    elif goal == "muscle_gain":
+        calories += 300
+        meals_per_day = 6
+        protein_ratio = 0.40
+    else:  # maintenance
+        meals_per_day = 4
+        protein_ratio = 0.30
+    
+    carb_ratio = 0.45
+    fat_ratio = 0.25
+    
+    # Lista de comidas de ejemplo según objetivo
+    meal_templates = {
+        "weight_loss": [
+            "Desayuno: Avena con frutas y huevos (300 cal)",
+            "Media mañana: Yogur griego con nueces (150 cal)",
+            "Almuerzo: Pollo con arroz integral y vegetales (500 cal)",
+            "Merienda: Fruta y queso cottage (100 cal)",
+            "Cena: Pescado con ensalada (400 cal)"
+        ],
+        "muscle_gain": [
+            "Desayuno: Tortilla de claras con avena y aguacate (500 cal)",
+            "Media mañana: Batido de proteínas con plátano (300 cal)",
+            "Almuerzo: Carne con patatas y vegetales (700 cal)",
+            "Merienda: Sandwich de pollo (400 cal)",
+            "Pre-entreno: Frutos secos y fruta (200 cal)",
+            "Cena: Salmón con quinoa (600 cal)"
+        ]
+    }
+    
+    meals = meal_templates.get(goal, meal_templates["weight_loss"])
+    
+    return {
+        "success": True,
+        "data": {
+            "daily_calories": round(calories),
+            "macros": {
+                "protein_g": round((calories * protein_ratio) / 4),
+                "carbs_g": round((calories * carb_ratio) / 4),
+                "fat_g": round((calories * fat_ratio) / 9)
+            },
+            "meals_per_day": meals_per_day,
+            "goal": goal,
+            "activity_level": activity,
+            "sample_meals": meals,
+            "recommendations": [
+                f"Consume {round(calories)} calorías diarias",
+                f"Distribuye en {meals_per_day} comidas",
+                "Mantente hidratado (2-3L de agua/día)",
+                "Combina dieta con ejercicio regular"
+            ]
+        }
+    }
+
+# ================= NUEVOS ENDPOINTS (EXPANSIÓN) =================
+@app.post("/profile/create")
+async def create_profile(
+    age: int,
+    gender: str,
+    height: float,
+    weight: float,
+    goal: str,
+    activity_level: str = "moderate",
+    dietary_restrictions: List[str] = [],
+    allergies: List[str] = []
+):
+    """Crear perfil de usuario completo"""
+    logger.info(f"Creando perfil para usuario: {age}años, {gender}")
+    
+    return {
+        "profile_created": True,
+        "profile_id": 1,
+        "user_data": {
+            "age": age,
+            "gender": gender,
+            "height_cm": height,
+            "weight_kg": weight,
+            "goal": goal,
+            "activity_level": activity_level,
+            "bmi": round(weight / ((height/100) ** 2), 1),
+            "restrictions": dietary_restrictions,
+            "allergies": allergies
+        },
+        "next": "Generar dieta personalizada en /diets/generate-advanced"
+    }
+
+@app.get("/food/search")
+async def search_food(query: str, category: Optional[str] = None):
+    """Buscar alimentos (simulado)"""
+    # Esto se conectaría a una base de datos real
+    food_db = {
+        "pollo": {"calories": 165, "protein": 31, "carbs": 0, "fat": 3.6},
+        "arroz": {"calories": 130, "protein": 2.7, "carbs": 28, "fat": 0.3},
+        "manzana": {"calories": 52, "protein": 0.3, "carbs": 14, "fat": 0.2},
+        "aguacate": {"calories": 160, "protein": 2, "carbs": 9, "fat": 15}
+    }
+    
+    results = []
+    for food, nutrients in food_db.items():
+        if query.lower() in food.lower():
+            if not category or category.lower() in food.lower():
+                results.append({
+                    "name": food,
+                    "nutrients": nutrients,
+                    "serving": "100g"
+                })
+    
+    return {
+        "query": query,
+        "results": results,
+        "count": len(results)
+    }
+
+@app.get("/debug/info")
+async def debug_info():
+    """Información de debug"""
+    return {
+        "python_path": sys.path,
+        "working_directory": os.getcwd(),
+        "environment_vars": {k: v for k, v in os.environ.items() if "PYTHON" in k or "PATH" in k},
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+# ================= INICIALIZACIÓN =================
+@app.on_event("startup")
+async def startup_event():
+    """Evento de inicio"""
+    logger.info("🚀 DietAI API iniciada")
+    logger.info(f"📁 Directorio: {os.getcwd()}")
+    logger.info(f"🐍 Python: {sys.version}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Evento de apagado"""
+    logger.info("🛑 DietAI API detenida")
+
+if __name__ == "__main__":
+    import uvicorn
+    logger.info("Iniciando servidor...")
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

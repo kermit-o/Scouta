@@ -1,0 +1,111 @@
+==========================================
+ Forge Core Diagnostics (llm_driven_service)
+ ROOT: /workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized
+ LOG:  forge_core_diag.txt
+==========================================
+
+>>> 1) Parando procesos antiguos de uvicorn llm_driven_service
+Hecho.
+
+>>> 2) Arrancando llm_driven_service:app en puerto 8011
+$ PYTHONPATH='/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized' nohup python -m uvicorn llm_driven_service:app   --host 0.0.0.0 --port 8011 > /tmp/forge_api.log 2>&1 &
+Lanzado. Esperando 4s...
+
+>>> 3) Probar /api/health
+$ curl -v http://localhost:8011/api/health
+* Host localhost:8011 was resolved.
+* IPv6: ::1
+* IPv4: 127.0.0.1
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0*   Trying [::1]:8011...
+* connect to ::1 port 8011 from ::1 port 44740 failed: Connection refused
+*   Trying 127.0.0.1:8011...
+* connect to 127.0.0.1 port 8011 from 127.0.0.1 port 46804 failed: Connection refused
+* Failed to connect to localhost port 8011 after 0 ms: Couldn't connect to server
+  0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+* Closing connection
+curl: (7) Failed to connect to localhost port 8011 after 0 ms: Couldn't connect to server
+
+
+>>> 4) Si existe, obtener último plan generado
+$ curl -s http://localhost:8011/api/projects/diagnostics/latest-plan
+
+
+>>> 5) Tail de /tmp/forge_api.log (últimas 200 líneas)
+----- /tmp/forge_api.log (tail -n 200) -----
+nohup: ignoring input
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/__main__.py", line 4, in <module>
+    uvicorn.main()
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/click/core.py", line 1462, in __call__
+    return self.main(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/click/core.py", line 1383, in main
+    rv = self.invoke(ctx)
+         ^^^^^^^^^^^^^^^^
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/click/core.py", line 1246, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/click/core.py", line 814, in invoke
+    return callback(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 409, in main
+    run(
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/main.py", line 575, in run
+    server.run()
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 65, in run
+    return asyncio.run(self.serve(sockets=sockets))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.python/current/lib/python3.12/asyncio/runners.py", line 194, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/home/codespace/.python/current/lib/python3.12/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.python/current/lib/python3.12/asyncio/base_events.py", line 684, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+    await self._serve(sockets)
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/server.py", line 76, in _serve
+    config.load()
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/config.py", line 433, in load
+    self.loaded_app = import_from_string(self.app)
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 22, in import_from_string
+    raise exc from None
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/.venv/lib/python3.12/site-packages/uvicorn/importer.py", line 19, in import_from_string
+    module = importlib.import_module(module_str)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/codespace/.python/current/lib/python3.12/importlib/__init__.py", line 90, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1387, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1360, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1331, in _find_and_load_unlocked
+  File "<frozen importlib._bootstrap>", line 935, in _load_unlocked
+  File "<frozen importlib._bootstrap_external>", line 994, in exec_module
+  File "<frozen importlib._bootstrap>", line 488, in _call_with_frames_removed
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/llm_driven_service.py", line 16, in <module>
+    from core.api.projects_bridge import router as projects_bridge_router
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/core/api/projects_bridge.py", line 9, in <module>
+    from core.services.orchestrator_facade import persist_plan_manifest, build_only
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/core/services/orchestrator_facade.py", line 9, in <module>
+    from core.agents.packager_agent import PackagerAgent
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/core/agents/__init__.py", line 1, in <module>
+    from .universal_analyst_agent import UniversalAnalystAgent
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/core/agents/universal_analyst_agent.py", line 4, in <module>
+    from core.agents.agent_base import AgentBase
+  File "/workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/core/agents/agent_base.py", line 6, in <module>
+    import requests
+ModuleNotFoundError: No module named 'requests'
+----- FIN forge_api.log -----
+
+==========================================
+ Fin del diagnóstico. Sube el archivo:
+   /workspaces/Scouta/backend_consolidate_20251015-1755/backend_reorganized/forge_core_diag.txt
+ al chat para seguir.
+==========================================

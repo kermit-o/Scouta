@@ -1,0 +1,43 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge
+      POSTGRES_DB: forge
+    ports: ["55432:5432"]
+      - "5432:5432"
+    volumes: [ "pgdata:/var/lib/postgresql/data" ]
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    #command: uvicorn backend.api.main:app --host 0.0.0.0 --port 8000 --reload
+    command: uvicorn backend.app.main_api:app --host 0.0.0.0 --port 8000 --reload
+
+    environment:
+      DATABASE_URL: postgresql+psycopg2://forge:forge@postgres:5432/forge
+      REDIS_URL: redis://redis:6379/0
+      STRIPE_SECRET_KEY: sk_test_51RuUkA9TXLctvE6FCeKDwO6P7tm1raodjvygT7XKq6pJ8WqpsWK8HQhhBGPtXTM687rxjk9tY7HYm378adHuDd1W00UmCnyfkO      # tu clave secreta de prueba
+      STRIPE_PUBLISHABLE_KEY: pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka # tu clave publicable de prueba
+      STRIPE_WEBHOOK_SECRET: whsec_83ff119a06ac80c9eecf18104036c77aef2721783f61fddd4dcdabdfe86002b3 #whsec_lTdkkiNsAnsOAE2mY3rgBAEZAWbzcf7k  # el que te dio el CLI
+    depends_on: [postgres, redis]
+    ports: ["8000:8000"]
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    environment:
+      NEXT_PUBLIC_API_BASE: http://localhost:8000
+    depends_on: [backend]
+    ports: ["3000:3000"]
+      - "3000:3000"
+
+volumes:
+  pgdata:

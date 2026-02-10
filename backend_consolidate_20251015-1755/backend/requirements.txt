@@ -1,0 +1,14 @@
+PyJWT
+SQLAlchemy
+alembic
+fastapi
+loguru
+passlib
+psycopg2-binary
+pydantic
+pydantic-settings
+python-dotenv
+stripe
+tenacity>=8.2.0
+uvicorn[standard]
+httpx>=0.27.0

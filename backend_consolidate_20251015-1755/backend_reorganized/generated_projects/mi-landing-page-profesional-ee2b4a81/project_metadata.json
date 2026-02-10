@@ -1,0 +1,17 @@
+{
+  "project_id": "ee2b4a81",
+  "name": "Mi Landing Page Profesional",
+  "description": "Una landing page moderna para un servicio de consultoría digital con formulario de contacto y sección de servicios",
+  "type": "web",
+  "pipeline_type": "simple",
+  "complexity_analysis": {},
+  "features": [
+    "diseño responsive",
+    "formulario de contacto",
+    "galería de servicios",
+    "optimización SEO"
+  ],
+  "generated_at": 1761060908.262958,
+  "file_count": 4,
+  "status": "completed"
+}

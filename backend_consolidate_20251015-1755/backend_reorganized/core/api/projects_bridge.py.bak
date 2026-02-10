@@ -1,0 +1,39 @@
+from fastapi import APIRouter, BackgroundTasks
+from uuid import uuid4
+from typing import Dict, Any
+
+from core.services.orchestrator_facade import persist_plan_manifest, build_only
+from core.services.feature_contracts import enforce_feature_contract
+
+router = APIRouter(prefix="/api/projects", tags=["projects"])
+
+@router.post("")
+async def create_project(req: Dict[str, Any], background: BackgroundTasks):
+    name = (req.get("name") or "Forge Project")
+    requirements = req.get("requirements") or {}
+    normalized = {
+        "stack_hint": requirements.get("stack") or requirements.get("stack_hint"),
+        "features": requirements.get("features") or [],
+        "variables": requirements.get("variables") or {},
+    }
+
+    project_id = str(uuid4())
+
+    plan = {
+    plan = enforce_feature_contract(plan)
+        "project_name": name,
+        "stack": normalized.get("stack_hint") or "fastapi_postgres_docker",
+        "features": normalized.get("features"),
+        "variables": {"python_version": "3.11", **normalized.get("variables", {})},
+    }
+
+    persisted = persist_plan_manifest(project_id, plan)
+    background.add_task(build_only, project_id, persisted["plan"])
+
+    return {
+        "accepted": True,
+        "status": "queued",
+        "project_id": project_id,
+        "manifest_path": persisted.get("manifest_path"),
+        "warnings": persisted.get("warnings"),
+    }

@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Blog SaaS{% endblock %}</title>
+  </head>
+  <body>
+    <header style="padding:12px;border-bottom:1px solid #ddd;">
+      <strong>Blog SaaS</strong>
+      <nav style="display:inline-block;margin-left:12px;">
+        <a href="/">Home</a>
+      </nav>
+    </header>
+    <main style="padding:16px;max-width:900px;margin:0 auto;">
+      {% block content %}{% endblock %}
+    </main>
+  </body>
+</html>

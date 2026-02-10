@@ -1,0 +1,36 @@
+{
+  "project_name": "Forge LLM CRUD + PG + Docker",
+  "stack": "fastapi_postgres_docker",
+  "features": [
+    "FastAPI",
+    "health",
+    "users_crud",
+    "postgres",
+    "alembic",
+    "Dockerfile",
+    "docker_compose"
+  ],
+  "variables": {
+    "python_version": "3.12",
+    "service_name": "forge-app",
+    "db_name": "forge",
+    "db_user": "forge",
+    "db_password": "forge",
+    "db_host": "db",
+    "db_port": 5432
+  },
+  "structure": [
+    {
+      "path": "backend/app/requirements.txt"
+    },
+    {
+      "path": "backend/app/routers/health.py"
+    },
+    {
+      "path": "README.md"
+    },
+    {
+      "path": "backend/app/main.py"
+    }
+  ]
+}

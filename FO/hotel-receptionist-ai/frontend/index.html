@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Receptionist AI - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="mb-12 text-center">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">
+                <i class="fas fa-hotel text-blue-500"></i> Hotel Receptionist AI
+            </h1>
+            <p class="text-gray-600">Sistema de recepción automatizada - Panel de control en tiempo real</p>
+            <div class="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-800 rounded-full">
+                <i class="fas fa-circle text-green-500"></i>
+                <span id="system-status">Sistema Operativo</span>
+            </div>
+        </header>
+
+        <!-- Stats Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Llamadas Hoy</p>
+                        <p class="text-3xl font-bold text-blue-600" id="calls-today">0</p>
+                    </div>
+                    <i class="fas fa-phone text-blue-500 text-3xl"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Reservas Activas</p>
+                        <p class="text-3xl font-bold text-green-600" id="active-reservations">0</p>
+                    </div>
+                    <i class="fas fa-calendar-check text-green-500 text-3xl"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Huéspedes</p>
+                        <p class="text-3xl font-bold text-purple-600" id="total-guests">0</p>
+                    </div>
+                    <i class="fas fa-users text-purple-500 text-3xl"></i>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Resolución IA</p>
+                        <p class="text-3xl font-bold text-orange-600" id="ai-resolution">0%</p>
+                    </div>
+                    <i class="fas fa-robot text-orange-500 text-3xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- Quick Actions -->
+            <div class="lg:col-span-1 bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-bolt text-yellow-500 mr-2"></i>Acciones Rápidas
+                </h2>
+                <div class="space-y-3">
+                    <button onclick="testCall()" class="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-blue-50 transition">
+                        <span class="font-medium">
+                            <i class="fas fa-phone text-blue-500 mr-2"></i>
+                            Probar Llamada
+                        </span>
+                        <i class="fas fa-play text-gray-400"></i>
+                    </button>
+                    
+                    <a href="http://localhost:8000/docs" target="_blank" class="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-green-50 transition block">
+                        <span class="font-medium">
+                            <i class="fas fa-book text-green-500 mr-2"></i>
+                            API Docs
+                        </span>
+                        <i class="fas fa-external-link-alt text-gray-400"></i>
+                    </a>
+                    
+                    <button onclick="checkAvailability()" class="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-purple-50 transition">
+                        <span class="font-medium">
+                            <i class="fas fa-search text-purple-500 mr-2"></i>
+                            Ver Disponibilidad
+                        </span>
+                        <i class="fas fa-arrow-right text-gray-400"></i>
+                    </button>
+                    
+                    <button onclick="loadAllData()" class="w-full flex items-center justify-between p-3 border rounded-lg hover:bg-orange-50 transition">
+                        <span class="font-medium">
+                            <i class="fas fa-sync text-orange-500 mr-2"></i>
+                            Actualizar Datos
+                        </span>
+                        <i class="fas fa-redo text-gray-400"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recent Calls -->
+            <div class="lg:col-span-2 bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-history text-blue-500 mr-2"></i>Llamadas Recientes
+                </h2>
+                <div id="recent-calls" class="space-y-3">
+                    <p class="text-gray-500">Cargando llamadas recientes...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Info -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-info-circle text-green-500 mr-2"></i>Información del Sistema
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-3">Estadísticas BD</h3>
+                    <div id="db-stats">
+                        <p class="text-gray-500">Cargando...</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-3">Servicios</h3>
+                    <div id="services-status">
+                        <p class="text-gray-500">Cargando...</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="font-medium text-gray-700 mb-3">API Endpoints</h3>
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-center">
+                            <code class="text-sm bg-gray-100 px-2 py-1 rounded">GET /health</code>
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <code class="text-sm bg-gray-100 px-2 py-1 rounded">GET /api/v1/stats/database</code>
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <code class="text-sm bg-gray-100 px-2 py-1 rounded">POST /api/v1/webhooks/twilio/incoming</code>
+                            <span class="text-green-600 text-sm">✓</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-12 text-center text-gray-500 text-sm">
+            <p>Hotel Receptionist AI v1.0 • <span id="current-time">--:--:--</span></p>
+            <p class="mt-1">
+                Backend: <a href="http://localhost:8000" class="text-blue-600 hover:underline">localhost:8000</a> • 
+                API Docs: <a href="http://localhost:8000/docs" class="text-blue-600 hover:underline" target="_blank">Swagger UI</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+        // URLs de la API
+        const API_BASE = 'http://localhost:8000';
+        
+        // Función para probar una llamada
+        async function testCall() {
+            try {
+                showNotification('📞 Enviando llamada de prueba...', 'info');
+                
+                const response = await fetch(`${API_BASE}/api/v1/webhooks/twilio/incoming`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: `From=+34600${Math.floor(Math.random() * 1000000)}&CallSid=test-${Date.now()}`
+                });
+                
+                if (response.ok) {
+                    showNotification('✅ Llamada de prueba enviada correctamente', 'success');
+                    // Recargar datos después de un momento
+                    setTimeout(loadAllData, 1000);
+                } else {
+                    showNotification('❌ Error en la llamada de prueba', 'error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('❌ Error de conexión con el servidor', 'error');
+            }
+        }
+        
+        // Función para ver disponibilidad
+        async function checkAvailability() {
+            const checkIn = '2024-01-10';
+            const checkOut = '2024-01-15';
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/v1/reservations/availability?check_in=${checkIn}&check_out=${checkOut}`);
+                const data = await response.json();
+                
+                let message = `📅 Disponibilidad para ${checkIn} a ${checkOut}:\n\n`;
+                
+                if (data.available) {
+                    if (data.room_types) {
+                        for (const [roomType, info] of Object.entries(data.room_types)) {
+                            message += `• ${roomType}: ${info.available || 0} disponibles - €${info.price || 0}/noche\n`;
+                        }
+                    }
+                    showNotification(message, 'info');
+                } else {
+                    showNotification('❌ No hay disponibilidad para las fechas seleccionadas', 'warning');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showNotification('❌ Error consultando disponibilidad', 'error');
+            }
+        }
+        
+        // Función para cargar todas las estadísticas
+        async function loadAllData() {
+            try {
+                showNotification('🔄 Actualizando datos...', 'info');
+                
+                // Cargar métricas del sistema
+                const [systemRes, callsRes, statsRes, recentCallsRes] = await Promise.all([
+                    fetch(`${API_BASE}/api/v1/metrics/system`),
+                    fetch(`${API_BASE}/api/v1/metrics/calls`),
+                    fetch(`${API_BASE}/api/v1/stats/database`),
+                    fetch(`${API_BASE}/api/v1/calls/recent`)
+                ]);
+                
+                if (!systemRes.ok || !callsRes.ok || !statsRes.ok || !recentCallsRes.ok) {
+                    throw new Error('Error en una o más respuestas de la API');
+                }
+                
+                const systemData = await systemRes.json();
+                const callsData = await callsRes.json();
+                const statsData = await statsRes.json();
+                const recentCallsData = await recentCallsRes.json();
+                
+                // Actualizar estadísticas principales
+                document.getElementById('calls-today').textContent = callsData.total_calls_today || '0';
+                document.getElementById('ai-resolution').textContent = callsData.automation_rate || '0%';
+                document.getElementById('active-reservations').textContent = statsData.active_reservations || '0';
+                document.getElementById('total-guests').textContent = statsData.total_guests || '0';
+                
+                // Actualizar estadísticas de BD
+                document.getElementById('db-stats').innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex justify-between">
+                            <span>Huéspedes totales:</span>
+                            <span class="font-medium">${statsData.total_guests || 0}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Reservas totales:</span>
+                            <span class="font-medium">${statsData.total_reservations || 0}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span>Logs de llamadas:</span>
+                            <span class="font-medium">${statsData.total_call_logs || 0}</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Actualizar estado de servicios
+                document.getElementById('services-status').innerHTML = `
+                    <div class="space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-server text-blue-500"></i>
+                                Backend API
+                            </span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Operativo</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-database text-green-500"></i>
+                                PostgreSQL
+                            </span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Conectado</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2">
+                                <i class="fas fa-phone text-purple-500"></i>
+                                Webhook Twilio
+                            </span>
+                            <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Activo</span>
+                        </div>
+                    </div>
+                `;
+                
+                // Actualizar llamadas recientes
+                if (recentCallsData.calls && recentCallsData.calls.length > 0) {
+                    const callsHtml = recentCallsData.calls.map(call => `
+                        <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                            <div>
+                                <p class="font-medium">${call.caller_number}</p>
+                                <p class="text-sm text-gray-500">
+                                    ${call.intent || 'Sin intención'} • 
+                                    ${Math.floor(call.duration_seconds / 60)}:${(call.duration_seconds % 60).toString().padStart(2, '0')}
+                                </p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full text-sm ${
+                                call.status === 'automated' ? 'bg-green-100 text-green-800' :
+                                call.status === 'transferred' ? 'bg-blue-100 text-blue-800' :
+                                'bg-gray-100 text-gray-800'
+                            }">
+                                ${call.status || 'desconocido'}
+                            </span>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('recent-calls').innerHTML = callsHtml;
+                } else {
+                    document.getElementById('recent-calls').innerHTML = `
+                        <p class="text-gray-500">No hay llamadas recientes registradas</p>
+                    `;
+                }
+                
+                // Actualizar estado del sistema
+                document.getElementById('system-status').textContent = 
+                    systemData.status === 'healthy' ? 'Sistema Operativo' : 'Sistema con Problemas';
+                
+                showNotification('✅ Datos actualizados correctamente', 'success');
+                
+            } catch (error) {
+                console.error('Error cargando datos:', error);
+                showNotification('❌ Error cargando datos del sistema', 'error');
+            }
+        }
+        
+        // Función para mostrar notificaciones
+        function showNotification(message, type = 'info') {
+            // Crear notificación
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all transform translate-x-0 ${
+                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+                'bg-blue-100 text-blue-800 border border-blue-200'
+            }`;
+            
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fas ${
+                        type === 'success' ? 'fa-check-circle' :
+                        type === 'error' ? 'fa-exclamation-circle' :
+                        'fa-info-circle'
+                    }"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+        
+        // Función para actualizar la hora
+        function updateTime() {
+            const now = new Date();
+            document.getElementById('current-time').textContent = 
+                now.toLocaleTimeString('es-ES', { hour12: false });
+        }
+        
+        // Cargar datos al iniciar
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAllData();
+            updateTime();
+            
+            // Actualizar cada 30 segundos
+            setInterval(loadAllData, 30000);
+            setInterval(updateTime, 1000);
+        });
+    </script>
+</body>
+</html>
+<script>
+    // Agregar botón de configuración Twilio al header
+    document.addEventListener('DOMContentLoaded', function() {
+        const header = document.querySelector('header');
+        if (header) {
+            const twilioBtn = document.createElement('a');
+            twilioBtn.href = '/twilio-admin.html';
+            twilioBtn.className = 'inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition ml-4';
+            twilioBtn.innerHTML = '<i class="fas fa-cog"></i> Configurar Twilio';
+            header.querySelector('div').appendChild(twilioBtn);
+        }
+    });
+</script>

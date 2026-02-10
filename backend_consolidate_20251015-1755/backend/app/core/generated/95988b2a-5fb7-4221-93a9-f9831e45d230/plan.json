@@ -1,0 +1,67 @@
+{
+  "modules": [
+    "api",
+    "db"
+  ],
+  "entities": [
+    {
+      "name": "Reservation",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "guest_name",
+          "type": "string"
+        },
+        {
+          "name": "check_in",
+          "type": "date"
+        },
+        {
+          "name": "check_out",
+          "type": "date"
+        }
+      ]
+    },
+    {
+      "name": "Room",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "number",
+          "type": "string"
+        },
+        {
+          "name": "type",
+          "type": "string"
+        },
+        {
+          "name": "price",
+          "type": "decimal"
+        }
+      ]
+    },
+    {
+      "name": "Invoice",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "amount",
+          "type": "decimal"
+        },
+        {
+          "name": "issued_date",
+          "type": "date"
+        }
+      ]
+    }
+  ]
+}

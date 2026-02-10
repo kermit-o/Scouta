@@ -1,0 +1,10 @@
+{
+  "project_name": "Sistema de Tareas Avanzado",
+  "version": "1.0.0",
+  "pipeline": "simple",
+  "tech_stack": [
+    "react",
+    "nodejs",
+    "mongodb"
+  ]
+}

@@ -1,0 +1,81 @@
+{
+  "api": [
+    {
+      "path": "/api/projects",
+      "methods": [
+        "GET",
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/projects/{id}",
+      "methods": [
+        "GET"
+      ]
+    },
+    {
+      "path": "/api/projects/{id}/requirements",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/projects/{id}/plan",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/projects/{id}/build",
+      "methods": [
+        "POST"
+      ]
+    },
+    {
+      "path": "/api/projects/{id}/artifact",
+      "methods": [
+        "GET"
+      ]
+    }
+  ],
+  "epics": [
+    {
+      "name": "Projects CRUD",
+      "stories": [
+        "Create project",
+        "List projects",
+        "Update requirements"
+      ]
+    },
+    {
+      "name": "Planning",
+      "stories": [
+        "Generate plan",
+        "Show plan in UI"
+      ]
+    },
+    {
+      "name": "Build & Package",
+      "stories": [
+        "Codegen skeleton",
+        "Zip artifact"
+      ]
+    }
+  ],
+  "entities": [
+    {
+      "name": "Project",
+      "fields": [
+        {
+          "name": "id",
+          "type": "uuid"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "features": []
+}

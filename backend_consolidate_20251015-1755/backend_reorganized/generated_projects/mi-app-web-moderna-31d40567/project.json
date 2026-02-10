@@ -1,0 +1,17 @@
+{
+  "project_id": "mi-app-web-moderna-31d40567",
+  "name": "Mi App Web Moderna",
+  "description": "Una aplicaci\u00f3n web full-stack con React y FastAPI",
+  "type": "web_app",
+  "features": [
+    "authentication",
+    "database",
+    "responsive design"
+  ],
+  "technologies": [
+    "react",
+    "fastapi",
+    "sqlite"
+  ],
+  "created_at": "2025-10-18T23:46:05.495352"
+}

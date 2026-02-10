@@ -1,0 +1,15 @@
+{
+  "name": "api-de-gesti\u00f3n-de-usuarios",
+  "version": "1.0.0",
+  "description": "Una API REST completa para gesti\u00f3n de usuarios con autenticaci\u00f3n JWT, base de datos y documentaci\u00f3n Swagger",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.0.0",
+    "react": "18.2.0",
+    "react-dom": "18.2.0"
+  }
+}

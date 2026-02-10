@@ -1,0 +1,18 @@
+{
+  "project_id": "e-commerce-inteligente-56fb1817",
+  "name": "E-commerce Inteligente",
+  "description": "Tienda online con recomendaciones de IA y personalizaci\u00f3n",
+  "type": "web_app",
+  "features": [
+    "recomendaciones IA",
+    "carrito inteligente",
+    "pagos online"
+  ],
+  "technologies": [
+    "react",
+    "nodejs",
+    "mongodb",
+    "tensorflow"
+  ],
+  "created_at": "2025-10-19T00:58:28.426965"
+}

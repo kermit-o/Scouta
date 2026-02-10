@@ -1,0 +1,16 @@
+{
+  "project_id": "app-m\u00f3vil-task-manager-efbe8f57",
+  "name": "App M\u00f3vil Task Manager",
+  "description": "Aplicaci\u00f3n m\u00f3vil para gesti\u00f3n de tareas",
+  "type": "mobile_app",
+  "features": [
+    "offline",
+    "sincronizaci\u00f3n",
+    "notificaciones"
+  ],
+  "technologies": [
+    "react-native",
+    "expo"
+  ],
+  "created_at": "2025-10-18T23:48:55.897890"
+}

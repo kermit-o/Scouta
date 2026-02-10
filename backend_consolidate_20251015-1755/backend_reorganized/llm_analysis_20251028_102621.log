@@ -1,0 +1,91 @@
+🔍 Analizando uso de LLMs en Forge SaaS...
+
+=== 1. BÚSQUEDA DE REFERENCIAS A LLMs EN CÓDIGO ===
+
+./analyze_real_agents.py:                has_ia = "openai" in content.lower() or "llm" in content.lower() or "gpt" in content.lower()
+./utils/config.py:    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+./test_smart_system.py:        from services.smart_deepseek_client import SmartDeepSeekClient
+./test_smart_system.py:        client = SmartDeepSeekClient()
+./test_real_intelligent_system.py:    """Test del sistema REAL que consulta a la API de DeepSeek"""
+./test_real_intelligent_system.py:    print("🧠 SISTEMA INTELIGENTE REAL - CONEXIÓN REAL A DEEPSEEK API")
+./test_real_intelligent_system.py:    print("🚀 INICIANDO SISTEMA REAL CON DEEPSEEK API...")
+./test_real_intelligent_system.py:    print("⚠️  Esto hará llamadas REALES a la API - puede tomar algunos segundos")
+./test_real_intelligent_system.py:        print(f"   Consultando a DeepSeek API para cada decisión")
+./config/settings.py:    DEEPSEEK_API_KEY: str | None = None
+./final_agent_comparison.py:    print("   • Integración con OpenAI GPT-4/Claude/etc.")
+./final_agent_comparison.py:                        if any(term in content.lower() for term in ["openai", "gpt-", "anthropic", "claude", "llm"]):
+./analyze_ia_issues.py:                if "DPSK_API" in env_content or "OPENAI_API" in env_content:
+./services/real_deepseek_client.py:Real DeepSeek API Client - Conecta REALMENTE a la API de DeepSeek
+./services/real_deepseek_client.py:class RealDeepSeekClient:
+./services/real_deepseek_client.py:    """Cliente REAL para DeepSeek AI API"""
+./services/real_deepseek_client.py:        self.api_key = api_key or os.getenv('DEEPSEEK_API_KEY')
+./services/real_deepseek_client.py:            raise ValueError("DEEPSEEK_API_KEY no encontrada en variables de entorno")
+./services/real_deepseek_client.py:        self.base_url = "https://api.deepseek.com/v1"
+./services/real_deepseek_client.py:        """Genera código REAL consultando a la API de DeepSeek"""
+
+=== 2. LOGS DE LLAMADAS A IA (últimos 50 líneas relevantes) ===
+
+./debug_specific_project.py:    response = requests.post(f"{BASE_URL}/api/projects/{PROJECT_ID}/generate")
+./debug_specific_project.py:    print(f"   Status Code: {response.status_code}")
+./debug_specific_project.py:    print(f"   Response Headers: {dict(response.headers)}")
+./debug_specific_project.py:    print(f"   Raw Response: {response.text}")
+./debug_specific_project.py:        data = response.json()
+./debug_specific_project.py:        print(f"   JSON Response: {json.dumps(data, indent=2)}")
+./debug_specific_project.py:        print(f"   ❌ Error parseando JSON: {e}")
+./core/database/debug_schema.py:    print(f"Error: {e}")
+./llm_analysis_20251028_102621.log:./utils/config.py:    DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY")
+./llm_analysis_20251028_102621.log:./test_smart_system.py:        from services.smart_deepseek_client import SmartDeepSeekClient
+./llm_analysis_20251028_102621.log:./test_smart_system.py:        client = SmartDeepSeekClient()
+./llm_analysis_20251028_102621.log:./test_real_intelligent_system.py:    """Test del sistema REAL que consulta a la API de DeepSeek"""
+./llm_analysis_20251028_102621.log:./test_real_intelligent_system.py:    print("🧠 SISTEMA INTELIGENTE REAL - CONEXIÓN REAL A DEEPSEEK API")
+./llm_analysis_20251028_102621.log:./test_real_intelligent_system.py:    print("🚀 INICIANDO SISTEMA REAL CON DEEPSEEK API...")
+./llm_analysis_20251028_102621.log:./test_real_intelligent_system.py:        print(f"   Consultando a DeepSeek API para cada decisión")
+./llm_analysis_20251028_102621.log:./config/settings.py:    DEEPSEEK_API_KEY: str | None = None
+./llm_analysis_20251028_102621.log:./services/real_deepseek_client.py:Real DeepSeek API Client - Conecta REALMENTE a la API de DeepSeek
+./llm_analysis_20251028_102621.log:./services/real_deepseek_client.py:class RealDeepSeekClient:
+./llm_analysis_20251028_102621.log:./services/real_deepseek_client.py:    """Cliente REAL para DeepSeek AI API"""
+./llm_analysis_20251028_102621.log:./services/real_deepseek_client.py:        self.api_key = api_key or os.getenv('DEEPSEEK_API_KEY')
+./llm_analysis_20251028_102621.log:./services/real_deepseek_client.py:            raise ValueError("DEEPSEEK_API_KEY no encontrada en variables de entorno")
+./llm_analysis_20251028_102621.log:./services/real_deepseek_client.py:        self.base_url = "https://api.deepseek.com/v1"
+./llm_analysis_20251028_102621.log:./services/real_deepseek_client.py:        """Genera código REAL consultando a la API de DeepSeek"""
+
+=== 3. RESUMEN DE PROYECTOS GENERADOS (últimos 5, con metadata IA) ===
+
+Proyecto: c51534d0-1874-468d-a5cc-9decdca093f7
+---
+Proyecto: app-móvil-task-manager-efbe8f57
+---
+Proyecto: app-móvil-fitness-ia-b8a353b6
+---
+Proyecto: mi-app-web-moderna-31d40567
+---
+Proyecto: plataforma-e-learning-514fb2ba
+---
+
+=== 4. ESTADO DE CLIENTES IA EN SERVICES/ ===
+
+-rw-rw-rw-   1 root      root       4522 Oct 25 17:04 deepseek_client.py
+-rw-rw-rw-   1 codespace codespace  7110 Oct 28 02:17 real_deepseek_client.py
+-rw-rw-rw-   1 codespace codespace 27734 Oct 28 10:04 robust_deepseek_client.py
+-rw-rw-rw-   1 codespace codespace 49490 Oct 28 02:49 smart_deepseek_client.py
+"""
+DeepSeek API Client for intelligent project generation
+"""
+import os
+import httpx
+from typing import Dict, List, Optional
+import json
+
+class DeepSeekClient:
+    """Client for DeepSeek AI API"""
+
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv('DEEPSEEK_API_KEY')
+        self.base_url = "https://api.deepseek.com/v1"
+        self.client = httpx.AsyncClient(timeout=30.0)
+
+    async def analyze_project_requirements(self, idea: str, project_type: str) -> Dict:
+        """Analyze project idea and generate detailed requirements"""
+        return self._fallback_analysis(idea, project_type)
+
+✅ Análisis completado. Revisa llm_analysis_20251028_102621.log o compártelo para más insights.

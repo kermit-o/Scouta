@@ -1,0 +1,40 @@
+"""
+Auto-generated Pydantic schemas for {{ model_class_name }}.
+
+Generated from lego_backend/schema_pydantic.py.j2.
+"""
+
+from typing import Optional
+from datetime import datetime
+from pydantic import BaseModel
+{% if extra_imports %}
+{{ extra_imports }}
+{% endif %}
+
+
+class {{ schema_base_name }}Base(BaseModel):
+{% for field in fields %}
+    {{ field.name }}: {{ field.type_hint }}
+{% endfor %}
+
+
+class {{ schema_create_name }}({{ schema_base_name }}Base):
+    """Schema used for creation."""
+    pass
+
+
+class {{ schema_update_name }}(BaseModel):
+    """Schema used for partial updates."""
+{% for field in fields %}
+    {{ field.name }}: Optional[{{ field.type_hint }}] = None
+{% endfor %}
+
+
+class {{ schema_read_name }}({{ schema_base_name }}Base):
+    """Schema returned to clients."""
+    id: int
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True

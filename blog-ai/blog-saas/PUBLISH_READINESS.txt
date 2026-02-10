@@ -1,0 +1,279 @@
+
+====================
+[2026-02-07T09:24:47Z] Paths
+====================
+ROOT=/workspaces/Scouta/blog-ai/blog-saas
+API=/workspaces/Scouta/blog-ai/blog-saas/api
+DB=/workspaces/Scouta/blog-ai/blog-saas/api/dev.db
+PWD=/workspaces/Scouta/blog-ai/blog-saas
+
+====================
+[2026-02-07T09:24:47Z] Tree (top)
+====================
+total 264
+drwxrwxrwx+ 5 codespace codespace  4096 Feb  7 09:24 .
+drwxrwxrwx+ 4 codespace codespace  4096 Feb  4 17:05 ..
+-rw-rw-rw-  1 codespace codespace   143 Feb  5 17:01 .dockerignore
+-rw-rw-rw-  1 codespace codespace    91 Feb  4 17:09 .gitignore
+-rw-rw-rw-  1 codespace codespace 98415 Feb  5 19:30 PROJECT_STATUS.txt
+-rw-rw-rw-  1 codespace codespace  7510 Feb  5 19:18 PROJECT_STATUS_FULL.txt
+-rw-rw-rw-  1 codespace codespace 94192 Feb  5 19:24 PROJECT_STATUS_FULL_V2.txt
+-rw-rw-rw-  1 codespace codespace   328 Feb  7 09:24 PUBLISH_READINESS.txt
+drwxrwxrwx+ 6 codespace codespace  4096 Feb  7 09:24 api
+-rwxrwxrwx  1 codespace codespace  1819 Feb  5 19:42 bootstrap_run.sh
+-rw-rw-rw-  1 codespace codespace   581 Feb  5 17:01 docker-compose.yml
+-rwxrwxrwx  1 codespace codespace  4011 Feb  5 19:30 publish_audit.sh
+-rwxrwxrwx  1 codespace codespace  2705 Feb  5 19:18 publish_audit_full.sh
+-rwxrwxrwx  1 codespace codespace  3575 Feb  5 19:22 publish_audit_full_v2.sh
+-rwxrwxrwx  1 codespace codespace  3628 Feb  7 09:24 publish_readiness.sh
+-rw-rw-rw-  1 codespace codespace    26 Feb  5 16:15 requirements.txt
+-rw-rw-rw-  1 codespace codespace   432 Feb  5 19:52 run_api.log
+drwxrwxrwx+ 2 codespace codespace  4096 Feb  5 17:10 templates
+drwxrwxrwx+ 4 codespace codespace  4096 Feb  4 17:12 web
+
+.
+api
+api/.venv
+api/.venv/bin
+api/.venv/include
+api/.venv/lib
+api/alembic
+api/alembic/__pycache__
+api/alembic/versions
+api/app
+api/app/__pycache__
+api/app/api
+api/app/core
+api/app/jobs
+api/app/models
+api/app/services
+api/app/web
+api/tests
+templates
+web
+web/.venv
+web/.venv/bin
+web/.venv/include
+web/.venv/lib
+web/app
+web/app/__pycache__
+web/app/routes
+web/app/services
+web/app/static
+web/app/templates
+web/app/utils
+
+====================
+[2026-02-07T09:24:47Z] Python/Venv
+====================
+/home/codespace/.python/current/bin/python
+Python 3.12.1
+jinja2: yes
+passlib: yes
+alembic: yes
+
+====================
+[2026-02-07T09:24:47Z] .env keys (redacted)
+====================
+SECRET_KEY=***REDACTED***
+DATABASE_URL=***REDACTED***
+DEEPSEEK_API_KEY=***REDACTED***
+DEEPSEEK_MODEL=***REDACTED***
+DEEPSEEK_BASE_URL=***REDACTED***
+DEEPSEEK_MAX_TOKENS=***REDACTED***
+DEEPSEEK_TEMPERATURE=***REDACTED***
+DEEPSEEK_TIMEOUT=***REDACTED***
+ACCESS_TOKEN_EXPIRE_MINUTES=***REDACTED***
+ALLOWED_ORIGINS=***REDACTED***
+AUTO_MODE_ENABLED=***REDACTED***
+AUTO_MODE_ORG_ID=***REDACTED***
+AUTO_MODE_INTERVAL_SECONDS=***REDACTED***
+AUTO_MODE_MAX_POSTS_PER_TICK=***REDACTED***
+AUTO_MODE_ACTIONS_PER_POST=***REDACTED***
+AUTO_MODE_SPAWN_PROBABILITY=***REDACTED***
+AUTO_MODE_MIN_POST_AGE_MINUTES=***REDACTED***
+
+====================
+[2026-02-07T09:24:47Z] Alembic status
+====================
+d9e2dd518d28 (head)
+d9e2dd518d28 (head)
+d9fbf3ad2165 -> d9e2dd518d28 (head), agent_policy_thresholds_and_shadowban
+762e3003a4f4 -> d9fbf3ad2165, add org_usage_daily
+75f067f42c1f -> 762e3003a4f4, add posts tags post_tags comments
+657480f24bee -> 75f067f42c1f, add agent_profiles and agent_actions
+771b814a374a -> 657480f24bee, add org_settings and agent_policies
+aaf8eeb1494e -> 771b814a374a, create orgs users org_members
+<base> -> aaf8eeb1494e, create orgs users org_members
+
+====================
+[2026-02-07T09:24:50Z] SQLite schema: tables + columns
+====================
+tables: 13
+
+-- agent_actions
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  agent_id INTEGER notnull=1 pk=0 default=None
+  target_type VARCHAR(20) notnull=1 pk=0 default=None
+  target_id INTEGER notnull=1 pk=0 default=None
+  action_type VARCHAR(30) notnull=1 pk=0 default=None
+  status VARCHAR(20) notnull=1 pk=0 default=None
+  content TEXT notnull=1 pk=0 default=None
+  policy_score INTEGER notnull=1 pk=0 default=None
+  policy_reason VARCHAR(500) notnull=1 pk=0 default=None
+  llm_provider VARCHAR(50) notnull=1 pk=0 default=None
+  llm_model VARCHAR(80) notnull=1 pk=0 default=None
+  prompt_hash VARCHAR(80) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+  published_at DATETIME notnull=0 pk=0 default=None
+
+-- agent_policies
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  allow_replies BOOLEAN notnull=1 pk=0 default=None
+  allow_reactions BOOLEAN notnull=1 pk=0 default=None
+  allow_critique BOOLEAN notnull=1 pk=0 default=None
+  max_risk_score INTEGER notnull=1 pk=0 default=None
+  require_human_review BOOLEAN notnull=1 pk=0 default=None
+  banned_topics VARCHAR(500) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+  updated_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+  auto_approve_threshold INTEGER notnull=1 pk=0 default=20
+  auto_reject_threshold INTEGER notnull=1 pk=0 default=80
+  enable_llm_moderation BOOLEAN notnull=1 pk=0 default=1
+
+-- agent_profiles
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  display_name VARCHAR(120) notnull=1 pk=0 default=None
+  handle VARCHAR(60) notnull=1 pk=0 default=None
+  avatar_url VARCHAR(500) notnull=1 pk=0 default=None
+  persona_seed TEXT notnull=1 pk=0 default=None
+  topics VARCHAR(500) notnull=1 pk=0 default=None
+  style VARCHAR(200) notnull=1 pk=0 default=None
+  risk_level INTEGER notnull=1 pk=0 default=None
+  is_enabled BOOLEAN notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+  updated_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+  is_shadow_banned BOOLEAN notnull=1 pk=0 default=0
+
+-- alembic_version
+  version_num VARCHAR(32) notnull=1 pk=1 default=None
+
+-- comments
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  post_id INTEGER notnull=1 pk=0 default=None
+  parent_comment_id INTEGER notnull=0 pk=0 default=None
+  author_type VARCHAR(10) notnull=1 pk=0 default=None
+  author_user_id INTEGER notnull=0 pk=0 default=None
+  author_agent_id INTEGER notnull=0 pk=0 default=None
+  body TEXT notnull=1 pk=0 default=None
+  status VARCHAR(20) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+
+-- org_members
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  user_id INTEGER notnull=1 pk=0 default=None
+  role VARCHAR(20) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+
+-- org_settings
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  agents_enabled BOOLEAN notnull=1 pk=0 default=None
+  auto_publish BOOLEAN notnull=1 pk=0 default=None
+  max_agents_per_post INTEGER notnull=1 pk=0 default=None
+  max_actions_per_day INTEGER notnull=1 pk=0 default=None
+  spawn_probability_base FLOAT notnull=1 pk=0 default=None
+  locale VARCHAR(10) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+  updated_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+
+-- org_usage_daily
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  day_utc DATE notnull=1 pk=0 default=None
+  actions_spawned INTEGER notnull=1 pk=0 default=None
+  actions_published INTEGER notnull=1 pk=0 default=None
+
+-- orgs
+  id INTEGER notnull=1 pk=1 default=None
+  name VARCHAR(200) notnull=1 pk=0 default=None
+  slug VARCHAR(80) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+
+-- post_tags
+  id INTEGER notnull=1 pk=1 default=None
+  post_id INTEGER notnull=1 pk=0 default=None
+  tag_id INTEGER notnull=1 pk=0 default=None
+
+-- posts
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  author_user_id INTEGER notnull=0 pk=0 default=None
+  title VARCHAR(200) notnull=1 pk=0 default=None
+  slug VARCHAR(120) notnull=1 pk=0 default=None
+  body_md TEXT notnull=1 pk=0 default=None
+  status VARCHAR(20) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+  published_at DATETIME notnull=0 pk=0 default=None
+
+-- tags
+  id INTEGER notnull=1 pk=1 default=None
+  org_id INTEGER notnull=1 pk=0 default=None
+  name VARCHAR(60) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+
+-- users
+  id INTEGER notnull=1 pk=1 default=None
+  email VARCHAR(255) notnull=1 pk=0 default=None
+  password_hash VARCHAR(255) notnull=1 pk=0 default=None
+  created_at DATETIME notnull=1 pk=0 default=CURRENT_TIMESTAMP
+
+====================
+[2026-02-07T09:24:50Z] Templates presence
+====================
+templates/admin_moderation.html
+templates/base.html
+templates/public_home.html
+templates/public_post.html
+
+====================
+[2026-02-07T09:24:50Z] Routes discovery (FastAPI routers)
+====================
+router-like files: 15
+ - app/api/v1/admin_posts.py
+ - app/api/v1/agent_factory.py
+ - app/api/v1/agent_policies.py
+ - app/api/v1/agents.py
+ - app/api/v1/auth.py
+ - app/api/v1/comments.py
+ - app/api/v1/moderation.py
+ - app/api/v1/orgs.py
+ - app/api/v1/posts.py
+ - app/api/v1/public.py
+ - app/api/v1/settings.py
+ - app/api/v1/spawn.py
+ - app/web/admin_auto.py
+ - app/web/admin_moderation.py
+ - app/web/public_blog.py
+
+====================
+[2026-02-07T09:24:50Z] Runtime sanity (if server running)
+====================
+TIP: run uvicorn in another terminal: uvicorn app.main:app --env-file .env --host 0.0.0.0 --port 8000
+http://localhost:8000/openapi.json -> 200
+http://localhost:8000/blog/outman-studio -> 404
+http://localhost:8000/blog/outman-studio/hello-agents -> 200
+
+====================
+[2026-02-07T09:24:50Z] Auth+spawn smoke test (requires server running)
+====================
+WARN: login did not return token (server down or auth failing)
+
+====================
+[2026-02-07T09:24:50Z] DONE
+====================

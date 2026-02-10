@@ -1,0 +1,40 @@
+services:
+  db:
+    image: postgres:16
+    container_name: ecommerce-db
+    environment:
+      POSTGRES_DB: forge
+      POSTGRES_USER: forge
+      POSTGRES_PASSWORD: forge
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_ecommerce:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U forge -d forge"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: ecommerce-app
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # URL que usa SQLAlchemy en backend/app/db.py
+      - DATABASE_URL=postgresql+psycopg2://forge:forge@db:5432/forge
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./backend:/app/backend
+      - ./alembic:/app/alembic
+      - ./alembic.ini:/app/alembic.ini
+    working_dir: /app
+    command: >
+      bash -lc "alembic -c alembic.ini upgrade head &&
+                uvicorn backend.app.main:app --host 0.0.0.0 --port 8081"
+
+volumes:
+  pgdata_ecommerce:

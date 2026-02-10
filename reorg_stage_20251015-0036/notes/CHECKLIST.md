@@ -1,0 +1,11 @@
+# CHECKLIST (Staging)
+- [ ] Backends consolidados bajo backend/app
+- [ ] core → backend/app/core (importable)
+- [ ] Alembic único en backend/migrations
+- [ ] settings/db/logging en backend/app/config
+- [ ] Base declarativa única en backend/app/models
+- [ ] /health responde en el STAGE cuando se monte
+- [ ] Frontend copiado a /frontend (si aplica)
+- [ ] Docker y compose listos en /docker (pendiente)
+- [ ] Revisar MISSING_IN_MAP.md
+- [ ] Validar imports reescritos (grep "from core." residual)

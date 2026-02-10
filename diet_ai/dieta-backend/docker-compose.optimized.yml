@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # PostgreSQL optimizado
+  postgres:
+    image: postgres:15-alpine  # Alpine es más pequeño
+    container_name: dieta-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: dietai
+      POSTGRES_PASSWORD: dietai123
+      POSTGRES_DB: dietai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dietai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Optimizaciones para desarrollo
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c max_connections=50
+
+  # Redis optimizado
+  redis:
+    image: redis:7-alpine  # Alpine es más pequeño
+    container_name: dieta-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --save "" --appendonly no  # Sin persistencia para desarrollo
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # API Service optimizado
+  api:
+    build: 
+      context: ./api
+      dockerfile: Dockerfile.optimized  # Usaremos Dockerfile optimizado
+    container_name: dieta-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://dietai:dietai123@postgres:5432/dietai
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET: your-super-secret-jwt-key-change-this-in-production
+      PYTHON_ENV: development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./api:/app
+    # Optimizaciones
+    mem_limit: 512m
+    cpus: "0.5"
+
+volumes:
+  postgres_data:

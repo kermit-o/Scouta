@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Global Feed</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; }
+    .top { display:flex; justify-content:space-between; align-items:center; margin-bottom: 16px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 12px; padding: 14px 16px; margin: 10px 0; }
+    .meta { color:#6b7280; font-size: 13px; margin-bottom: 6px; }
+    a { color:#111827; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .pager { display:flex; gap: 10px; margin-top: 18px; }
+    .btn { border:1px solid #e5e7eb; padding:8px 10px; border-radius: 10px; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1 style="margin:0;">Global Feed</h1>
+    <div><a class="btn" href="/blog">Refresh</a></div>
+  </div>
+
+  {% if posts and posts|length > 0 %}
+    {% for p in posts %}
+      <div class="card">
+        <div class="meta">{{ p.org_name }} · <code>/blog/{{ p.org_slug }}/{{ p.post_slug }}</code></div>
+        <div style="font-size:18px; font-weight:650;">
+          <a href="/blog/{{ p.org_slug }}/{{ p.post_slug }}">{{ p.post_title }}</a>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>No posts found (or none published yet).</p>
+  {% endif %}
+
+  <div class="pager">
+    {% if page > 1 %}
+      <a class="btn" href="/blog?page={{ page - 1 }}&per_page={{ per_page }}">← Prev</a>
+    {% endif %}
+    <a class="btn" href="/blog?page={{ page + 1 }}&per_page={{ per_page }}">Next →</a>
+  </div>
+</body>
+</html>

@@ -1,0 +1,95 @@
+Resumen del Proyecto - Tue Nov 18 05:42:37 UTC 2025
+==========================================
+
+INFORMACIÓN BÁSICA:
+-------------------
+Directorio actual: /workspaces/Scouta/backend_consolidate_20251015-1755
+Fecha de análisis: Tue Nov 18 05:42:38 UTC 2025
+Tipo de proyecto: No identificado
+
+ESTRUCTURA DEL PROYECTO:
+------------------------
+./docker/Dockerfile.backend
+./docker/Dockerfile.frontend
+./docker/compose.yml
+./docker/compose.yml.bak.20251030_120914
+./project_summary_20251118_054237.txt
+./forge_report_20251030_114735.md
+./forge_inspect_log.txt
+./=8.2.0
+./test_enhanced_intake.py
+./=2.0.0
+./backend_reorganized/forge_fix_buildctx.sh
+./backend_reorganized/RESUMEN_FINAL_CORREGIDO.md
+./backend_reorganized/server.pid
+./backend_reorganized/generated_projects/mi-landing-page-profesional-ee2b4a81/index.html
+./backend_reorganized/generated_projects/mi-landing-page-profesional-ee2b4a81/README.md
+./backend_reorganized/generated_projects/mi-landing-page-profesional-ee2b4a81/styles.css
+./backend_reorganized/generated_projects/mi-landing-page-profesional-ee2b4a81/forge.config.json
+./backend_reorganized/generated_projects/mi-landing-page-profesional-ee2b4a81/project_metadata.json
+./backend_reorganized/generated_projects/llm-demo-forge-85046e67/README.md
+./backend_reorganized/generated_projects/llm-demo-forge-85046e67/package.json
+./backend_reorganized/generated_projects/llm-tienda-online-real-tienda-o/README.md
+./backend_reorganized/generated_projects/llm-tienda-online-real-tienda-o/package.json
+./backend_reorganized/generated_projects/api-de-gestión-de-usuarios-1bb63f9c/README.md
+./backend_reorganized/generated_projects/api-de-gestión-de-usuarios-1bb63f9c/forge.config.json
+./backend_reorganized/generated_projects/api-de-gestión-de-usuarios-1bb63f9c/project_metadata.json
+./backend_reorganized/generated_projects/api-de-gestión-de-usuarios-1bb63f9c/backend/main.py
+./backend_reorganized/generated_projects/api-de-gestión-de-usuarios-1bb63f9c/backend/requirements.txt
+./backend_reorganized/generated_projects/api-de-gestión-de-usuarios-1bb63f9c/frontend/package.json
+./backend_reorganized/generated_projects/sistema-de-tareas-avanzado-ee339d6e/index.html
+./backend_reorganized/generated_projects/sistema-de-tareas-avanzado-ee339d6e/README.md
+./backend_reorganized/generated_projects/sistema-de-tareas-avanzado-ee339d6e/styles.css
+./backend_reorganized/generated_projects/sistema-de-tareas-avanzado-ee339d6e/forge.config.json
+./backend_reorganized/generated_projects/sistema-de-tareas-avanzado-ee339d6e/project_metadata.json
+./backend_reorganized/generated_projects/sistema-ia-test-a55a6aa3/README.md
+./backend_reorganized/generated_projects/sistema-ia-test-a55a6aa3/project.json
+./backend_reorganized/generated_projects/sistema-ia-test-a55a6aa3/backend/app/main.py
+./backend_reorganized/generated_projects/sistema-ia-test-a55a6aa3/backend/requirements.txt
+./backend_reorganized/generated_projects/sistema-ia-test-a55a6aa3/frontend/package.json
+./backend_reorganized/generated_projects/sistema-ia-test-a55a6aa3/frontend/public/index.html
+./backend_reorganized/generated_projects/sistema-ia-test-a55a6aa3/frontend/public/favicon.ico
+./backend_reorganized/generated_projects/real-api-ecommerce-real-a8fcb4e5/README.md
+./backend_reorganized/generated_projects/real-api-ecommerce-real-a8fcb4e5/main.py
+./backend_reorganized/generated_projects/real-api-ecommerce-real-a8fcb4e5/requirements.txt
+./backend_reorganized/generated_projects/api-de-análisis-de-datos-58fa7e1b/README.md
+./backend_reorganized/generated_projects/api-de-análisis-de-datos-58fa7e1b/project.json
+./backend_reorganized/generated_projects/api-de-análisis-de-datos-58fa7e1b/Dockerfile
+./backend_reorganized/generated_projects/api-de-análisis-de-datos-58fa7e1b/app/main.py
+./backend_reorganized/generated_projects/api-de-análisis-de-datos-58fa7e1b/requirements.txt
+./backend_reorganized/generated_projects/real-mi-api-final-funcionando-792cb918/README.md
+./backend_reorganized/generated_projects/real-mi-api-final-funcionando-792cb918/main.py
+
+ARCHIVOS DE CONFIGURACIÓN DETECTADOS:
+-------------------------------------
+
+ANÁLISIS DE CÓDIGO FUENTE:
+--------------------------
+ARCHIVOS POR TIPO:
+  Python:  559
+  JavaScript:  42
+  TypeScript:  13
+  Java:  0
+  Go:  0
+  Rust:  0
+  PHP:  0
+  HTML:  11
+  CSS:  10
+
+DEPENDENCIAS:
+-------------
+
+DOCUMENTACIÓN:
+--------------
+No se encontró README.md
+
+ANÁLISIS DEL PROPÓSITO:
+-----------------------
+✓ Incluye tests
+
+ESTADO DEL PROYECTO:
+--------------------
+✓ Estructura analizada: Tue Nov 18 05:42:40 UTC 2025
+✓ Archivos de código detectados
+✓ Dependencias identificadas
+✓ Listo para continuar desarrollo

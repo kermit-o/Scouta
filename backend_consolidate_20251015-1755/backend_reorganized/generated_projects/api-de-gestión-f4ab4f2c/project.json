@@ -1,0 +1,17 @@
+{
+  "project_id": "api-de-gesti\u00f3n-f4ab4f2c",
+  "name": "API de Gesti\u00f3n",
+  "description": "API REST para sistema de gesti\u00f3n",
+  "type": "api_service",
+  "features": [
+    "crud",
+    "autenticaci\u00f3n",
+    "documentaci\u00f3n"
+  ],
+  "technologies": [
+    "fastapi",
+    "sqlalchemy",
+    "jwt"
+  ],
+  "created_at": "2025-10-18T23:48:55.799726"
+}

@@ -1,0 +1,17 @@
+{
+  "backend": [
+    "fastapi",
+    "sqlalchemy",
+    "pydantic"
+  ],
+  "frontend": [
+    "react",
+    "typescript",
+    "tailwind"
+  ],
+  "dev": [
+    "pytest",
+    "docker",
+    "github-actions"
+  ]
+}

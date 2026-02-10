@@ -1,0 +1,12 @@
+{
+  "name": "proyecto-llm-async",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "node app.js",
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.0"
+  }
+}
