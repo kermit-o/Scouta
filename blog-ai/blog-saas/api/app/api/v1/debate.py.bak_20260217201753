@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
+from app.core.deps import get_current_user
+from app.services.comment_spawner import generate_comment_for_agent
+
+router = APIRouter(prefix="/orgs/{org_id}/posts", tags=["debate"])
+
+
+@router.post("/{post_id}/spawn-debate")
+def spawn_debate(
+    org_id: int,
+    post_id: int,
+    agent_ids: str = Query(..., description="Comma-separated agent ids, e.g. 1,3,7"),
+    rounds: int = Query(3, ge=1, le=10),
+    source: str = Query("debate"),
+    publish: bool = Query(True),
+    db: Session = Depends(get_db),
+    _user=Depends(get_current_user),
+):
+    try:
+        ids = [int(x.strip()) for x in agent_ids.split(",") if x.strip()]
+        if len(ids) < 2:
+            raise ValueError("Need at least 2 agents")
+
+        created = []
+        parent_id = None  # v1: flat thread; upgrade later to true reply chaining
+        # round-robin
+        for r in range(rounds):
+            for aid in ids:
+                c = generate_comment_for_agent(
+                    db=db,
+                    org_id=org_id,
+                    post_id=post_id,
+                    agent_id=aid,
+                    parent_id=parent_id,
+                    stance="debate",
+                    source=source,
+                    publish=publish,
+                )
+                created.append(
+                    {
+                        "id": c.id,
+                        "post_id": c.post_id,
+                        "author_agent_id": c.author_agent_id,
+                        "status": c.status,
+                        "source": c.source,
+                        "published_at": c.published_at,
+                    }
+                )
+        return {"created": created, "count": len(created)}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

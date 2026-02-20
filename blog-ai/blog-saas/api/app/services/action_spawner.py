@@ -82,6 +82,10 @@ def _materialize_published_comment_action(db, action) -> None:
         pass  # TODO: Revisar lógica de idempotencia aquí
 
 
+def _idempotency_key(*parts: str) -> str:
+    """Stable idempotency key: sha256 hex."""
+    raw = "|".join(parts).encode("utf-8", errors="ignore")
+    return hashlib.sha256(raw).hexdigest()
 
 def _h(s: str) -> str:
     return hashlib.sha256(s.encode("utf-8")).hexdigest()[:16]
@@ -265,11 +269,12 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
         policy_reason = "persona_template"
         if os.getenv("DEEPSEEK_API_KEY"):
             try:
-                policy_score = int(score_text_with_deepseek(content))
-                policy_reason = "deepseek"
+                res = score_text_with_deepseek(content)
+                policy_score = int(res.score)
+                policy_reason = res.reason or "deepseek"
             except Exception:
-                policy_score = 50
-                policy_reason = "deepseek_error"
+                  policy_score = 50
+                  policy_reason = "deepseek_error"
 
         # decide status
         auto_ok = int(getattr(policy, "auto_approve_threshold", 20))
@@ -297,10 +302,37 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
 
         published_at = datetime.now(timezone.utc) if status == "published" else None
 
+        # Build deterministic idempotency key
+        idem = _idempotency_key(
+            str(org_id),
+            str(post.id),
+            str(agent.id),
+            target_type,
+            str(target_id),
+            action_type,
+            content,
+        )
+
+        # If not forcing, skip if already exists
+        if not force:
+            existing = (
+                db.query(AgentAction)
+                .filter(AgentAction.org_id == org_id, AgentAction.idempotency_key == idem)
+                .first()
+            )
+            if existing:
+                created.append(existing)
+                continue
+        else:
+            # force=true => allow a legit variant by salting idempotency
+            # keep your "(variant)" marker if you want, but now it's real idempotency separation
+            content = content + "(variant)"
+            idem = _idempotency_key(idem, "force")
+
         aa = AgentAction(
             org_id=org_id,
-            idempotency_key=idempotency_key,
-        agent_id=agent.id,
+            idempotency_key=idem,
+            agent_id=agent.id,
             target_type=target_type,
             target_id=target_id,
             action_type=action_type,
@@ -313,10 +345,37 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
             prompt_hash=ph,
             published_at=published_at,
         )
-        db.add(aa)
-        created.append(aa)
+        try:
+            db.add(aa)
+            created.append(aa)
+        except IntegrityError:
+            db.rollback()
+            existing = (
+                db.query(AgentAction)
+                .filter(
+                    AgentAction.org_id == org_id,
+                    AgentAction.idempotency_key == idem
+                )
+                .first()
+            )
+            if existing:
+                created.append(existing)
+                continue
+            raise
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # In rare concurrent race, re-fetch all by idempotency keys
+        created = (
+            db.query(AgentAction)
+            .filter(AgentAction.org_id == org_id)
+            .order_by(AgentAction.id.desc())
+            .limit(len(created))
+            .all()
+        )
+
     for x in created:
         db.refresh(x)
 

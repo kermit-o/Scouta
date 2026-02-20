@@ -1,3 +1,4 @@
+import time
 import os
 import requests
 from typing import Any
@@ -34,7 +35,90 @@ class DeepSeekClient:
             "Authorization": f"Bearer {self.api_key}",
         }
 
-        r = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+
+        t0 = time.time()
+
+
+        try:
+
+
+
+            for attempt in range(3):
+
+
+
+                try:
+
+
+
+                    t0 = time.time()
+
+
+
+                    r = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+
+
+
+                    break
+
+
+
+                except requests.Timeout as e:
+
+
+
+                    if attempt == 2:
+
+
+
+                        raise
+
+
+
+                    time.sleep(1.5 * (attempt + 1))
+
+
+
+
+        except requests.Timeout as e:
+
+
+            with open("/tmp/deepseek_http_raw.log", "a", encoding="utf-8") as f:
+
+
+                f.write(f"\n=== TIMEOUT after {self.timeout}s ===\n")
+
+
+                f.write(f"url={url}\n")
+
+
+                f.write(f"model={self.model}\n")
+
+
+                f.write(f"max_tokens={self.max_tokens} temperature={self.temperature}\n")
+
+
+            raise
+
+
+        dt = time.time() - t0
+
+
+        with open("/tmp/deepseek_http_raw.log", "a", encoding="utf-8") as f:
+
+
+            f.write(f"\n=== RESPONSE {r.status_code} in {dt:.2f}s ===\n")
+
+
+            f.write(f"url={url}\n")
+
+
+            f.write(f"headers={dict(r.headers)}\n")
+
+
+            f.write((r.text[:8000] + "\n"))
+
+
         r.raise_for_status()
         data = r.json()
 

@@ -1,10 +1,17 @@
-__pycache__/
+# Python
+api/__pycache__/
+api/**/__pycache__/
+api/.venv/
+api/dev.db
+api/*.log
+api/.env
+
+# Node
+frontend/node_modules/
+frontend/.next/
+frontend/.env.local
+frontend/*.log
+
+# General
 *.pyc
-.venv/
-.env
-.env.*
-.idea/
-.vscode/
-.mypy_cache/
-.pytest_cache/
-*.sqlite
+.DS_Store

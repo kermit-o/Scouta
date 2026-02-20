@@ -1,8 +1,12 @@
+from app.api.v1.spawn import router as spawn_router
+from app.api.v1.auth import router as auth_router
 
 """
 FastAPI app - VERSIÓN SIMPLE QUE FUNCIONA
 """
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
+from app.api.v1.api import api_router
+from fastapi import Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 import uvicorn
@@ -12,6 +16,8 @@ from app.models.post import Post
 from app.models.user import User
 from app.models.org import Org
 import app.models  # Para registrar todos los modelos
+from app.api.v1 import agent_posts
+
 
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine)
@@ -21,14 +27,27 @@ app = FastAPI(
     description="AI-powered blog content generation",
     version="1.0.0"
 )
+app.include_router(api_router, prefix="/api/v1")
 
 # CORS
+import os
+
+ALLOWED_ORIGINS = [
+    o.strip()
+    for o in os.getenv(
+        "ALLOWED_ORIGINS",
+        "http://localhost:3000,"
+        "https://verbose-funicular-54pj46qxgw5h75x5-3000.app.github.dev",
+    ).split(",")
+    if o.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
 )
 
 # Dependency
@@ -60,21 +79,6 @@ async def root():
 
 # SIMPLE AUTH (como funcionaba antes)
 from fastapi.security import OAuth2PasswordRequestForm
-
-@app.post("/api/v1/auth/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    """Login simple - como funcionaba antes"""
-    if form_data.username == "outman3@example.com" and form_data.password == "ChangeMe123!":
-        return {
-            "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoxNzcwNjc3NTY1fQ.8nWo0gQQc0buSSAHHF7HKfxB6O9IzTrDlqpGIXguEmc",
-            "token_type": "bearer",
-            "user": {
-                "id": 1,
-                "email": "outman3@example.com",
-                "name": "Outman Test"
-            }
-        }
-    raise HTTPException(status_code=401, detail="Invalid credentials")
 
 # SIMPLE POST GENERATION (como funcionaba antes)
 @app.post("/api/v1/orgs/{org_id}/generate-post")
@@ -120,3 +124,7 @@ async def get_posts(org_id: int, db: Session = Depends(get_db)):
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+# auth_router ya incluido en api_router — eliminado duplicado
+app.include_router(spawn_router, prefix="/api/v1")
+app.include_router(agent_posts.router, prefix="/api/v1")

@@ -1,0 +1,128 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from datetime import datetime, timezone
+from typing import Optional
+
+from sqlalchemy.orm import Session
+
+from app.models.comment import Comment
+from app.models.post import Post
+from app.models.agent_profile import AgentProfile
+from app.services.deepseek_client import DeepSeekClient
+
+
+def _sha256(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+def _now_utc_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _must_json(system: str, user: str, ds: DeepSeekClient) -> dict:
+    sys = system.strip() + "\n\nReturn ONLY valid JSON. No markdown. No code fences."
+    out = ds.chat(system=sys, user=user)
+    try:
+        return json.loads(out)
+    except Exception:
+        raise ValueError(f"Model did not return JSON (len={len(out)})")
+
+
+def generate_comment_for_agent(
+    db: Session,
+    org_id: int,
+    post_id: int,
+    agent_id: int,
+    parent_comment_id: Optional[int] = None,
+    stance: str = "neutral",
+    source: str = "debate",
+    publish: bool = True,
+) -> Comment:
+    post = db.query(Post).filter(Post.id == post_id, Post.org_id == org_id).first()
+    if not post:
+        raise ValueError("Post not found")
+
+    agent = db.query(AgentProfile).filter(AgentProfile.id == agent_id, AgentProfile.org_id == org_id).first()
+    if not agent or not getattr(agent, "is_enabled", True) or getattr(agent, "is_shadow_banned", False):
+        raise ValueError("Agent not eligible")
+
+    # Context: last few comments for this post (simple v1)
+    recent = (
+        db.query(Comment)
+        .filter(Comment.org_id == org_id, Comment.post_id == post_id)
+        .order_by(Comment.id.desc())
+        .limit(6)
+        .all()
+    )
+    recent = list(reversed(recent))
+
+    ctx_lines = []
+    for c in recent:
+        who = f"{c.author_type}:{c.author_agent_id or c.author_user_id or 'n/a'}"
+        ctx_lines.append(f"- [{who}] {c.body[:400]}")
+    ctx = "\n".join(ctx_lines) if ctx_lines else "(no prior comments)"
+
+    ds = DeepSeekClient()
+
+    system = f"""
+You are an expert commenter.
+Agent style: {getattr(agent, "style", "")}
+Agent topics: {getattr(agent, "topics", "")}
+Stance: {stance}
+
+Return JSON object:
+- body_md: string (markdown allowed)
+- summary: string (1 sentence)
+"""
+
+    user = f"""
+POST_TITLE: {post.title}
+POST_BODY_MD: {post.body_md[:3500]}
+
+RECENT_COMMENTS:
+{ctx}
+
+Write ONE comment as this agent. Make it distinct and specific.
+"""
+
+    data = _must_json(system=system, user=user, ds=ds)
+    body_md = (data.get("body_md") or "").strip()
+    if not body_md:
+        raise ValueError("Empty body_md from model")
+
+    h = _sha256(f"{org_id}|{post_id}|{agent_id}|{body_md}")
+    exists = (
+        db.query(Comment)
+        .filter(Comment.org_id == org_id, Comment.post_id == post_id, Comment.content_hash == h)
+        .first()
+    )
+    if exists:
+        return exists
+
+    status = "published" if publish else "draft"
+    published_at = _now_utc_iso() if publish else None
+
+    row = Comment(
+        org_id=org_id,
+        post_id=post_id,
+        parent_comment_id=parent_comment_id,
+        author_user_id=None,
+        author_agent_id=agent_id,
+        author_type="agent",
+        body=body_md,
+        status=status,
+        source=source,
+        content_hash=h,
+        published_at=published_at,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+# --- compatibility alias (router expects this name) ---
+def spawn_debate_for_post(*args, **kwargs):
+    raise ImportError('spawn_debate_for_post alias added, but no underlying spawn_* function found in comment_spawner.py')

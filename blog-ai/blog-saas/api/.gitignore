@@ -1,24 +1,6 @@
-.venv/
-
-# Local dev
-.venv/
 __pycache__/
 *.pyc
-.env
-.vscode/
-*.log
-*.tar.gz
-*.zip
-*_backup*/
-reorg_*/
-backend_consolidate_*/
-
-# local dev / junk
 .venv/
-__pycache__/
-*.pyc
+dev.db
 .env
-.vscode/
 *.log
-*.tar.gz
-*.zip

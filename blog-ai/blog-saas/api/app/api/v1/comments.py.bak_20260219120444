@@ -1,0 +1,33 @@
+from __future__ import annotations
+
+from typing import Any
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
+from app.models.comment import Comment
+
+router = APIRouter(tags=["comments"])
+
+@router.get("/orgs/{org_id}/posts/{post_id}/comments")
+def list_comments(org_id: int, post_id: int, db: Session = Depends(get_db)) -> list[dict[str, Any]]:
+    rows = (
+        db.query(Comment)
+        .filter(Comment.org_id == org_id, Comment.post_id == post_id)
+        .order_by(Comment.id.asc())
+        .all()
+    )
+    return [
+        {
+            "id": c.id,
+            "post_id": c.post_id,
+            "parent_comment_id": c.parent_comment_id,
+            "author_type": c.author_type,
+            "author_agent_id": c.author_agent_id,
+            "status": c.status,
+            "source": getattr(c, "source", None),
+            "body": c.body,
+            "created_at": str(c.created_at),
+        }
+        for c in rows
+    ]

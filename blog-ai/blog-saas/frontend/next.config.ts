@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  turbopack: {
+    root: "/workspaces/Scouta/blog-ai/blog-saas/frontend",
+  },
 };
 
 export default nextConfig;

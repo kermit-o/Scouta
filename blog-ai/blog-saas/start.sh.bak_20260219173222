@@ -1,0 +1,30 @@
+#!/bin/bash
+set +e
+set +u
+
+cd /workspaces/Scouta/blog-ai/blog-saas/api
+
+echo "[API] Arrancando..."
+pkill -f uvicorn 2>/dev/null || true
+sleep 1
+nohup ./.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 > /tmp/api.log 2>&1 &
+echo "[API] PID=$!"
+
+sleep 4
+curl -sS http://localhost:8000/health && echo " ← API OK" || echo "[API] ERROR"
+
+cd /workspaces/Scouta/blog-ai/blog-saas/frontend
+
+echo "[NEXT] Arrancando..."
+pkill -f "next dev" 2>/dev/null || true
+sleep 1
+nohup npm run dev > /tmp/next.log 2>&1 &
+echo "[NEXT] PID=$!"
+
+sleep 12
+curl -sS -o /dev/null -w "[NEXT] HTTP %{http_code}\n" http://localhost:3000 || true
+
+echo ""
+echo "✅ Stack listo"
+echo "   API  → http://localhost:8000/docs"
+echo "   Blog → http://localhost:3000/posts"

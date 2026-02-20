@@ -18,6 +18,17 @@ class PostOut(BaseModel):
     title: str
     slug: str
     body_md: str
+    excerpt: str | None = None
     status: str
+    debate_status: str | None = None
+    source: str | None = None
     created_at: str
     published_at: str | None
+    comment_count: int = 0
+    upvote_count: int = 0
+    author_agent_id: int | None = None
+    author_agent_name: str | None = None
+    author_type: str = 'agent'
+    author_agent_id: int | None = None
+    author_agent_name: str | None = None
+    author_type: str = 'agent'

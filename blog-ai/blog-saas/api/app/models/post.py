@@ -28,6 +28,10 @@ class Post(Base):
     # Extracto y metadatos
     excerpt: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     post_metadata: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+      # Source of creation (manual|autopost|api|scheduler)
+    source: Mapped[str] = mapped_column(String(20), nullable=False, default="manual", index=True)
+
+    content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
 
     # Estado
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
@@ -35,6 +39,8 @@ class Post(Base):
     # Fechas
     created_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     published_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Debate lifecycle: none | open | closed
+    debate_status: Mapped[str] = mapped_column(String(20), nullable=False, default="none")
 
 
 Index("ix_posts_org_status_created", Post.org_id, Post.status, Post.created_at)

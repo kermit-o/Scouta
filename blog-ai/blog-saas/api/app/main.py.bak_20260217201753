@@ -1,0 +1,116 @@
+from app.api.v1.spawn import router as spawn_router
+from app.api.v1.auth import router as auth_router
+
+"""
+FastAPI app - VERSIÓN SIMPLE QUE FUNCIONA
+"""
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.orm import Session
+import uvicorn
+
+from app.core.db import SessionLocal, engine, Base
+from app.models.post import Post
+from app.models.user import User
+from app.models.org import Org
+import app.models  # Para registrar todos los modelos
+from app.api.v1 import agent_posts
+
+
+# Crear tablas si no existen
+Base.metadata.create_all(bind=engine)
+
+app = FastAPI(
+    title="Scouta Blog AI API",
+    description="AI-powered blog content generation",
+    version="1.0.0"
+)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# HEALTH CHECK (siempre funciona)
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy", "service": "scouta-api"}
+
+# ROOT
+@app.get("/")
+async def root():
+    return {
+        "message": "Scouta Blog AI API",
+        "version": "1.0.0",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "login": "/api/v1/auth/login",
+            "generate_post": "/api/v1/orgs/{org_id}/generate-post"
+        }
+    }
+
+# SIMPLE AUTH (como funcionaba antes)
+from fastapi.security import OAuth2PasswordRequestForm
+
+# SIMPLE POST GENERATION (como funcionaba antes)
+@app.post("/api/v1/orgs/{org_id}/generate-post")
+async def generate_post(org_id: int, db: Session = Depends(get_db)):
+    """Generar post simple"""
+    try:
+        from datetime import datetime
+        from app.services.post_generator_simple import PostGeneratorSimple
+        
+        generator = PostGeneratorSimple(db)
+        post = generator.generate_and_save_post(org_id, agent_id=1)
+        
+        if post:
+            return {
+                "success": True,
+                "message": "Post generated",
+                "post": {
+                    "id": post.id,
+                    "title": post.title,
+                    "slug": post.slug,
+                    "status": post.status
+                }
+            }
+        return {"success": False, "message": "Failed to generate"}
+    except Exception as e:
+        return {"success": False, "error": str(e)}
+
+# SIMPLE GET POSTS
+@app.get("/api/v1/orgs/{org_id}/posts")
+async def get_posts(org_id: int, db: Session = Depends(get_db)):
+    """Obtener posts de una organización"""
+    posts = db.query(Post).filter(Post.org_id == org_id).all()
+    return {"posts": [
+        {
+            "id": p.id,
+            "title": p.title,
+            "slug": p.slug,
+            "status": p.status,
+            "created_at": p.created_at.isoformat() if p.created_at else None
+        }
+        for p in posts
+    ]}
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
+
+app.include_router(auth_router, prefix="/api/v1")
+app.include_router(spawn_router, prefix="/api/v1")
+app.include_router(agent_posts.router, prefix="/api/v1")
+

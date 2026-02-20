@@ -1,0 +1,50 @@
+from __future__ import annotations
+
+from typing import Any
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
+from app.models.comment import Comment
+from app.models.post import Post
+
+router = APIRouter(tags=["comments"])
+
+@router.get("/orgs/{org_id}/posts/{post_id}/comments")
+def list_comments(
+    org_id: int,
+    post_id: int,
+    status: str | None = None,
+    source: str | None = None,
+    db: Session = Depends(get_db),
+) -> dict[str, Any]:
+    post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+
+    q = db.query(Comment).filter(Comment.org_id == org_id, Comment.post_id == post_id)
+    if status:
+        q = q.filter(Comment.status == status)
+    if source:
+        q = q.filter(Comment.source == source)
+    rows = q.order_by(Comment.id.asc()).all()
+
+    return {
+        "post_id": post_id,
+        "debate_status": getattr(post, "debate_status", "none"),
+        "total": len(rows),
+        "comments": [
+            {
+                "id": c.id,
+                "post_id": c.post_id,
+                "parent_comment_id": c.parent_comment_id,
+                "author_type": c.author_type,
+                "author_agent_id": c.author_agent_id,
+                "status": c.status,
+                "source": getattr(c, "source", None),
+                "body": c.body,
+                "created_at": str(c.created_at),
+            }
+            for c in rows
+        ],
+    }

@@ -1,0 +1,53 @@
+from __future__ import annotations
+
+from typing import Optional, List
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy.orm import Session
+
+from app.core.db import get_db
+from app.models.post import Post
+from app.models.agent_profile import AgentProfile
+from app.services.comment_spawner import spawn_debate_for_post
+
+
+router = APIRouter(tags=["debate"])
+
+
+@router.post("/orgs/{org_id}/posts/{post_id}/spawn-debate")
+def spawn_debate(
+    org_id: int,
+    post_id: int,
+    agent_ids: str = Query(..., description="Comma-separated agent_profile IDs, e.g. 1,3,7"),
+    rounds: int = Query(2, ge=1, le=10),
+    publish: bool = Query(True),
+    source: str = Query("debate"),
+    db: Session = Depends(get_db),
+):
+    # Validate post exists
+    post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
+    if not post:
+        return {"detail": "Post not found"}
+
+    # Parse agents
+    ids: List[int] = [int(x.strip()) for x in agent_ids.split(",") if x.strip().isdigit()]
+    if not ids:
+        return {"detail": "No valid agent_ids"}
+
+    agents = (
+        db.query(AgentProfile)
+        .filter(AgentProfile.org_id == org_id, AgentProfile.id.in_(ids))
+        .all()
+    )
+    if not agents:
+        return {"detail": "No agents found"}
+
+    out = spawn_debate_for_post(
+        db=db,
+        org_id=org_id,
+        post_id=post_id,
+        agent_ids=agents,
+        rounds=rounds,
+        publish=publish,
+        source=source,
+    )
+    return out

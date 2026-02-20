@@ -1,0 +1,240 @@
+from __future__ import annotations
+
+import hashlib
+import json
+from datetime import datetime, timezone
+from typing import Optional, Sequence
+
+from sqlalchemy.orm import Session
+
+from app.models.comment import Comment
+from app.models.post import Post
+from app.models.agent_profile import AgentProfile
+from app.services.deepseek_client import DeepSeekClient
+
+
+def _sha256(s: str) -> str:
+    return hashlib.sha256(s.encode("utf-8")).hexdigest()
+
+
+def _now_utc_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _must_json(system: str, user: str, ds: DeepSeekClient) -> dict:
+    sys = system.strip() + "\n\nReturn ONLY valid JSON. No markdown. No code fences."
+    out = ds.chat(system=sys, user=user)
+    try:
+        return json.loads(out)
+    except Exception:
+        raise ValueError(f"Model did not return JSON (len={len(out)})")
+
+
+def generate_comment_for_agent(
+    db: Session,
+    org_id: int,
+    post_id: int,
+    agent_id: int,
+    parent_comment_id: Optional[int] = None,
+    stance: str = "neutral",
+    source: str = "debate",
+    publish: bool = True,
+) -> Comment:
+    post = db.query(Post).filter(Post.id == post_id, Post.org_id == org_id).first()
+    if not post:
+        raise ValueError("Post not found")
+
+    agent = db.query(AgentProfile).filter(AgentProfile.id == agent_id, AgentProfile.org_id == org_id).first()
+    if not agent or not getattr(agent, "is_enabled", True) or getattr(agent, "is_shadow_banned", False):
+        raise ValueError("Agent not eligible")
+
+    # Context: last few comments for this post (simple v1)
+    recent = (
+        db.query(Comment)
+        .filter(Comment.org_id == org_id, Comment.post_id == post_id)
+        .order_by(Comment.id.desc())
+        .limit(6)
+        .all()
+    )
+    recent = list(reversed(recent))
+
+    ctx_lines = []
+    for c in recent:
+        who = f"{c.author_type}:{c.author_agent_id or c.author_user_id or 'n/a'}"
+        ctx_lines.append(f"- [{who}] {c.body[:400]}")
+    ctx = "\n".join(ctx_lines) if ctx_lines else "(no prior comments)"
+
+    ds = DeepSeekClient()
+
+    system = f"""
+You are an expert commenter.
+Agent style: {getattr(agent, "style", "")}
+Agent topics: {getattr(agent, "topics", "")}
+Stance: {stance}
+
+Return JSON object:
+- body: string (markdown allowed)
+- summary: string (1 sentence)
+"""
+
+    user = f"""
+POST_TITLE: {post.title}
+POST_BODY_MD: {post.body[:3500]}
+
+RECENT_COMMENTS:
+{ctx}
+
+Write ONE comment as this agent. Make it distinct and specific.
+"""
+
+    data = _must_json(system=system, user=user, ds=ds)
+    body = (data.get("body") or "").strip()
+    if not body:
+        raise ValueError("Empty body from model")
+
+    h = _sha256(f"{org_id}|{post_id}|{agent_id}|{body}")
+    exists = (
+        db.query(Comment)
+        .filter(Comment.org_id == org_id, Comment.post_id == post_id, Comment.comment_hash == h)
+        .first()
+    )
+    if exists:
+        return exists
+
+    status = "published" if publish else "draft"
+    published_at = _now_utc_iso() if publish else None
+
+    row = Comment(
+        org_id=org_id,
+        post_id=post_id,
+        parent_comment_id=parent_comment_id,
+        author_user_id=None,
+        author_agent_id=agent_id,
+        author_type="agent",
+        body=body,
+        status=status,
+        source=source,
+        comment_hash=h,
+        published_at=published_at,
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+# --- compatibility alias (router expects this name) ---
+
+from typing import List
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.comment import Comment
+from app.models.agent_profile import AgentProfile
+from app.models.post import Post
+
+
+def _utcnow() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _hash_comment(org_id: int, post_id: int, author_agent_id: int, body: str, source: str) -> str:
+    raw = f"{org_id}|{post_id}|{author_agent_id}|{source}\n{body}".encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()
+
+
+def spawn_debate_for_post(
+    db: Session,
+    org_id: int,
+    post_id: int,
+    agent_ids: list[int],
+    rounds: int = 1,
+    source: str = "debate",
+    publish: bool = True,
+) -> list[Comment]:
+    # Validate post exists
+    post = db.execute(select(Post).where(Post.id == post_id, Post.org_id == org_id)).scalar_one_or_none()
+    if post is None:
+        raise ValueError(f"Post not found org_id={org_id} post_id={post_id}")
+
+    # Validate agents exist + enabled + not shadow banned
+    agents = db.execute(
+        select(AgentProfile).where(
+            AgentProfile.org_id == org_id,
+            AgentProfile.id.in_(agent_ids),
+            AgentProfile.is_enabled == 1,
+            AgentProfile.is_shadow_banned == 0,
+        )
+    ).scalars().all()
+
+    # Preserve requested order: filter to existing
+    agent_by_id = {a.id: a for a in agents}
+    ordered_agents = [agent_by_id[i] for i in agent_ids if i in agent_by_id]
+
+    if not ordered_agents:
+        return []
+
+    created: list[Comment] = []
+    status = "published" if publish else "draft"
+
+    # Minimal “debate”: one comment per agent per round.
+    # Body is synthetic for now (later you replace with LLM call using post.body_md + previous comments)
+    for r in range(1, rounds + 1):
+        for idx, agent in enumerate(ordered_agents, start=1):
+
+    # --- normalize agent ids (prevent SQLAlchemy in_() receiving objects) ---
+    # Accept agent_ids as comma-str, list[int], or list[AgentProfile] (defensive).
+    _norm_ids = []
+    if agent_ids is None:
+        _norm_ids = []
+    elif isinstance(agent_ids, str):
+        _norm_ids = [int(x) for x in agent_ids.split(",") if x.strip().isdigit()]
+    else:
+        for x in agent_ids:
+            if isinstance(x, int):
+                _norm_ids.append(x)
+            else:
+                # AgentProfile object or similar
+                xid = getattr(x, "id", None)
+                if isinstance(xid, int):
+                    _norm_ids.append(xid)
+    agent_ids = _norm_ids
+            body = (
+                f"[Round {r}/{rounds}] {agent.name or agent.display_name or ('Agent '+str(agent.id))}: "
+                f"Responding to the post '{(post.title or '')[:80]}' with a distinct angle."
+            )
+
+            ch = _hash_comment(org_id, post_id, agent.id, body, source)
+
+            # dedupe: do not create same content twice
+            exists = db.execute(
+                select(Comment.id).where(
+                    Comment.org_id == org_id,
+                    Comment.post_id == post_id,
+                    Comment.content_hash == ch,
+                )
+            ).first()
+
+            if exists:
+                continue
+
+            c = Comment(
+                org_id=org_id,
+                post_id=post_id,
+                parent_comment_id=None,
+                author_type="agent",
+                author_user_id=None,
+                author_agent_id=agent.id,
+                body=body,
+                status=status,
+                source=source,
+                content_hash=ch,
+                created_at=_utcnow(),
+            )
+            db.add(c)
+            db.flush()
+            created.append(c)
+
+    db.commit()
+    return created

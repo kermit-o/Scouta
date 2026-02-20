@@ -1,0 +1,113 @@
+== TREE DUMP ==
+ROOT: .
+
+./
+├── alembic/
+│   ├── _broken/
+│   │   └── idx_20260209_203538_unique_agent_actions_idempotency.py
+│   ├── versions/
+│   │   ├── 00834d18cde6_add_agent_actions_idempotency_key.py
+│   │   ├── 5312fd70cd3b_diagnostic_test.py
+│   │   ├── 657480f24bee_add_org_settings_and_agent_policies.py
+│   │   ├── 6b3db0fe7900_add_posts_published_at.py
+│   │   ├── 75f067f42c1f_add_agent_profiles_and_agent_actions.py
+│   │   ├── 762e3003a4f4_add_posts_tags_post_tags_comments.py
+│   │   ├── 771b814a374a_create_orgs_users_org_members.py
+│   │   ├── 8ca13e5f84af_add_idempotency_key_to_agent_actions.py
+│   │   ├── 942d3cb7420f_add_idempotency_key_to_agent_actions_.py
+│   │   ├── aaf8eeb1494e_create_orgs_users_org_members.py
+│   │   ├── d9e2dd518d28_agent_policy_thresholds_and_shadowban.py
+│   │   ├── d9fbf3ad2165_add_org_usage_daily.py
+│   │   └── idx_20260209_203817_unique_agent_actions_idempotency.py
+│   ├── README
+│   ├── env.py
+│   └── script.py.mako
+├── app/
+│   ├── api/
+│   │   ├── v1/
+│   │   │   ├── schemas/
+│   │   │   │   ├── agents.py
+│   │   │   │   ├── auth.py
+│   │   │   │   ├── comments.py
+│   │   │   │   ├── orgs.py
+│   │   │   │   ├── posts.py
+│   │   │   │   ├── public.py
+│   │   │   │   └── settings.py
+│   │   │   ├── __init__.py
+│   │   │   ├── admin_posts.py
+│   │   │   ├── agent_factory.py
+│   │   │   ├── agent_policies.py
+│   │   │   ├── agents.py
+│   │   │   ├── api.py
+│   │   │   ├── auth.py
+│   │   │   ├── auto_posts.py
+│   │   │   ├── comments.py
+│   │   │   ├── moderation.py
+│   │   │   ├── orgs.py
+│   │   │   ├── posts.py
+│   │   │   ├── public.py
+│   │   │   ├── settings.py
+│   │   │   └── spawn.py
+│   │   └── __init__.py
+│   ├── core/
+│   │   ├── config.py
+│   │   ├── db.py
+│   │   ├── deps.py
+│   │   ├── limits.py
+│   │   ├── rate_limit.py
+│   │   ├── security.py
+│   │   ├── security.py.bak.1770453950
+│   │   └── security.py.bak.2026-02-05_185000
+│   ├── jobs/
+│   │   └── spawn_loop.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── agent_action.py
+│   │   ├── agent_policy.py
+│   │   ├── agent_profile.py
+│   │   ├── comment.py
+│   │   ├── org.py
+│   │   ├── org_member.py
+│   │   ├── org_settings.py
+│   │   ├── org_usage_daily.py
+│   │   ├── post.py
+│   │   ├── post.py.backup
+│   │   ├── post.py.backup_final
+│   │   ├── post_tag.py
+│   │   ├── tag.py
+│   │   └── user.py
+│   ├── services/
+│   │   ├── action_spawner.py
+│   │   ├── action_spawner.py.backup
+│   │   ├── action_spawner.py.bak.1770455164
+│   │   ├── action_spawner.py.bak_20260205_105715
+│   │   ├── agent_factory.py
+│   │   ├── auto_scheduler.py
+│   │   ├── auto_scheduler.py.backup
+│   │   ├── deepseek_client.py
+│   │   ├── moderation_scorer.py
+│   │   ├── moderation_service.py
+│   │   ├── persona_writer.py
+│   │   ├── post_generator.py
+│   │   ├── post_generator.py.backup
+│   │   ├── post_generator_simple.py
+│   │   ├── simple_moderation.py
+│   │   └── trend_scanner.py
+│   ├── web/
+│   │   ├── admin_agents.py
+│   │   ├── admin_auto.py
+│   │   ├── admin_moderation.py
+│   │   ├── index.py
+│   │   └── public_blog.py
+│   └── main.py
+├── tests/
+├── .env
+├── .gitignore
+├── Dockerfile
+├── alembic.ini
+├── scouta_debug_20260210_114909.txt
+└── tree_clean.txt
+
+14 directories, 92 files
+
+== DONE ==
