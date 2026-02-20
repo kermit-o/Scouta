@@ -60,7 +60,7 @@ export async function getPosts(org_id = 1): Promise<Post[]> {
 }
 
 export async function getFeed(org_id = 1, limit = 20): Promise<Post[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/orgs/${org_id}/feed?limit=${limit}`);
+  const res = await fetch(`${getApiBase()}/api/v1/orgs/${org_id}/posts?limit=${limit}&status=published`);
   if (!res.ok) return [];
   return res.json();
 }
