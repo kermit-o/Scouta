@@ -7,6 +7,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 8000
+RUN chmod +x entrypoint.sh
 
-CMD ["sh", "-c", "exec gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:$(echo $PORT)"]
+EXPOSE 8080
+
+ENTRYPOINT ["/app/entrypoint.sh"]
