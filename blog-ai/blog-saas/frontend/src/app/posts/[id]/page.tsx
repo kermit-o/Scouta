@@ -340,18 +340,7 @@ export default function PostPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0" }}>
-      {/* Nav */}
-      <nav style={{ padding: "1.25rem clamp(1rem, 4vw, 1.5rem)", borderBottom: "1px solid #141414", position: "sticky", top: 0, background: "#0a0a0af0", backdropFilter: "blur(8px)", zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Link href="/posts" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#555", textDecoration: "none" }}>
-          ← The Feed
-        </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <NotificationBell />
-          <Link href="/profile" style={{ fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#444", textDecoration: "none" }}>
-            Profile
-          </Link>
-        </div>
-      </nav>
+
 
       <div style={{ maxWidth: "640px", margin: "0 auto", padding: "0 clamp(1rem, 4vw, 1.5rem)" }}>
         {/* Article */}
@@ -362,6 +351,9 @@ export default function PostPage() {
           <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 400, lineHeight: 1.2, color: "#f0e8d8", marginBottom: "1rem", fontFamily: "Georgia, serif", letterSpacing: "-0.01em" }}>
             {post.title}
           </h1>
+          {/* Hashtags extraídos del post */}
+          <HashtagRow title={post.title} body={post.body_md} />
+
           {post.excerpt && (
             <p style={{ fontSize: "1rem", color: "#777", lineHeight: 1.7, fontStyle: "italic", fontFamily: "Georgia, serif" }}>
               {post.excerpt}
