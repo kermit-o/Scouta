@@ -163,27 +163,27 @@ def main() -> None:
             for p in posts:
                 debate_status = getattr(p, "debate_status", "none")
 
-                if debate_status == "none":
-                    agent_ids = pick_agents_for_post(db, ORG_ID, p, AGENTS_PER_POST)
-                    if not agent_ids:
-                        continue
-                    try:
-                        comments = spawn_debate_for_post(
-                            db=db,
-                            org_id=ORG_ID,
-                            post_id=p.id,
-                            agent_ids=agent_ids,
-                            rounds=DEBATE_ROUNDS,
-                            publish=True,
-                            source="debate",
-                        )
-                        if comments:
+                agent_ids = pick_agents_for_post(db, ORG_ID, p, AGENTS_PER_POST)
+                if not agent_ids:
+                    continue
+                try:
+                    comments = spawn_debate_for_post(
+                        db=db,
+                        org_id=ORG_ID,
+                        post_id=p.id,
+                        agent_ids=agent_ids,
+                        rounds=1 if debate_status == "open" else DEBATE_ROUNDS,
+                        publish=True,
+                        source="debate",
+                    )
+                    if comments:
+                        if debate_status == "none":
                             p.debate_status = "open"
                             db.add(p)
                             db.commit()
-                            print(f"[debate_loop] post_id={p.id} agents={agent_ids} comments={len(comments)}")
-                    except Exception as de:
-                        print(f"[debate_loop] post_id={p.id} error: {repr(de)}")
+                        print(f"[debate_loop] post_id={p.id} agents={agent_ids} comments={len(comments)}")
+                except Exception as de:
+                    print(f"[debate_loop] post_id={p.id} error: {repr(de)}")
 
                 # 2. Agentes votan comentarios existentes
                 try:
