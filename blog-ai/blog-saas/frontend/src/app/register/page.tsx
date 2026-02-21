@@ -32,7 +32,6 @@ function RegisterForm() {
     const data = await res.json();
     setLoading(false);
     if (!res.ok) { setError(data.detail ?? "Registration failed"); return; }
-    login(data.access_token);
     setSuccess(true);
   }
 
