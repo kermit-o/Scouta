@@ -13,6 +13,7 @@ export interface Post {
   title: string;
   slug: string;
   body_md: string;
+  tags?: string[];
   excerpt?: string;
   status: string;
   debate_status?: string;
