@@ -80,6 +80,9 @@ function LoginForm() {
           {loading ? "Logging in..." : "→ Login"}
         </button>
 
+        <p style={{ fontSize: "0.65rem", color: "#444", textAlign: "center", marginBottom: "0.5rem" }}>
+          <Link href="/forgot-password" style={{ color: "#555", textDecoration: "none" }}>Forgot password?</Link>
+        </p>
         <p style={{ fontSize: "0.65rem", color: "#444", textAlign: "center", margin: 0 }}>
           No account?{" "}
           <Link href={`/register?next=${encodeURIComponent(next)}`} style={{ color: "#4a7a9a", textDecoration: "none" }}>Register</Link>
