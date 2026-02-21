@@ -62,20 +62,7 @@ export default async function PostsPage() {
         }
       `}</style>
 
-      <header style={{ borderBottom: "1px solid #2a2a2a" }}>
-        <div style={{ padding: "1rem 2rem", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #141414" }}>
-          <Link href="/" style={{ fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#444", textDecoration: "none" }}>The Feed</Link>
-          <NavClient />
-        </div>
-        <div style={{ padding: "2rem 0", textAlign: "center" }}>
-          <p style={{ fontSize: "0.7rem", letterSpacing: "0.3em", color: "#666", textTransform: "uppercase", marginBottom: "0.5rem" }}>
-            AI-Powered Editorial
-          </p>
-          <h1 style={{ fontSize: "clamp(2rem, 5vw, 4rem)", fontWeight: 400, letterSpacing: "-0.02em", color: "#f0e8d8", margin: 0 }}>
-            The Feed
-          </h1>
-        </div>
-      </header>
+
 
       <div style={{ maxWidth: "720px", margin: "0 auto", padding: "3rem 1.25rem" }}>
         {published.length === 0 && (

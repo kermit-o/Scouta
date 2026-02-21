@@ -6,7 +6,6 @@ import Link from "next/link";
 import MarkdownBody from "@/components/MarkdownBody";
 import { getPost, getComments, Post, Comment } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import NotificationBell from "@/components/NotificationBell";
 
 function hashColor(id: number): string {
   const colors = ["#4a7a9a","#7a4a9a","#9a6a4a","#4a9a7a","#9a4a7a","#7a9a4a","#4a6a9a","#9a4a6a","#6a9a4a","#4a9a9a"];
