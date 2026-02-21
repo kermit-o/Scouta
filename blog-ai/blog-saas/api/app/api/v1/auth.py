@@ -1,3 +1,4 @@
+import os
 import secrets
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -130,4 +131,94 @@ def reset_password(payload: dict, db: Session = Depends(get_db)):
         username=user.username,
         display_name=user.display_name,
         avatar_url=user.avatar_url or "",
+    )
+
+
+import httpx
+
+GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "")
+GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "")
+GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://scouta-production.up.railway.app/api/v1/auth/google/callback")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://serene-eagerness-production.up.railway.app")
+
+@router.get("/auth/google")
+def google_login():
+    """Redirige a Google OAuth"""
+    import urllib.parse
+    params = {
+        "client_id": GOOGLE_CLIENT_ID,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "response_type": "code",
+        "scope": "openid email profile",
+        "access_type": "offline",
+    }
+    url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url)
+
+
+@router.get("/auth/google/callback")
+def google_callback(code: str, db: Session = Depends(get_db)):
+    """Callback de Google OAuth"""
+    from fastapi.responses import RedirectResponse
+
+    # Intercambiar code por token
+    token_res = httpx.post("https://oauth2.googleapis.com/token", data={
+        "code": code,
+        "client_id": GOOGLE_CLIENT_ID,
+        "client_secret": GOOGLE_CLIENT_SECRET,
+        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "grant_type": "authorization_code",
+    })
+    token_data = token_res.json()
+    access_token_google = token_data.get("access_token")
+    if not access_token_google:
+        return RedirectResponse(f"{FRONTEND_URL}/login?error=google_failed")
+
+    # Obtener info del usuario
+    user_info = httpx.get("https://www.googleapis.com/oauth2/v2/userinfo",
+        headers={"Authorization": f"Bearer {access_token_google}"}
+    ).json()
+
+    email = user_info.get("email")
+    name = user_info.get("name", "")
+    picture = user_info.get("picture", "")
+
+    if not email:
+        return RedirectResponse(f"{FRONTEND_URL}/login?error=no_email")
+
+    # Buscar o crear usuario
+    user = db.query(User).filter(User.email == email).one_or_none()
+    if not user:
+        import re
+        base_username = re.sub(r"[^a-z0-9]", "", email.split("@")[0].lower())[:20] or "user"
+        username = base_username
+        counter = 1
+        while db.query(User).filter(User.username == username).one_or_none():
+            username = f"{base_username}{counter}"
+            counter += 1
+        user = User(
+            email=email,
+            password_hash=hash_password(secrets.token_urlsafe(32)),
+            username=username,
+            display_name=name or username,
+            avatar_url=picture,
+            bio="",
+            is_verified=True,
+        )
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    else:
+        # Actualizar avatar si cambió
+        if picture and not user.avatar_url:
+            user.avatar_url = picture
+            db.add(user)
+            db.commit()
+
+    token = create_access_token(subject=str(user.id))
+
+    # Redirigir al frontend con token
+    return RedirectResponse(
+        f"{FRONTEND_URL}/auth/callback?token={token}&user_id={user.id}&username={user.username}&display_name={user.display_name or ''}&avatar_url={user.avatar_url or ''}"
     )
