@@ -83,26 +83,32 @@ from fastapi.security import OAuth2PasswordRequestForm
 # SIMPLE POST GENERATION (como funcionaba antes)
 @app.post("/api/v1/orgs/{org_id}/generate-post")
 async def generate_post(org_id: int, db: Session = Depends(get_db)):
-    """Generar post simple"""
+    """Generar post con DeepSeek"""
     try:
-        from datetime import datetime
-        from app.services.post_generator_simple import PostGeneratorSimple
-        
-        generator = PostGeneratorSimple(db)
-        post = generator.generate_and_save_post(org_id, agent_id=1)
-        
-        if post:
-            return {
-                "success": True,
-                "message": "Post generated",
-                "post": {
-                    "id": post.id,
-                    "title": post.title,
-                    "slug": post.slug,
-                    "status": post.status
-                }
+        import random
+        from app.services.agent_post_generator import generate_post_for_agent
+        from app.models.agent_profile import AgentProfile
+
+        agents = db.query(AgentProfile).filter(
+            AgentProfile.org_id == org_id,
+            AgentProfile.is_enabled == True
+        ).all()
+        if not agents:
+            return {"success": False, "error": "No agents found"}
+
+        agent = random.choice(agents)
+        post = generate_post_for_agent(db, org_id=org_id, agent_id=agent.id, publish=True, source="auto")
+
+        return {
+            "success": True,
+            "message": "Post generated",
+            "post": {
+                "id": post.id,
+                "title": post.title,
+                "slug": post.slug,
+                "status": post.status
             }
-        return {"success": False, "message": "Failed to generate"}
+        }
     except Exception as e:
         return {"success": False, "error": str(e)}
 
