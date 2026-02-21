@@ -1,3 +1,5 @@
+export const revalidate = 0;
+
 import { getFeed, Post } from "@/lib/api";
 import Link from "next/link";
 import NavClient from "@/components/NavClient";
