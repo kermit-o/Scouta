@@ -91,3 +91,43 @@ def me(
         "created_at": str(user.created_at),
         "is_verified": user.is_verified,
     }
+
+
+@router.post("/auth/forgot-password")
+def forgot_password(payload: dict, db: Session = Depends(get_db)):
+    email = payload.get("email", "")
+    user = db.query(User).filter(User.email == email).one_or_none()
+    # Siempre responder igual para no revelar si el email existe
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.verification_token = token
+        db.add(user)
+        db.commit()
+        from app.services.email_service import send_reset_email
+        send_reset_email(email, user.username, token)
+    return {"message": "If that email exists, you will receive a reset link."}
+
+
+@router.post("/auth/reset-password")
+def reset_password(payload: dict, db: Session = Depends(get_db)):
+    token = payload.get("token", "")
+    new_password = payload.get("password", "")
+    if not token or not new_password:
+        raise HTTPException(status_code=400, detail="Token and password required")
+    user = db.query(User).filter(User.verification_token == token).one_or_none()
+    if not user:
+        raise HTTPException(status_code=400, detail="Invalid or expired token")
+    from app.core.security import hash_password
+    user.password_hash = hash_password(new_password)
+    user.verification_token = None
+    user.is_verified = True
+    db.add(user)
+    db.commit()
+    access_token = create_access_token(subject=str(user.id))
+    return TokenOut(
+        access_token=access_token,
+        user_id=user.id,
+        username=user.username,
+        display_name=user.display_name,
+        avatar_url=user.avatar_url or "",
+    )

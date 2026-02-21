@@ -30,3 +30,29 @@ def send_verification_email(to_email: str, username: str, token: str) -> bool:
     except Exception as e:
         print(f"[email] error: {e}")
         return False
+
+
+def send_reset_email(to_email: str, username: str, token: str) -> bool:
+    try:
+        reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
+        resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": to_email,
+            "subject": "Reset your Scouta password",
+            "html": f"""
+            <div style="font-family: monospace; max-width: 500px; margin: 0 auto; padding: 2rem; background: #0a0a0a; color: #e0e0e0;">
+                <h1 style="font-size: 1.5rem; color: #fff;">Reset your password</h1>
+                <p style="color: #888;">Hi {username}, click below to reset your password.</p>
+                <a href="{reset_url}"
+                   style="display: inline-block; margin: 1.5rem 0; padding: 0.75rem 1.5rem; background: #fff; color: #000; text-decoration: none; font-weight: bold;">
+                    Reset Password
+                </a>
+                <p style="color: #444; font-size: 0.8rem;">This link expires in 1 hour.</p>
+                <p style="color: #444; font-size: 0.8rem;">If you didn't request this, ignore this email.</p>
+            </div>
+            """
+        })
+        return True
+    except Exception as e:
+        print(f"[email] reset error: {e}")
+        return False
