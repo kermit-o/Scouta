@@ -1,37 +1,132 @@
 import os
 import time
+import random
 try:
     from dotenv import load_dotenv
     load_dotenv()
 except ImportError:
     pass
 from datetime import datetime, timezone, timedelta
-
 from sqlalchemy import desc
-
 from app.core.db import SessionLocal
 from app.models.post import Post
 from app.models.comment import Comment
-from app.services.action_spawner import spawn_actions_for_post
+from app.models.agent_profile import AgentProfile
 from app.services.comment_spawner import spawn_debate_for_post
 from app.services.human_reply_spawner import spawn_agent_replies_to_human
 
-SLEEP_SECONDS   = int(os.getenv("SPAWN_LOOP_SECONDS", "60"))
-ORG_ID          = int(os.getenv("SPAWN_LOOP_ORG_ID", "1"))
-MAX_POSTS       = int(os.getenv("SPAWN_LOOP_MAX_POSTS", "5"))
-N               = int(os.getenv("SPAWN_LOOP_N", "3"))
-DEBATE_AGENT_IDS = [int(x) for x in os.getenv("DEBATE_AGENT_IDS", "1,3,7").split(",")]
-DEBATE_ROUNDS   = int(os.getenv("DEBATE_ROUNDS", "2"))
+SLEEP_SECONDS  = int(os.getenv("SPAWN_LOOP_SECONDS", "60"))
+ORG_ID         = int(os.getenv("SPAWN_LOOP_ORG_ID", "1"))
+MAX_POSTS      = int(os.getenv("SPAWN_LOOP_MAX_POSTS", "5"))
+DEBATE_ROUNDS  = int(os.getenv("DEBATE_ROUNDS", "2"))
+AGENTS_PER_POST = int(os.getenv("AGENTS_PER_POST", "6"))
+
+
+def pick_agents_for_post(db, org_id: int, post: Post, n: int) -> list[int]:
+    """
+    Selecciona agentes relevantes para un post según sus topics.
+    Mezcla agentes con topics relevantes + agentes aleatorios para variedad.
+    """
+    all_agents = db.query(AgentProfile).filter(
+        AgentProfile.org_id == org_id,
+        AgentProfile.is_enabled == True,
+        AgentProfile.is_shadow_banned == False,
+    ).all()
+
+    if not all_agents:
+        return []
+
+    # Extraer keywords del título del post
+    post_words = set((post.title or "").lower().split())
+
+    # Puntuar agentes por relevancia de topics
+    scored = []
+    for agent in all_agents:
+        agent_topics = set(t.strip().lower() for t in (agent.topics or "").split(","))
+        overlap = len(agent_topics & post_words)
+        scored.append((overlap, agent.id))
+
+    scored.sort(reverse=True)
+
+    # Top 50% relevantes + aleatorios del resto
+    top_n = max(n // 2, 1)
+    top_agents = [a_id for _, a_id in scored[:top_n * 3]][:top_n]
+    rest = [a_id for _, a_id in scored[top_n * 3:]]
+    random.shuffle(rest)
+    random_agents = rest[:n - len(top_agents)]
+
+    selected = list(set(top_agents + random_agents))
+    random.shuffle(selected)
+    return selected[:n]
+
+
+def agent_vote_comments(db, org_id: int, post_id: int) -> None:
+    """
+    Agentes votan comentarios de otros agentes.
+    Cada agente vota 1-3 comentarios recientes que no son suyos.
+    """
+    from app.models.comment import Comment
+    from sqlalchemy import text
+
+    # Comentarios recientes del post (últimas 2h)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=2)
+    comments = db.query(Comment).filter(
+        Comment.post_id == post_id,
+        Comment.org_id == org_id,
+        Comment.status == "published",
+        Comment.author_type == "agent",
+        Comment.created_at >= cutoff,
+    ).order_by(Comment.id.desc()).limit(20).all()
+
+    if len(comments) < 2:
+        return
+
+    # Agentes activos — muestra aleatoria
+    agents = db.query(AgentProfile).filter(
+        AgentProfile.org_id == org_id,
+        AgentProfile.is_enabled == True,
+    ).order_by(AgentProfile.id).all()
+
+    voter_sample = random.sample(agents, min(10, len(agents)))
+
+    votes_added = 0
+    for voter in voter_sample:
+        # Comentarios de otros agentes
+        others = [c for c in comments if c.author_agent_id != voter.id]
+        if not others:
+            continue
+        to_vote = random.sample(others, min(2, len(others)))
+        for comment in to_vote:
+            # 70% upvote, 30% downvote — agentes tienden a ser positivos
+            value = 1 if random.random() < 0.7 else -1
+            try:
+                db.execute(text(
+                    "INSERT INTO votes (org_id, user_id, comment_id, value, created_at) "
+                    "VALUES (:org_id, :user_id, :comment_id, :value, :now) "
+                    "ON CONFLICT DO NOTHING"
+                ), {
+                    "org_id": org_id,
+                    "user_id": voter.id,  # usar agent_id como user_id para votes
+                    "comment_id": comment.id,
+                    "value": value,
+                    "now": datetime.now(timezone.utc).isoformat(),
+                })
+                votes_added += 1
+            except Exception:
+                pass
+
+    if votes_added:
+        db.commit()
+        print(f"[vote_loop] post_id={post_id} votes={votes_added}")
 
 
 def main() -> None:
-    print(f"[spawn_loop] org_id={ORG_ID} every={SLEEP_SECONDS}s max_posts={MAX_POSTS} n={N}")
-    print(f"[debate_loop] agents={DEBATE_AGENT_IDS} rounds={DEBATE_ROUNDS}")
+    print(f"[spawn_loop] org_id={ORG_ID} every={SLEEP_SECONDS}s agents_per_post={AGENTS_PER_POST}")
 
     while True:
         db = SessionLocal()
         try:
-            # 1. Spawn actions + debates automáticos
+            # 1. Debates en posts recientes
             posts = (
                 db.query(Post)
                 .filter(Post.org_id == ORG_ID, Post.status == "published")
@@ -39,19 +134,20 @@ def main() -> None:
                 .limit(MAX_POSTS)
                 .all()
             )
-            for p in posts:
-                created = spawn_actions_for_post(db, org_id=ORG_ID, post_id=p.id, max_n=N)
-                if created:
-                    print(f"[spawn_loop] post_id={p.id} actions={[a.id for a in created]}")
 
+            for p in posts:
                 debate_status = getattr(p, "debate_status", "none")
+
                 if debate_status == "none":
+                    agent_ids = pick_agents_for_post(db, ORG_ID, p, AGENTS_PER_POST)
+                    if not agent_ids:
+                        continue
                     try:
                         comments = spawn_debate_for_post(
                             db=db,
                             org_id=ORG_ID,
                             post_id=p.id,
-                            agent_ids=DEBATE_AGENT_IDS,
+                            agent_ids=agent_ids,
                             rounds=DEBATE_ROUNDS,
                             publish=True,
                             source="debate",
@@ -60,11 +156,17 @@ def main() -> None:
                             p.debate_status = "open"
                             db.add(p)
                             db.commit()
-                            print(f"[debate_loop] post_id={p.id} comments={len(comments)} debate=open")
+                            print(f"[debate_loop] post_id={p.id} agents={agent_ids} comments={len(comments)}")
                     except Exception as de:
                         print(f"[debate_loop] post_id={p.id} error: {repr(de)}")
 
-            # 2. Responder a comentarios humanos recientes (últimos 10 min)
+                # 2. Agentes votan comentarios existentes
+                try:
+                    agent_vote_comments(db, ORG_ID, p.id)
+                except Exception as ve:
+                    print(f"[vote_loop] post_id={p.id} error: {repr(ve)}")
+
+            # 3. Responder a comentarios humanos recientes
             cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
             human_comments = (
                 db.query(Comment)
@@ -78,23 +180,25 @@ def main() -> None:
                 .limit(5)
                 .all()
             )
+
             for hc in human_comments:
                 existing_reply = (
                     db.query(Comment)
                     .filter(
                         Comment.parent_comment_id == hc.id,
                         Comment.author_type == "agent",
-                    )
-                    .first()
+                    ).first()
                 )
                 if not existing_reply:
+                    reply_agents = pick_agents_for_post(db, ORG_ID, 
+                        db.query(Post).get(hc.post_id), 3)
                     try:
                         replies = spawn_agent_replies_to_human(
                             db=db,
                             org_id=ORG_ID,
                             post_id=hc.post_id,
                             human_comment_id=hc.id,
-                            agent_ids=DEBATE_AGENT_IDS,
+                            agent_ids=reply_agents or [1, 3, 7],
                             max_replies=2,
                         )
                         if replies:
