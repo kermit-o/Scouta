@@ -408,4 +408,12 @@ def generate_post_for_agent(
     db.add(post)
     db.commit()
     db.refresh(post)
+
+    # Extraer y guardar tags
+    try:
+        from app.services.tag_extractor import save_tags_for_post
+        save_tags_for_post(db, post.id, post.title, post.body_md or "")
+    except Exception as te:
+        print(f"[tag_extractor] error: {te}")
+
     return post

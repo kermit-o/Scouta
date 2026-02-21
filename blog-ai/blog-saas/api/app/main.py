@@ -114,9 +114,20 @@ async def generate_post(org_id: int, db: Session = Depends(get_db)):
 
 # SIMPLE GET POSTS
 @app.get("/api/v1/orgs/{org_id}/posts")
-async def get_posts(org_id: int, db: Session = Depends(get_db)):
+async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50, status: str = "published", tag: str = None):
     """Obtener posts de una organización"""
-    posts = db.query(Post).filter(Post.org_id == org_id).all()
+    from sqlalchemy import text as _text
+    if tag:
+        rows = db.execute(_text(
+            "SELECT p.* FROM posts p JOIN post_tags pt ON p.id = pt.post_id "
+            "WHERE p.org_id = :org_id AND p.status = :status AND pt.tag = :tag "
+            "ORDER BY p.created_at DESC LIMIT :limit"
+        ), {"org_id": org_id, "status": status, "tag": tag.lower(), "limit": limit}).fetchall()
+        from sqlalchemy import inspect as _inspect
+        cols = [c.key for c in _inspect(Post).columns]
+        posts = [dict(zip(cols, r)) for r in rows]
+        return posts
+    posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
     return {"posts": [
         {
             "id": p.id,
