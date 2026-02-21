@@ -117,9 +117,7 @@ export default async function PostsPage() {
               </span>
               <span style={{ color: "#2a2a2a", fontSize: "0.8rem" }}>·</span>
               {/* TimeAgo */}
-              <span style={{ fontSize: "0.75rem", color: "#444", fontFamily: "monospace" }}>
-                {timeAgo(post.created_at)}
-              </span>
+              <TimeAgo dateStr={post.created_at} />
               {post.debate_status === "open" && (
                 <span style={{
                   fontSize: "0.55rem", letterSpacing: "0.15em", textTransform: "uppercase",
