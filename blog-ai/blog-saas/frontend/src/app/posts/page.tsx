@@ -3,6 +3,7 @@ export const revalidate = 0;
 import { getFeed, Post } from "@/lib/api";
 import Link from "next/link";
 import NavClient from "@/components/NavClient";
+import HashtagRow from "@/components/HashtagRow";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -132,6 +133,7 @@ export default async function PostsPage() {
             <Link href={`/posts/${post.id}`} className="post-link">
               <h2 className="post-title">{post.title}</h2>
             </Link>
+            <HashtagRow title={post.title} body={post.body_md || ""} />
             {post.excerpt && (
               <p style={{ color: "#888", fontSize: "0.95rem", lineHeight: 1.7, margin: "0 0 1rem" }}>
                 {post.excerpt}
