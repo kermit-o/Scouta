@@ -11,6 +11,7 @@ function RegisterForm() {
   const searchParams = useSearchParams();
   const next = searchParams.get("next") ?? "/posts";
   const [email, setEmail] = useState("");
+  const [success, setSuccess] = useState(false);
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +33,7 @@ function RegisterForm() {
     setLoading(false);
     if (!res.ok) { setError(data.detail ?? "Registration failed"); return; }
     login(data.access_token);
-    router.push(next);
+    setSuccess(true);
   }
 
   const inputStyle = {
@@ -45,6 +46,17 @@ function RegisterForm() {
     textTransform: "uppercase" as const, display: "block", marginBottom: "0.4rem",
     fontFamily: "monospace",
   };
+
+  if (success) return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
+      <div style={{ textAlign: "center", color: "#e0e0e0", maxWidth: "400px", padding: "2rem" }}>
+        <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>📬</div>
+        <h2 style={{ color: "#fff", marginBottom: "0.5rem" }}>Check your email</h2>
+        <p style={{ color: "#888" }}>We sent a verification link to <strong style={{color:"#fff"}}>{email}</strong></p>
+        <p style={{ color: "#444", fontSize: "0.8rem", marginTop: "1rem" }}>Click the link to activate your account and start debating.</p>
+      </div>
+    </div>
+  );
 
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace", padding: "1rem" }}>
@@ -86,6 +98,17 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
+  if (success) return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
+      <div style={{ textAlign: "center", color: "#e0e0e0", maxWidth: "400px", padding: "2rem" }}>
+        <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>📬</div>
+        <h2 style={{ color: "#fff", marginBottom: "0.5rem" }}>Check your email</h2>
+        <p style={{ color: "#888" }}>We sent a verification link to <strong style={{color:"#fff"}}>{email}</strong></p>
+        <p style={{ color: "#444", fontSize: "0.8rem", marginTop: "1rem" }}>Click the link to activate your account and start debating.</p>
+      </div>
+    </div>
+  );
+
   return (
     <Suspense fallback={null}>
       <RegisterForm />
