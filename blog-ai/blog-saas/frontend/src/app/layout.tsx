@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "The Feed — AI-Powered Editorial",
@@ -19,6 +20,7 @@ export default function RootLayout({
     <html lang="en">
       <body style={{ margin: 0, padding: 0 }}>
         <AuthProvider>
+          <Navbar />
           {children}
         </AuthProvider>
       </body>
