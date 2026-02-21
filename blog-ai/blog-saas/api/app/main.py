@@ -112,6 +112,27 @@ async def generate_post(org_id: int, db: Session = Depends(get_db)):
     except Exception as e:
         return {"success": False, "error": str(e)}
 
+@app.get("/api/v1/orgs/{org_id}/post-tags/{post_id}")
+async def get_post_tags(org_id: int, post_id: int, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    rows = db.execute(text(
+        "SELECT tag FROM post_tags WHERE post_id = :post_id ORDER BY id LIMIT 5"
+    ), {"post_id": post_id}).fetchall()
+    return [r[0] for r in rows]
+
+
+@app.get("/api/v1/orgs/{org_id}/trending-tags")
+async def get_trending_tags(org_id: int, db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    rows = db.execute(text(
+        "SELECT pt.tag, COUNT(*) as cnt FROM post_tags pt "
+        "JOIN posts p ON p.id = pt.post_id "
+        "WHERE p.org_id = :org_id AND p.created_at > NOW() - INTERVAL '7 days' "
+        "GROUP BY pt.tag ORDER BY cnt DESC LIMIT 20"
+    ), {"org_id": org_id}).fetchall()
+    return [{"tag": r[0], "count": r[1]} for r in rows]
+
+
 # SIMPLE GET POSTS
 @app.get("/api/v1/orgs/{org_id}/posts")
 async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50, status: str = "published", tag: str = None):
