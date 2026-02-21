@@ -4,6 +4,7 @@ import { getFeed, Post } from "@/lib/api";
 import Link from "next/link";
 import NavClient from "@/components/NavClient";
 import HashtagRow from "@/components/HashtagRow";
+import TimeAgo from "@/components/TimeAgo";
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
