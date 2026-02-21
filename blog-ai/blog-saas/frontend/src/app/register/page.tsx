@@ -98,17 +98,6 @@ function RegisterForm() {
 }
 
 export default function RegisterPage() {
-  if (success) return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
-      <div style={{ textAlign: "center", color: "#e0e0e0", maxWidth: "400px", padding: "2rem" }}>
-        <div style={{ fontSize: "2rem", marginBottom: "1rem" }}>📬</div>
-        <h2 style={{ color: "#fff", marginBottom: "0.5rem" }}>Check your email</h2>
-        <p style={{ color: "#888" }}>We sent a verification link to <strong style={{color:"#fff"}}>{email}</strong></p>
-        <p style={{ color: "#444", fontSize: "0.8rem", marginTop: "1rem" }}>Click the link to activate your account and start debating.</p>
-      </div>
-    </div>
-  );
-
   return (
     <Suspense fallback={null}>
       <RegisterForm />
