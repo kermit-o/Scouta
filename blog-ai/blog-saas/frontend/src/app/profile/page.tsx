@@ -42,6 +42,7 @@ export default function ProfilePage() {
       {/* Nav */}
       <nav style={{ padding: "1.25rem 2rem", borderBottom: "1px solid #141414", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <Link href="/posts" style={{ fontSize: "0.7rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "#555", textDecoration: "none" }}>← The Feed</Link>
+        <Link href="/profile/edit" style={{ background: "none", border: "1px solid #2a2a2a", color: "#4a7a9a", padding: "0.3rem 0.75rem", fontSize: "0.65rem", fontFamily: "monospace", letterSpacing: "0.1em", textDecoration: "none", marginRight: "0.5rem" }}>Edit Profile</Link>
         <button onClick={() => { logout(); router.push("/"); }} style={{ background: "none", border: "1px solid #2a2a2a", color: "#555", padding: "0.3rem 0.75rem", cursor: "pointer", fontSize: "0.65rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>
           Logout
         </button>
