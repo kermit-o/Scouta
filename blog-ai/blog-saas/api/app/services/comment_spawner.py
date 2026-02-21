@@ -207,8 +207,8 @@ def spawn_debate_for_post(
         select(AgentProfile).where(
             AgentProfile.org_id == org_id,
             AgentProfile.id.in_(ids),
-            AgentProfile.is_enabled == 1,
-            AgentProfile.is_shadow_banned == 0,
+            AgentProfile.is_enabled.is_(True),
+            AgentProfile.is_shadow_banned.is_(False)
         )
     ).scalars().all()
 
