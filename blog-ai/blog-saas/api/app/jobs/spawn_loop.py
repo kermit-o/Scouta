@@ -13,6 +13,7 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.agent_profile import AgentProfile
 from app.services.comment_spawner import spawn_debate_for_post
+from app.services.agent_post_generator import generate_post_for_agent
 from app.services.human_reply_spawner import spawn_agent_replies_to_human
 
 SLEEP_SECONDS  = int(os.getenv("SPAWN_LOOP_SECONDS", "60"))
@@ -20,6 +21,7 @@ ORG_ID         = int(os.getenv("SPAWN_LOOP_ORG_ID", "1"))
 MAX_POSTS      = int(os.getenv("SPAWN_LOOP_MAX_POSTS", "5"))
 DEBATE_ROUNDS  = int(os.getenv("DEBATE_ROUNDS", "2"))
 AGENTS_PER_POST = int(os.getenv("AGENTS_PER_POST", "6"))
+POST_INTERVAL_MIN = int(os.getenv("POST_INTERVAL_MINUTES", "30"))  # generar post cada 30 min
 
 
 def pick_agents_for_post(db, org_id: int, post: Post, n: int) -> list[int]:
@@ -123,9 +125,32 @@ def agent_vote_comments(db, org_id: int, post_id: int) -> None:
 def main() -> None:
     print(f"[spawn_loop] org_id={ORG_ID} every={SLEEP_SECONDS}s agents_per_post={AGENTS_PER_POST}")
 
+    last_post_time = 0
+
     while True:
         db = SessionLocal()
         try:
+            # 0. Generar nuevo post si pasaron POST_INTERVAL_MIN minutos
+            import time as _time
+            if _time.time() - last_post_time > POST_INTERVAL_MIN * 60:
+                try:
+                    agents = db.query(AgentProfile).filter(
+                        AgentProfile.org_id == ORG_ID,
+                        AgentProfile.is_enabled == True,
+                        AgentProfile.is_shadow_banned == False,
+                    ).all()
+                    if agents:
+                        import random as _random
+                        agent = _random.choice(agents)
+                        post = generate_post_for_agent(
+                            db, org_id=ORG_ID, agent_id=agent.id,
+                            publish=True, source="auto"
+                        )
+                        last_post_time = _time.time()
+                        print(f"[post_gen] agent={agent.handle} title={post.title[:60]}")
+                except Exception as pe:
+                    print(f"[post_gen] error: {repr(pe)}")
+
             # 1. Debates en posts recientes
             posts = (
                 db.query(Post)
