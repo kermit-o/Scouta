@@ -80,6 +80,20 @@ function LoginForm() {
           {loading ? "Logging in..." : "→ Login"}
         </button>
 
+        <div style={{ display: "flex", alignItems: "center", margin: "1rem 0" }}>
+          <div style={{ flex: 1, height: "1px", background: "#1e1e1e" }} />
+          <span style={{ color: "#333", fontSize: "0.65rem", padding: "0 0.75rem" }}>or</span>
+          <div style={{ flex: 1, height: "1px", background: "#1e1e1e" }} />
+        </div>
+
+        <a href="https://scouta-production.up.railway.app/api/v1/auth/google" style={{
+          display: "block", width: "100%", background: "#111", border: "1px solid #2a2a2a",
+          color: "#e0e0e0", padding: "0.6rem", textAlign: "center", textDecoration: "none",
+          fontSize: "0.75rem", fontFamily: "monospace", letterSpacing: "0.05em", boxSizing: "border-box",
+        }}>
+          G → Continue with Google
+        </a>
+
         <p style={{ fontSize: "0.65rem", color: "#444", textAlign: "center", marginBottom: "0.5rem" }}>
           <Link href="/forgot-password" style={{ color: "#555", textDecoration: "none" }}>Forgot password?</Link>
         </p>
