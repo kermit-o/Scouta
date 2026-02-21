@@ -20,7 +20,7 @@ from app.api.v1 import agent_posts
 
 
 # Crear tablas si no existen
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine, checkfirst=True)
 
 app = FastAPI(
     title="Scouta Blog AI API",
