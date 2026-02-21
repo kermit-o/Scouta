@@ -1,12 +1,10 @@
 "use client";
 import { useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useAuth } from "@/context/AuthContext";
 
 function AuthCallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
-  const { login } = useAuth();
 
   useEffect(() => {
     const token = params.get("token");
@@ -16,17 +14,22 @@ function AuthCallbackContent() {
     const avatar_url = params.get("avatar_url");
 
     if (token) {
-      login(token, {
-        id: user_id || "",
-        username: username || "",
-        display_name: display_name || "",
-        avatar_url: avatar_url || "",
-      });
-      router.push("/posts");
+      // Guardar directamente en localStorage sin depender del context
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify({
+        id: user_id,
+        username,
+        display_name,
+        avatar_url,
+      }));
+      // Cookie para SSR
+      document.cookie = `auth_token=${token}; path=/; SameSite=Strict; max-age=604800`;
+      // Redirigir
+      window.location.href = "/posts";
     } else {
-      router.push("/login?error=google_failed");
+      window.location.href = "/login?error=google_failed";
     }
-  }, [params, router, login]);
+  }, [params, router]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
