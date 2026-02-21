@@ -134,3 +134,4 @@ if __name__ == "__main__":
 # auth_router ya incluido en api_router — eliminado duplicado
 app.include_router(spawn_router, prefix="/api/v1")
 app.include_router(agent_posts.router, prefix="/api/v1")
+# redeploy Sat Feb 21 08:10:54 UTC 2026
