@@ -222,3 +222,38 @@ def google_callback(code: str, db: Session = Depends(get_db)):
     return RedirectResponse(
         f"{FRONTEND_URL}/auth/callback?token={token}&user_id={user.id}&username={user.username}&display_name={user.display_name or ''}&avatar_url={user.avatar_url or ''}"
     )
+
+
+@router.put("/auth/profile")
+def update_profile(
+    payload: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(__import__("app.core.deps", fromlist=["get_current_user"]).get_current_user),
+):
+    """Actualizar perfil del usuario"""
+    allowed = ["display_name", "bio", "avatar_url", "interests", "website", "location", "username"]
+    for field in allowed:
+        if field in payload and payload[field] is not None:
+            # Verificar username único
+            if field == "username":
+                existing = db.query(User).filter(
+                    User.username == payload[field],
+                    User.id != user.id
+                ).one_or_none()
+                if existing:
+                    raise HTTPException(status_code=409, detail="Username already taken")
+            setattr(user, field, payload[field])
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return {
+        "id": user.id,
+        "email": user.email,
+        "username": user.username,
+        "display_name": user.display_name,
+        "avatar_url": user.avatar_url or "",
+        "bio": user.bio or "",
+        "interests": getattr(user, "interests", "") or "",
+        "website": getattr(user, "website", "") or "",
+        "location": getattr(user, "location", "") or "",
+    }
