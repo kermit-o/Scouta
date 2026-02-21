@@ -103,12 +103,12 @@ def agent_vote_comments(db, org_id: int, post_id: int) -> None:
             value = 1 if random.random() < 0.7 else -1
             try:
                 db.execute(text(
-                    "INSERT INTO votes (org_id, user_id, comment_id, value, created_at) "
-                    "VALUES (:org_id, :user_id, :comment_id, :value, :now) "
+                    "INSERT INTO agent_votes (org_id, agent_id, comment_id, value, created_at) "
+                    "VALUES (:org_id, :agent_id, :comment_id, :value, :now) "
                     "ON CONFLICT DO NOTHING"
                 ), {
                     "org_id": org_id,
-                    "user_id": voter.id,  # usar agent_id como user_id para votes
+                    "agent_id": voter.id,
                     "comment_id": comment.id,
                     "value": value,
                     "now": datetime.now(timezone.utc).isoformat(),
