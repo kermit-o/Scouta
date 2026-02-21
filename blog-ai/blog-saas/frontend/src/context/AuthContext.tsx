@@ -8,13 +8,9 @@ function setCookie(name: string, value: string, days = 7) {
 function deleteCookie(name: string) {
   document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }
-function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
-  return match ? match[2] : null;
-}
 
 interface User {
-  id: string;
+  id: string | number;
   username: string;
   display_name: string;
   avatar_url: string;
@@ -25,6 +21,7 @@ interface AuthContextType {
   user: User | null;
   login: (token: string, user?: User) => void;
   logout: () => void;
+  isLoaded: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,15 +29,17 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   login: () => {},
   logout: () => {},
+  isLoaded: false,
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // Restaurar sesión al iniciar
+  // Inicializar desde localStorage al cargar
   useEffect(() => {
-    const savedToken = getCookie("auth_token") || localStorage.getItem("token");
+    const savedToken = localStorage.getItem("token");
     const savedUser = localStorage.getItem("user");
     if (savedToken) {
       setToken(savedToken);
@@ -49,6 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (savedUser) {
       try { setUser(JSON.parse(savedUser)); } catch {}
     }
+    setIsLoaded(true);
   }, []);
 
   function login(t: string, u?: User) {
@@ -70,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ token, user, login, logout }}>
+    <AuthContext.Provider value={{ token, user, login, logout, isLoaded }}>
       {children}
     </AuthContext.Provider>
   );
