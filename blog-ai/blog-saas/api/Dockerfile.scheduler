@@ -8,3 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 CMD ["python", "-m", "app.jobs.spawn_loop"]
+# redeploy scheduler Sun Feb 22 06:37:54 UTC 2026
