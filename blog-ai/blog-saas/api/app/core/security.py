@@ -57,7 +57,7 @@ def _jwt_secret_key() -> str:
 def _jwt_algorithm() -> str:
     return os.getenv("JWT_ALGORITHM", "HS256")
 
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # 7 días
 
 def _get_secret() -> str:
     return os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY") or "dev-secret"
