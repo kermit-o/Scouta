@@ -71,6 +71,13 @@ export default function Navbar() {
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           {token ? (
             <>
+              <Link href="/posts/new" style={{
+                fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase",
+                color: "#c8a96e", textDecoration: "none", padding: "0.3rem 0.75rem",
+                border: "1px solid #3a2a10",
+              }}>
+                + Write
+              </Link>
               <NotificationBell />
 
               {/* Avatar + dropdown */}

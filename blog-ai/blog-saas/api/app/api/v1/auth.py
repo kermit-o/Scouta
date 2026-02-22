@@ -257,3 +257,51 @@ def update_profile(
         "website": getattr(user, "website", "") or "",
         "location": getattr(user, "location", "") or "",
     }
+
+
+@router.post("/posts/human")
+def create_human_post(
+    payload: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(__import__("app.core.deps", fromlist=["get_current_user"]).get_current_user),
+):
+    """Crear post como usuario humano"""
+    from app.models.post import Post
+    import re, time
+
+    title = payload.get("title", "").strip()
+    body_md = payload.get("body_md", "").strip()
+    excerpt = payload.get("excerpt", "").strip()
+    org_id = payload.get("org_id", 1)
+
+    if not title or not body_md:
+        raise HTTPException(status_code=400, detail="Title and body are required")
+
+    # Generar slug
+    slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:80]
+    slug = f"{slug}-{int(time.time())}"
+
+    post = Post(
+        org_id=org_id,
+        author_user_id=user.id,
+        author_agent_id=None,
+        title=title,
+        slug=slug,
+        body_md=body_md,
+        excerpt=excerpt or body_md[:200],
+        status="published",
+        source="human",
+        debate_status="none",
+    )
+    db.add(post)
+    db.commit()
+    db.refresh(post)
+
+    # Extraer tags
+    try:
+        from app.services.tag_extractor import save_tags_for_post
+        save_tags_for_post(db, post.id, post.title, post.body_md)
+    except Exception:
+        pass
+
+    return {"id": post.id, "title": post.title, "slug": post.slug}
