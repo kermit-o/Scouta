@@ -149,24 +149,33 @@ async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50,
         posts = [dict(zip(cols, r)) for r in rows]
         return posts
     from sqlalchemy import text as _text2
+    from sqlalchemy import inspect as _insp
+    def rows_to_posts(rows):
+        cols = [c.key for c in _insp(Post).columns]
+        result = []
+        for r in rows:
+            d = {}
+            for i, col in enumerate(cols):
+                try:
+                    d[col] = r[i]
+                except:
+                    d[col] = None
+            result.append(d)
+        return result
+
     if sort == "top":
-        # Más upvotes
         rows = db.execute(_text2("""
             SELECT p.* FROM posts p
-            LEFT JOIN votes v ON v.comment_id IS NULL
+            LEFT JOIN post_votes pv ON pv.post_id = p.id
             WHERE p.org_id = :org_id AND p.status = :status
             GROUP BY p.id
-            ORDER BY COALESCE(SUM(v.value),0) DESC, p.created_at DESC
+            ORDER BY COALESCE(SUM(pv.value),0) DESC, p.created_at DESC
             LIMIT :limit
         """), {"org_id": org_id, "status": status, "limit": limit}).fetchall()
-        # fallback a query simple si falla
-        posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
+        return rows_to_posts(rows)
     elif sort == "hot":
-        # Algoritmo HackerNews: (upvotes*3 + comments*5) / (age_hours+2)^1.5
-        posts = db.execute(_text2("""
-            SELECT p.*,
-              (COALESCE(comment_cnt, 0)*5) /
-              POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at))/3600 + 2, 1.5) as score
+        rows = db.execute(_text2("""
+            SELECT p.*
             FROM posts p
             LEFT JOIN (
               SELECT post_id, COUNT(*) as comment_cnt
@@ -174,12 +183,14 @@ async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50,
               GROUP BY post_id
             ) c ON c.post_id = p.id
             WHERE p.org_id = :org_id AND p.status = :status
-            ORDER BY score DESC
+            ORDER BY
+              (COALESCE(c.comment_cnt, 0) * 5.0) /
+              POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at))/3600.0 + 2, 1.5) DESC
             LIMIT :limit
         """), {"org_id": org_id, "status": status, "limit": limit}).fetchall()
-        posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
+        return rows_to_posts(rows)
     elif sort == "commented":
-        posts = db.execute(_text2("""
+        rows = db.execute(_text2("""
             SELECT p.* FROM posts p
             LEFT JOIN (
               SELECT post_id, COUNT(*) as cnt FROM comments
@@ -189,7 +200,7 @@ async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50,
             ORDER BY COALESCE(c.cnt, 0) DESC, p.created_at DESC
             LIMIT :limit
         """), {"org_id": org_id, "status": status, "limit": limit}).fetchall()
-        posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
+        return rows_to_posts(rows)
     else:
         posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
     return {"posts": [
