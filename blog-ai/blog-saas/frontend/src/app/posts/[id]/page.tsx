@@ -68,14 +68,15 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
   const replyCount = comment.replies?.length ?? 0;
 
   async function handleVote(value: 1 | -1) {
-    if (!token) {
+    const activeToken = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    if (!activeToken) {
       window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
       return;
     }
     const API = "/api/proxy";
     const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments/${comment.id}/vote`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
       body: JSON.stringify({ value }),
     });
     if (!res.ok) return;
@@ -309,11 +310,12 @@ export default function PostPage() {
   useEffect(() => { load(); }, [load]);
 
   async function handlePostVote(value: 1 | -1) {
-    if (!token) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
+    const activeToken = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    if (!activeToken) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
     const API = "/api/proxy";
     const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/vote`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
       body: JSON.stringify({ value }),
     });
     if (!res.ok) return;
