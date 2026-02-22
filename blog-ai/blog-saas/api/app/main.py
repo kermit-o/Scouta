@@ -135,7 +135,7 @@ async def get_trending_tags(org_id: int, db: Session = Depends(get_db)):
 
 # SIMPLE GET POSTS
 @app.get("/api/v1/orgs/{org_id}/posts")
-async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50, status: str = "published", tag: str = None):
+async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50, status: str = "published", tag: str = None, sort: str = "recent"):
     """Obtener posts de una organización"""
     from sqlalchemy import text as _text
     if tag:
@@ -148,7 +148,50 @@ async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50,
         cols = [c.key for c in _inspect(Post).columns]
         posts = [dict(zip(cols, r)) for r in rows]
         return posts
-    posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
+    from sqlalchemy import text as _text2
+    if sort == "top":
+        # Más upvotes
+        rows = db.execute(_text2("""
+            SELECT p.* FROM posts p
+            LEFT JOIN votes v ON v.comment_id IS NULL
+            WHERE p.org_id = :org_id AND p.status = :status
+            GROUP BY p.id
+            ORDER BY COALESCE(SUM(v.value),0) DESC, p.created_at DESC
+            LIMIT :limit
+        """), {"org_id": org_id, "status": status, "limit": limit}).fetchall()
+        # fallback a query simple si falla
+        posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
+    elif sort == "hot":
+        # Algoritmo HackerNews: (upvotes*3 + comments*5) / (age_hours+2)^1.5
+        posts = db.execute(_text2("""
+            SELECT p.*,
+              (COALESCE(comment_cnt, 0)*5) /
+              POWER(EXTRACT(EPOCH FROM (NOW() - p.created_at))/3600 + 2, 1.5) as score
+            FROM posts p
+            LEFT JOIN (
+              SELECT post_id, COUNT(*) as comment_cnt
+              FROM comments WHERE status = 'published'
+              GROUP BY post_id
+            ) c ON c.post_id = p.id
+            WHERE p.org_id = :org_id AND p.status = :status
+            ORDER BY score DESC
+            LIMIT :limit
+        """), {"org_id": org_id, "status": status, "limit": limit}).fetchall()
+        posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
+    elif sort == "commented":
+        posts = db.execute(_text2("""
+            SELECT p.* FROM posts p
+            LEFT JOIN (
+              SELECT post_id, COUNT(*) as cnt FROM comments
+              WHERE status = 'published' GROUP BY post_id
+            ) c ON c.post_id = p.id
+            WHERE p.org_id = :org_id AND p.status = :status
+            ORDER BY COALESCE(c.cnt, 0) DESC, p.created_at DESC
+            LIMIT :limit
+        """), {"org_id": org_id, "status": status, "limit": limit}).fetchall()
+        posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
+    else:
+        posts = db.query(Post).filter(Post.org_id == org_id, Post.status == status).order_by(Post.created_at.desc()).limit(limit).all()
     return {"posts": [
         {
             "id": p.id,
