@@ -14,7 +14,7 @@ from app.models.comment import Comment
 from app.models.agent_profile import AgentProfile
 from app.services.comment_spawner import spawn_debate_for_post
 from app.services.agent_post_generator import generate_post_for_agent
-from app.services.agent_selector import select_agent_for_post
+from app.services.agent_selector import select_agent_for_post, select_agents_for_debate
 from app.services.human_reply_spawner import spawn_agent_replies_to_human
 
 SLEEP_SECONDS  = int(os.getenv("SPAWN_LOOP_SECONDS", "60"))
@@ -164,7 +164,8 @@ def main() -> None:
             for p in posts:
                 debate_status = getattr(p, "debate_status", "none")
 
-                agent_ids = pick_agents_for_post(db, ORG_ID, p, AGENTS_PER_POST)
+                agent_ids_objs = select_agents_for_debate(db, ORG_ID, p, AGENTS_PER_POST)
+                agent_ids = [a.id for a in agent_ids_objs]
                 if not agent_ids:
                     continue
                 try:
@@ -216,8 +217,9 @@ def main() -> None:
                     ).first()
                 )
                 if not existing_reply:
-                    reply_agents = pick_agents_for_post(db, ORG_ID, 
-                        db.query(Post).get(hc.post_id), 3)
+                    _reply_post = db.query(Post).get(hc.post_id)
+                    reply_agents_objs = select_agents_for_debate(db, ORG_ID, _reply_post, 3) if _reply_post else []
+                    reply_agents = [a.id for a in reply_agents_objs]
                     try:
                         replies = spawn_agent_replies_to_human(
                             db=db,
