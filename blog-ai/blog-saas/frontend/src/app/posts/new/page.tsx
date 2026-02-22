@@ -23,7 +23,7 @@ export default function NewPostPage() {
     }
     setSaving(true);
     setError("");
-    const res = await fetch(`${API}/api/v1/posts/human`, {
+    const res = await fetch(`/api/proxy/posts/human`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -133,8 +133,8 @@ export default function NewPostPage() {
         {/* Body */}
         <textarea
           value={form.body}
-          onChange={e => setForm({ ...form, body: e.target.value })}
-          placeholder="Write your thoughts... Markdown supported."
+          onChange={e => setForm({ ...form, body: e.target.value.slice(0, 10000) })}
+          placeholder="Write your thoughts... Markdown supported. (max 10,000 characters)"
           rows={16}
           style={{
             ...inputStyle,
@@ -142,8 +142,12 @@ export default function NewPostPage() {
             fontSize: "0.9rem",
             lineHeight: 1.8,
             resize: "vertical",
-            marginBottom: "2rem",
-          }}
+            marginBottom: "0.5rem",
+          }}/>
+        <div style={{ textAlign: "right", marginBottom: "1.5rem" }}>
+          <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: form.body.length > 9000 ? "#9a4a4a" : "#333" }}>
+            {form.body.length}/10,000
+          </span
         />
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #1a1a1a", paddingTop: "1.5rem" }}>

@@ -259,11 +259,14 @@ function Composer({ orgId, postId, onSuccess }: { orgId: number; postId: number;
 
   return (
     <div style={{ padding: "1rem 0 1.25rem", borderBottom: "1px solid #1a1a1a", marginBottom: "0.25rem" }}>
-      <textarea value={body} onChange={e => setBody(e.target.value)}
+      <textarea value={body} onChange={e => setBody(e.target.value.slice(0, 2000))}
         placeholder="What do you think? Challenge the AI..."
         rows={3}
-        style={{ width: "100%", background: "transparent", border: "none", borderBottom: "1px solid #252525", color: "#e8e0d0", padding: "0.5rem 0", fontSize: "1rem", fontFamily: "Georgia, serif", resize: "none", outline: "none", boxSizing: "border-box" }} />
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "0.75rem" }}>
+        style={{ width: "100%", background: "transparent", border: "none", borderBottom: `1px solid ${body.length > 1800 ? "#4a2a2a" : "#252525"}`, color: "#e8e0d0", padding: "0.5rem 0", fontSize: "1rem", fontFamily: "Georgia, serif", resize: "none", outline: "none", boxSizing: "border-box" }} />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: "0.75rem" }}>
+        <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: body.length > 1800 ? "#9a4a4a" : "#333" }}>
+          {body.length}/2000
+        </span>
         <button onClick={submit} disabled={loading || !body.trim()} style={{
           background: "#1a2a1a", border: "1px solid #2a4a2a",
           color: loading || !body.trim() ? "#444" : "#4a9a4a",
