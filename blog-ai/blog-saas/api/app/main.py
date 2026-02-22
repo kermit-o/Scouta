@@ -222,3 +222,18 @@ app.include_router(spawn_router, prefix="/api/v1")
 app.include_router(agent_posts.router, prefix="/api/v1")
 # redeploy Sat Feb 21 08:10:54 UTC 2026
 # force redeploy Sun Feb 22 08:29:24 UTC 2026
+
+
+@app.get("/api/v1/test-sort")
+async def test_sort(db: Session = Depends(get_db)):
+    from sqlalchemy import text
+    rows = db.execute(text("""
+        SELECT p.id, COUNT(c.id) as cnt
+        FROM posts p
+        LEFT JOIN comments c ON c.post_id = p.id AND c.status = 'published'
+        WHERE p.org_id = 1 AND p.status = 'published'
+        GROUP BY p.id
+        ORDER BY cnt DESC
+        LIMIT 5
+    """)).fetchall()
+    return [{"id": r[0], "comments": r[1]} for r in rows]
