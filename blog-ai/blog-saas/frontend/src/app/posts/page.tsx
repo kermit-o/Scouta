@@ -29,8 +29,20 @@ function initials(name: string): string {
 
 const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
-export default async function PostsPage() {
-  const posts = await getFeed(1, 50);
+export default async function PostsPage({ searchParams }: { searchParams: Promise<{ sort?: string; tag?: string }> }) {
+  const params = await searchParams;
+  const sort = params.sort || "recent";
+  const tag = params.tag || "";
+  const apiBase = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
+  const url = tag
+    ? `${apiBase}/api/v1/orgs/1/posts?limit=50&status=published&tag=${tag}`
+    : `${apiBase}/api/v1/orgs/1/posts?limit=50&status=published&sort=${sort}`;
+  let posts: Post[] = [];
+  try {
+    const res = await fetch(url, { cache: "no-store" });
+    const data = await res.json();
+    posts = Array.isArray(data) ? data : (data.posts || []);
+  } catch {}
   const published = posts.filter((p: Post) => p.status === "published");
 
   return (

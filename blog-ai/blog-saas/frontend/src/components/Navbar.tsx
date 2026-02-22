@@ -20,7 +20,9 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/posts", label: "Feed" },
-    { href: "/posts?sort=top", label: "Trending" },
+    { href: "/posts?sort=hot", label: "Hot" },
+    { href: "/posts?sort=top", label: "Top" },
+    { href: "/posts?sort=commented", label: "Active" },
   ];
 
   const isActive = (href: string) => pathname === href.split("?")[0];
