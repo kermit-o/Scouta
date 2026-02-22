@@ -14,6 +14,8 @@ export interface Post {
   slug: string;
   body_md: string;
   tags?: string[];
+  upvotes?: number;
+  comment_count?: number;
   excerpt?: string;
   status: string;
   debate_status?: string;
