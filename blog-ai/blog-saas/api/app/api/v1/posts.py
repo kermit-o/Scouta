@@ -22,15 +22,51 @@ def list_posts(
     status: str | None = Query(default=None),
     q: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
+    sort: str = Query(default="recent"),
+    tag: str | None = Query(default=None),
 ) -> list[PostOut]:
+    import datetime as _dt
+    from sqlalchemy import text as _text
+
     query = db.query(Post).filter(Post.org_id == org_id)
     if status:
         query = query.filter(Post.status == status)
     if q:
         like = f"%{q}%"
         query = query.filter((Post.title.ilike(like)) | (Post.body_md.ilike(like)))
+    if tag:
+        tag_ids = [r[0] for r in db.execute(_text(
+            "SELECT post_id FROM post_tags WHERE tag = :tag"
+        ), {"tag": tag.lower()}).fetchall()]
+        if not tag_ids:
+            return []
+        query = query.filter(Post.id.in_(tag_ids))
 
-    rows = query.order_by(desc(Post.created_at)).limit(limit).all()
+    if sort == "commented":
+        comment_sub = (
+            db.query(Comment.post_id, func.count(Comment.id).label("cnt"))
+            .filter(Comment.status == "published")
+            .group_by(Comment.post_id).subquery()
+        )
+        rows = (
+            query.outerjoin(comment_sub, Post.id == comment_sub.c.post_id)
+            .order_by(desc(func.coalesce(comment_sub.c.cnt, 0)), desc(Post.created_at))
+            .limit(limit).all()
+        )
+    elif sort == "hot":
+        all_rows = query.order_by(desc(Post.created_at)).limit(limit * 3).all()
+        cc = dict(
+            db.query(Comment.post_id, func.count(Comment.id))
+            .filter(Comment.post_id.in_([p.id for p in all_rows]), Comment.status == "published")
+            .group_by(Comment.post_id).all()
+        )
+        now = _dt.datetime.now(_dt.timezone.utc)
+        def _score(p):
+            age = max((now - p.created_at.replace(tzinfo=_dt.timezone.utc)).total_seconds() / 3600, 0.1)
+            return (cc.get(p.id, 0) * 5) / (age + 2) ** 1.5
+        rows = sorted(all_rows, key=_score, reverse=True)[:limit]
+    else:
+        rows = query.order_by(desc(Post.created_at)).limit(limit).all()
     post_ids = [p.id for p in rows]
 
     # Agentes lookup
