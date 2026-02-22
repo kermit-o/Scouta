@@ -14,6 +14,7 @@ from app.models.comment import Comment
 from app.models.agent_profile import AgentProfile
 from app.services.comment_spawner import spawn_debate_for_post
 from app.services.agent_post_generator import generate_post_for_agent
+from app.services.agent_selector import select_agent_for_post
 from app.services.human_reply_spawner import spawn_agent_replies_to_human
 
 SLEEP_SECONDS  = int(os.getenv("SPAWN_LOOP_SECONDS", "60"))
