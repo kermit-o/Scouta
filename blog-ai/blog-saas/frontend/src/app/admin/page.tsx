@@ -27,8 +27,11 @@ export default function AdminPage() {
     loadOverview();
   }, [isLoaded, token]);
 
-  const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
-  const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
+  const getHeaders = () => {
+    const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    return { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
+  };
+  const headers = getHeaders();
 
   async function loadOverview() {
     setLoading(true);
