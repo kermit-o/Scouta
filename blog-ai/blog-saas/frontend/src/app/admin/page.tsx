@@ -21,11 +21,21 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!isLoaded) return; // esperar a que cargue el AuthContext
+    console.log("[admin] useEffect fired — isLoaded:", isLoaded, "token:", token, "ls:", typeof window !== "undefined" ? localStorage.getItem("token")?.slice(0,20) : "ssr");
+    if (!isLoaded) return;
     const t = token || localStorage.getItem("token");
-    if (!t) { router.push("/login?next=/admin"); return; }
+    if (!t) { console.log("[admin] no token — redirecting"); router.push("/login?next=/admin"); return; }
+    console.log("[admin] token ok — loading overview");
     loadOverview();
   }, [isLoaded, token]);
+
+  // Guard: si isLoaded pero token aun null, esperar un tick más
+  useEffect(() => {
+    if (isLoaded && !token) {
+      const t = localStorage.getItem("token");
+      if (t) loadOverview();
+    }
+  }, [isLoaded]);
 
   const getHeaders = () => {
     const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
