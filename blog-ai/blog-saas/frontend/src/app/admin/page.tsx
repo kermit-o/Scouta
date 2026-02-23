@@ -46,13 +46,20 @@ export default function AdminPage() {
   async function loadOverview() {
     setLoading(true);
     try {
-      const [posts, users, agents] = await Promise.all([
-        fetch(`${API}/api/v1/orgs/1/posts?limit=200&status=published`, { headers }).then(r => r.json()),
-        fetch(`${API}/api/v1/orgs/1/moderation/queue?limit=50`, { headers }).then(r => r.ok ? r.json() : []),
-        fetch(`${API}/api/v1/orgs/1/agents?limit=200`, { headers }).then(r => r.ok ? r.json() : []),
+      const h = getHeaders();
+      const [posts, agents, users, actions] = await Promise.all([
+        fetch(`${API}/api/v1/orgs/1/posts?limit=200&status=published`, { headers: h }).then(r => r.json()),
+        fetch(`${API}/api/v1/orgs/1/agents?limit=200`, { headers: h }).then(r => r.ok ? r.json() : []),
+        fetch(`${API}/api/v1/orgs/1/admin/users?limit=200`, { headers: h }).then(r => r.ok ? r.json() : []),
+        fetch(`${API}/api/v1/orgs/1/admin/actions?limit=100`, { headers: h }).then(r => r.ok ? r.json() : []),
       ]);
       const postList = Array.isArray(posts) ? posts : posts.posts || [];
-      setData({ posts: postList, queue: users, agents: Array.isArray(agents) ? agents : agents.agents || [] });
+      setData({
+        posts: postList,
+        agents: Array.isArray(agents) ? agents : agents.agents || [],
+        users: Array.isArray(users) ? users : [],
+        actions: Array.isArray(actions) ? actions : [],
+      });
     } catch(e) { console.error(e); }
     setLoading(false);
   }
@@ -120,7 +127,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div style={{ borderBottom: "1px solid #1a1a1a", marginBottom: "1.5rem" }}>
-          {(["posts","agents"] as const).map(t => (
+          {(["posts","agents","comments","users"] as const).map(t => (
             <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>{t}</button>
           ))}
         </div>
@@ -143,6 +150,43 @@ export default function AdminPage() {
                   background: "none", border: "1px solid #2a1a1a", color: "#9a4a4a",
                   padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
                 }}>Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Comments/Actions tab */}
+        {tab === "comments" && !loading && (
+          <div>
+            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{(data.actions||[]).length} recent actions</p>
+            {(data.actions||[]).map((a: any) => (
+              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{a.id}</span>
+                <span style={{ fontSize: "0.55rem", color: a.status === "approved" ? "#4a9a4a" : a.status === "rejected" ? "#9a4a4a" : "#888", minWidth: 60 }}>{a.status}</span>
+                <span style={{ fontSize: "0.55rem", color: "#555", minWidth: 50 }}>{a.action_type}</span>
+                <span style={{ flex: 1, fontSize: "0.75rem", color: "#c8c0b0", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>{a.content}</span>
+                <span style={{ fontSize: "0.55rem", color: "#333" }}>{timeAgo(a.created_at)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Users tab */}
+        {tab === "users" && !loading && (
+          <div>
+            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{(data.users||[]).length} users</p>
+            {(data.users||[]).map((u: any) => (
+              <div key={u.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{u.id}</span>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: "0.8rem", color: "#c8c0b0" }}>{u.display_name || u.username || "—"}</span>
+                  <span style={{ fontSize: "0.55rem", color: "#444", marginLeft: "0.5rem" }}>{u.email}</span>
+                </div>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 60 }}>@{u.username || "—"}</span>
+                <span style={{ fontSize: "0.55rem", color: u.is_verified ? "#4a9a4a" : "#9a4a4a", minWidth: 50 }}>
+                  {u.is_verified ? "verified" : "unverified"}
+                </span>
+                <span style={{ fontSize: "0.55rem", color: "#333" }}>{timeAgo(u.created_at)}</span>
               </div>
             ))}
           </div>
