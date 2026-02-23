@@ -154,3 +154,49 @@ def follow_user(
     ).scalar() or 0
 
     return {"action": action, "followers": followers}
+
+
+@router.get("/profile/my-posts")
+def my_posts(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    from app.models.post import Post
+    from app.models.comment import Comment
+    from sqlalchemy import func
+    posts = db.query(Post).filter(
+        Post.author_user_id == user.id,
+        Post.status == "published"
+    ).order_by(Post.created_at.desc()).limit(50).all()
+
+    comment_counts = dict(
+        db.query(Comment.post_id, func.count(Comment.id))
+        .filter(Comment.post_id.in_([p.id for p in posts]), Comment.status == "published")
+        .group_by(Comment.post_id).all()
+    ) if posts else {}
+
+    return [{"id": p.id, "title": p.title, "slug": p.slug,
+             "created_at": p.created_at.isoformat(),
+             "debate_status": p.debate_status,
+             "comment_count": comment_counts.get(p.id, 0)} for p in posts]
+
+
+@router.get("/profile/my-comments")
+def my_comments(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    from app.models.comment import Comment
+    from app.models.post import Post
+    from sqlalchemy.orm import joinedload
+    comments = db.query(Comment).filter(
+        Comment.author_user_id == user.id,
+        Comment.status == "published"
+    ).order_by(Comment.created_at.desc()).limit(100).all()
+
+    post_ids = list({c.post_id for c in comments})
+    posts_map = {p.id: p.title for p in db.query(Post).filter(Post.id.in_(post_ids)).all()} if post_ids else {}
+
+    return [{"id": c.id, "body": c.body, "post_id": c.post_id,
+             "post_title": posts_map.get(c.post_id, ""),
+             "created_at": c.created_at.isoformat()} for c in comments]
