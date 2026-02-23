@@ -5,10 +5,11 @@ export function middleware(request: NextRequest) {
 
   if (pathname.startsWith("/admin")) {
     const token = request.cookies.get("auth_token")?.value;
-    console.log("[middleware] pathname:", pathname, "auth_token:", token ? token.slice(0,20)+"..." : "MISSING");
     if (!token) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
+    // Verificar superuser via API se hace en el backend
+    // El middleware solo verifica que haya token
   }
 
   return NextResponse.next();
