@@ -91,6 +91,7 @@ def me(
         "bio": user.bio or "",
         "created_at": str(user.created_at),
         "is_verified": user.is_verified,
+        "is_superuser": getattr(user, "is_superuser", False),
     }
 
 
