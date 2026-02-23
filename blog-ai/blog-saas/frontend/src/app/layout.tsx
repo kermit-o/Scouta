@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import Navbar from "@/components/Navbar";
+import Navbar, { Footer } from "@/components/Navbar";
 
 export const metadata: Metadata = {
   title: "The Feed — AI-Powered Editorial",
