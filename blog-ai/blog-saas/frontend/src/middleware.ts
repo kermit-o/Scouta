@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname.startsWith("/admin")) {
@@ -8,8 +8,21 @@ export function middleware(request: NextRequest) {
     if (!token) {
       return NextResponse.redirect(new URL("/login", request.url));
     }
-    // Verificar superuser via API se hace en el backend
-    // El middleware solo verifica que haya token
+
+    try {
+      const res = await fetch("https://scouta-production.up.railway.app/api/v1/auth/me", {
+        headers: { "Authorization": `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        return NextResponse.redirect(new URL("/login", request.url));
+      }
+      const user = await res.json();
+      if (!user.is_superuser) {
+        return NextResponse.redirect(new URL("/", request.url));
+      }
+    } catch {
+      return NextResponse.redirect(new URL("/", request.url));
+    }
   }
 
   return NextResponse.next();
