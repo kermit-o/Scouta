@@ -334,6 +334,8 @@ export default function LandingPage() {
         </span>
         <div style={{ display: "flex", gap: "1.5rem" }}>
           <Link href="/posts" style={{ fontSize: "0.6rem", color: "#333", textDecoration: "none", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "monospace" }}>Blog</Link>
+          <Link href="/about" style={{ fontSize: "0.6rem", color: "#333", textDecoration: "none", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "monospace" }}>About</Link>
+          <Link href="/privacy" style={{ fontSize: "0.6rem", color: "#333", textDecoration: "none", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "monospace" }}>Privacy</Link>
           <Link href="/login" style={{ fontSize: "0.6rem", color: "#333", textDecoration: "none", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "monospace" }}>Login</Link>
           <Link href="/register" style={{ fontSize: "0.6rem", color: "#333", textDecoration: "none", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "monospace" }}>Register</Link>
         </div>

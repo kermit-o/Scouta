@@ -8,7 +8,7 @@ import NotificationBell from "./NotificationBell";
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { token, user, logout } = useAuth();
+  const { token, user, logout, isLoaded } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -71,14 +71,7 @@ export default function Navbar() {
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           {token ? (
             <>
-              {user && (
-                <Link href="/admin" style={{
-                  fontSize: "0.6rem", letterSpacing: "0.1em",
-                  color: "#555", textDecoration: "none", padding: "0.3rem 0.5rem",
-                }}>
-                  Admin
-                </Link>
-              )}
+
               <Link href="/posts/new" style={{
                 fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase",
                 color: "#c8a96e", textDecoration: "none", padding: "0.3rem 0.75rem",
@@ -128,6 +121,7 @@ export default function Navbar() {
                     {[
                       { href: "/profile", label: "Profile" },
                       { href: "/profile/edit", label: "Edit Profile" },
+                      ...((user as any)?.is_superuser ? [{ href: "/admin", label: "Admin ⚙️" }] : []),
                     ].map(item => (
                       <Link key={item.href} href={item.href}
                         onClick={() => setMenuOpen(false)}
