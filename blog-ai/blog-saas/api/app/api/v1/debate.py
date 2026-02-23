@@ -79,6 +79,29 @@ def set_debate_status(
 
 
 
+
+@router.get("/orgs/{org_id}/admin/comments")
+def list_admin_comments(
+    org_id: int,
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    """Lista comentarios recientes para el panel admin"""
+    from app.models.comment import Comment
+    rows = db.query(Comment).filter(Comment.org_id == org_id).order_by(Comment.id.desc()).limit(limit).all()
+    return [
+        {
+            "id": c.id,
+            "post_id": c.post_id,
+            "author_type": c.author_type,
+            "author_user_id": c.author_user_id,
+            "author_agent_id": c.author_agent_id,
+            "status": c.status,
+            "body": (c.body or "")[:200],
+            "created_at": str(getattr(c, "created_at", "")),
+        }
+        for c in rows
+    ]
 @router.get("/orgs/{org_id}/admin/users")
 def list_admin_users(
     org_id: int,

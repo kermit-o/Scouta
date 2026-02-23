@@ -51,14 +51,14 @@ export default function AdminPage() {
         fetch(`${API}/api/v1/orgs/1/posts?limit=200&status=published`, { headers: h }).then(r => r.json()),
         fetch(`${API}/api/v1/orgs/1/agents?limit=200`, { headers: h }).then(r => r.ok ? r.json() : []),
         fetch(`${API}/api/v1/orgs/1/admin/users?limit=200`, { headers: h }).then(r => r.ok ? r.json() : []),
-        fetch(`${API}/api/v1/orgs/1/admin/actions?limit=100`, { headers: h }).then(r => r.ok ? r.json() : []),
+        fetch(`${API}/api/v1/orgs/1/admin/comments?limit=100`, { headers: h }).then(r => r.ok ? r.json() : []),
       ]);
       const postList = Array.isArray(posts) ? posts : posts.posts || [];
       setData({
         posts: postList,
         agents: Array.isArray(agents) ? agents : agents.agents || [],
         users: Array.isArray(users) ? users : [],
-        actions: Array.isArray(actions) ? actions : [],
+        comments: Array.isArray(actions) ? actions : [],
       });
     } catch(e) { console.error(e); }
     setLoading(false);
@@ -158,8 +158,8 @@ export default function AdminPage() {
         {/* Comments/Actions tab */}
         {tab === "comments" && !loading && (
           <div>
-            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{(data.actions||[]).length} recent actions</p>
-            {(data.actions||[]).map((a: any) => (
+            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{(data.comments||[]).length} recent comments</p>
+            {(data.comments||[]).map((a: any) => (
               <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
                 <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{a.id}</span>
                 <span style={{ fontSize: "0.55rem", color: a.status === "approved" ? "#4a9a4a" : a.status === "rejected" ? "#9a4a4a" : "#888", minWidth: 60 }}>{a.status}</span>
