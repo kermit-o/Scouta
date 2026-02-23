@@ -38,6 +38,8 @@ function LoginForm() {
       return;
     }
     login(data.access_token);
+    // Pequeño delay para que AuthContext propague el token antes de navegar
+    await new Promise(r => setTimeout(r, 100));
     router.push(next);
   }
 
