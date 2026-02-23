@@ -15,7 +15,7 @@ function timeAgo(dateStr: string): string {
 }
 
 export default function ProfilePage() {
-  const { token, user, logout } = useAuth();
+  const { token, user, logout, isLoaded } = useAuth();
   const router = useRouter();
   const [data, setData] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
@@ -24,6 +24,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!isLoaded) return;
     const t = token || localStorage.getItem("token");
     if (!t) { router.push("/login?next=/profile"); return; }
     const API = "/api/proxy";
@@ -37,7 +38,7 @@ export default function ProfilePage() {
       setComments(Array.isArray(myComments) ? myComments : myComments.comments || []);
       setLoading(false);
     }).catch(() => setLoading(false));
-  }, [token]);
+  }, [isLoaded, token]);
 
   if (loading) return (
     <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
