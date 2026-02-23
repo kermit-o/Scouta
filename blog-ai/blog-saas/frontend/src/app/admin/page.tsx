@@ -1,212 +1,171 @@
 "use client";
-
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
-const API = (typeof window !== "undefined"
-  ? process.env.NEXT_PUBLIC_API_BROWSER_URL
-  : process.env.NEXT_PUBLIC_API_URL) ?? "http://localhost:8000";
-const ORG_ID = 1;
+const API = "/api/proxy";
 
-interface Post {
-  id: number;
-  title: string;
-  status: string;
-  debate_status: string;
-  created_at: string;
-  comment_count: number;
-}
-
-interface Action {
-  id: number;
-  agent_id: number;
-  action_type: string;
-  status: string;
-  content: string;
-  policy_score: number;
-  created_at: string;
+function timeAgo(d: string) {
+  const m = Math.floor((Date.now() - new Date(d).getTime()) / 60000);
+  if (m < 1) return "just now"; if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60); if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
 }
 
 export default function AdminPage() {
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [actions, setActions] = useState<Action[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [msg, setMsg] = useState("");
-  const { token, logout } = useAuth();
+  const { token } = useAuth();
   const router = useRouter();
+  const [tab, setTab] = useState<"overview"|"posts"|"comments"|"users"|"agents">("overview");
+  const [data, setData] = useState<any>({});
+  const [loading, setLoading] = useState(true);
+
+  const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+  const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
 
   useEffect(() => {
-    if (token === null && typeof window !== "undefined") {
-      router.push("/login");
-    }
-  }, [token]);
+    if (!t) { router.push("/login?next=/admin"); return; }
+    loadOverview();
+  }, [t]);
 
-  async function load() {
+  async function loadOverview() {
     setLoading(true);
-    const [p, a] = await Promise.all([
-      fetch(`${API}/api/v1/orgs/${ORG_ID}/admin/posts`).then(r => r.json()).catch(() => []),
-      fetch(`${API}/api/v1/orgs/${ORG_ID}/admin/actions?limit=20`).then(r => r.json()).catch(() => []),
-    ]);
-    setPosts(Array.isArray(p) ? p : []);
-    setActions(Array.isArray(a) ? a : []);
+    try {
+      const [posts, users, agents] = await Promise.all([
+        fetch(`${API}/api/v1/orgs/1/posts?limit=200&status=published`, { headers }).then(r => r.json()),
+        fetch(`${API}/api/v1/orgs/1/moderation/queue?limit=50`, { headers }).then(r => r.ok ? r.json() : []),
+        fetch(`${API}/api/v1/orgs/1/agents?limit=200`, { headers }).then(r => r.ok ? r.json() : []),
+      ]);
+      const postList = Array.isArray(posts) ? posts : posts.posts || [];
+      setData({ posts: postList, queue: users, agents: Array.isArray(agents) ? agents : agents.agents || [] });
+    } catch(e) { console.error(e); }
     setLoading(false);
   }
 
-  useEffect(() => { load(); }, []);
-
-  async function spawnDebate(postId: number) {
-    setMsg(`Spawning debate for post #${postId}...`);
-    const res = await fetch(
-      `${API}/api/v1/orgs/${ORG_ID}/posts/${postId}/spawn-debate?agent_ids=1,3,7&rounds=2&publish=true&source=debate`,
-      { method: "POST" }
-    );
-    const d = await res.json();
-    setMsg(res.ok ? `✅ Debate spawned: ${Array.isArray(d) ? d.length : 0} comments` : `❌ ${JSON.stringify(d)}`);
-    load();
+  async function deletePost(id: number) {
+    if (!confirm("Delete this post?")) return;
+    await fetch(`${API}/api/v1/orgs/1/posts/${id}`, { method: "DELETE", headers });
+    setData((d: any) => ({ ...d, posts: d.posts.filter((p: any) => p.id !== id) }));
   }
 
-  async function setDebateStatus(postId: number, status: string) {
-    const res = await fetch(
-      `${API}/api/v1/orgs/${ORG_ID}/posts/${postId}/debate-status?status=${status}`,
-      { method: "PATCH" }
-    );
-    const d = await res.json();
-    setMsg(res.ok ? `✅ Post #${postId} debate → ${status}` : `❌ ${JSON.stringify(d)}`);
-    load();
+  async function toggleAgent(id: number, enabled: boolean) {
+    await fetch(`${API}/api/v1/orgs/1/agents/${id}`, {
+      method: "PATCH", headers,
+      body: JSON.stringify({ is_enabled: !enabled }),
+    });
+    setData((d: any) => ({ ...d, agents: d.agents.map((a: any) => a.id === id ? { ...a, is_enabled: !enabled } : a) }));
   }
 
-  const debateBadge = (s: string) => {
-    const colors: Record<string, string> = {
-      none: "#333",
-      open: "#1a3a1a",
-      closed: "#3a1a1a",
-    };
-    const text: Record<string, string> = {
-      none: "#666",
-      open: "#4a9a4a",
-      closed: "#9a4a4a",
-    };
-    return (
-      <span style={{
-        background: colors[s] ?? "#333",
-        color: text[s] ?? "#666",
-        border: `1px solid ${text[s] ?? "#666"}44`,
-        padding: "0.1rem 0.4rem",
-        borderRadius: "2px",
-        fontSize: "0.6rem",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase",
-        fontFamily: "monospace",
-      }}>{s}</span>
-    );
-  };
+  async function shadowBanAgent(id: number, banned: boolean) {
+    await fetch(`${API}/api/v1/orgs/1/agents/${id}`, {
+      method: "PATCH", headers,
+      body: JSON.stringify({ is_shadow_banned: !banned }),
+    });
+    setData((d: any) => ({ ...d, agents: d.agents.map((a: any) => a.id === id ? { ...a, is_shadow_banned: !banned } : a) }));
+  }
+
+  const tabStyle = (active: boolean) => ({
+    background: "none", border: "none",
+    borderBottom: active ? "1px solid #f0e8d8" : "1px solid transparent",
+    color: active ? "#f0e8d8" : "#444", padding: "0.5rem 0",
+    cursor: "pointer", fontSize: "0.6rem", fontFamily: "monospace",
+    letterSpacing: "0.15em", textTransform: "uppercase" as const, marginRight: "1.5rem",
+  });
+
+  const posts = data.posts || [];
+  const agents = data.agents || [];
 
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0", fontFamily: "monospace" }}>
-      {/* Header */}
-      <header style={{ borderBottom: "1px solid #1e1e1e", padding: "1.25rem 2rem", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <div>
-          <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", margin: 0 }}>Admin Panel</p>
-          <h1 style={{ fontSize: "1.25rem", fontWeight: 400, color: "#f0e8d8", margin: "0.25rem 0 0", fontFamily: "monospace" }}>Blog-AI Dashboard</h1>
-        </div>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <a href="/posts" style={{ fontSize: "0.7rem", color: "#555", textDecoration: "none", letterSpacing: "0.1em" }}>← Blog</a>
-          <button onClick={load} style={{ background: "none", border: "1px solid #2a2a2a", color: "#888", padding: "0.3rem 0.75rem", cursor: "pointer", fontSize: "0.7rem", fontFamily: "monospace" }}>
-            ↻ Refresh
-          </button>
-          <button onClick={() => { logout(); router.push("/login"); }} style={{ background: "none", border: "1px solid #3a1a1a", color: "#9a4a4a", padding: "0.3rem 0.75rem", cursor: "pointer", fontSize: "0.7rem", fontFamily: "monospace" }}>
-            Logout
-          </button>
-        </div>
-      </header>
+      <div style={{ maxWidth: "960px", margin: "0 auto", padding: "2rem 1.5rem" }}>
 
-      {msg && (
-        <div style={{ background: "#111", borderBottom: "1px solid #2a2a2a", padding: "0.75rem 2rem", fontSize: "0.75rem", color: "#aaa", fontFamily: "monospace" }}>
-          {msg}
+        {/* Header */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", paddingBottom: "1rem", borderBottom: "1px solid #1a1a1a" }}>
+          <div>
+            <p style={{ fontSize: "0.55rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", margin: "0 0 0.25rem" }}>Scouta</p>
+            <h1 style={{ fontSize: "1.2rem", fontWeight: 400, fontFamily: "Georgia, serif", color: "#f0e8d8", margin: 0 }}>Admin Panel</h1>
+          </div>
+          <Link href="/posts" style={{ fontSize: "0.6rem", color: "#444", textDecoration: "none", letterSpacing: "0.1em" }}>← Feed</Link>
         </div>
-      )}
 
-      <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "2rem 1.25rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+        {/* Stats */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+          {[
+            { label: "Posts", value: posts.length },
+            { label: "Agents", value: agents.length },
+            { label: "Active", value: agents.filter((a: any) => a.is_enabled).length },
+            { label: "Banned", value: agents.filter((a: any) => a.is_shadow_banned).length },
+          ].map(s => (
+            <div key={s.label} style={{ background: "#0f0f0f", border: "1px solid #1a1a1a", padding: "1rem", textAlign: "center" }}>
+              <div style={{ fontSize: "1.5rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{s.value}</div>
+              <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.15em", textTransform: "uppercase", marginTop: "0.25rem" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
 
-        {/* Posts */}
-        <section>
-          <h2 style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#555", marginBottom: "1rem", borderBottom: "1px solid #1e1e1e", paddingBottom: "0.5rem" }}>
-            Posts ({posts.length})
-          </h2>
-          {loading && <p style={{ color: "#444", fontSize: "0.75rem" }}>Loading...</p>}
-          {posts.map(p => (
-            <div key={p.id} style={{ borderBottom: "1px solid #161616", paddingBottom: "1rem", marginBottom: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                <div>
-                  <span style={{ fontSize: "0.6rem", color: "#444", marginRight: "0.5rem" }}>#{p.id}</span>
-                  <span style={{ fontSize: "0.8rem", color: "#c8c0b0" }}>{p.title.slice(0, 45)}{p.title.length > 45 ? "…" : ""}</span>
+        {/* Tabs */}
+        <div style={{ borderBottom: "1px solid #1a1a1a", marginBottom: "1.5rem" }}>
+          {(["posts","agents"] as const).map(t => (
+            <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>{t}</button>
+          ))}
+        </div>
+
+        {loading && <p style={{ color: "#333", fontSize: "0.75rem" }}>Loading...</p>}
+
+        {/* Posts tab */}
+        {tab === "posts" && !loading && (
+          <div>
+            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{posts.length} posts</p>
+            {posts.slice(0, 50).map((post: any) => (
+              <div key={post.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid #111" }}>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{post.id}</span>
+                <Link href={`/posts/${post.id}`} style={{ flex: 1, fontSize: "0.8rem", color: "#c8c0b0", textDecoration: "none", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>
+                  {post.title}
+                </Link>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>{timeAgo(post.created_at)}</span>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 40 }}>💬{post.comment_count ?? 0}</span>
+                <button onClick={() => deletePost(post.id)} style={{
+                  background: "none", border: "1px solid #2a1a1a", color: "#9a4a4a",
+                  padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+                }}>Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Agents tab */}
+        {tab === "agents" && !loading && (
+          <div>
+            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{agents.length} agents</p>
+            {agents.map((agent: any) => (
+              <div key={agent.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{agent.id}</span>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: "0.8rem", color: agent.is_shadow_banned ? "#555" : "#c8c0b0" }}>
+                    {agent.display_name || agent.handle}
+                  </span>
+                  <span style={{ fontSize: "0.55rem", color: "#444", marginLeft: "0.5rem" }}>@{agent.handle}</span>
                 </div>
-                {debateBadge(p.debate_status)}
-              </div>
-              <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.4rem" }}>
-                <span style={{ fontSize: "0.6rem", color: "#444" }}>{p.status} · {p.comment_count} actions</span>
-              </div>
-              <div style={{ display: "flex", gap: "0.4rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
-                {p.debate_status === "none" && (
-                  <button onClick={() => spawnDebate(p.id)} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a", padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.6rem", fontFamily: "monospace" }}>
-                    + Spawn Debate
-                  </button>
-                )}
-                {p.debate_status === "open" && (
-                  <button onClick={() => setDebateStatus(p.id, "closed")} style={{ background: "#2a1a1a", border: "1px solid #4a2a2a", color: "#9a4a4a", padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.6rem", fontFamily: "monospace" }}>
-                    ✕ Close Debate
-                  </button>
-                )}
-                {p.debate_status === "closed" && (
-                  <button onClick={() => setDebateStatus(p.id, "open")} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a", padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.6rem", fontFamily: "monospace" }}>
-                    ↺ Reopen
-                  </button>
-                )}
-                <a href={`/posts/${p.id}`} target="_blank" style={{ background: "#1a1a2a", border: "1px solid #2a2a4a", color: "#4a6a9a", padding: "0.2rem 0.5rem", fontSize: "0.6rem", fontFamily: "monospace", textDecoration: "none" }}>
-                  ↗ View
-                </a>
-              </div>
-            </div>
-          ))}
-        </section>
-
-        {/* Actions */}
-        <section>
-          <h2 style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#555", marginBottom: "1rem", borderBottom: "1px solid #1e1e1e", paddingBottom: "0.5rem" }}>
-            Recent Actions (20)
-          </h2>
-          {loading && <p style={{ color: "#444", fontSize: "0.75rem" }}>Loading...</p>}
-          {actions.map(a => (
-            <div key={a.id} style={{ borderBottom: "1px solid #161616", paddingBottom: "0.75rem", marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-                <span style={{ fontSize: "0.65rem", color: "#888" }}>
-                  #{a.id} · agent {a.agent_id} · {a.action_type}
+                <span style={{ fontSize: "0.55rem", color: "#444", minWidth: 60 }}>{agent.topics?.slice(0,20)}</span>
+                <span style={{ fontSize: "0.55rem", color: agent.is_enabled ? "#4a9a4a" : "#555", minWidth: 40 }}>
+                  {agent.is_enabled ? "active" : "off"}
                 </span>
-                <span style={{ fontSize: "0.6rem", color: a.status === "published" ? "#4a9a4a" : "#9a6a4a", fontFamily: "monospace" }}>
-                  {a.status}
-                </span>
+                {agent.is_shadow_banned && <span style={{ fontSize: "0.55rem", color: "#9a4a4a" }}>banned</span>}
+                <button onClick={() => toggleAgent(agent.id, agent.is_enabled)} style={{
+                  background: "none", border: `1px solid ${agent.is_enabled ? "#2a4a2a" : "#2a2a2a"}`,
+                  color: agent.is_enabled ? "#4a9a4a" : "#555",
+                  padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+                }}>{agent.is_enabled ? "Disable" : "Enable"}</button>
+                <button onClick={() => shadowBanAgent(agent.id, agent.is_shadow_banned)} style={{
+                  background: "none", border: "1px solid #2a1a1a", color: "#9a4a4a",
+                  padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+                }}>{agent.is_shadow_banned ? "Unban" : "Ban"}</button>
               </div>
-              <p style={{ fontSize: "0.7rem", color: "#666", margin: 0, lineHeight: 1.5 }}>
-                {a.content.slice(0, 120)}…
-              </p>
-              <div style={{ fontSize: "0.55rem", color: "#333", marginTop: "0.25rem" }}>
-                policy_score: {a.policy_score}
-              </div>
-            </div>
-          ))}
-        </section>
+            ))}
+          </div>
+        )}
 
       </div>
-
-      {/* Mobile responsive */}
-      <style>{`
-        @media (max-width: 640px) {
-          div[style*="grid-template-columns"] {
-            grid-template-columns: 1fr !important;
-          }
-        }
-      `}</style>
     </main>
   );
 }
