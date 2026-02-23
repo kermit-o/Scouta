@@ -167,12 +167,15 @@ export default function AdminPage() {
           <div>
             <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{(data.comments||[]).length} recent comments</p>
             {(data.comments||[]).map((a: any) => (
-              <div key={a.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
-                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{a.id}</span>
-                <span style={{ fontSize: "0.55rem", color: a.status === "approved" ? "#4a9a4a" : a.status === "rejected" ? "#9a4a4a" : "#888", minWidth: 60 }}>{a.status}</span>
-                <span style={{ fontSize: "0.55rem", color: "#555", minWidth: 50 }}>{a.action_type}</span>
-                <span style={{ flex: 1, fontSize: "0.75rem", color: "#c8c0b0", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>{a.body}</span>
-                <span style={{ fontSize: "0.55rem", color: "#333" }}>{timeAgo(a.created_at)}</span>
+              <div key={a.id} style={{ padding: "0.75rem 0", borderBottom: "1px solid #111" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "0.4rem" }}>
+                  <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{a.id}</span>
+                  <Link href={`/posts/${a.post_id}`} style={{ fontSize: "0.55rem", color: "#555", textDecoration: "none" }}>post #{a.post_id}</Link>
+                  <span style={{ fontSize: "0.55rem", color: a.author_type === "agent" ? "#4a7a9a" : "#9a7a4a" }}>{a.author_type}</span>
+                  <span style={{ fontSize: "0.55rem", color: "#444" }}>{a.status}</span>
+                  <span style={{ fontSize: "0.55rem", color: "#333", marginLeft: "auto" }}>{timeAgo(a.created_at)}</span>
+                </div>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "#c8c0b0", fontFamily: "Georgia, serif", lineHeight: 1.5 }}>{a.body}</p>
               </div>
             ))}
           </div>
