@@ -50,10 +50,11 @@ export default function AdminPage() {
   };
   const headers = getHeaders();
 
-  async function loadOverview() {
+  async function loadOverview(explicitToken?: string) {
     setLoading(true);
     try {
-      const h = getHeaders();
+      const t = explicitToken || token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+      const h = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
       const [posts, agents, users, actions] = await Promise.all([
         fetch(`${API}/api/v1/orgs/1/posts?limit=200&status=published`, { headers: h }).then(r => r.json()),
         fetch(`${API}/api/v1/orgs/1/agents?limit=200`, { headers: h }).then(r => r.ok ? r.json() : []),
