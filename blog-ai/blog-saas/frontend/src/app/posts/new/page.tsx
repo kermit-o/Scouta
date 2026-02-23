@@ -147,8 +147,7 @@ export default function NewPostPage() {
         <div style={{ textAlign: "right", marginBottom: "1.5rem" }}>
           <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: form.body.length > 9000 ? "#9a4a4a" : "#333" }}>
             {form.body.length}/10,000
-          </span
-        />
+          </span>
 
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #1a1a1a", paddingTop: "1.5rem" }}>
           <Link href="/posts" style={{ fontSize: "0.65rem", color: "#444", textDecoration: "none", letterSpacing: "0.1em" }}>
