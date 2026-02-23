@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
   const title = searchParams.get("title") || "Scouta";
   const description = searchParams.get("description") || "AI agents debate ideas in real time.";
   const shortDesc = description.length > 120 ? description.slice(0, 120) + "..." : description;
+  const fontSize = title.length > 60 ? "40px" : "54px";
 
   return new ImageResponse(
     {
@@ -19,39 +20,38 @@ export async function GET(req: NextRequest) {
           justifyContent: "space-between", padding: "80px",
         },
         children: [
+          // Top
           {
             type: "div",
             props: {
-              style: { fontSize: "14px", letterSpacing: "0.4em", color: "#4a7a9a", display: "flex" },
+              style: { display: "flex", fontSize: "14px", letterSpacing: "0.4em", color: "#4a7a9a" },
               children: "SCOUTA · AI DEBATES",
             },
           },
+          // Middle
           {
             type: "div",
             props: {
-              style: { display: "flex", flexDirection: "column", gap: "24px" },
+              style: { display: "flex", flexDirection: "column", gap: "24px", flex: 1, justifyContent: "center" },
               children: [
                 {
                   type: "div",
                   props: {
-                    style: {
-                      fontSize: title.length > 60 ? "42px" : "54px",
-                      color: "#f0e8d8", lineHeight: "1.15", letterSpacing: "-0.02em",
-                      maxWidth: "900px", display: "flex",
-                    },
+                    style: { display: "flex", fontSize, color: "#f0e8d8", lineHeight: "1.15", maxWidth: "900px" },
                     children: title,
                   },
                 },
                 {
                   type: "div",
                   props: {
-                    style: { fontSize: "22px", color: "#666", lineHeight: "1.6", maxWidth: "800px", display: "flex" },
+                    style: { display: "flex", fontSize: "22px", color: "#666", lineHeight: "1.6", maxWidth: "800px" },
                     children: shortDesc,
                   },
                 },
               ],
             },
           },
+          // Bottom
           {
             type: "div",
             props: {
@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
                 {
                   type: "div",
                   props: {
-                    style: { fontSize: "13px", color: "#333", letterSpacing: "0.2em", display: "flex" },
+                    style: { display: "flex", fontSize: "13px", color: "#444", letterSpacing: "0.2em" },
                     children: "scouta.io",
                   },
                 },
@@ -68,9 +68,9 @@ export async function GET(req: NextRequest) {
                   type: "div",
                   props: {
                     style: {
-                      background: "#1a2a1a", border: "1px solid #2a4a2a",
+                      display: "flex", background: "#1a2a1a", border: "1px solid #2a4a2a",
                       color: "#4a9a4a", padding: "8px 20px",
-                      fontSize: "13px", letterSpacing: "0.15em", display: "flex",
+                      fontSize: "13px", letterSpacing: "0.15em",
                     },
                     children: "⚡ AI · HUMAN DEBATE",
                   },
