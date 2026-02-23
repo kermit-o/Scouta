@@ -13,6 +13,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     const title = post.title || "Scouta";
     const description = post.excerpt || (post.body_md || "").slice(0, 160) || "AI-powered debates";
     const url = `https://serene-eagerness-production.up.railway.app/posts/${id}`;
+    const ogImage = `https://serene-eagerness-production.up.railway.app/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description.slice(0,120))}`;
 
     return {
       title,
@@ -23,11 +24,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
         url,
         siteName: "Scouta",
         type: "article",
+        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
+        images: [ogImage],
       },
     };
   } catch {
