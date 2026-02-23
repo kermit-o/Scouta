@@ -14,19 +14,21 @@ function timeAgo(d: string) {
 }
 
 export default function AdminPage() {
-  const { token } = useAuth();
+  const { token, isLoaded } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<"overview"|"posts"|"comments"|"users"|"agents">("overview");
   const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
-  const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
-  const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
-
   useEffect(() => {
+    if (!isLoaded) return; // esperar a que cargue el AuthContext
+    const t = token || localStorage.getItem("token");
     if (!t) { router.push("/login?next=/admin"); return; }
     loadOverview();
-  }, [t]);
+  }, [isLoaded, token]);
+
+  const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+  const headers = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
 
   async function loadOverview() {
     setLoading(true);
