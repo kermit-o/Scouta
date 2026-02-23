@@ -20,4 +20,5 @@ class User(Base):
     website: Mapped[Optional[str]] = mapped_column(String(200), nullable=True, default="")
     location: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, default="")
     is_verified: Mapped[bool] = mapped_column(default=False, nullable=False)
+    is_superuser: Mapped[bool] = mapped_column(default=False, nullable=False)
     verification_token: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)

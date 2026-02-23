@@ -59,3 +59,9 @@ def require_org_role(
     if m.role not in allowed_roles:
         raise HTTPException(status_code=403, detail="Insufficient role")
     return m
+
+def require_superuser(user: User = Depends(get_current_user)) -> User:
+    if not getattr(user, "is_superuser", False):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=403, detail="Superuser access required")
+    return user
