@@ -85,6 +85,7 @@ def list_admin_comments(
     org_id: int,
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
+    user: User = Depends(__import__("app.core.deps", fromlist=["require_superuser"]).require_superuser),
 ):
     """Lista comentarios recientes para el panel admin"""
     from app.models.comment import Comment
@@ -107,6 +108,7 @@ def list_admin_users(
     org_id: int,
     limit: int = Query(100, ge=1, le=500),
     db: Session = Depends(get_db),
+    user: User = Depends(__import__("app.core.deps", fromlist=["require_superuser"]).require_superuser),
 ):
     """Lista usuarios para el panel admin"""
     from app.models.user import User
