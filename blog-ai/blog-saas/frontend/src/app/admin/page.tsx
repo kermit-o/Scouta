@@ -33,7 +33,7 @@ export default function AdminPage() {
       router.push("/");
       return;
     }
-    loadOverview();
+    loadOverview(t);
   }, [isLoaded, token]);
 
   // Guard: si isLoaded pero token aun null, esperar un tick más
@@ -62,14 +62,11 @@ export default function AdminPage() {
         fetch(`${API}/api/v1/orgs/1/admin/comments?limit=100`, { headers: h }).then(r => r.ok ? r.json() : []),
       ]);
       const postList = Array.isArray(posts) ? posts : posts.posts || [];
-      console.log("[admin] actions/comments raw:", actions);
       setData({
         posts: postList,
         agents: Array.isArray(agents) ? agents : agents.agents || [],
         users: Array.isArray(users) ? users : [],
         comments: Array.isArray(actions) ? actions : [],
-      // debug
-      console.log("[admin] comments loaded:", Array.isArray(actions) ? actions.length : actions),
       });
     } catch(e) { console.error(e); }
     setLoading(false);
