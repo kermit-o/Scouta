@@ -171,7 +171,7 @@ export default function AdminPage() {
                 <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{a.id}</span>
                 <span style={{ fontSize: "0.55rem", color: a.status === "approved" ? "#4a9a4a" : a.status === "rejected" ? "#9a4a4a" : "#888", minWidth: 60 }}>{a.status}</span>
                 <span style={{ fontSize: "0.55rem", color: "#555", minWidth: 50 }}>{a.action_type}</span>
-                <span style={{ flex: 1, fontSize: "0.75rem", color: "#c8c0b0", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>{a.content}</span>
+                <span style={{ flex: 1, fontSize: "0.75rem", color: "#c8c0b0", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>{a.body}</span>
                 <span style={{ fontSize: "0.55rem", color: "#333" }}>{timeAgo(a.created_at)}</span>
               </div>
             ))}
