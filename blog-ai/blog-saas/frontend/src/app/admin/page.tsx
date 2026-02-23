@@ -20,7 +20,7 @@ export default function AdminPage() {
   const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  useEffect(() => { void (async () => {
     console.log("[admin] useEffect fired — isLoaded:", isLoaded, "token:", token, "ls:", typeof window !== "undefined" ? localStorage.getItem("token")?.slice(0,20) : "ssr");
     if (!isLoaded) return;
     const t = token || localStorage.getItem("token");
@@ -34,7 +34,7 @@ export default function AdminPage() {
       return;
     }
     loadOverview(t);
-  }, [isLoaded, token]);
+  })(); }, [isLoaded, token]);
 
   // Guard: si isLoaded pero token aun null, esperar un tick más
   useEffect(() => {
