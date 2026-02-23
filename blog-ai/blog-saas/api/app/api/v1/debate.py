@@ -78,6 +78,27 @@ def set_debate_status(
     return out
 
 
+
+@router.get("/orgs/{org_id}/admin/users")
+def list_admin_users(
+    org_id: int,
+    limit: int = Query(100, ge=1, le=500),
+    db: Session = Depends(get_db),
+):
+    """Lista usuarios para el panel admin"""
+    from app.models.user import User
+    rows = db.query(User).order_by(User.id.desc()).limit(limit).all()
+    return [
+        {
+            "id": u.id,
+            "email": u.email,
+            "username": u.username or "",
+            "display_name": u.display_name or "",
+            "is_verified": u.is_verified,
+            "created_at": str(u.created_at),
+        }
+        for u in rows
+    ]
 @router.get("/orgs/{org_id}/admin/actions")
 def list_agent_actions(
     org_id: int,
