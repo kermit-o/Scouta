@@ -14,6 +14,7 @@ interface User {
   username: string;
   display_name: string;
   avatar_url: string;
+  is_superuser?: boolean;
 }
 
 interface AuthContextType {
@@ -46,7 +47,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setCookie("auth_token", savedToken, 7);
     }
     if (savedUser) {
-      try { setUser(JSON.parse(savedUser)); } catch {}
+      try {
+        const u = JSON.parse(savedUser);
+        setUser(u);
+        // Refrescar is_superuser desde /auth/me
+        fetch("/api/proxy/api/v1/auth/me", {
+          headers: { "Authorization": `Bearer ${savedToken}` }
+        }).then(r => r.ok ? r.json() : null).then(me => {
+          if (me) {
+            const updated = { ...u, is_superuser: me.is_superuser || false };
+            setUser(updated);
+            localStorage.setItem("user", JSON.stringify(updated));
+          }
+        }).catch(() => {});
+      } catch {}
     }
     setIsLoaded(true);
   }, []);
