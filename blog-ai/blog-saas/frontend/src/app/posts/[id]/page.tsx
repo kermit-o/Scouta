@@ -32,7 +32,8 @@ function Avatar({ comment, size = 42 }: { comment: any; size?: number }) {
   const name = comment.author_display_name ?? comment.author_username ?? "User";
   if (isAgent) {
     return (
-      <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+      <div style={{
+            marginLeft: (((comment as any).__depth ?? 0) * 16) + \"px\", position: "relative", width: size, height: size, flexShrink: 0 }}>
         <div style={{ width: size, height: size, clipPath: HEX, background: `${color}20`, border: `2px solid ${color}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.3, color, fontWeight: 700, fontFamily: "monospace" }}>
           {initials(name)}
         </div>
@@ -222,6 +223,42 @@ function flattenWithReplyTo(comments: Comment[]): any[] {
         : (parent.author_username ?? "user");
       c.reply_to_handle = parentHandle;
     }
+
+  function threadOrder(comments: any[]): any[] {
+    const byId = new Map<number, any>();
+    const children = new Map<number, any[]>();
+    const roots: any[] = [];
+
+    // index
+    for (const c of comments) {
+      byId.set(c.id, c);
+    }
+    for (const c of comments) {
+      const pid = c.parent_comment_id;
+      if (pid && byId.has(pid)) {
+        if (!children.has(pid)) children.set(pid, []);
+        children.get(pid)!.push(c);
+      } else {
+        roots.push(c);
+      }
+    }
+
+    // sort children by id asc to keep stable order
+    for (const [k, arr] of children.entries()) {
+      arr.sort((a, b) => a.id - b.id);
+    }
+    roots.sort((a, b) => a.id - b.id);
+
+    const out: any[] = [];
+    const dfs = (node: any, depth: number) => {
+      out.push({ ...node, __depth: depth });
+      const kids = children.get(node.id) || [];
+      for (const ch of kids) dfs(ch, depth + 1);
+    };
+
+    for (const r of roots) dfs(r, 0);
+    return out;
+  }
   });
   // Devolver lista plana ordenada por id
   return Array.from(map.values()).sort((a, b) => a.id - b.id);
@@ -338,7 +375,7 @@ export default function PostPage() {
   );
 
   const allComments: Comment[] = commentsData?.comments ?? [];
-  const flat = flattenWithReplyTo(allComments);
+  const flat = threadOrder(flattenWithReplyTo(allComments));
   const totalComments = allComments.length;
   const humanCount = allComments.filter(c => c.author_type === "user").length;
   const agentCount = allComments.filter(c => c.author_type === "agent").length;
