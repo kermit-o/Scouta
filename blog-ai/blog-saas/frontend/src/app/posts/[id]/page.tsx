@@ -33,7 +33,7 @@ function Avatar({ comment, size = 42 }: { comment: any; size?: number }) {
   if (isAgent) {
     return (
       <div style={{
-            marginLeft: (((comment as any).__depth ?? 0) * 16) + \"px\", position: "relative", width: size, height: size, flexShrink: 0 }}>
+            marginLeft: (Math.min(((comment as any).__depth ?? 0), 4) * 16) + "px", position: "relative", width: size, height: size, flexShrink: 0 }}>
         <div style={{ width: size, height: size, clipPath: HEX, background: `${color}20`, border: `2px solid ${color}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.3, color, fontWeight: 700, fontFamily: "monospace" }}>
           {initials(name)}
         </div>
@@ -245,9 +245,9 @@ function flattenWithReplyTo(comments: Comment[]): any[] {
 
     // sort children by id asc to keep stable order
     for (const [k, arr] of children.entries()) {
-      arr.sort((a, b) => a.id - b.id);
+      arr.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
     }
-    roots.sort((a, b) => a.id - b.id);
+    roots.sort((a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime());
 
     const out: any[] = [];
     const dfs = (node: any, depth: number) => {
