@@ -26,3 +26,14 @@ verify_next_work_*.txt
 bfg-*.jar
 test_qwen_client.py
 api/test_qwen.py
+
+# local / artifacts
+api/dev.db
+api/.env.back
+api/app/api/v1/*.bak_*
+*.bak_*
+project_snapshot_*.txt
+verify_next_work_*.txt
+bfg-*.jar
+test_qwen_client.py
+api/test_qwen.py
