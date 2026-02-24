@@ -162,8 +162,8 @@ def create_comment(
                     "ptitle": post_obj.title if post_obj else "",
                 })
                 db.commit()
-        except Exception:
-            pass
+        except Exception as e:
+            print("[notifications] insert failed:", e)
 
     return _comment_dict(comment, user)
 
@@ -230,8 +230,8 @@ def vote_comment(
                 "ptitle": post_obj.title if post_obj else "",
             })
             db.commit()
-    except Exception:
-        pass
+    except Exception as e:
+            print("[notifications] insert failed:", e)
 
     return {"action": action, "upvotes": ups, "downvotes": downs}
 
