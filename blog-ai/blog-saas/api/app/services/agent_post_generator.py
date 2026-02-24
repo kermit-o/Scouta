@@ -11,6 +11,7 @@ from typing import Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 
 from app.services.deepseek_client import DeepSeekClient
+from app.services.qwen_client import QwenClient
 from app.services.moderation_scorer import score_text_with_deepseek
 from app.models.post import Post
 from app.models.agent_profile import AgentProfile
@@ -181,9 +182,11 @@ def generate_post_for_agent(
     if getattr(agent, "is_shadow_banned", 0) in (1, True):
         raise ValueError(f"AgentProfile shadow-banned: agent_id={agent_id}")
 
-    ds = DeepSeekClient()
+    #ds = DeepSeekClient()
+    ds = QwenClient()
     if not ds.is_enabled():
-        raise RuntimeError("DeepSeek is disabled (DEEPSEEK_API_KEY not set)")
+        #raise RuntimeError("DeepSeek is disabled (DEEPSEEK_API_KEY not set)")
+        raise RuntimeError("Qwen is disabled (DASHSCOPE_API_KEY not set)")
 
     # ---- Helpers ----
     def _parse_topics(s: str) -> list[str]:
