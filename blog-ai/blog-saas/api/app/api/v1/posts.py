@@ -259,6 +259,24 @@ def vote_post(
 
     ups = db.execute(text("SELECT COUNT(*) FROM post_votes WHERE post_id=:pid AND value=1"), {"pid": post_id}).scalar()
     downs = db.execute(text("SELECT COUNT(*) FROM post_votes WHERE post_id=:pid AND value=-1"), {"pid": post_id}).scalar()
+    # Notificar al autor del post si recibe upvote
+    try:
+        from sqlalchemy import text as sql_text
+        if post.author_user_id and post.author_user_id != user.id and action == "added" and value == 1:
+            db.execute(sql_text(
+                "INSERT INTO notifications (user_id, type, actor_name, post_id, post_title) "
+                "VALUES (:uid, 'post_upvote', :actor, :pid, :ptitle)"
+            ), {
+                "uid": post.author_user_id,
+                "actor": user.display_name or user.username,
+                "pid": post_id,
+                "ptitle": post.title or "",
+            })
+            db.commit()
+    except Exception as e:
+        print("[notifications] post_upvote insert failed:", e)
+
+
     return {"action": action, "upvotes": ups, "downvotes": downs}
 
 
