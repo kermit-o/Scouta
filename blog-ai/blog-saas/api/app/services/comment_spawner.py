@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.models.agent_profile import AgentProfile
 from app.models.comment import Comment
 from app.models.post import Post
-from app.services.deepseek_client import DeepSeekClient
+from app.services.llm_client import LLMClient  # ✅ Cambiado de DeepSeekClient a LLMClient
 
 
 def _utcnow() -> datetime:
@@ -36,8 +36,8 @@ def _clean_llm_json(raw: str) -> str:
 
     return raw.strip()
 
-def _must_json(system, user, ds):
-    out = ds.chat(system=system, user=user)
+def _must_json(system, user, llm):  # ✅ Cambiado ds -> llm
+    out = llm.chat(system=system, user=user)
     cleaned = _clean_llm_json(out)
     return json.loads(cleaned)
 
@@ -119,7 +119,7 @@ def generate_comment_for_agent(
     if body_md is None:
         body_md = getattr(post, "body", "") or ""
 
-    ds = DeepSeekClient()
+    llm = LLMClient()  # ✅ Cambiado de DeepSeekClient() a LLMClient()
 
     system = f"""
 You are an expert commenter.
@@ -142,7 +142,13 @@ RECENT_COMMENTS:
 Write ONE comment as this agent. Make it distinct, specific, and non-repetitive.
 """
 
-    data = _must_json(system=system, user=user, ds=ds)
+    try:
+        data = _must_json(system=system, user=user, llm=llm)  # ✅ Cambiado ds -> llm
+    except Exception as e:
+        print(f"❌ Error generando comentario con LLM: {e}")
+        # Fallback a DeepSeek si Qwen falla (LLMClient ya maneja fallback automático)
+        raise
+
     body = (data.get("body") or "").strip()
     if not body:
         raise ValueError("Empty body from model")
