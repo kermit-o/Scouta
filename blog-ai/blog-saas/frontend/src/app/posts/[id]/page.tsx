@@ -434,55 +434,97 @@ export default function PostPage() {
     }
   }, [orgId, postId, activeToken, commentOffset, commentsHasMore, commentsLoadingMore]);
 
-  // En frontend/src/app/posts/[id]/page.tsx, dentro del componente PostPage:
-
-// Después de los useState, agrega esto para exponer variables globalmente
+  // Efecto para exponer variables globales (debugging)
   useEffect(() => {
-    // Exponer variables para debugging (opcional, solo desarrollo)
     if (typeof window !== 'undefined') {
       (window as any).commentsHasMore = commentsHasMore;
       (window as any).commentsLoadingMore = commentsLoadingMore;
       (window as any).commentOffset = commentOffset;
+      (window as any).loadMoreComments = loadMoreComments;
+      (window as any).comments = comments;
     }
-  }, [commentsHasMore, commentsLoadingMore, commentOffset]);
+  }, [commentsHasMore, commentsLoadingMore, commentOffset, loadMoreComments, comments]);
 
-  // Asegurar que el sentinel tiene el ID correcto y es visible
-  // En el JSX, reemplaza el div del sentinel con:
-  <div 
-    id="comments-sentinel" 
-    ref={sentinelRef}
-    style={{ 
-      height: "20px", 
-      margin: "20px 0",
-      background: commentsHasMore ? "rgba(0,255,0,0.1)" : "transparent",
-      border: commentsHasMore ? "1px dashed #666" : "none"
-    }} 
-  />
-
-  // Verificar que el observer usa el ID correcto
+  // EFECTO PRINCIPAL DEL SCROLL INFINITO - VERSIÓN CORREGIDA
   useEffect(() => {
-    if (!commentsHasMore || commentsLoadingMore) return;
+    // Debug: verificar que el sentinel existe (usando tanto ref como getElementById)
+    const sentinelFromRef = sentinelRef.current;
+    const sentinelFromId = document.getElementById("comments-sentinel");
     
-    // Usar tanto ref como getElementById para asegurar
-    const sentinel = document.getElementById("comments-sentinel");
+    console.log("🔍 Sentinel desde ref:", sentinelFromRef);
+    console.log("🔍 Sentinel desde getElementById:", sentinelFromId);
+    
+    // Usar el ref primero, fallback a getElementById
+    const sentinel = sentinelFromRef || sentinelFromId;
+    
     if (!sentinel) {
-      console.log("⚠️ Sentinel no encontrado en DOM");
+      console.error("❌ Sentinel no encontrado en el DOM");
+      return;
+    }
+
+    // Condiciones para observar
+    if (!commentsHasMore) {
+      console.log("⏸️ No hay más comentarios, observer detenido");
       return;
     }
     
-    console.log("👀 Observer configurado para sentinel");
-    
-    const obs = new IntersectionObserver((entries) => {
-      console.log("🎯 Intersección detectada:", entries[0].isIntersecting);
-      if (entries[0].isIntersecting) {
-        console.log("📦 Cargando más comentarios...");
-        loadMoreComments(50);
+    if (commentsLoadingMore) {
+      console.log("⏳ Ya cargando, observer espera");
+      return;
+    }
+
+    console.log("👀 Configurando observer...", {
+      hasMore: commentsHasMore,
+      loading: commentsLoadingMore,
+      offset: commentOffset,
+      sentinelVisible: sentinel.offsetHeight > 0,
+      sentinelPosition: sentinel.getBoundingClientRect()
+    });
+
+    // Crear observer con configuración más sensible
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        console.log("🎯 Intersección detectada:", {
+          isIntersecting: entry.isIntersecting,
+          ratio: entry.intersectionRatio,
+          time: new Date().toISOString(),
+          boundingRect: entry.boundingClientRect
+        });
+        
+        if (entry.isIntersecting && commentsHasMore && !commentsLoadingMore) {
+          console.log("📦 ACTIVANDO CARGA DE MÁS COMENTARIOS");
+          loadMoreComments(50);
+        }
+      },
+      {
+        root: null, // viewport
+        rootMargin: "400px 0px", // Cargar 400px antes de llegar (aumentado)
+        threshold: 0.01 // Solo 1% visible es suficiente
       }
-    }, { root: null, threshold: 0.1, rootMargin: "100px" });
-    
+    );
+
+    // Observar
     obs.observe(sentinel);
-    return () => obs.disconnect();
-  }, [commentsHasMore, commentsLoadingMore, loadMoreComments]);
+    console.log("✅ Observer conectado al sentinel");
+
+    // Forzar una comprobación inicial
+    setTimeout(() => {
+      const rect = sentinel.getBoundingClientRect();
+      console.log("📏 Posición inicial del sentinel:", {
+        top: rect.top,
+        bottom: rect.bottom,
+        windowHeight: window.innerHeight,
+        isVisible: rect.top < window.innerHeight && rect.bottom > 0
+      });
+    }, 1000);
+
+    // Limpiar
+    return () => {
+      console.log("🧹 Limpiando observer");
+      obs.disconnect();
+    };
+  }, [commentsHasMore, commentsLoadingMore, loadMoreComments, commentOffset]); // Dependencias
 
   async function handlePostVote(value: 1 | -1) {
     if (!activeToken) { 
@@ -589,22 +631,33 @@ export default function PostPage() {
           ))
         )}
 
-        {/* Sentinel para scroll infinito - más visible para debugging */}
+        {/* Sentinel para scroll infinito - MEJORADO */}
         <div 
+          id="comments-sentinel"
           ref={sentinelRef} 
           style={{ 
             height: "40px", 
             margin: "20px 0",
-            background: commentsHasMore ? "rgba(0,255,0,0.1)" : "rgba(255,0,0,0.1)",
-            border: "1px dashed #666",
+            background: commentsHasMore ? "rgba(0,255,0,0.15)" : "rgba(255,0,0,0.1)",
+            border: commentsHasMore ? "2px solid #4a9a4a" : "1px dashed #666",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             fontSize: "12px",
-            color: "#666"
+            color: "#666",
+            borderRadius: "4px",
+            transition: "all 0.3s ease"
           }}
         >
-          {commentsHasMore ? "🟢 Sentinel - More comments available" : "🔴 Sentinel - No more comments"}
+          {commentsHasMore ? (
+            <span style={{ color: "#4a9a4a", fontWeight: "bold" }}>
+              🟢 Sentinel activo - Más comentarios disponibles ({commentOffset}/628)
+            </span>
+          ) : (
+            <span style={{ color: "#ff6b6b" }}>
+              🔴 No hay más comentarios
+            </span>
+          )}
         </div>
         
         {/* Indicador de carga */}
@@ -616,9 +669,10 @@ export default function PostPage() {
             textAlign: "center",
             color: "#666",
             fontFamily: "monospace",
-            background: "rgba(255,255,0,0.1)"
+            background: "rgba(255,255,0,0.1)",
+            borderRadius: "4px"
           }}>
-            ⏳ Loading more comments...
+            ⏳ Cargando más comentarios... (offset: {commentOffset})
           </div>
         )}
         
@@ -632,7 +686,7 @@ export default function PostPage() {
             color: "#444",
             fontFamily: "monospace"
           }}>
-            📄 No more comments
+            📄 Fin de los comentarios ({comments.length} total)
           </div>
         )}
         
