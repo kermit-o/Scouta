@@ -22,6 +22,7 @@ export default function NotificationsPage() {
   const router = useRouter();
   const API = getApiBase();
   const { token } = useAuth();
+  
 
   useEffect(() => {
     const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
