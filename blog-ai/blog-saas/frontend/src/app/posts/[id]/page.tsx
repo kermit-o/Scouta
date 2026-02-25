@@ -336,6 +336,7 @@ export default function PostPage() {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
+    console.log("Loading initial comments...");
     const API = "/api/proxy";
     const [p, c, v] = await Promise.all([
       getPost(orgId, postId),
@@ -344,15 +345,20 @@ export default function PostPage() {
     ]);
     setPost(p);
     const commentsList = c?.comments || [];
+    console.log("Initial comments loaded:", commentsList.length);
     setComments(commentsList);
     setCommentOffset(commentsList.length);
+    
     // Determinar si hay más comentarios
     if (c?.total !== undefined) {
+      console.log("Total comments from API:", c.total);
       setCommentsHasMore(commentsList.length < c.total);
     } else {
       // Si no hay total, asumimos que hay más si recibimos exactamente 50
       setCommentsHasMore(commentsList.length === 50);
     }
+    console.log("Has more comments:", commentsList.length === 50);
+    
     setPostUpvotes(v.upvotes ?? 0);
     setPostDownvotes(v.downvotes ?? 0);
     setLoading(false);
@@ -360,16 +366,26 @@ export default function PostPage() {
 
   const loadMoreComments = useCallback(async (limit = 50) => {
     const API = "/api/proxy";
-    if (commentsLoadingMore || !commentsHasMore) return;
+    if (commentsLoadingMore || !commentsHasMore) {
+      console.log("Skipping loadMore:", { commentsLoadingMore, commentsHasMore });
+      return;
+    }
     
+    console.log(`Loading more comments: offset=${commentOffset}, limit=${limit}`);
     setCommentsLoadingMore(true);
+    
     try {
-      const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${commentOffset}`, {
+      const url = `${API}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${commentOffset}`;
+      console.log("Fetching:", url);
+      
+      const res = await fetch(url, {
         headers: { 
           "Content-Type": "application/json", 
           ...(activeToken ? { "Authorization": `Bearer ${activeToken}` } : {})
         },
       });
+      
+      console.log("Response status:", res.status);
       
       if (!res.ok) {
         console.error("Error loading more comments:", res.status);
@@ -377,9 +393,13 @@ export default function PostPage() {
       }
       
       const data = await res.json();
+      console.log("Response data:", data);
+      
       const batch = data.comments || [];
+      console.log(`Received ${batch.length} comments`);
       
       if (batch.length === 0) {
+        console.log("No more comments available");
         setCommentsHasMore(false);
         return;
       }
@@ -392,6 +412,7 @@ export default function PostPage() {
             merged.push(c);
           }
         }
+        console.log(`Merged comments: now ${merged.length} total`);
         return merged;
       });
       
@@ -400,6 +421,7 @@ export default function PostPage() {
       
       // Determinar si hay más comentarios
       if (data.total !== undefined) {
+        console.log(`Total from API: ${data.total}, nextOffset: ${nextOffset}`);
         setCommentsHasMore(nextOffset < data.total);
       } else {
         // Si no hay total, asumimos que hay más si recibimos exactamente el límite
@@ -417,31 +439,43 @@ export default function PostPage() {
   }, [load]);
 
   useEffect(() => {
-    if (!sentinelRef.current) return;
+    if (!sentinelRef.current) {
+      console.log("Sentinel ref not available");
+      return;
+    }
+    
+    console.log("Setting up intersection observer", {
+      commentsHasMore,
+      commentsLoadingMore
+    });
     
     // No observar si no hay más comentarios o ya está cargando
     if (!commentsHasMore || commentsLoadingMore) {
+      console.log("Not observing:", { commentsHasMore, commentsLoadingMore });
       return;
     }
 
     const obs = new IntersectionObserver(
       (entries) => {
+        console.log("Intersection observed:", entries[0].isIntersecting);
         const firstEntry = entries[0];
         if (firstEntry.isIntersecting && commentsHasMore && !commentsLoadingMore) {
-          console.log("Sentinel visible, loading more comments...");
+          console.log("🔵 Sentinel visible, loading more comments...");
           loadMoreComments(50);
         }
       },
       { 
         root: null, 
-        rootMargin: "100px", // Cargar un poco antes de llegar al final
-        threshold: 0.1 
+        rootMargin: "200px", // Aumentado para cargar más temprano
+        threshold: 0.01 // Reducido para detectar más fácilmente
       }
     );
 
     obs.observe(sentinelRef.current);
+    console.log("Observer attached to sentinel");
     
     return () => {
+      console.log("Cleaning up observer");
       obs.disconnect();
     };
   }, [commentsHasMore, commentsLoadingMore, loadMoreComments]);
@@ -551,8 +585,23 @@ export default function PostPage() {
           ))
         )}
 
-        {/* Sentinel para scroll infinito */}
-        <div ref={sentinelRef} style={{ height: "20px", marginTop: "20px" }} />
+        {/* Sentinel para scroll infinito - más visible para debugging */}
+        <div 
+          ref={sentinelRef} 
+          style={{ 
+            height: "40px", 
+            margin: "20px 0",
+            background: commentsHasMore ? "rgba(0,255,0,0.1)" : "rgba(255,0,0,0.1)",
+            border: "1px dashed #666",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontSize: "12px",
+            color: "#666"
+          }}
+        >
+          {commentsHasMore ? "🟢 Sentinel - More comments available" : "🔴 Sentinel - No more comments"}
+        </div>
         
         {/* Indicador de carga */}
         {commentsLoadingMore && (
@@ -562,9 +611,10 @@ export default function PostPage() {
             opacity: 0.7, 
             textAlign: "center",
             color: "#666",
-            fontFamily: "monospace"
+            fontFamily: "monospace",
+            background: "rgba(255,255,0,0.1)"
           }}>
-            Loading more comments...
+            ⏳ Loading more comments...
           </div>
         )}
         
@@ -578,7 +628,7 @@ export default function PostPage() {
             color: "#444",
             fontFamily: "monospace"
           }}>
-            No more comments
+            📄 No more comments
           </div>
         )}
         
