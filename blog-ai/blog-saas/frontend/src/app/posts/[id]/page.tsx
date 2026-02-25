@@ -343,8 +343,16 @@ export default function PostPage() {
       fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/votes`).then(r => r.ok ? r.json() : {upvotes:0, downvotes:0}),
     ]);
     setPost(p);
-    setComments(c?.comments || []);
-    setCommentOffset((c?.comments || []).length);
+    const commentsList = c?.comments || [];
+    setComments(commentsList);
+    setCommentOffset(commentsList.length);
+    // Determinar si hay más comentarios
+    if (c?.total !== undefined) {
+      setCommentsHasMore(commentsList.length < c.total);
+    } else {
+      // Si no hay total, asumimos que hay más si recibimos exactamente 50
+      setCommentsHasMore(commentsList.length === 50);
+    }
     setPostUpvotes(v.upvotes ?? 0);
     setPostDownvotes(v.downvotes ?? 0);
     setLoading(false);
@@ -353,50 +361,96 @@ export default function PostPage() {
   const loadMoreComments = useCallback(async (limit = 50) => {
     const API = "/api/proxy";
     if (commentsLoadingMore || !commentsHasMore) return;
+    
     setCommentsLoadingMore(true);
     try {
       const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${commentOffset}`, {
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
+        headers: { 
+          "Content-Type": "application/json", 
+          ...(activeToken ? { "Authorization": `Bearer ${activeToken}` } : {})
+        },
       });
-      if (!res.ok) return;
+      
+      if (!res.ok) {
+        console.error("Error loading more comments:", res.status);
+        return;
+      }
+      
       const data = await res.json();
       const batch = data.comments || [];
+      
+      if (batch.length === 0) {
+        setCommentsHasMore(false);
+        return;
+      }
+      
       setComments((prev: any) => {
         const seen = new Set((prev || []).map((c: any) => c.id));
         const merged = [...(prev || [])];
-        for (const c of batch) if (!seen.has(c.id)) merged.push(c);
+        for (const c of batch) {
+          if (!seen.has(c.id)) {
+            merged.push(c);
+          }
+        }
         return merged;
       });
-      const total = data.total ?? null;
+      
       const nextOffset = commentOffset + batch.length;
       setCommentOffset(nextOffset);
-      if (total !== null) {
-        setCommentsHasMore(nextOffset < total);
+      
+      // Determinar si hay más comentarios
+      if (data.total !== undefined) {
+        setCommentsHasMore(nextOffset < data.total);
       } else {
+        // Si no hay total, asumimos que hay más si recibimos exactamente el límite
         setCommentsHasMore(batch.length === limit);
       }
+    } catch (error) {
+      console.error("Error in loadMoreComments:", error);
     } finally {
       setCommentsLoadingMore(false);
     }
   }, [orgId, postId, activeToken, commentOffset, commentsHasMore, commentsLoadingMore]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { 
+    load(); 
+  }, [load]);
 
   useEffect(() => {
-    if (!commentsHasMore || commentsLoadingMore || !sentinelRef.current) return;
+    if (!sentinelRef.current) return;
+    
+    // No observar si no hay más comentarios o ya está cargando
+    if (!commentsHasMore || commentsLoadingMore) {
+      return;
+    }
 
-    const obs = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting) {
-        loadMoreComments(50);
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const firstEntry = entries[0];
+        if (firstEntry.isIntersecting && commentsHasMore && !commentsLoadingMore) {
+          console.log("Sentinel visible, loading more comments...");
+          loadMoreComments(50);
+        }
+      },
+      { 
+        root: null, 
+        rootMargin: "100px", // Cargar un poco antes de llegar al final
+        threshold: 0.1 
       }
-    }, { root: null, threshold: 0.1 });
+    );
 
     obs.observe(sentinelRef.current);
-    return () => obs.disconnect();
+    
+    return () => {
+      obs.disconnect();
+    };
   }, [commentsHasMore, commentsLoadingMore, loadMoreComments]);
 
   async function handlePostVote(value: 1 | -1) {
-    if (!activeToken) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
+    if (!activeToken) { 
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; 
+      return; 
+    }
     const API = "/api/proxy";
     const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/vote`, {
       method: "POST",
@@ -429,7 +483,6 @@ export default function PostPage() {
 
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0" }}>
-
       <div style={{ maxWidth: "640px", margin: "0 auto", padding: "0 clamp(1rem, 4vw, 1.5rem)" }}>
         {/* Article */}
         <article style={{ padding: "2.5rem 0 2rem", borderBottom: "1px solid #141414" }}>
@@ -498,8 +551,37 @@ export default function PostPage() {
           ))
         )}
 
-        <div ref={sentinelRef} style={{ height: 1 }} />
-        {commentsLoadingMore ? <div style={{ padding: "8px 0", fontSize: "0.9rem", opacity: 0.7, textAlign: "center" }}>Loading…</div> : null}
+        {/* Sentinel para scroll infinito */}
+        <div ref={sentinelRef} style={{ height: "20px", marginTop: "20px" }} />
+        
+        {/* Indicador de carga */}
+        {commentsLoadingMore && (
+          <div style={{ 
+            padding: "20px 0", 
+            fontSize: "0.9rem", 
+            opacity: 0.7, 
+            textAlign: "center",
+            color: "#666",
+            fontFamily: "monospace"
+          }}>
+            Loading more comments...
+          </div>
+        )}
+        
+        {/* Mensaje cuando no hay más comentarios */}
+        {!commentsHasMore && comments.length > 0 && (
+          <div style={{ 
+            padding: "30px 0", 
+            fontSize: "0.8rem", 
+            opacity: 0.5, 
+            textAlign: "center",
+            color: "#444",
+            fontFamily: "monospace"
+          }}>
+            No more comments
+          </div>
+        )}
+        
         <div style={{ height: "4rem" }} />
       </div>
     </main>
