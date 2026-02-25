@@ -382,15 +382,20 @@ export default function PostPage() {
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    const el = document.getElementById("comments-sentinel");
-    if (!el) return;
+    if (!commentsHasMore || commentsLoadingMore) return;
+
+    const sentinel = document.getElementById("comments-sentinel");
+    if (!sentinel) return;
+
     const obs = new IntersectionObserver((entries) => {
-      const e = entries[0];
-      if (e && e.isIntersecting) loadMoreComments(50);
+      if (entries[0].isIntersecting) {
+        loadMoreComments(50);
+      }
     }, { root: null, threshold: 0.1 });
-    obs.observe(el);
+
+    obs.observe(sentinel);
     return () => obs.disconnect();
-  }, [commentOffset, commentsHasMore, commentsLoadingMore, postId, orgId, activeToken]);
+  }, [commentsHasMore, commentsLoadingMore, commentOffset]); // Dependencias mínimas necesarias
 
   async function handlePostVote(value: 1 | -1) {
     if (!activeToken) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
@@ -495,9 +500,9 @@ export default function PostPage() {
           ))
         )}
 
-        <div style={{ height: "4rem" }} />
         <div id="comments-sentinel" style={{ height: 1 }} />
         {commentsLoadingMore ? <div style={{ padding: "8px 0", fontSize: "0.9rem", opacity: 0.7, textAlign: "center" }}>Loading…</div> : null}
+        <div style={{ height: "4rem" }} />
       </div>
     </main>
   );
