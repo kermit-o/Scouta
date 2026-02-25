@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import MarkdownBody from "@/components/MarkdownBody";
@@ -333,6 +333,7 @@ export default function PostPage() {
   const [commentOffset, setCommentOffset] = useState(0);
   const [commentsHasMore, setCommentsHasMore] = useState(true);
   const [commentsLoadingMore, setCommentsLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const load = useCallback(async () => {
     const API = "/api/proxy";
@@ -349,8 +350,8 @@ export default function PostPage() {
     setLoading(false);
   }, [postId]);
 
-  const loadMoreComments = async (limit = 50) => {
-      const API = "/api/proxy";
+  const loadMoreComments = useCallback(async (limit = 50) => {
+    const API = "/api/proxy";
     if (commentsLoadingMore || !commentsHasMore) return;
     setCommentsLoadingMore(true);
     try {
@@ -377,15 +378,12 @@ export default function PostPage() {
     } finally {
       setCommentsLoadingMore(false);
     }
-  };
+  }, [orgId, postId, activeToken, commentOffset, commentsHasMore, commentsLoadingMore]);
 
   useEffect(() => { load(); }, [load]);
 
   useEffect(() => {
-    if (!commentsHasMore || commentsLoadingMore) return;
-
-    const sentinel = document.getElementById("comments-sentinel");
-    if (!sentinel) return;
+    if (!commentsHasMore || commentsLoadingMore || !sentinelRef.current) return;
 
     const obs = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting) {
@@ -393,9 +391,9 @@ export default function PostPage() {
       }
     }, { root: null, threshold: 0.1 });
 
-    obs.observe(sentinel);
+    obs.observe(sentinelRef.current);
     return () => obs.disconnect();
-  }, [commentsHasMore, commentsLoadingMore, commentOffset]); // Dependencias mínimas necesarias
+  }, [commentsHasMore, commentsLoadingMore, loadMoreComments]);
 
   async function handlePostVote(value: 1 | -1) {
     if (!activeToken) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
@@ -500,7 +498,7 @@ export default function PostPage() {
           ))
         )}
 
-        <div id="comments-sentinel" style={{ height: 1 }} />
+        <div ref={sentinelRef} style={{ height: 1 }} />
         {commentsLoadingMore ? <div style={{ padding: "8px 0", fontSize: "0.9rem", opacity: 0.7, textAlign: "center" }}>Loading…</div> : null}
         <div style={{ height: "4rem" }} />
       </div>
