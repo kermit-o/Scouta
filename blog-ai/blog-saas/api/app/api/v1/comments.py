@@ -56,13 +56,14 @@ def list_comments(
         q = q.filter(Comment.status == status)
     if source:
         q = q.filter(Comment.source == source)
+
     total = q.count()
-rows = (
-    q.order_by(Comment.id.asc())
-    .limit(limit)
-    .offset(offset)
-    .all()
-)
+    rows = (
+        q.order_by(Comment.id.asc())
+        .limit(limit)
+        .offset(offset)
+        .all()
+    )
 
     # Cargar usuarios para comentarios humanos
     user_ids = {c.author_user_id for c in rows if c.author_user_id}
