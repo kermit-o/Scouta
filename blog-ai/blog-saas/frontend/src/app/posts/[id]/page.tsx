@@ -91,7 +91,7 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
     if (!replyBody.trim() || !token) return;
     setReplyLoading(true);
     const API = "/api/proxy";
-    await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments/${comment.id}/vote`, {
+    await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({ body: replyBody.trim(), parent_comment_id: comment.id }),
@@ -285,7 +285,7 @@ function Composer({ orgId, postId, onSuccess }: { orgId: number; postId: number;
     if (!body.trim()) return;
     setLoading(true);
     const API = "/api/proxy";
-    await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments/${comment.id}/vote`, {
+    await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
       body: JSON.stringify({ body: body.trim() }),
