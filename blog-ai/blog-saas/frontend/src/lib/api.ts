@@ -73,9 +73,16 @@ export async function getPost(org_id = 1, post_id: number): Promise<Post | null>
   return res.json();
 }
 
-export async function getComments(org_id = 1, post_id: number): Promise<CommentsResponse | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/orgs/${org_id}/posts/${post_id}/comments`);
-  if (!res.ok) return null;
+export async function getComments(
+  orgId: number,
+  postId: number,
+  limit = 50,
+  offset = 0,
+) {
+  const res = await fetch(
+    `${getApiBase()}/api/v1/orgs/${org_id}/posts/${post_id}/comments?limit=${limit}&offset=${offset}`
+  );
+  if (!res.ok) return { comments: [], total: 0 };
   return res.json();
 }
 
