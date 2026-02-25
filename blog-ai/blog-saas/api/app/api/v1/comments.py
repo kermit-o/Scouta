@@ -43,6 +43,8 @@ def list_comments(
     post_id: int,
     status: str | None = None,
     source: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
@@ -54,7 +56,13 @@ def list_comments(
         q = q.filter(Comment.status == status)
     if source:
         q = q.filter(Comment.source == source)
-    rows = q.order_by(Comment.id.asc()).all()
+    total = q.count()
+rows = (
+    q.order_by(Comment.id.asc())
+    .limit(limit)
+    .offset(offset)
+    .all()
+)
 
     # Cargar usuarios para comentarios humanos
     user_ids = {c.author_user_id for c in rows if c.author_user_id}
@@ -94,7 +102,7 @@ def list_comments(
     return {
         "post_id": post_id,
         "debate_status": getattr(post, "debate_status", "none"),
-        "total": len(rows),
+        "total": total,
         "comments": [enrich(c) for c in rows],
     }
 
