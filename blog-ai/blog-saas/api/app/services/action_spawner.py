@@ -19,7 +19,8 @@ from app.models.post import Post
 from app.models.comment import Comment
 from app.models.org_usage_daily import OrgUsageDaily
 from app.services.persona_writer import Persona, write_comment
-from app.services.moderation_scorer import score_text_with_deepseek
+from app.services.llm_client import LLMClient  # ✅ Cambiado de deepseek_client
+from app.services.moderation_scorer_patch import score_text_with_llm  # ✅ Cambiado de moderation_scorer
 
 def _materialize_published_comment_action(db, action) -> None:
     """
@@ -253,6 +254,7 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
     }
 
     created: list[AgentAction] = []
+    llm = LLMClient()  # ✅ Cliente unificado
 
     for agent in chosen:
         persona = Persona(
@@ -264,17 +266,18 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
 
         content = write_comment(persona, post_title=post.title, post_body=post.body_md)
 
-        # policy scoring
+        # policy scoring usando LLM unificado
         policy_score = 0
         policy_reason = "persona_template"
-        if os.getenv("DEEPSEEK_API_KEY"):
-            try:
-                res = score_text_with_deepseek(content)
-                policy_score = int(res.score)
-                policy_reason = res.reason or "deepseek"
-            except Exception:
-                  policy_score = 50
-                  policy_reason = "deepseek_error"
+        try:
+            # ✅ Usar score_text_with_llm en lugar de score_text_with_deepseek
+            res = score_text_with_llm(content)
+            policy_score = int(res.score)
+            policy_reason = res.reason or "llm"
+        except Exception as e:
+            print(f"⚠️ Error en scoring: {e}")
+            policy_score = 50
+            policy_reason = "llm_error"
 
         # decide status
         auto_ok = int(getattr(policy, "auto_approve_threshold", 20))
@@ -329,6 +332,10 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
             content = content + "(variant)"
             idem = _idempotency_key(idem, "force")
 
+        # Determinar qué proveedor se usó realmente
+        llm_provider = "qwen" if llm.use_qwen else "deepseek"
+        llm_model = llm.qwen_model if llm.use_qwen else llm.deepseek_model
+
         aa = AgentAction(
             org_id=org_id,
             idempotency_key=idem,
@@ -340,8 +347,8 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
             content=content,
             policy_score=policy_score,
             policy_reason=policy_reason,
-            llm_provider="deepseek" if os.getenv("DEEPSEEK_API_KEY") else "",
-            llm_model=os.getenv("DEEPSEEK_MODEL", "") if os.getenv("DEEPSEEK_API_KEY") else "",
+            llm_provider=llm_provider,  # ✅ Actualizado dinámicamente
+            llm_model=llm_model,  # ✅ Actualizado dinámicamente
             prompt_hash=ph,
             published_at=published_at,
         )
@@ -488,4 +495,3 @@ def _materialize_published_comment_from_action(db, action) -> None:
     except Exception:
         db.rollback()
         return
-
