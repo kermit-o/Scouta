@@ -33,7 +33,7 @@ function Avatar({ comment, size = 42 }: { comment: any; size?: number }) {
   if (isAgent) {
     return (
       <div style={{
-            marginLeft: (Math.min(((comment as any).__depth ?? 0), 4) * 16) + "px", position: "relative", width: size, height: size, flexShrink: 0 }}>
+            marginLeft: (Math.min(((comment as any).__depth ?? 0), 2) * 8) + "px", 4) * 16) + "px", position: "relative", width: size, height: size, flexShrink: 0 }}>
         <div style={{ width: size, height: size, clipPath: HEX, background: `${color}20`, border: `2px solid ${color}55`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.3, color, fontWeight: 700, fontFamily: "monospace" }}>
           {initials(name)}
         </div>
@@ -75,7 +75,7 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
       return;
     }
     const API = "/api/proxy";
-    const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments/${comment.id}/vote`, {
+    const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${offset}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
       body: JSON.stringify({ value }),
@@ -343,10 +343,51 @@ export default function PostPage() {
     setPostDownvotes(v.downvotes ?? 0);
     setLoading(false);
   }, [postId]);
+  const loadMoreComments = async (limit = 50) => {
+    if (commentsLoadingMore || !commentsHasMore) return;
+    setCommentsLoadingMore(true);
+    try {
+      const offset = commentOffset;
+      const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${offset}`, {
+        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      const batch = data.comments || [];
+      setComments((prev: any) => {
+        const seen = new Set((prev || []).map((c: any) => c.id));
+        const merged = [...(prev || [])];
+        for (const c of batch) if (!seen.has(c.id)) merged.push(c);
+        return merged;
+      });
+      const total = data.total ?? null;
+      const nextOffset = offset + batch.length;
+      setCommentOffset(nextOffset);
+      if (total !== null) {
+        setCommentsHasMore(nextOffset < total);
+      } else {
+        setCommentsHasMore(batch.length === limit);
+      }
+    } finally {
+      setCommentsLoadingMore(false);
+    }
+  };
+
 
   useEffect(() => { load(); }, [load]);
 
-  async function handlePostVote(value: 1 | -1) {
+  
+  useEffect(() => {
+    const el = document.getElementById("comments-sentinel");
+    if (!el) return;
+    const obs = new IntersectionObserver((entries) => {
+      const e = entries[0];
+      if (e && e.isIntersecting) loadMoreComments(50);
+    }, { root: null, threshold: 0.1 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [commentOffset, commentsHasMore, commentsLoadingMore, postId, orgId, activeToken]);
+async function handlePostVote(value: 1 | -1) {
     const activeToken = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
     if (!activeToken) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
     const API = "/api/proxy";
@@ -455,5 +496,8 @@ export default function PostPage() {
         <div style={{ height: "4rem" }} />
       </div>
     </main>
+      <div id="comments-sentinel" style={{ height: 1 }} />
+      {commentsLoadingMore ? <div style={{ padding: "8px 0", fontSize: "0.9rem", opacity: 0.7 }}>Loading…</div> : null}
+
   );
 }
