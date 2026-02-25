@@ -1,4 +1,4 @@
-# app/services/agent_post_generator.py
+﻿# app/services/agent_post_generator.py
 
 from __future__ import annotations
 
@@ -10,8 +10,9 @@ from typing import Optional, Dict, Any, Tuple
 
 from sqlalchemy.orm import Session
 
-from app.services.llm_client import LLMClient
-from app.services.moderation_scorer_patch import score_text_with_llm
+from app.services.deepseek_client import DeepSeekClient
+from app.services.qwen_client import QwenClient
+from app.services.moderation_scorer import score_text_with_deepseek
 from app.models.post import Post
 from app.models.agent_profile import AgentProfile
 
@@ -159,7 +160,7 @@ def generate_post_for_agent(
     auto_approve_threshold: int = 20,
 ) -> Post:
     """
-    Generate a NEW post for a given agent profile using LLM (Qwen primero, DeepSeek fallback).
+    Generate a NEW post for a given agent profile using DeepSeek.
 
     - Topics are driven by agent_profiles.topics (comma-separated)
     - Rotates toward least-used topics for that agent
@@ -181,9 +182,11 @@ def generate_post_for_agent(
     if getattr(agent, "is_shadow_banned", 0) in (1, True):
         raise ValueError(f"AgentProfile shadow-banned: agent_id={agent_id}")
 
-    llm = LLMClient()
-    if not llm.is_enabled():
-        raise RuntimeError("No LLM clients available (check DASHSCOPE_API_KEY or DEEPSEEK_API_KEY)")
+    #ds = DeepSeekClient()
+    ds = QwenClient()
+    if not ds.is_enabled():
+        #raise RuntimeError("DeepSeek is disabled (DEEPSEEK_API_KEY not set)")
+        raise RuntimeError("Qwen is disabled (DASHSCOPE_API_KEY not set)")
 
     # ---- Helpers ----
     def _parse_topics(s: str) -> list[str]:
@@ -300,17 +303,17 @@ def generate_post_for_agent(
         if banned_block:
             system = system + "\n\nAvoid repeating any of these titles:\n" + banned_block
 
-        out = llm.chat(system=system, user=user)
+        out = ds.chat(system=system, user=user)
 
         try:
             data = _extract_json_object(out)
         except Exception as e:
             raw = (out or "")
             snippet = raw[:6500]
-            with open("/tmp/llm_generate_post_raw.txt", "w", encoding="utf-8") as f:
+            with open("/tmp/deepseek_generate_post_raw.txt", "w", encoding="utf-8") as f:
                 f.write(snippet)
             raise ValueError(
-                f"Model did not return JSON. raw_len={len(raw)} saved=/tmp/llm_generate_post_raw.txt"
+                f"Model did not return JSON. raw_len={len(raw)} saved=/tmp/deepseek_generate_post_raw.txt"
             ) from e
 
         title = _safe_str(data.get("title"))
@@ -325,7 +328,7 @@ def generate_post_for_agent(
         topic_out = _safe_str(data.get("topic")) or topic or "general"
 
         if not title or not body_md:
-            raise ValueError("LLM returned empty title/body_md")
+            raise ValueError("DeepSeek returned empty title/body_md")
 
         # 3.5) Hard dedupe BEFORE moderation/insert (exact match + content_hash)
         # Title exact match within org
@@ -357,7 +360,7 @@ def generate_post_for_agent(
             excerpt = (body_md.replace("\n", " ").strip())[:240]
 
     # Moderation gate
-    mod = score_text_with_llm(f"{title}\n\n{body_md}")
+    mod = score_text_with_deepseek(f"{title}\n\n{body_md}")
     policy_score = int(mod.score)
     policy_reason = _safe_str(mod.reason)
 
@@ -377,17 +380,13 @@ def generate_post_for_agent(
 
     slug = f"{_slugify(title)}-{int(datetime.utcnow().timestamp())}"
 
-    # Determinar qué proveedor se usó realmente
-    llm_provider = "qwen" if llm.use_qwen else "deepseek"
-    llm_model = llm.qwen_model if llm.use_qwen else llm.deepseek_model
-
     post_metadata_payload = {
         "topic": topic_out,
         "tags": tags,
         "agent_name": agent_name,
         "agent_id": agent_id,
-        "llm_provider": llm_provider,
-        "llm_model": llm_model,
+        "llm_provider": "deepseek",
+        "llm_model": getattr(ds, "model", ""),
         "policy_score": policy_score,
         "policy_reason": policy_reason,
     }
