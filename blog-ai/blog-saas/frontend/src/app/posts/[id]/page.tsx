@@ -434,95 +434,57 @@ export default function PostPage() {
     }
   }, [orgId, postId, activeToken, commentOffset, commentsHasMore, commentsLoadingMore]);
 
-  // Efecto para exponer variables globales (debugging)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      (window as any).commentsHasMore = commentsHasMore;
-      (window as any).commentsLoadingMore = commentsLoadingMore;
-      (window as any).commentOffset = commentOffset;
-      (window as any).loadMoreComments = loadMoreComments;
-      (window as any).comments = comments;
-    }
-  }, [commentsHasMore, commentsLoadingMore, commentOffset, loadMoreComments, comments]);
+  // Reemplaza COMPLETAMENTE el useEffect del observer con esto:
 
-  // EFECTO PRINCIPAL DEL SCROLL INFINITO - VERSIÓN CORREGIDA
   useEffect(() => {
-    // Debug: verificar que el sentinel existe (usando tanto ref como getElementById)
-    const sentinelFromRef = sentinelRef.current;
-    const sentinelFromId = document.getElementById("comments-sentinel");
+    console.log("🔄 EFFECT OBSERVER - Iniciando...");
     
-    console.log("🔍 Sentinel desde ref:", sentinelFromRef);
-    console.log("🔍 Sentinel desde getElementById:", sentinelFromId);
-    
-    // Usar el ref primero, fallback a getElementById
-    const sentinel = sentinelFromRef || sentinelFromId;
+    // Buscar el sentinel de varias formas
+    const sentinel = document.getElementById("comments-sentinel") || sentinelRef.current;
     
     if (!sentinel) {
-      console.error("❌ Sentinel no encontrado en el DOM");
-      return;
-    }
-
-    // Condiciones para observar
-    if (!commentsHasMore) {
-      console.log("⏸️ No hay más comentarios, observer detenido");
+      console.error("❌ Sentinel no encontrado");
       return;
     }
     
-    if (commentsLoadingMore) {
-      console.log("⏳ Ya cargando, observer espera");
+    console.log("✅ Sentinel encontrado:", sentinel);
+    console.log("📊 Estado:", { 
+      hasMore: commentsHasMore, 
+      loading: commentsLoadingMore, 
+      offset: commentOffset 
+    });
+    
+    // Si no hay más comentarios, no observar
+    if (!commentsHasMore) {
+      console.log("⏸️ No hay más comentarios");
       return;
     }
-
-    console.log("👀 Configurando observer...", {
-      hasMore: commentsHasMore,
-      loading: commentsLoadingMore,
-      offset: commentOffset,
-      sentinelVisible: sentinel.offsetHeight > 0,
-      sentinelPosition: sentinel.getBoundingClientRect()
-    });
-
-    // Crear observer con configuración más sensible
-    const obs = new IntersectionObserver(
+    
+    // Crear observer simple
+    const observer = new IntersectionObserver(
       (entries) => {
-        const entry = entries[0];
-        console.log("🎯 Intersección detectada:", {
-          isIntersecting: entry.isIntersecting,
-          ratio: entry.intersectionRatio,
-          time: new Date().toISOString(),
-          boundingRect: entry.boundingClientRect
-        });
+        console.log("👁️ Observer callback ejecutado", entries[0]?.isIntersecting);
         
-        if (entry.isIntersecting && commentsHasMore && !commentsLoadingMore) {
-          console.log("📦 ACTIVANDO CARGA DE MÁS COMENTARIOS");
+        if (entries[0]?.isIntersecting && commentsHasMore && !commentsLoadingMore) {
+          console.log("🚀 CARGANDO MÁS COMENTARIOS - offset:", commentOffset);
           loadMoreComments(50);
         }
       },
       {
-        root: null, // viewport
-        rootMargin: "400px 0px", // Cargar 400px antes de llegar (aumentado)
-        threshold: 0.01 // Solo 1% visible es suficiente
+        root: null,
+        rootMargin: "100px",
+        threshold: 0
       }
     );
-
+    
     // Observar
-    obs.observe(sentinel);
-    console.log("✅ Observer conectado al sentinel");
-
-    // Forzar una comprobación inicial
-    setTimeout(() => {
-      const rect = sentinel.getBoundingClientRect();
-      console.log("📏 Posición inicial del sentinel:", {
-        top: rect.top,
-        bottom: rect.bottom,
-        windowHeight: window.innerHeight,
-        isVisible: rect.top < window.innerHeight && rect.bottom > 0
-      });
-    }, 1000);
-
+    observer.observe(sentinel);
+    console.log("👀 Observer activo");
+    
     // Limpiar
     return () => {
       console.log("🧹 Limpiando observer");
-      obs.disconnect();
+      observer.disconnect();
     };
   }, [commentsHasMore, commentsLoadingMore, loadMoreComments, commentOffset]); // Dependencias
 
