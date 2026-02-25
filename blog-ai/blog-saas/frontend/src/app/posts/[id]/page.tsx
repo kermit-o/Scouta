@@ -434,50 +434,54 @@ export default function PostPage() {
     }
   }, [orgId, postId, activeToken, commentOffset, commentsHasMore, commentsLoadingMore]);
 
-  useEffect(() => { 
-    load(); 
-  }, [load]);
+  // En frontend/src/app/posts/[id]/page.tsx, dentro del componente PostPage:
 
+// Después de los useState, agrega esto para exponer variables globalmente
   useEffect(() => {
-    if (!sentinelRef.current) {
-      console.log("Sentinel ref not available");
-      return;
+    // Exponer variables para debugging (opcional, solo desarrollo)
+    if (typeof window !== 'undefined') {
+      (window as any).commentsHasMore = commentsHasMore;
+      (window as any).commentsLoadingMore = commentsLoadingMore;
+      (window as any).commentOffset = commentOffset;
     }
-    
-    console.log("Setting up intersection observer", {
-      commentsHasMore,
-      commentsLoadingMore
-    });
-    
-    // No observar si no hay más comentarios o ya está cargando
-    if (!commentsHasMore || commentsLoadingMore) {
-      console.log("Not observing:", { commentsHasMore, commentsLoadingMore });
-      return;
-    }
+  }, [commentsHasMore, commentsLoadingMore, commentOffset]);
 
-    const obs = new IntersectionObserver(
-      (entries) => {
-        console.log("Intersection observed:", entries[0].isIntersecting);
-        const firstEntry = entries[0];
-        if (firstEntry.isIntersecting && commentsHasMore && !commentsLoadingMore) {
-          console.log("🔵 Sentinel visible, loading more comments...");
-          loadMoreComments(50);
-        }
-      },
-      { 
-        root: null, 
-        rootMargin: "200px", // Aumentado para cargar más temprano
-        threshold: 0.01 // Reducido para detectar más fácilmente
+  // Asegurar que el sentinel tiene el ID correcto y es visible
+  // En el JSX, reemplaza el div del sentinel con:
+  <div 
+    id="comments-sentinel" 
+    ref={sentinelRef}
+    style={{ 
+      height: "20px", 
+      margin: "20px 0",
+      background: commentsHasMore ? "rgba(0,255,0,0.1)" : "transparent",
+      border: commentsHasMore ? "1px dashed #666" : "none"
+    }} 
+  />
+
+  // Verificar que el observer usa el ID correcto
+  useEffect(() => {
+    if (!commentsHasMore || commentsLoadingMore) return;
+    
+    // Usar tanto ref como getElementById para asegurar
+    const sentinel = document.getElementById("comments-sentinel");
+    if (!sentinel) {
+      console.log("⚠️ Sentinel no encontrado en DOM");
+      return;
+    }
+    
+    console.log("👀 Observer configurado para sentinel");
+    
+    const obs = new IntersectionObserver((entries) => {
+      console.log("🎯 Intersección detectada:", entries[0].isIntersecting);
+      if (entries[0].isIntersecting) {
+        console.log("📦 Cargando más comentarios...");
+        loadMoreComments(50);
       }
-    );
-
-    obs.observe(sentinelRef.current);
-    console.log("Observer attached to sentinel");
+    }, { root: null, threshold: 0.1, rootMargin: "100px" });
     
-    return () => {
-      console.log("Cleaning up observer");
-      obs.disconnect();
-    };
+    obs.observe(sentinel);
+    return () => obs.disconnect();
   }, [commentsHasMore, commentsLoadingMore, loadMoreComments]);
 
   async function handlePostVote(value: 1 | -1) {
