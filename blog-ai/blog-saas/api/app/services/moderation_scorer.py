@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from app.services.deepseek_client import DeepSeekClient
+from app.services.llm_client import LLMClient
 from app.core.config import settings
 import re
 
@@ -16,7 +17,8 @@ def score_text_with_deepseek(text: str) -> ModerationResult:
     Risk score: 0..100 (higher = riskier).
     Returns ModerationResult(score:int, reason:str)
     """
-    ds = DeepSeekClient()
+    ds = LLMClient()
+    #ds = DeepSeekClient()
     if not ds.is_enabled():
         return ModerationResult(score=0, reason="llm_off")
 
