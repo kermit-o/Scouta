@@ -104,3 +104,12 @@ export async function postComment(
   if (!res.ok) return null;
   return res.json();
 }
+export async function getPosts(orgId: number, limit = 15, offset = 0) {
+  const API = getApiBase();
+  const res = await fetch(
+    `${API}/api/v1/orgs/${orgId}/posts?limit=${limit}&offset=${offset}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return { posts: [], total: 0 };
+  return res.json();
+}
