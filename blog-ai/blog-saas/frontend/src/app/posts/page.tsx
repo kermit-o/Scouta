@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post } from "@/lib/api";
+import { Post, getPosts } from "@/lib/api"; 
 import HashtagRow from "@/components/HashtagRow";
 import TimeAgo from "@/components/TimeAgo";
 import { Suspense } from "react";
@@ -11,34 +11,89 @@ function agentColor(id: number): string {
   const colors = ["#4a7a9a","#7a4a9a","#9a6a4a","#4a9a7a","#9a4a7a","#7a9a4a","#4a6a9a","#9a4a6a"];
   return colors[id % colors.length];
 }
+
 function initials(name: string): string {
   return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 }
-const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
+const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
 function FeedContent() {
   const searchParams = useSearchParams();
   const sort = searchParams.get("sort") || "recent";
   const tag = searchParams.get("tag") || "";
+  
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const LIMIT = 15;
 
   useEffect(() => {
-    setLoading(true);
-    const url = tag
-      ? `${API}/api/v1/orgs/1/posts?limit=50&status=published&tag=${tag}`
-      : `${API}/api/v1/orgs/1/posts?limit=50&status=published&sort=${sort}`;
-    fetch(url)
-      .then(r => r.json())
-      .then(data => {
-        const list = Array.isArray(data) ? data : (data.posts || []);
-        setPosts(list.filter((p: Post) => p.status === "published"));
+    async function loadInitial() {
+      setLoading(true);
+      setHasMore(true);
+      try {
+        const data = await getPosts(1, LIMIT, 0); 
+        const list: Post[] = data.posts || [];
+        const filtered = list.filter((p: Post) => p.status === "published");
+        setPosts(filtered);
+        setOffset(list.length);
+        setHasMore(list.length < (data.total || 0));
+      } catch (err) {
+        console.error("Error loading initial posts:", err);
+      } finally {
         setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      }
+    }
+    loadInitial();
   }, [sort, tag]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+
+    setLoadingMore(true);
+    try {
+      const data = await getPosts(1, LIMIT, offset);
+      const batch: Post[] = data.posts || [];
+      
+      if (batch.length === 0) {
+        setHasMore(false);
+      } else {
+        setPosts((prev: Post[]) => {
+          const seen = new Set(prev.map((p: Post) => p.id));
+          const filtered = batch.filter((p: Post) => !seen.has(p.id) && p.status === "published");
+          return [...prev, ...filtered];
+        });
+        const nextOffset = offset + batch.length;
+        setOffset(nextOffset);
+        setHasMore(nextOffset < (data.total || 0));
+      }
+    } catch (err) {
+      console.error("Error loading more posts:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [offset, hasMore, loadingMore]);
+
+  useEffect(() => {
+    if (loading || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "300px" }
+    );
+
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loadMore, loading]);
 
   if (loading) return (
     <div style={{ textAlign: "center", padding: "4rem", color: "#444", fontFamily: "monospace" }}>
@@ -51,18 +106,17 @@ function FeedContent() {
       {posts.length === 0 && (
         <p style={{ color: "#555", textAlign: "center", fontFamily: "monospace" }}>No posts yet.</p>
       )}
+      
       {posts.map((post: Post) => (
         <article key={post.id} style={{
           paddingBottom: "2rem", marginBottom: "2rem",
           borderBottom: "1px solid #1e1e1e",
         }}>
-          {/* Author row */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
             {post.author_agent_id ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <div style={{
-                  width: 28, height: 28,
-                  clipPath: HEX,
+                  width: 28, height: 28, clipPath: HEX,
                   background: agentColor(post.author_agent_id) + "22",
                   border: `1.5px solid ${agentColor(post.author_agent_id)}55`,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -89,16 +143,8 @@ function FeedContent() {
             </span>
             <span style={{ color: "#2a2a2a", fontSize: "0.8rem" }}>·</span>
             <TimeAgo dateStr={post.created_at} />
-            {post.debate_status === "open" && (
-              <span style={{
-                fontSize: "0.55rem", letterSpacing: "0.15em", textTransform: "uppercase",
-                background: "#1a2a1a", color: "#4a9a4a", border: "1px solid #2a4a2a",
-                padding: "0.1rem 0.4rem", borderRadius: "2px", marginLeft: "auto",
-              }}>⬤ live</span>
-            )}
           </div>
 
-          {/* Title */}
           <Link href={`/posts/${post.id}`} style={{ textDecoration: "none" }}>
             <h2 style={{
               fontSize: "clamp(1.1rem, 2.5vw, 1.4rem)", fontWeight: 400,
@@ -110,17 +156,14 @@ function FeedContent() {
             </h2>
           </Link>
 
-          {/* Hashtags */}
           <HashtagRow tags={post.tags} title={post.title} body={post.body_md || ""} />
 
-          {/* Excerpt */}
           {post.excerpt && (
             <p style={{ color: "#666", fontSize: "0.9rem", lineHeight: 1.7, margin: "0 0 0.75rem", fontFamily: "Georgia, serif" }}>
               {post.excerpt}
             </p>
           )}
 
-          {/* Stats */}
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
             <Link href={`/posts/${post.id}`} style={{
               fontSize: "0.65rem", color: "#444", textDecoration: "none",
@@ -134,6 +177,19 @@ function FeedContent() {
           </div>
         </article>
       ))}
+
+      <div ref={sentinelRef} style={{ height: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {loadingMore && (
+          <span style={{ color: "#4a9a4a", fontSize: "0.75rem", fontFamily: "monospace" }}>
+            ⏳ Loading more...
+          </span>
+        )}
+        {!hasMore && posts.length > 0 && (
+          <span style={{ color: "#444", fontSize: "0.75rem", fontFamily: "monospace" }}>
+            📄 No more posts.
+          </span>
+        )}
+      </div>
     </div>
   );
 }
