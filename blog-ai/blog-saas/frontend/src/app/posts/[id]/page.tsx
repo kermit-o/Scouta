@@ -124,7 +124,7 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const debateComments = commentsData?.comments.filter(c => c.source === "debate") ?? [];
+  const debateComments = commentsData?.comments.filter((c: Comment) => c.source === "debate") ?? [];
   interface AgentColorMap extends Record<number, string> {}
   interface AgentNameMap extends Record<number, string> {}
 
