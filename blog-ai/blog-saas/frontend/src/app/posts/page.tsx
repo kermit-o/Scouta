@@ -3,54 +3,49 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post, getPosts } from "@/lib/api"; // Importamos getPosts desde tu lib/api
+import { Post, getPosts } from "@/lib/api"; //
 import HashtagRow from "@/components/HashtagRow";
 import TimeAgo from "@/components/TimeAgo";
 import { Suspense } from "react";
 
 function agentColor(id: number): string {
   const colors = ["#4a7a9a","#7a4a9a","#9a6a4a","#4a9a7a","#9a4a7a","#7a9a4a","#4a6a9a","#9a4a6a"];
-  return colors[id % colors.length];
+  return colors[id % colors.length]; // [cite: 4]
 }
 
 function initials(name: string): string {
-  return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+  return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase(); // [cite: 5]
 }
 
-const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"; // [cite: 8]
 
 function FeedContent() {
   const searchParams = useSearchParams();
   const sort = searchParams.get("sort") || "recent";
   const tag = searchParams.get("tag") || "";
   
-  // Estados para paginación
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // 1. CARGA INICIAL (Se dispara cuando cambia el sort o el tag)
+  // CARGA INICIAL
   const loadInitial = useCallback(async () => {
     setLoading(true);
-    setOffset(0); // Reiniciamos el offset
     try {
-      const data = await getPosts(1, 15, 0); // Cargamos los primeros 15
+      // Usamos getPosts de api.ts
+      const data = await getPosts(1, 15, 0); 
       const list = data.posts || [];
       
-      // Si hay un tag activo, filtramos (o podrías dejar que el API lo haga si lo soporta)
-      const filtered = list.filter((p: Post) => p.status === "published");
+      setPosts(list.filter((p: Post) => p.status === "published"));
+      setOffset(list.length);
       
-      setPosts(filtered);
-      setOffset(filtered.length);
-      
-      // Sincronizamos si hay más contenido
-      setHasMore(filtered.length < (data.total ?? 0));
+      // Verificamos si hay más 
+      setHasMore(list.length < (data.total ?? 0));
     } catch (err) {
-      console.error("Error loading initial feed:", err);
+      console.error("Error al cargar feed inicial:", err);
     } finally {
       setLoading(false);
     }
@@ -60,13 +55,13 @@ function FeedContent() {
     loadInitial();
   }, [loadInitial]);
 
-  // 2. CARGA ADICIONAL (Al hacer scroll)
+  // CARGA MÁS (SCROLL INFINITO)
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;
 
     setLoadingMore(true);
     try {
-      const data = await getPosts(1, 15, offset);
+      const data = await getPosts(1, 15, offset); //
       const batch = data.posts || [];
       
       if (batch.length === 0) {
@@ -75,34 +70,34 @@ function FeedContent() {
       }
 
       setPosts(prev => {
-        const seen = new Set(prev.map(p => p.id));
+        const seen = new Set(prev.map(p => p.id)); // [cite: 86]
         const filtered = batch.filter((p: Post) => !seen.has(p.id) && p.status === "published");
         return [...prev, ...filtered];
       });
 
       const nextOffset = offset + batch.length;
       setOffset(nextOffset);
-      setHasMore(nextOffset < (data.total ?? 0));
+      setHasMore(nextOffset < (data.total ?? 0)); // 
     } catch (err) {
-      console.error("Error loading more posts:", err);
+      console.error("Error al cargar más posts:", err);
     } finally {
       setLoadingMore(false);
     }
   }, [offset, hasMore, loadingMore, loading]);
 
-  // 3. OBSERVER DEL SCROLL
+  // OBSERVER
   useEffect(() => {
     if (loading || !hasMore) return;
 
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && !loadingMore) {
-        loadMore();
+        loadMore(); // [cite: 94]
       }
     }, { rootMargin: "300px" });
 
-    if (sentinelRef.current) observer.observe(sentinelRef.current);
+    if (sentinelRef.current) observer.observe(sentinelRef.current); // [cite: 95]
     
-    return () => observer.disconnect();
+    return () => observer.disconnect(); // [cite: 96]
   }, [hasMore, loadingMore, loadMore, loading]);
 
   if (loading) return (
@@ -122,7 +117,7 @@ function FeedContent() {
           paddingBottom: "2rem", marginBottom: "2rem",
           borderBottom: "1px solid #1e1e1e",
         }}>
-          {/* Author row */}
+          {/* Fila del autor */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
             {post.author_agent_id ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
@@ -197,25 +192,24 @@ function FeedContent() {
         </article>
       ))}
 
-      {/* SENTINEL: Div que dispara la carga adicional */}
+      {/* SENTINEL para scroll infinito */}
       <div 
         ref={sentinelRef} 
         style={{ 
           height: "80px", 
           display: "flex", 
           alignItems: "center", 
-          justifyContent: "center",
-          borderTop: hasMore ? "1px dashed #1a1a1a" : "none"
+          justifyContent: "center"
         }}
       >
         {hasMore ? (
           <span style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace" }}>
-            ⏳ Loading more stories...
+            ⏳ Loading more...
           </span>
         ) : (
           posts.length > 0 && (
             <span style={{ color: "#333", fontSize: "0.7rem", fontFamily: "monospace" }}>
-              📄 No more stories
+              📄 End of feed
             </span>
           )
         )}
