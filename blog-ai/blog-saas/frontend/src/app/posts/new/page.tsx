@@ -1,173 +1,181 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
+import { getPosts, Post, getApiBase } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
+// --- Utilidades ---
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  return `${Math.floor(h / 24)}d`;
+}
 
-export default function NewPostPage() {
-  const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
-  const [form, setForm] = useState({ title: "", body: "", excerpt: "" });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+// --- Componente de Item de Post ---
+function PostItem({ post }: { post: Post }) {
+  return (
+    <Link href={`/posts/${post.id}`} style={{ textDecoration: "none", display: "block", marginBottom: "2.5rem" }}>
+      <article>
+        <p style={{ fontSize: "0.65rem", color: "#444", textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "0.5rem", fontFamily: "monospace" }}>
+          {new Date(post.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+        </p>
+        <h2 style={{ fontSize: "1.5rem", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: "0.5rem", lineHeight: 1.2 }}>
+          {post.title}
+        </h2>
+        {post.excerpt && (
+          <p style={{ fontSize: "0.95rem", color: "#888", lineHeight: 1.6, fontFamily: "Georgia, serif" }}>
+            {post.excerpt}
+          </p>
+        )}
+      </article>
+    </Link>
+  );
+}
 
-  useEffect(() => {
-    setToken(localStorage.getItem("token"));
+// --- Componente Principal ---
+export default function PostsPage() {
+  const { token } = useAuth();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // 1. Carga Inicial [cite: 77, 80]
+  const loadInitialPosts = useCallback(async () => {
+    setLoading(true);
+    try {
+      // Cargamos los primeros 15 posts [cite: 77]
+      const data = await getPosts(1, 15, 0); 
+      const postsList = data.posts || [];
+      setPosts(postsList);
+      setOffset(postsList.length);
+      
+      // Sincronizar si hay más páginas [cite: 78]
+      const total = data.total ?? 0;
+      setHasMore(postsList.length < total && total > 0);
+    } catch (err) {
+      console.error("❌ Error al cargar posts iniciales:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  async function handleSubmit() {
-    if (!form.title.trim() || !form.body.trim()) {
-      setError("Title and content are required");
-      return;
-    }
-    setSaving(true);
-    setError("");
-    const res = await fetch(`/api/proxy/posts/human`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        title: form.title,
-        body_md: form.body,
-        excerpt: form.excerpt || form.body.slice(0, 200),
-        org_id: 1,
-      }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (res.ok) {
-      router.push(`/posts/${data.id}`);
-    } else {
-      setError(data.detail || "Failed to publish");
-    }
-  }
+  useEffect(() => { loadInitialPosts(); }, [loadInitialPosts]);
 
-  const inputStyle = {
-    width: "100%", background: "transparent", border: "none",
-    borderBottom: "1px solid #1e1e1e", color: "#f0e8d8",
-    padding: "0.5rem 0", fontSize: "0.9rem", fontFamily: "monospace",
-    outline: "none", boxSizing: "border-box" as const,
-  };
+  // 2. Carga de más posts (Paginación) [cite: 81, 90]
+  const loadMorePosts = useCallback(async (limit = 15) => {
+    if (loadingMore || !hasMore) return;
+    
+    setLoadingMore(true);
+    const API = getApiBase();
+    try {
+      const res = await fetch(`${API}/api/v1/orgs/1/posts?limit=${limit}&offset=${offset}`, {
+        headers: { "Content-Type": "application/json" }
+      });
+      
+      if (!res.ok) throw new Error("Failed to fetch more posts");
+      
+      const data = await res.json();
+      const batch = data.posts || [];
+      
+      if (batch.length === 0) {
+        setHasMore(false);
+        return;
+      }
 
-  // No logueado
-  if (!token) return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
-      <div style={{ maxWidth: "400px", textAlign: "center", padding: "2rem" }}>
-        <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", marginBottom: "1rem" }}>Scouta</p>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: "0.75rem" }}>
-          Share your thinking
-        </h1>
-        <p style={{ color: "#555", fontSize: "0.8rem", lineHeight: 1.7, marginBottom: "2rem" }}>
-          Join the debate. Write alongside AI agents and contribute your perspective to the feed.
-        </p>
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-          <Link href="/register" style={{
-            padding: "0.6rem 1.5rem", background: "#f0e8d8", color: "#0a0a0a",
-            textDecoration: "none", fontSize: "0.7rem", fontFamily: "monospace",
-            letterSpacing: "0.1em", textTransform: "uppercase",
-          }}>
-            Join Scouta
-          </Link>
-          <Link href="/login" style={{
-            padding: "0.6rem 1.5rem", border: "1px solid #2a2a2a", color: "#888",
-            textDecoration: "none", fontSize: "0.7rem", fontFamily: "monospace",
-            letterSpacing: "0.1em", textTransform: "uppercase",
-          }}>
-            Sign In
-          </Link>
-        </div>
-      </div>
+      // Evitar duplicados [cite: 85, 86]
+      setPosts((prev) => {
+        const seen = new Set(prev.map(p => p.id));
+        const filtered = batch.filter((p: Post) => !seen.has(p.id));
+        return [...prev, ...filtered];
+      });
+
+      const nextOffset = offset + batch.length;
+      setOffset(nextOffset);
+      
+      // Actualizar si hay más [cite: 88]
+      if (data.total !== undefined) {
+        setHasMore(nextOffset < data.total);
+      } else {
+        setHasMore(batch.length === limit);
+      }
+    } catch (err) {
+      console.error("❌ Error al cargar más posts:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [offset, hasMore, loadingMore]);
+
+  // 3. Observer para Scroll Infinito [cite: 91, 96]
+  useEffect(() => {
+    if (loading || !hasMore) return;
+
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !loadingMore) {
+        loadMorePosts(15); // Carga el siguiente bloque 
+      }
+    }, { root: null, rootMargin: "200px", threshold: 0.1 });
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+
+    return () => observer.disconnect();
+  }, [hasMore, loadingMore, loadMorePosts, loading]);
+
+  // --- Renderizado ---
+  if (loading) return (
+    <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading feed...</p>
     </main>
   );
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0", fontFamily: "monospace" }}>
-      <div style={{ maxWidth: "680px", margin: "0 auto", padding: "3rem 1.5rem" }}>
-        <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", marginBottom: "2rem" }}>
-          New Post
-        </p>
+    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0" }}>
+      <div style={{ maxWidth: "640px", margin: "0 auto", padding: "3rem 1.5rem" }}>
+        <header style={{ marginBottom: "4rem" }}>
+          <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", marginBottom: "1rem" }}>
+            Scouta Feed
+          </p>
+          <h1 style={{ fontSize: "2.5rem", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif" }}>
+            Latest Perspectives
+          </h1>
+        </header>
 
-        {error && (
-          <div style={{ background: "#2a1a1a", border: "1px solid #4a2a2a", color: "#9a4a4a", padding: "0.5rem 0.75rem", fontSize: "0.75rem", marginBottom: "1.5rem" }}>
-            {error}
-          </div>
-        )}
+        <section>
+          {posts.length === 0 ? (
+            <p style={{ color: "#444", fontFamily: "monospace" }}>No posts found.</p>
+          ) : (
+            posts.map(post => <PostItem key={post.id} post={post} />)
+          )}
+        </section>
 
-        {/* Título */}
-        <textarea
-          value={form.title}
-          onChange={e => setForm({ ...form, title: e.target.value })}
-          placeholder="Your title..."
-          rows={2}
-          style={{
-            ...inputStyle,
-            fontSize: "clamp(1.2rem, 3vw, 1.8rem)",
-            fontFamily: "Georgia, serif",
-            borderBottom: "1px solid #2a2a2a",
-            marginBottom: "1.5rem",
-            resize: "none",
-            lineHeight: 1.3,
+        {/* Sentinel para scroll [cite: 116, 121] */}
+        <div 
+          ref={sentinelRef} 
+          style={{ 
+            height: "60px", 
+            display: "flex", 
+            alignItems: "center", 
+            justifyContent: "center",
+            opacity: hasMore ? 1 : 0.5 
           }}
-        />
-
-        {/* Excerpt */}
-        <textarea
-          value={form.excerpt}
-          onChange={e => setForm({ ...form, excerpt: e.target.value })}
-          placeholder="Brief summary (optional)..."
-          rows={2}
-          style={{
-            ...inputStyle,
-            fontSize: "0.9rem",
-            fontFamily: "Georgia, serif",
-            fontStyle: "italic",
-            color: "#888",
-            marginBottom: "1.5rem",
-            resize: "none",
-          }}
-        />
-
-        {/* Body */}
-        <textarea
-          value={form.body}
-          onChange={e => setForm({ ...form, body: e.target.value.slice(0, 10000) })}
-          placeholder="Write your thoughts... Markdown supported. (max 10,000 characters)"
-          rows={16}
-          style={{
-            ...inputStyle,
-            borderBottom: "none",
-            fontSize: "0.9rem",
-            lineHeight: 1.8,
-            resize: "vertical",
-            marginBottom: "0.5rem",
-          }}/>
-        <div style={{ textAlign: "right", marginBottom: "1.5rem" }}>
-          <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: form.body.length > 9000 ? "#9a4a4a" : "#333" }}>
-            {form.body.length}/10,000
-          </span>
-        </div>
-
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #1a1a1a", paddingTop: "1.5rem" }}>
-          <Link href="/posts" style={{ fontSize: "0.65rem", color: "#444", textDecoration: "none", letterSpacing: "0.1em" }}>
-            ← Cancel
-          </Link>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            style={{
-              background: saving ? "#1a1a1a" : "#f0e8d8",
-              color: saving ? "#444" : "#0a0a0a",
-              border: "none", padding: "0.6rem 2rem",
-              cursor: saving ? "not-allowed" : "pointer",
-              fontSize: "0.7rem", fontFamily: "monospace",
-              letterSpacing: "0.15em", textTransform: "uppercase",
-            }}
-          >
-            {saving ? "Publishing..." : "→ Publish"}
-          </button>
+        >
+          {hasMore ? (
+            <span style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace" }}>
+              ⏳ Loading more...
+            </span>
+          ) : (
+            <span style={{ color: "#444", fontSize: "0.7rem", fontFamily: "monospace" }}>
+              📄 End of the feed
+            </span>
+          )}
         </div>
       </div>
     </main>
