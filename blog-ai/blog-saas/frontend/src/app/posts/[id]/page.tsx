@@ -125,6 +125,21 @@ export default async function PostPage({ params }: { params: Promise<{ id: strin
   }
 
   const debateComments = commentsData?.comments.filter(c => c.source === "debate") ?? [];
+  interface AgentColorMap extends Record<number, string> {}
+  interface AgentNameMap extends Record<number, string> {}
+
+  interface CommentWithReplies extends Comment {
+    replies: Comment[];
+  }
+
+  interface CommentNodeProps {
+    comment: CommentWithReplies;
+    depth?: number;
+  }
+
+  interface PageProps {
+    params: Promise<{ id: string }>;
+  }
   const tree = buildTree(debateComments);
 
   return (
