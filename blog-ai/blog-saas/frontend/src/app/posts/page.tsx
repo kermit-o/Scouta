@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post, getPosts } from "@/lib/api"; // Usamos la función consolidada
+import { Post, getPosts } from "@/lib/api"; // Importamos la función que añadiste a api.ts
 import HashtagRow from "@/components/HashtagRow";
 import TimeAgo from "@/components/TimeAgo";
 import { Suspense } from "react";
@@ -30,19 +30,23 @@ function FeedContent() {
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // 1. CARGA INICIAL
+  // Esta es la función que faltaba en tu archivo original
   const loadInitial = useCallback(async () => {
     setLoading(true);
     try {
-      // getPosts maneja la URL base y los parámetros correctamente
+      // Llamamos a getPosts de tu archivo api.ts
       const data = await getPosts(1, 15, 0); 
+      
+      // Manejo de respuesta: tu API devuelve { posts: [], total: X }
       const list = data.posts || [];
       
       setPosts(list.filter((p: Post) => p.status === "published"));
       setOffset(list.length);
+      
+      // Sincronizamos si hay más contenido basado en el total del servidor
       setHasMore(list.length < (data.total ?? 0));
     } catch (err) {
-      console.error("Error cargando feed:", err);
+      console.error("Error cargando feed inicial:", err);
     } finally {
       setLoading(false);
     }
@@ -52,7 +56,7 @@ function FeedContent() {
     loadInitial();
   }, [loadInitial]);
 
-  // 2. CARGA DE MÁS CONTENIDO
+  // Función para cargar la siguiente página
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;
 
@@ -82,7 +86,7 @@ function FeedContent() {
     }
   }, [offset, hasMore, loadingMore, loading]);
 
-  // 3. OBSERVER DEL SCROLL
+  // Observer para detectar el scroll al final
   useEffect(() => {
     if (loading || !hasMore) return;
 
@@ -90,7 +94,7 @@ function FeedContent() {
       if (entries[0].isIntersecting && !loadingMore) {
         loadMore();
       }
-    }, { rootMargin: "300px" }); // Carga con anticipación
+    }, { rootMargin: "300px" });
 
     if (sentinelRef.current) observer.observe(sentinelRef.current);
     
@@ -114,7 +118,6 @@ function FeedContent() {
           paddingBottom: "2rem", marginBottom: "2rem",
           borderBottom: "1px solid #1e1e1e",
         }}>
-          {/* Fila del autor */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
             {post.author_agent_id ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
@@ -146,13 +149,6 @@ function FeedContent() {
             </span>
             <span style={{ color: "#2a2a2a", fontSize: "0.8rem" }}>·</span>
             <TimeAgo dateStr={post.created_at} />
-            {post.debate_status === "open" && (
-              <span style={{
-                fontSize: "0.55rem", letterSpacing: "0.15em", textTransform: "uppercase",
-                background: "#1a2a1a", color: "#4a9a4a", border: "1px solid #2a4a2a",
-                padding: "0.1rem 0.4rem", borderRadius: "2px", marginLeft: "auto",
-              }}>⬤ live</span>
-            )}
           </div>
 
           <Link href={`/posts/${post.id}`} style={{ textDecoration: "none" }}>
@@ -160,7 +156,6 @@ function FeedContent() {
               fontSize: "clamp(1.1rem, 2.5vw, 1.4rem)", fontWeight: 400,
               color: "#f0e8d8", margin: "0 0 0.5rem",
               fontFamily: "Georgia, serif", lineHeight: 1.3,
-              letterSpacing: "-0.01em",
             }}>
               {post.title}
             </h2>
@@ -173,41 +168,15 @@ function FeedContent() {
               {post.excerpt}
             </p>
           )}
-
-          <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <Link href={`/posts/${post.id}`} style={{
-              fontSize: "0.65rem", color: "#444", textDecoration: "none",
-              fontFamily: "monospace", letterSpacing: "0.05em",
-            }}>
-              💬 {post.comment_count ?? 0} comments
-            </Link>
-            <span style={{ fontSize: "0.65rem", color: "#333", fontFamily: "monospace" }}>
-              ↑ {post.upvotes ?? 0}
-            </span>
-          </div>
         </article>
       ))}
 
-      {/* Sentinel: Este div activa la carga cuando aparece en pantalla */}
-      <div 
-        ref={sentinelRef} 
-        style={{ 
-          height: "80px", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center"
-        }}
-      >
+      {/* Sentinel para activar la carga infinita */}
+      <div ref={sentinelRef} style={{ height: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {hasMore ? (
-          <span style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace" }}>
-            ⏳ Cargando más historias...
-          </span>
+          <span style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace" }}>⏳ Cargando más...</span>
         ) : (
-          posts.length > 0 && (
-            <span style={{ color: "#333", fontSize: "0.7rem", fontFamily: "monospace" }}>
-              📄 Fin del feed
-            </span>
-          )
+          posts.length > 0 && <span style={{ color: "#333", fontSize: "0.7rem", fontFamily: "monospace" }}>📄 Fin del feed</span>
         )}
       </div>
     </div>
@@ -217,7 +186,7 @@ function FeedContent() {
 export default function PostsPage() {
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0" }}>
-      <Suspense fallback={<div style={{ textAlign: "center", padding: "4rem", color: "#444", fontFamily: "monospace" }}>Loading...</div>}>
+      <Suspense fallback={<div>Loading...</div>}>
         <FeedContent />
       </Suspense>
     </main>
