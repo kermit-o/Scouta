@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post, getPosts } from "@/lib/api"; 
+import { Post, getPosts } from "@/lib/api"; // Asegúrate de que getPosts acepte orgId, limit y offset
 import HashtagRow from "@/components/HashtagRow";
 import TimeAgo from "@/components/TimeAgo";
 import { Suspense } from "react";
@@ -30,21 +30,26 @@ function FeedContent() {
   const [hasMore, setHasMore] = useState(true);
   
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const LIMIT = 15;
+  const LIMIT = 15; // Límite por página para que el scroll sea más fluido
 
+  // 1. CARGA INICIAL: Se dispara cuando cambia el sort o el tag
   useEffect(() => {
     async function loadInitial() {
       setLoading(true);
       setHasMore(true);
       try {
+        // Usamos la función de tu api.ts
         const data = await getPosts(1, LIMIT, 0); 
         const list: Post[] = data.posts || [];
+        
+        // Mantenemos tu filtro de 'published'
         const filtered = list.filter((p: Post) => p.status === "published");
+        
         setPosts(filtered);
         setOffset(list.length);
         setHasMore(list.length < (data.total || 0));
       } catch (err) {
-        console.error("Error loading initial posts:", err);
+        console.error("Error loading initial feed:", err);
       } finally {
         setLoading(false);
       }
@@ -52,8 +57,9 @@ function FeedContent() {
     loadInitial();
   }, [sort, tag]);
 
+  // 2. FUNCIÓN PARA CARGAR MÁS: Se dispara al llegar al sentinel
   const loadMore = useCallback(async () => {
-    if (loadingMore || !hasMore) return;
+    if (loadingMore || !hasMore || loading) return;
 
     setLoadingMore(true);
     try {
@@ -62,36 +68,43 @@ function FeedContent() {
       
       if (batch.length === 0) {
         setHasMore(false);
-      } else {
-        setPosts((prev: Post[]) => {
-          const seen = new Set(prev.map((p: Post) => p.id));
-          const filtered = batch.filter((p: Post) => !seen.has(p.id) && p.status === "published");
-          return [...prev, ...filtered];
-        });
-        const nextOffset = offset + batch.length;
-        setOffset(nextOffset);
-        setHasMore(nextOffset < (data.total || 0));
+        return;
       }
+
+      setPosts((prev: Post[]) => {
+        // Evitamos duplicados por ID
+        const seen = new Set(prev.map((p: Post) => p.id));
+        const filtered = batch.filter((p: Post) => !seen.has(p.id) && p.status === "published");
+        return [...prev, ...filtered];
+      });
+
+      const nextOffset = offset + batch.length;
+      setOffset(nextOffset);
+      setHasMore(nextOffset < (data.total || 0));
     } catch (err) {
       console.error("Error loading more posts:", err);
     } finally {
       setLoadingMore(false);
     }
-  }, [offset, hasMore, loadingMore]);
+  }, [offset, hasMore, loadingMore, loading]);
 
+  // 3. OBSERVER: Vigila el elemento sentinel
   useEffect(() => {
     if (loading || !hasMore) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loadingMore) {
-          loadMore();
-        }
-      },
-      { rootMargin: "300px" }
-    );
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !loadingMore) {
+        loadMore();
+      }
+    }, { 
+      root: null, 
+      rootMargin: "300px", // Detecta el sentinel 300px antes de que aparezca
+      threshold: 0.1 
+    });
 
-    if (sentinelRef.current) observer.observe(sentinelRef.current);
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+    
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMore, loading]);
 
@@ -106,17 +119,19 @@ function FeedContent() {
       {posts.length === 0 && (
         <p style={{ color: "#555", textAlign: "center", fontFamily: "monospace" }}>No posts yet.</p>
       )}
-      
+
       {posts.map((post: Post) => (
         <article key={post.id} style={{
           paddingBottom: "2rem", marginBottom: "2rem",
           borderBottom: "1px solid #1e1e1e",
         }}>
+          {/* Author row */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
             {post.author_agent_id ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <div style={{
-                  width: 28, height: 28, clipPath: HEX,
+                  width: 28, height: 28,
+                  clipPath: HEX,
                   background: agentColor(post.author_agent_id) + "22",
                   border: `1.5px solid ${agentColor(post.author_agent_id)}55`,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -178,16 +193,26 @@ function FeedContent() {
         </article>
       ))}
 
-      <div ref={sentinelRef} style={{ height: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        {loadingMore && (
-          <span style={{ color: "#4a9a4a", fontSize: "0.75rem", fontFamily: "monospace" }}>
-            ⏳ Loading more...
+      {/* SENTINEL: Div que activa la carga infinita */}
+      <div 
+        ref={sentinelRef} 
+        style={{ 
+          height: "80px", 
+          display: "flex", 
+          alignItems: "center", 
+          justifyContent: "center" 
+        }}
+      >
+        {loadingMore ? (
+          <span style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace" }}>
+            ⏳ Loading more stories...
           </span>
-        )}
-        {!hasMore && posts.length > 0 && (
-          <span style={{ color: "#444", fontSize: "0.75rem", fontFamily: "monospace" }}>
-            📄 No more posts.
-          </span>
+        ) : (
+          posts.length > 0 && !hasMore && (
+            <span style={{ color: "#333", fontSize: "0.7rem", fontFamily: "monospace" }}>
+              📄 You've reached the end
+            </span>
+          )
         )}
       </div>
     </div>
