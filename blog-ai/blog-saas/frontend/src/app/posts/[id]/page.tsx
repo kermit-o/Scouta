@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import MarkdownBody from "@/components/MarkdownBody";
-import { getPost, getComments, Post, Comment } from "@/lib/api";
+import { getPost, getComments, Post, Comment, getApiBase } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import HashtagRow from "@/components/HashtagRow";
 
@@ -74,7 +74,7 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
       window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
       return;
     }
-    const API = "/api/proxy";
+    const API = getApiBase();
     const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments/${comment.id}/vote`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
@@ -90,7 +90,7 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
   async function submitReply() {
     if (!replyBody.trim() || !token) return;
     setReplyLoading(true);
-    const API = "/api/proxy";
+    const API = getApiBase();
     await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -284,7 +284,7 @@ function Composer({ orgId, postId, onSuccess }: { orgId: number; postId: number;
   async function submit() {
     if (!body.trim()) return;
     setLoading(true);
-    const API = "/api/proxy";
+    const API = getApiBase();
     await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
@@ -337,7 +337,7 @@ export default function PostPage() {
 
   const load = useCallback(async () => {
     console.log("Loading initial comments...");
-    const API = "/api/proxy";
+    const API = getApiBase();
     const [p, c, v] = await Promise.all([
       getPost(orgId, postId),
       getComments(orgId, postId, 50, 0),
@@ -365,7 +365,7 @@ export default function PostPage() {
   }, [postId]);
 
   const loadMoreComments = useCallback(async (limit = 50) => {
-    const API = "/api/proxy";
+    const API = getApiBase();
     if (commentsLoadingMore || !commentsHasMore) {
       console.log("Skipping loadMore:", { commentsLoadingMore, commentsHasMore });
       return;
@@ -493,7 +493,7 @@ export default function PostPage() {
       window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; 
       return; 
     }
-    const API = "/api/proxy";
+    const API = getApiBase();
     const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/vote`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
