@@ -1,29 +1,28 @@
 "use client";
-
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post, getPosts } from "@/lib/api"; //
+import { Post, getPosts } from "@/lib/api"; // Usamos la función consolidada
 import HashtagRow from "@/components/HashtagRow";
 import TimeAgo from "@/components/TimeAgo";
 import { Suspense } from "react";
 
 function agentColor(id: number): string {
   const colors = ["#4a7a9a","#7a4a9a","#9a6a4a","#4a9a7a","#9a4a7a","#7a9a4a","#4a6a9a","#9a4a6a"];
-  return colors[id % colors.length]; // [cite: 4]
+  return colors[id % colors.length];
 }
 
 function initials(name: string): string {
-  return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase(); // [cite: 5]
+  return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
-const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)"; // [cite: 8]
+const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
 function FeedContent() {
   const searchParams = useSearchParams();
   const sort = searchParams.get("sort") || "recent";
   const tag = searchParams.get("tag") || "";
-  
+
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [offset, setOffset] = useState(0);
@@ -31,21 +30,19 @@ function FeedContent() {
   const [loadingMore, setLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // CARGA INICIAL
+  // 1. CARGA INICIAL
   const loadInitial = useCallback(async () => {
     setLoading(true);
     try {
-      // Usamos getPosts de api.ts
+      // getPosts maneja la URL base y los parámetros correctamente
       const data = await getPosts(1, 15, 0); 
       const list = data.posts || [];
       
       setPosts(list.filter((p: Post) => p.status === "published"));
       setOffset(list.length);
-      
-      // Verificamos si hay más 
       setHasMore(list.length < (data.total ?? 0));
     } catch (err) {
-      console.error("Error al cargar feed inicial:", err);
+      console.error("Error cargando feed:", err);
     } finally {
       setLoading(false);
     }
@@ -55,13 +52,13 @@ function FeedContent() {
     loadInitial();
   }, [loadInitial]);
 
-  // CARGA MÁS (SCROLL INFINITO)
+  // 2. CARGA DE MÁS CONTENIDO
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;
 
     setLoadingMore(true);
     try {
-      const data = await getPosts(1, 15, offset); //
+      const data = await getPosts(1, 15, offset);
       const batch = data.posts || [];
       
       if (batch.length === 0) {
@@ -70,34 +67,34 @@ function FeedContent() {
       }
 
       setPosts(prev => {
-        const seen = new Set(prev.map(p => p.id)); // [cite: 86]
+        const seen = new Set(prev.map(p => p.id));
         const filtered = batch.filter((p: Post) => !seen.has(p.id) && p.status === "published");
         return [...prev, ...filtered];
       });
 
       const nextOffset = offset + batch.length;
       setOffset(nextOffset);
-      setHasMore(nextOffset < (data.total ?? 0)); // 
+      setHasMore(nextOffset < (data.total ?? 0));
     } catch (err) {
-      console.error("Error al cargar más posts:", err);
+      console.error("Error cargando más posts:", err);
     } finally {
       setLoadingMore(false);
     }
   }, [offset, hasMore, loadingMore, loading]);
 
-  // OBSERVER
+  // 3. OBSERVER DEL SCROLL
   useEffect(() => {
     if (loading || !hasMore) return;
 
     const observer = new IntersectionObserver((entries) => {
       if (entries[0].isIntersecting && !loadingMore) {
-        loadMore(); // [cite: 94]
+        loadMore();
       }
-    }, { rootMargin: "300px" });
+    }, { rootMargin: "300px" }); // Carga con anticipación
 
-    if (sentinelRef.current) observer.observe(sentinelRef.current); // [cite: 95]
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
     
-    return () => observer.disconnect(); // [cite: 96]
+    return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMore, loading]);
 
   if (loading) return (
@@ -122,8 +119,7 @@ function FeedContent() {
             {post.author_agent_id ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <div style={{
-                  width: 28, height: 28,
-                  clipPath: HEX,
+                  width: 28, height: 28, clipPath: HEX,
                   background: agentColor(post.author_agent_id) + "22",
                   border: `1.5px solid ${agentColor(post.author_agent_id)}55`,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -192,7 +188,7 @@ function FeedContent() {
         </article>
       ))}
 
-      {/* SENTINEL para scroll infinito */}
+      {/* Sentinel: Este div activa la carga cuando aparece en pantalla */}
       <div 
         ref={sentinelRef} 
         style={{ 
@@ -204,12 +200,12 @@ function FeedContent() {
       >
         {hasMore ? (
           <span style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace" }}>
-            ⏳ Loading more...
+            ⏳ Cargando más historias...
           </span>
         ) : (
           posts.length > 0 && (
             <span style={{ color: "#333", fontSize: "0.7rem", fontFamily: "monospace" }}>
-              📄 End of feed
+              📄 Fin del feed
             </span>
           )
         )}
