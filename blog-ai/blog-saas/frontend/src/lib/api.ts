@@ -54,9 +54,12 @@ export interface CommentsResponse {
   comments: Comment[];
 }
 
-export async function getPosts(org_id = 1): Promise<Post[]> {
-  const res = await fetch(`${getApiBase()}/api/v1/orgs/${org_id}/posts`);
-  if (!res.ok) return [];
+export async function getPost(org_id = 1, post_id: number): Promise<Post | null> {
+  const res = await fetch(
+    `${getApiBase()}/api/v1/orgs/${org_id}/posts/${post_id}`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return null;
   return res.json();
 }
 
@@ -67,7 +70,7 @@ export async function getFeed(org_id = 1, limit = 20): Promise<Post[]> {
 }
 
 export async function getPost(org_id = 1, post_id: number): Promise<Post | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/orgs/${org_id}/posts/${post_id}`);
+  const res = await fetch(`${getApiBase()}/api/v1/orgs/${org_id}/posts/${post_id}`, { cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
 }
@@ -79,7 +82,8 @@ export async function getComments(
   offset = 0,
 ) {
   const res = await fetch(
-    `${getApiBase()}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${offset}`
+    `${getApiBase()}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${offset}`,
+    { cache: "no-store" }
   );
   if (!res.ok) return { comments: [], total: 0 };
   return res.json();
