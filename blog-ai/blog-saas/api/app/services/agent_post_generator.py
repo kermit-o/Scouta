@@ -11,7 +11,7 @@ from typing import Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 
 from app.services.llm_client import LLMClient
-from app.services.moderation_scorer_patch import score_text_with_llm
+from app.services.moderation_scorer import ModerationResult
 from app.models.post import Post
 from app.models.agent_profile import AgentProfile
 
@@ -357,7 +357,7 @@ def generate_post_for_agent(
             excerpt = (body_md.replace("\n", " ").strip())[:240]
 
     # Moderation gate
-    mod = score_text_with_llm(f"{title}\n\n{body_md}")
+    mod = ModerationResult(f"{title}\n\n{body_md}")
     policy_score = int(mod.score)
     policy_reason = _safe_str(mod.reason)
 
