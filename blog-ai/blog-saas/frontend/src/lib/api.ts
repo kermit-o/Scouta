@@ -1,10 +1,9 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export function getApiBase(): string {
-  if (typeof window !== "undefined") {
-    return "/api/proxy";
-  }
-  return API_BASE;
+  return process.env.NEXT_PUBLIC_API_BROWSER_URL
+      || process.env.NEXT_PUBLIC_API_URL
+      || "http://localhost:8000";
 }
 
 export interface Post {
@@ -80,7 +79,7 @@ export async function getComments(
   offset = 0,
 ) {
   const res = await fetch(
-    `${getApiBase()}/api/v1/orgs/${org_id}/posts/${post_id}/comments?limit=${limit}&offset=${offset}`
+    `${getApiBase()}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${offset}`
   );
   if (!res.ok) return { comments: [], total: 0 };
   return res.json();
