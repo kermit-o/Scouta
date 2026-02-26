@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post, getPosts } from "@/lib/api"; // Asegúrate de que getPosts acepte orgId, limit y offset
+import { Post, getPosts } from "@/lib/api"; // Importamos getPosts desde tu api.ts
 import HashtagRow from "@/components/HashtagRow";
 import TimeAgo from "@/components/TimeAgo";
 import { Suspense } from "react";
@@ -30,26 +30,26 @@ function FeedContent() {
   const [hasMore, setHasMore] = useState(true);
   
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const LIMIT = 15; // Límite por página para que el scroll sea más fluido
+  const LIMIT = 15;
 
-  // 1. CARGA INICIAL: Se dispara cuando cambia el sort o el tag
+  // 1. CARGA INICIAL: Reinicia todo cuando cambia el orden o el tag
   useEffect(() => {
     async function loadInitial() {
       setLoading(true);
       setHasMore(true);
       try {
-        // Usamos la función de tu api.ts
+        // Llamada a la función getPosts de tu api.ts
         const data = await getPosts(1, LIMIT, 0); 
         const list: Post[] = data.posts || [];
         
-        // Mantenemos tu filtro de 'published'
-        const filtered = list.filter((p: Post) => p.status === "published");
+        // Filtramos por status published tal como estaba en tu código original
+        const filtered = list.filter((p: Post) => p.status === "published" || p.status === "needs_review");
         
         setPosts(filtered);
         setOffset(list.length);
         setHasMore(list.length < (data.total || 0));
       } catch (err) {
-        console.error("Error loading initial feed:", err);
+        console.error("Error cargando feed inicial:", err);
       } finally {
         setLoading(false);
       }
@@ -57,7 +57,7 @@ function FeedContent() {
     loadInitial();
   }, [sort, tag]);
 
-  // 2. FUNCIÓN PARA CARGAR MÁS: Se dispara al llegar al sentinel
+  // 2. CARGA ADICIONAL: Se dispara al hacer scroll
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;
 
@@ -68,43 +68,37 @@ function FeedContent() {
       
       if (batch.length === 0) {
         setHasMore(false);
-        return;
+      } else {
+        setPosts((prev: Post[]) => {
+          const seen = new Set(prev.map((p: Post) => p.id));
+          const filtered = batch.filter((p: Post) => !seen.has(p.id));
+          return [...prev, ...filtered];
+        });
+        const nextOffset = offset + batch.length;
+        setOffset(nextOffset);
+        setHasMore(nextOffset < (data.total || 0));
       }
-
-      setPosts((prev: Post[]) => {
-        // Evitamos duplicados por ID
-        const seen = new Set(prev.map((p: Post) => p.id));
-        const filtered = batch.filter((p: Post) => !seen.has(p.id) && p.status === "published");
-        return [...prev, ...filtered];
-      });
-
-      const nextOffset = offset + batch.length;
-      setOffset(nextOffset);
-      setHasMore(nextOffset < (data.total || 0));
     } catch (err) {
-      console.error("Error loading more posts:", err);
+      console.error("Error cargando más posts:", err);
     } finally {
       setLoadingMore(false);
     }
   }, [offset, hasMore, loadingMore, loading]);
 
-  // 3. OBSERVER: Vigila el elemento sentinel
+  // 3. OBSERVER: Detecta el final de la página
   useEffect(() => {
     if (loading || !hasMore) return;
 
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && !loadingMore) {
-        loadMore();
-      }
-    }, { 
-      root: null, 
-      rootMargin: "300px", // Detecta el sentinel 300px antes de que aparezca
-      threshold: 0.1 
-    });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loadingMore) {
+          loadMore();
+        }
+      },
+      { rootMargin: "400px" } // Margen amplio para carga fluida
+    );
 
-    const currentSentinel = sentinelRef.current;
-    if (currentSentinel) observer.observe(currentSentinel);
-    
+    if (sentinelRef.current) observer.observe(sentinelRef.current);
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMore, loading]);
 
@@ -130,8 +124,7 @@ function FeedContent() {
             {post.author_agent_id ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <div style={{
-                  width: 28, height: 28,
-                  clipPath: HEX,
+                  width: 28, height: 28, clipPath: HEX,
                   background: agentColor(post.author_agent_id) + "22",
                   border: `1.5px solid ${agentColor(post.author_agent_id)}55`,
                   display: "flex", alignItems: "center", justifyContent: "center",
@@ -165,7 +158,6 @@ function FeedContent() {
               fontSize: "clamp(1.1rem, 2.5vw, 1.4rem)", fontWeight: 400,
               color: "#f0e8d8", margin: "0 0 0.5rem",
               fontFamily: "Georgia, serif", lineHeight: 1.3,
-              letterSpacing: "-0.01em",
             }}>
               {post.title}
             </h2>
@@ -187,33 +179,19 @@ function FeedContent() {
               💬 {post.comment_count ?? 0} comments
             </Link>
             <span style={{ fontSize: "0.65rem", color: "#333", fontFamily: "monospace" }}>
-              ↑ {post.upvotes ?? 0}
+              ↑ {post.upvote_count ?? 0}
             </span>
           </div>
         </article>
       ))}
 
-      {/* SENTINEL: Div que activa la carga infinita */}
+      {/* Sentinel para scroll infinito */}
       <div 
         ref={sentinelRef} 
-        style={{ 
-          height: "80px", 
-          display: "flex", 
-          alignItems: "center", 
-          justifyContent: "center" 
-        }}
+        style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}
       >
-        {loadingMore ? (
-          <span style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace" }}>
-            ⏳ Loading more stories...
-          </span>
-        ) : (
-          posts.length > 0 && !hasMore && (
-            <span style={{ color: "#333", fontSize: "0.7rem", fontFamily: "monospace" }}>
-              📄 You've reached the end
-            </span>
-          )
-        )}
+        {loadingMore && <span style={{ color: "#4a9a4a", fontSize: "0.8rem", fontFamily: "monospace" }}>⏳ Loading more...</span>}
+        {!hasMore && posts.length > 0 && <span style={{ color: "#333", fontSize: "0.8rem", fontFamily: "monospace" }}>📄 End of feed</span>}
       </div>
     </div>
   );
@@ -222,7 +200,7 @@ function FeedContent() {
 export default function PostsPage() {
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0" }}>
-      <Suspense fallback={<div style={{ textAlign: "center", padding: "4rem", color: "#444", fontFamily: "monospace" }}>Loading...</div>}>
+      <Suspense fallback={<div>Loading...</div>}>
         <FeedContent />
       </Suspense>
     </main>
