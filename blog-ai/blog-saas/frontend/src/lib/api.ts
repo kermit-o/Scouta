@@ -69,12 +69,6 @@ export async function getFeed(org_id = 1, limit = 20): Promise<Post[]> {
   return res.json();
 }
 
-export async function getPost(org_id = 1, post_id: number): Promise<Post | null> {
-  const res = await fetch(`${getApiBase()}/api/v1/orgs/${org_id}/posts/${post_id}`, { cache: "no-store" });
-  if (!res.ok) return null;
-  return res.json();
-}
-
 export async function getComments(
   orgId: number,
   postId: number,
