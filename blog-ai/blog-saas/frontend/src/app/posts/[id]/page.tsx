@@ -8,6 +8,7 @@ import { getPost, getComments, Post, Comment, getApiBase } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
 import HashtagRow from "@/components/HashtagRow";
 
+// --- Utilidades ---
 function hashColor(id: number): string {
   const colors = ["#4a7a9a","#7a4a9a","#9a6a4a","#4a9a7a","#9a4a7a","#7a9a4a","#4a6a9a","#9a4a6a","#6a9a4a","#4a9a9a"];
   return colors[id % colors.length];
@@ -29,6 +30,7 @@ function timeAgo(dateStr: string): string {
 
 const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
+// --- Componentes de Apoyo ---
 function Avatar({ comment, size = 42 }: { comment: any; size?: number }) {
   const isAgent = comment.author_type === "agent";
   const color = isAgent ? hashColor(comment.author_agent_id ?? 0) : "#6a8a6a";
@@ -270,12 +272,14 @@ function Composer({ orgId, postId, onSuccess }: { orgId: number; postId: number;
   );
 }
 
+// --- Componente Principal ---
 export default function PostPage() {
   const params = useParams();
   const postId = parseInt(params.id as string);
   const orgId = 1;
   const { token: authContextToken } = useAuth();
   const activeToken = authContextToken || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+
   const [post, setPost] = useState<Post | null>(null);
   const [comments, setComments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -287,7 +291,8 @@ export default function PostPage() {
   const [commentsLoadingMore, setCommentsLoadingMore] = useState(false);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const load = useCallback(async () => {
+  // 1. CARGA INICIAL
+  const loadInitialData = useCallback(async () => {
     setLoading(true);
     const API = getApiBase();
     try {
@@ -295,23 +300,25 @@ export default function PostPage() {
         getPost(orgId, postId),
         getComments(orgId, postId, 50, 0),
       ]);
-      let v = { upvotes: 0, downvotes: 0 };
-      try {
-        const r = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/votes`, { cache: "no-store" });
-        if (r.ok) v = await r.json();
-      } catch (e) { console.warn("votes fetch failed:", e); }
+      
       setPost(p);
       const commentsData = c || {};
       const commentsList = commentsData.comments || [];
       setComments(commentsList);
       setCommentOffset(commentsList.length);
-      if (commentsData.total !== undefined) {
-        setCommentsHasMore(commentsList.length < commentsData.total);
-      } else {
-        setCommentsHasMore(commentsList.length === 50);
-      }
-      setPostUpvotes(v.upvotes ?? 0);
-      setPostDownvotes(v.downvotes ?? 0);
+
+      const total = commentsData.total ?? 0;
+      setCommentsHasMore(commentsList.length < total && total > 0);
+      
+      // Votos del post
+      try {
+        const r = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/votes`, { cache: "no-store" });
+        if (r.ok) {
+          const v = await r.json();
+          setPostUpvotes(v.upvotes ?? 0);
+          setPostDownvotes(v.downvotes ?? 0);
+        }
+      } catch (e) { console.warn("votes failed", e); }
     } catch (err) {
       console.error("❌ load() failed:", err);
     } finally {
@@ -319,47 +326,80 @@ export default function PostPage() {
     }
   }, [orgId, postId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { loadInitialData(); }, [loadInitialData]);
 
+  // 2. CARGA DE MÁS COMENTARIOS (CONSOLIDADA)
   const loadMoreComments = useCallback(async (limit = 50) => {
     const API = getApiBase();
     if (commentsLoadingMore || !commentsHasMore) return;
+    
     setCommentsLoadingMore(true);
     try {
       const url = `${API}/api/v1/orgs/${orgId}/posts/${postId}/comments?limit=${limit}&offset=${commentOffset}`;
       const res = await fetch(url, {
-        headers: { "Content-Type": "application/json", ...(activeToken ? { "Authorization": `Bearer ${activeToken}` } : {}) },
+        headers: { 
+          "Content-Type": "application/json", 
+          ...(activeToken ? { "Authorization": `Bearer ${activeToken}` } : {}) 
+        },
       });
-      if (!res.ok) return;
+      
+      if (!res.ok) throw new Error("Fetch failed");
+      
       const data = await res.json();
       const batch = data.comments || [];
-      if (batch.length === 0) { setCommentsHasMore(false); return; }
-      setComments((prev: any) => {
-        const seen = new Set((prev || []).map((c: any) => c.id));
-        const merged = [...(prev || [])];
-        for (const c of batch) { if (!seen.has(c.id)) { merged.push(c); } }
-        return merged;
+      
+      if (batch.length === 0) {
+        setCommentsHasMore(false);
+        return;
+      }
+
+      setComments((prev) => {
+        const seen = new Set(prev.map((c: any) => c.id));
+        const filteredBatch = batch.filter((c: any) => !seen.has(c.id));
+        return [...prev, ...filteredBatch];
       });
+
       const nextOffset = commentOffset + batch.length;
       setCommentOffset(nextOffset);
-      if (data.total !== undefined) { setCommentsHasMore(nextOffset < data.total); }
-      else { setCommentsHasMore(batch.length === limit); }
-    } catch (error) { console.error("Error in loadMoreComments:", error); }
-    finally { setCommentsLoadingMore(false); }
+      
+      if (data.total !== undefined) {
+        setCommentsHasMore(nextOffset < data.total);
+      } else {
+        setCommentsHasMore(batch.length === limit);
+      }
+    } catch (error) {
+      console.error("Error loading more:", error);
+    } finally {
+      setCommentsLoadingMore(false);
+    }
   }, [orgId, postId, activeToken, commentOffset, commentsHasMore, commentsLoadingMore]);
 
+  // 3. OBSERVER PARA SCROLL INFINITO
   useEffect(() => {
-    const sentinel = document.getElementById("comments-sentinel") || sentinelRef.current;
-    if (!sentinel || !commentsHasMore) return;
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting && commentsHasMore && !commentsLoadingMore) { loadMoreComments(50); }
-    }, { root: null, rootMargin: "100px", threshold: 0 });
-    observer.observe(sentinel);
-    return () => { observer.disconnect(); };
-  }, [commentsHasMore, commentsLoadingMore, loadMoreComments, commentOffset]);
+    if (loading || !commentsHasMore) return;
 
+    const observer = new IntersectionObserver((entries) => {
+      if (entries[0].isIntersecting && !commentsLoadingMore) {
+        loadMoreComments(50);
+      }
+    }, { 
+      root: null, 
+      rootMargin: "200px", 
+      threshold: 0.1 
+    });
+
+    const currentSentinel = sentinelRef.current;
+    if (currentSentinel) observer.observe(currentSentinel);
+
+    return () => observer.disconnect();
+  }, [commentsHasMore, commentsLoadingMore, loadMoreComments, loading]);
+
+  // 4. VOTACIÓN DEL POST
   async function handlePostVote(value: 1 | -1) {
-    if (!activeToken) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
+    if (!activeToken) { 
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; 
+      return; 
+    }
     const API = getApiBase();
     const res = await fetch(`${API}/api/v1/orgs/${orgId}/posts/${postId}/vote`, {
       method: "POST",
@@ -373,6 +413,7 @@ export default function PostPage() {
     setPostVoted(data.action === "removed" ? 0 : value);
   }
 
+  // --- Renderizado ---
   if (loading) return (
     <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading...</p>
@@ -430,18 +471,21 @@ export default function PostPage() {
           </div>
         </div>
 
-        <Composer orgId={orgId} postId={postId} onSuccess={load} />
+        <Composer orgId={orgId} postId={postId} onSuccess={loadInitialData} />
 
         {flat.length === 0 ? (
           <p style={{ fontSize: "0.8rem", color: "#333", fontFamily: "monospace", padding: "2rem 0" }}>No comments yet. Be the first.</p>
         ) : (
-          flat.map(c => (<CommentItem key={c.id} comment={c} orgId={orgId} postId={postId} onRefresh={load} />))
+          flat.map(c => (<CommentItem key={c.id} comment={c} orgId={orgId} postId={postId} onRefresh={loadInitialData} />))
         )}
 
-        <div id="comments-sentinel" ref={sentinelRef} style={{ height: "40px", margin: "20px 0", background: commentsHasMore ? "rgba(0,255,0,0.15)" : "rgba(255,0,0,0.1)", border: commentsHasMore ? "2px solid #4a9a4a" : "1px dashed #666", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#666", borderRadius: "4px", transition: "all 0.3s ease" }}>
-          {commentsHasMore ? (<span style={{ color: "#4a9a4a", fontWeight: "bold" }}>🟢 Sentinel activo ({commentOffset})</span>) : (<span style={{ color: "#ff6b6b" }}>🔴 No hay más comentarios</span>)}
+        {/* SENTINEL ÚNICO */}
+        <div id="comments-sentinel" ref={sentinelRef} style={{ height: "40px", margin: "20px 0", background: commentsHasMore ? "rgba(0,255,0,0.05)" : "transparent", border: commentsHasMore ? "1px dashed #4a9a4a" : "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#666", borderRadius: "4px" }}>
+          {commentsHasMore ? "🟢 Sentinel activo (Scroll para cargar)" : comments.length > 0 ? "📄 Fin de los comentarios" : ""}
         </div>
-        {commentsLoadingMore && <div style={{ padding: "20px 0", textAlign: "center", color: "#666", fontFamily: "monospace" }}>⏳ Cargando...</div>}
+        
+        {commentsLoadingMore && <div style={{ padding: "20px 0", textAlign: "center", color: "#666", fontFamily: "monospace" }}>⏳ Cargando más comentarios...</div>}
+        
         <div style={{ height: "4rem" }} />
       </div>
     </main>
