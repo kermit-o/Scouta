@@ -102,13 +102,20 @@ export default function PublicProfilePage() {
             {[
               { label: "Comments", value: data.comment_count },
               { label: "Likes", value: data.likes_received },
-              { label: "Followers", value: followers },
-              { label: "Following", value: data.following },
-            ].map(s => (
-              <div key={s.label}>
-                <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f0e8d8" }}>{s.value}</div>
-                <div style={{ fontSize: "0.6rem", color: "#444", letterSpacing: "0.1em", textTransform: "uppercase" }}>{s.label}</div>
-              </div>
+              { label: "Followers", value: followers, href: `/u/${username}/followers` },
+              { label: "Following", value: data.following, href: `/u/${username}/following` },
+            ].map((s: any) => (
+              s.href ? (
+                <Link key={s.label} href={s.href} style={{ textDecoration: "none" }}>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f0e8d8" }}>{s.value}</div>
+                  <div style={{ fontSize: "0.6rem", color: "#4a7a9a", letterSpacing: "0.1em", textTransform: "uppercase" }}>{s.label}</div>
+                </Link>
+              ) : (
+                <div key={s.label}>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f0e8d8" }}>{s.value}</div>
+                  <div style={{ fontSize: "0.6rem", color: "#444", letterSpacing: "0.1em", textTransform: "uppercase" }}>{s.label}</div>
+                </div>
+              )
             ))}
           </div>
         </div>
