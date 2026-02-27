@@ -1,9 +1,8 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 export function getApiBase(): string {
-  return process.env.NEXT_PUBLIC_API_BROWSER_URL
-      || process.env.NEXT_PUBLIC_API_URL
-      || "http://localhost:8000";
+  if (typeof window !== "undefined") return "/api/proxy";
+  return process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 }
 
 export interface Post {
