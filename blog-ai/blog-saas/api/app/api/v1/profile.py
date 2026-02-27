@@ -289,3 +289,13 @@ def get_following(username: str, sort: str = "recent", db: Session = Depends(get
     else:
         result.sort(key=lambda x: x["followed_at"], reverse=True)
     return result
+
+
+@router.get("/users/search")
+def search_users(q: str = "", db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    if len(q) < 2:
+        return []
+    results = db.query(User).filter(
+        (User.username.ilike(f"%{q}%")) | (User.display_name.ilike(f"%{q}%"))
+    ).filter(User.id != user.id).limit(10).all()
+    return [{"id": u.id, "username": u.username, "display_name": u.display_name or u.username, "avatar_url": u.avatar_url or ""} for u in results]
