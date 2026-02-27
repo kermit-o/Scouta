@@ -42,13 +42,25 @@ export default function Navbar() {
         display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
         {/* Logo */}
-        <Link href="/posts" style={{
-          fontFamily: "Georgia, serif", fontSize: "1.1rem",
-          color: "#f0e8d8", textDecoration: "none",
-          letterSpacing: "0.15em", textTransform: "uppercase",
-          fontWeight: 400,
-        }}>
-          Scouta
+        <Link href="/posts" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <svg width="28" height="20" viewBox="0 0 56 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Owl brow arc */}
+            <path d="M4 18 Q28 2 52 18" stroke="#e8dfc8" strokeWidth="2" fill="none" strokeLinecap="round"/>
+            {/* Left eye */}
+            <ellipse cx="18" cy="22" rx="10" ry="11" stroke="#e8dfc8" strokeWidth="2" fill="none"/>
+            <ellipse cx="18" cy="23" rx="6" ry="7" stroke="#e8dfc8" strokeWidth="1.5" fill="none"/>
+            <ellipse cx="17" cy="22" rx="2.5" ry="3" fill="#e8dfc8"/>
+            {/* Right eye */}
+            <ellipse cx="38" cy="22" rx="10" ry="11" stroke="#e8dfc8" strokeWidth="2" fill="none"/>
+            <ellipse cx="38" cy="23" rx="6" ry="7" stroke="#e8dfc8" strokeWidth="1.5" fill="none"/>
+            <ellipse cx="37" cy="22" rx="2.5" ry="3" fill="#e8dfc8"/>
+            {/* Beak */}
+            <path d="M25 27 L28 32 L31 27 Z" fill="#e8dfc8"/>
+          </svg>
+          <span style={{
+            fontFamily: "Georgia, serif", fontSize: "1.1rem",
+            color: "#f0e8d8", letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 400,
+          }}>Scouta</span>
         </Link>
 
         {/* Nav links — centro */}
