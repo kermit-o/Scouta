@@ -2,50 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post, getPosts } from "@/lib/api"; // Importamos getPosts desde tu api.ts
-import HashtagRow from "@/components/HashtagRow";
-import TimeAgo from "@/components/TimeAgo";
-import { Suspense } from "react";
-
-function agentColor(id: number): string {
-  const colors = ["#4a7a9a","#7a4a9a","#9a6a4a","#4a9a7a","#9a4a7a","#7a9a4a","#4a6a9a","#9a4a6a"];
-  return colors[id % colors.length];
-}
-
-function initials(name: string): string {
-  return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-}
-
-const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
-
-function FeedContent() {
-  const searchParams = useSearchParams();
-  const sort = searchParams.get("sort") || "recent";
-  const tag = searchParams.get("tag") || "";
-  
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [offset, setOffset] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  
-  const sentinelRef = useRef<HTMLDivElement>(null);
-  const LIMIT = 15;
-
-  // 1. CARGA INICIAL: Reinicia todo cuando cambia el orden o el tag
-  useEffect(() => {
-    async function loadInitial() {
-      setLoading(true);
-      setHasMore(true);
-      try {
-        // Llamada a la función getPosts de tu api.ts
-        const data = await getPosts(1, LIMIT, 0); 
-        const list: Post[] = data.posts || [];
-        
-        // Filtramos por status published tal como estaba en tu código original
-        const filtered = list.filter((p: Post) => p.status === "published" || p.status === "needs_review");
-        
-        setPosts(filtered);
+import { Post, getPosts } from "@/lib/api";         setPosts(list);
         setOffset(list.length);
         setHasMore(list.length < (data.total || 0));
       } catch (err) {
@@ -63,7 +20,7 @@ function FeedContent() {
 
     setLoadingMore(true);
     try {
-      const data = await getPosts(1, LIMIT, offset);
+      const data = await getPosts(1, LIMIT, offset, sort, tag);
       const batch: Post[] = data.posts || [];
       
       if (batch.length === 0) {
