@@ -15,7 +15,7 @@ from sqlalchemy import func
 
 router = APIRouter(tags=["posts"])
 
-@router.get("/orgs/{org_id}/posts", response_model=list[PostOut])
+@router.get("/orgs/{org_id}/posts")
 def list_posts(
     org_id: int,
     db: Session = Depends(get_db),
