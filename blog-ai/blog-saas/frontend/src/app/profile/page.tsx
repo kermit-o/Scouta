@@ -101,13 +101,20 @@ export default function ProfilePage() {
             { label: "Posts", value: posts.length },
             { label: "Comments", value: comments.length },
             { label: "Likes", value: data?.likes_received ?? 0 },
-            { label: "Followers", value: data?.followers ?? 0 },
-            { label: "Following", value: data?.following ?? 0 },
+            { label: "Followers", value: data?.followers ?? 0, href: `/u/${data?.username}/followers` },
+            { label: "Following", value: data?.following ?? 0, href: `/u/${data?.username}/following` },
           ].map(s => (
-            <div key={s.label} style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{s.value}</div>
-              <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.15em", textTransform: "uppercase" }}>{s.label}</div>
-            </div>
+            (s as any).href ? (
+              <Link key={s.label} href={(s as any).href} style={{ textDecoration: "none", textAlign: "center" as const }}>
+                <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{s.value}</div>
+                <div style={{ fontSize: "0.55rem", color: "#4a7a9a", letterSpacing: "0.15em", textTransform: "uppercase" }}>{s.label}</div>
+              </Link>
+            ) : (
+              <div key={s.label} style={{ textAlign: "center" }}>
+                <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{s.value}</div>
+                <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.15em", textTransform: "uppercase" }}>{s.label}</div>
+              </div>
+            )
           ))}
         </div>
 
