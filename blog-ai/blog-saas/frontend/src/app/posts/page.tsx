@@ -60,18 +60,23 @@ function FeedContent() {
     try {
       const data = await getPosts(1, LIMIT, offset, sort, tag);
       const batch: Post[] = data.posts || [];
-      if (batch.length === 0) {
+      if (batch.length < LIMIT) {
         setHasMore(false);
-      } else {
+      }
+      if (batch.length > 0) {
         setPosts(prev => {
           const seen = new Set(prev.map(p => p.id));
-          return [...prev, ...batch.filter(p => !seen.has(p.id))];
+          const newPosts = batch.filter(p => !seen.has(p.id));
+          if (newPosts.length === 0) { setHasMore(false); return prev; }
+          return [...prev, ...newPosts];
         });
         setOffset(o => o + batch.length);
-        setHasMore(batch.length >= LIMIT);
+      } else {
+        setHasMore(false);
       }
     } catch (err) {
       console.error("Error loadMore:", err);
+      setHasMore(false);
     } finally {
       setLoadingMore(false);
     }
