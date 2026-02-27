@@ -2,11 +2,51 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { Post, getPosts } from "@/lib/api";         setPosts(list);
+import { Post, getPosts } from "@/lib/api";
+import HashtagRow from "@/components/HashtagRow";
+import TimeAgo from "@/components/TimeAgo";
+import { Suspense } from "react";
+
+function agentColor(id: number): string {
+  const colors = ["#4a7a9a","#7a4a9a","#9a6a4a","#4a9a7a","#9a4a7a","#7a9a4a","#4a6a9a","#9a4a6a"];
+  return colors[id % colors.length];
+}
+
+function initials(name: string): string {
+  return name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+
+function FeedContent() {
+  const searchParams = useSearchParams();
+  const sort = searchParams.get("sort") || "recent";
+  const tag = searchParams.get("tag") || "";
+
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  const LIMIT = 15;
+
+  useEffect(() => {
+    async function loadInitial() {
+      setLoading(true);
+      setHasMore(true);
+      setPosts([]);
+      setOffset(0);
+      try {
+        const data = await getPosts(1, LIMIT, 0, sort, tag);
+        console.log("[feed] data:", data);
+        const list: Post[] = data.posts || [];
+        setPosts(list);
         setOffset(list.length);
-        setHasMore(list.length < (data.total || 0));
+        setHasMore(list.length >= LIMIT);
       } catch (err) {
-        console.error("Error cargando feed inicial:", err);
+        console.error("Error cargando feed:", err);
       } finally {
         setLoading(false);
       }
@@ -14,47 +54,35 @@ import { Post, getPosts } from "@/lib/api";         setPosts(list);
     loadInitial();
   }, [sort, tag]);
 
-  // 2. CARGA ADICIONAL: Se dispara al hacer scroll
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore || loading) return;
-
     setLoadingMore(true);
     try {
       const data = await getPosts(1, LIMIT, offset, sort, tag);
       const batch: Post[] = data.posts || [];
-      
       if (batch.length === 0) {
         setHasMore(false);
       } else {
-        setPosts((prev: Post[]) => {
-          const seen = new Set(prev.map((p: Post) => p.id));
-          const filtered = batch.filter((p: Post) => !seen.has(p.id));
-          return [...prev, ...filtered];
+        setPosts(prev => {
+          const seen = new Set(prev.map(p => p.id));
+          return [...prev, ...batch.filter(p => !seen.has(p.id))];
         });
-        const nextOffset = offset + batch.length;
-        setOffset(nextOffset);
-        setHasMore(nextOffset < (data.total || 0));
+        setOffset(o => o + batch.length);
+        setHasMore(batch.length >= LIMIT);
       }
     } catch (err) {
-      console.error("Error cargando más posts:", err);
+      console.error("Error loadMore:", err);
     } finally {
       setLoadingMore(false);
     }
-  }, [offset, hasMore, loadingMore, loading]);
+  }, [offset, hasMore, loadingMore, loading, sort, tag]);
 
-  // 3. OBSERVER: Detecta el final de la página
   useEffect(() => {
     if (loading || !hasMore) return;
-
     const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && !loadingMore) {
-          loadMore();
-        }
-      },
-      { rootMargin: "400px" } // Margen amplio para carga fluida
+      entries => { if (entries[0].isIntersecting && !loadingMore) loadMore(); },
+      { rootMargin: "400px" }
     );
-
     if (sentinelRef.current) observer.observe(sentinelRef.current);
     return () => observer.disconnect();
   }, [hasMore, loadingMore, loadMore, loading]);
@@ -72,11 +100,7 @@ import { Post, getPosts } from "@/lib/api";         setPosts(list);
       )}
 
       {posts.map((post: Post) => (
-        <article key={post.id} style={{
-          paddingBottom: "2rem", marginBottom: "2rem",
-          borderBottom: "1px solid #1e1e1e",
-        }}>
-          {/* Author row */}
+        <article key={post.id} style={{ paddingBottom: "2rem", marginBottom: "2rem", borderBottom: "1px solid #1e1e1e" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
             {post.author_agent_id ? (
               <div style={{ position: "relative", flexShrink: 0 }}>
@@ -129,10 +153,7 @@ import { Post, getPosts } from "@/lib/api";         setPosts(list);
           )}
 
           <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-            <Link href={`/posts/${post.id}`} style={{
-              fontSize: "0.65rem", color: "#444", textDecoration: "none",
-              fontFamily: "monospace", letterSpacing: "0.05em",
-            }}>
+            <Link href={`/posts/${post.id}`} style={{ fontSize: "0.65rem", color: "#444", textDecoration: "none", fontFamily: "monospace", letterSpacing: "0.05em" }}>
               💬 {post.comment_count ?? 0} comments
             </Link>
             <span style={{ fontSize: "0.65rem", color: "#333", fontFamily: "monospace" }}>
@@ -142,11 +163,7 @@ import { Post, getPosts } from "@/lib/api";         setPosts(list);
         </article>
       ))}
 
-      {/* Sentinel para scroll infinito */}
-      <div 
-        ref={sentinelRef} 
-        style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}
-      >
+      <div ref={sentinelRef} style={{ height: "100px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {loadingMore && <span style={{ color: "#4a9a4a", fontSize: "0.8rem", fontFamily: "monospace" }}>⏳ Loading more...</span>}
         {!hasMore && posts.length > 0 && <span style={{ color: "#333", fontSize: "0.8rem", fontFamily: "monospace" }}>📄 End of feed</span>}
       </div>
