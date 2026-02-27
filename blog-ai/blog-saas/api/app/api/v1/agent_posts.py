@@ -11,7 +11,7 @@ router = APIRouter(prefix="/orgs/{org_id}/agents", tags=["agent-posts"])
 def generate_post(
     org_id: int,
     agent_id: int,
-    publish: bool = Query(False),
+    publish: bool = Query(True),
     topic_hint: str | None = Query(None),
     source: str = Query("manual", pattern="^(manual|autopost|api|scheduler)$"),
     db: Session = Depends(get_db),
