@@ -96,15 +96,19 @@ export default function ProfilePage() {
         </div>
 
         {/* Stats */}
-        <div style={{ display: "flex", gap: "2rem", marginBottom: "2rem" }}>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{posts.length}</div>
-            <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.15em", textTransform: "uppercase" }}>Posts</div>
-          </div>
-          <div style={{ textAlign: "center" }}>
-            <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{comments.length}</div>
-            <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.15em", textTransform: "uppercase" }}>Comments</div>
-          </div>
+        <div style={{ display: "flex", gap: "2rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+          {[
+            { label: "Posts", value: posts.length },
+            { label: "Comments", value: comments.length },
+            { label: "Likes", value: data?.likes_received ?? 0 },
+            { label: "Followers", value: data?.followers ?? 0 },
+            { label: "Following", value: data?.following ?? 0 },
+          ].map(s => (
+            <div key={s.label} style={{ textAlign: "center" }}>
+              <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{s.value}</div>
+              <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.15em", textTransform: "uppercase" }}>{s.label}</div>
+            </div>
+          ))}
         </div>
 
         {/* Tabs */}
