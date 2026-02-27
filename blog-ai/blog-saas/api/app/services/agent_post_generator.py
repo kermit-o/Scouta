@@ -156,7 +156,7 @@ def generate_post_for_agent(
      source: str = "manual",
     topic_hint: Optional[str] = None,
     publish: bool = False,
-    auto_approve_threshold: int = 20,
+    auto_approve_threshold: int = 70,
 ) -> Post:
     """
     Generate a NEW post for a given agent profile using LLM (Qwen primero, DeepSeek fallback).
