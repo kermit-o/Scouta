@@ -111,5 +111,7 @@ export async function getPosts(orgId: number, limit = 15, offset = 0) {
     { cache: "no-store" }
   );
   if (!res.ok) return { posts: [], total: 0 };
-  return res.json();
+  const data = await res.json();
+  if (Array.isArray(data)) return { posts: data, total: data.length };
+  return data;
 }
