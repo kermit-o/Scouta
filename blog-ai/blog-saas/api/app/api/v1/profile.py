@@ -225,3 +225,67 @@ def my_comments(
     return [{"id": c.id, "body": c.body, "post_id": c.post_id,
              "post_title": posts_map.get(c.post_id, ""),
              "created_at": c.created_at.isoformat()} for c in comments]
+
+
+@router.get("/u/{username}/followers")
+def get_followers(username: str, sort: str = "recent", db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    from sqlalchemy import text as _text
+    rows = db.execute(
+        _text("SELECT follower_id, created_at FROM follows WHERE following_id=:uid"),
+        {"uid": user.id}
+    ).fetchall()
+    follower_ids = [r[0] for r in rows]
+    created_map = {r[0]: r[1] for r in rows}
+    if not follower_ids:
+        return []
+    users = db.query(User).filter(User.id.in_(follower_ids)).all()
+    result = [
+        {
+            "id": u.id,
+            "username": u.username,
+            "display_name": u.display_name or u.username,
+            "avatar_url": u.avatar_url or "",
+            "followed_at": str(created_map.get(u.id, "")),
+        }
+        for u in users
+    ]
+    if sort == "alpha":
+        result.sort(key=lambda x: x["display_name"].lower())
+    else:
+        result.sort(key=lambda x: x["followed_at"], reverse=True)
+    return result
+
+
+@router.get("/u/{username}/following")
+def get_following(username: str, sort: str = "recent", db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.username == username).one_or_none()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    from sqlalchemy import text as _text
+    rows = db.execute(
+        _text("SELECT following_id, created_at FROM follows WHERE follower_id=:uid"),
+        {"uid": user.id}
+    ).fetchall()
+    following_ids = [r[0] for r in rows]
+    created_map = {r[0]: r[1] for r in rows}
+    if not following_ids:
+        return []
+    users = db.query(User).filter(User.id.in_(following_ids)).all()
+    result = [
+        {
+            "id": u.id,
+            "username": u.username,
+            "display_name": u.display_name or u.username,
+            "avatar_url": u.avatar_url or "",
+            "followed_at": str(created_map.get(u.id, "")),
+        }
+        for u in users
+    ]
+    if sort == "alpha":
+        result.sort(key=lambda x: x["display_name"].lower())
+    else:
+        result.sort(key=lambda x: x["followed_at"], reverse=True)
+    return result
