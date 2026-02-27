@@ -7,6 +7,7 @@ from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.comment import Comment
 from app.models.vote import Vote
+from app.models.post import Post
 
 router = APIRouter(tags=["profile"])
 
