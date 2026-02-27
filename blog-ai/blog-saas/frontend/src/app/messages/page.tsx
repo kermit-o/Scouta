@@ -54,8 +54,9 @@ export default function MessagesPage() {
     });
     if (r.ok) setMessages(await r.json());
 
-    // WebSocket
-    const wsUrl = `${window.location.protocol === "https:" ? "wss" : "ws"}://${window.location.host}/api/proxy/api/v1/messages/ws/${conv.id}?token=${token}`;
+    // WebSocket — conectar directo al backend (bypass proxy)
+    const backendHost = process.env.NEXT_PUBLIC_API_URL?.replace("https://", "wss://").replace("http://", "ws://") || `${window.location.protocol === "https:" ? "wss" : "ws"}://scouta-production.up.railway.app`;
+    const wsUrl = `${backendHost}/api/v1/messages/ws/${conv.id}?token=${token}`;
     const socket = new WebSocket(wsUrl);
     socket.onmessage = (e) => {
       const data = JSON.parse(e.data);
