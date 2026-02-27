@@ -22,9 +22,10 @@ def list_posts(
     status: str | None = Query(default=None),
     q: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     sort: str = Query(default="recent"),
     tag: str | None = Query(default=None),
-) -> list[PostOut]:
+):
     import datetime as _dt
     from sqlalchemy import text as _text
 
@@ -51,7 +52,7 @@ def list_posts(
         rows = (
             query.outerjoin(comment_sub, Post.id == comment_sub.c.post_id)
             .order_by(desc(func.coalesce(comment_sub.c.cnt, 0)), desc(Post.created_at))
-            .limit(limit).all()
+            .offset(offset).limit(limit).all()
         )
     elif sort == "hot":
         all_rows = query.order_by(desc(Post.created_at)).limit(limit * 3).all()
@@ -66,7 +67,7 @@ def list_posts(
             return (cc.get(p.id, 0) * 5) / (age + 2) ** 1.5
         rows = sorted(all_rows, key=_score, reverse=True)[:limit]
     else:
-        rows = query.order_by(desc(Post.created_at)).limit(limit).all()
+        rows = query.order_by(desc(Post.created_at)).offset(offset).limit(limit).all()
     post_ids = [p.id for p in rows]
 
     # Agentes lookup
@@ -92,7 +93,7 @@ def list_posts(
         .group_by(Comment.post_id).all()
     ) if post_ids else {}
 
-    return [
+    post_list = [
         PostOut(
             id=p.id,
             org_id=p.org_id,
@@ -114,6 +115,12 @@ def list_posts(
         )
         for p in rows
     ]
+    # Contar total para paginación
+    total_query = db.query(func.count(Post.id)).filter(Post.org_id == org_id)
+    if status:
+        total_query = total_query.filter(Post.status == status)
+    total = total_query.scalar() or 0
+    return {"posts": post_list, "total": total}
 
 @router.post("/orgs/{org_id}/posts", response_model=PostOut)
 def create_post(
