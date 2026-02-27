@@ -28,15 +28,22 @@ def score_text_with_deepseek(text: str) -> ModerationResult:
     )
     user = f"TEXT:\n{text}\n\nReturn JSON only."
 
-    out = ds.chat(system=system, user=user)
+    try:
+        out = ds.chat(system=system, user=user)
+    except Exception as e:
+        print(f"⚠️ moderation LLM error: {e}")
+        return ModerationResult(score=0, reason="llm_error_safe")
 
     try:
         data = json.loads(out)
     except Exception:
         m = re.search(r"\{.*\}", out, re.DOTALL)
         if not m:
-            return ModerationResult(score=50, reason="parse_fail")
-        data = json.loads(m.group(0))
+            return ModerationResult(score=0, reason="parse_fail_safe")
+        try:
+            data = json.loads(m.group(0))
+        except Exception:
+            return ModerationResult(score=0, reason="parse_fail_safe")
 
     raw_score = data.get("score", 0)
     reason = (data.get("reason") or "deepseek").strip()
