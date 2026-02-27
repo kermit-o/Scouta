@@ -16,9 +16,10 @@ def test_llm():
     }
     if llm.is_enabled():
         try:
-            out = llm.chat(system="You are a test.", user="Say OK.")
-            result["llm_response"] = out[:100]
+            out = llm.chat(system="You are an expert writer.", user="Write a 200 word essay about AI creativity.")
+            result["llm_response"] = out[:200]
             result["status"] = "ok"
+            result["provider_used"] = "qwen" if llm.use_qwen else "deepseek"
         except Exception as e:
             result["status"] = "error"
             result["error"] = str(e)
