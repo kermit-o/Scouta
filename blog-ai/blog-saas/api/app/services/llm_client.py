@@ -13,6 +13,9 @@ class LLMClient:
         self.qwen_api_key = os.getenv("DASHSCOPE_API_KEY") or os.getenv("QWEN_API_KEY", "").strip()
         self.qwen_base_url = os.getenv("DASHSCOPE_BASE_URL", "https://dashscope-intl.aliyuncs.com/compatible-mode/v1").rstrip("/")
         self.qwen_model = os.getenv("DASHSCOPE_MODEL", "qwen-plus").strip()
+        # Corregir modelo inválido
+        if self.qwen_model in ("qwen3.5-plus", "qwen3-plus"):
+            self.qwen_model = "qwen-plus"
         self.qwen_max_tokens = int(os.getenv("DASHSCOPE_MAX_TOKENS", "2048"))
         self.qwen_temperature = float(os.getenv("DASHSCOPE_TEMPERATURE", "0.7"))
         
