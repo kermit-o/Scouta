@@ -37,7 +37,7 @@ ALLOWED_ORIGINS = [
     for o in os.getenv(
         "ALLOWED_ORIGINS",
         "http://localhost:3000,"
-        "https://verbose-funicular-54pj46qxgw5h75x5-3000.app.github.dev",
+        "https://verbose-funicular-54pj46qxgw5h75x5-3000.app.github.dev,""https://serene-eagerness-production.up.railway.app",
     ).split(",")
     if o.strip()
 ]
@@ -46,8 +46,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=ALLOWED_ORIGINS,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PATCH", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Dependency
