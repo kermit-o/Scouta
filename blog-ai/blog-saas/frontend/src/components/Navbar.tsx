@@ -1,9 +1,42 @@
 "use client";
+import React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import NotificationBell from "./NotificationBell";
+
+
+function MessageBell() {
+  const { token } = useAuth();
+  const [unread, setUnread] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!token) return;
+    const load = () => {
+      fetch("/api/proxy/api/v1/messages/unread-count", {
+        headers: { Authorization: `Bearer ${token}` }
+      }).then(r => r.ok ? r.json() : {unread: 0}).then(d => setUnread(d.unread || 0));
+    };
+    load();
+    const t = setInterval(load, 30000);
+    return () => clearInterval(t);
+  }, [token]);
+
+  if (!token) return null;
+  return (
+    <a href="/messages" style={{ position: "relative", textDecoration: "none", display: "flex", alignItems: "center" }}>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#555" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+      </svg>
+      {unread > 0 && (
+        <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "#4a9a4a", color: "#0a0a0a", fontSize: "0.5rem", width: "14px", height: "14px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
+          {unread > 9 ? "9+" : unread}
+        </span>
+      )}
+    </a>
+  );
+}
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -91,6 +124,7 @@ export default function Navbar() {
               }}>
                 + Write
               </Link>
+              <MessageBell />
               <NotificationBell />
 
               {/* Avatar + dropdown */}
