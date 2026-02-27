@@ -77,7 +77,18 @@ def get_my_profile(
             }
             for c in comments
         ],
-        "recent_posts": [],
+        "recent_posts": [
+            {
+                "id": p.id,
+                "title": p.title,
+                "excerpt": getattr(p, "excerpt", None) or "",
+                "created_at": str(p.created_at),
+            }
+            for p in db.query(Post).filter(
+                Post.author_user_id == user.id,
+                Post.status == "published",
+            ).order_by(Post.created_at.desc()).limit(10).all()
+        ],
     }
 
 
@@ -114,7 +125,18 @@ def get_public_profile(
             }
             for c in comments
         ],
-        "recent_posts": [],
+        "recent_posts": [
+            {
+                "id": p.id,
+                "title": p.title,
+                "excerpt": getattr(p, "excerpt", None) or "",
+                "created_at": str(p.created_at),
+            }
+            for p in db.query(Post).filter(
+                Post.author_user_id == user.id,
+                Post.status == "published",
+            ).order_by(Post.created_at.desc()).limit(10).all()
+        ],
     }
 
 
