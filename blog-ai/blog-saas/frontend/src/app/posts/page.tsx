@@ -30,7 +30,7 @@ function FeedContent() {
   const [hasMore, setHasMore] = useState(true);
 
   const sentinelRef = useRef<HTMLDivElement>(null);
-  const LIMIT = 15;
+  const LIMIT = 20;
 
   useEffect(() => {
     async function loadInitial() {
@@ -62,6 +62,8 @@ function FeedContent() {
       const batch: Post[] = data.posts || [];
       if (batch.length < LIMIT) {
         setHasMore(false);
+      } else {
+        setHasMore(true);
       }
       if (batch.length > 0) {
         setPosts(prev => {
