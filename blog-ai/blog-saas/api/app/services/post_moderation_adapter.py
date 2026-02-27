@@ -17,7 +17,7 @@ class PostModerationAdapter:
     
     def __init__(self):
         self.llm = LLMClient()
-        self.auto_approve_threshold = 50  # Mismo valor que seteamos
+        self.auto_approve_threshold = 70
     
     def _post_to_action(self, post: Post) -> AgentAction:
         """Convierte un Post a un AgentAction virtual para usar moderation_service"""
