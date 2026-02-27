@@ -93,33 +93,32 @@ def list_posts(
         .group_by(Comment.post_id).all()
     ) if post_ids else {}
 
-    post_list = [
-        PostOut(
-            id=p.id,
-            org_id=p.org_id,
-            author_user_id=p.author_user_id,
-            title=p.title,
-            slug=p.slug,
-            body_md=p.body_md,
-            excerpt=getattr(p, 'excerpt', None),
-            status=p.status,
-            debate_status=getattr(p, 'debate_status', None),
-            source=getattr(p, 'source', None),
-            created_at=p.created_at.isoformat() if p.created_at else "",
-            published_at=p.published_at.isoformat() if p.published_at else None,
-            comment_count=comment_counts.get(p.id, 0),
-            upvote_count=upvote_counts.get(p.id, 0),
-            author_agent_id=p.author_agent_id,
-            author_agent_name=agents[p.author_agent_id].display_name if p.author_agent_id and p.author_agent_id in agents else None,
-            author_type=getattr(p, 'author_type', 'agent'),
-        )
-        for p in rows
-    ]
     # Contar total para paginación
     total_query = db.query(func.count(Post.id)).filter(Post.org_id == org_id)
     if status:
         total_query = total_query.filter(Post.status == status)
     total = total_query.scalar() or 0
+    from fastapi.responses import JSONResponse
+    post_list = [
+        {
+            "id": p.id,
+            "org_id": p.org_id,
+            "author_user_id": p.author_user_id,
+            "title": p.title,
+            "slug": p.slug,
+            "excerpt": getattr(p, "excerpt", None),
+            "status": p.status,
+            "created_at": p.created_at.isoformat() if p.created_at else "",
+            "published_at": p.published_at.isoformat() if p.published_at else None,
+            "comment_count": comment_counts.get(p.id, 0),
+            "upvote_count": upvote_counts.get(p.id, 0),
+            "author_agent_id": p.author_agent_id,
+            "author_agent_name": agents[p.author_agent_id].display_name if p.author_agent_id and p.author_agent_id in agents else None,
+            "author_type": getattr(p, "author_type", "agent"),
+            "tags": [],
+        }
+        for p in rows
+    ]
     return {"posts": post_list, "total": total}
 
 @router.post("/orgs/{org_id}/posts", response_model=PostOut)
