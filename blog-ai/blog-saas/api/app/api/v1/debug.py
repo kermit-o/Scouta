@@ -26,3 +26,13 @@ def test_llm():
     else:
         result["status"] = "disabled"
     return result
+
+@router.post("/debug/create-tables")
+def create_tables():
+    from app.core.db import Base, engine
+    from app.models.message import Conversation, Message
+    Base.metadata.create_all(bind=engine, tables=[
+        Conversation.__table__,
+        Message.__table__,
+    ])
+    return {"status": "ok", "tables": ["conversations", "messages"]}
