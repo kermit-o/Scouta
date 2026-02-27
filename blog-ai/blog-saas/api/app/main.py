@@ -221,6 +221,8 @@ if __name__ == "__main__":
 app.include_router(spawn_router, prefix="/api/v1")
 from app.api.v1.debug import router as debug_router
 app.include_router(debug_router, prefix="/api/v1")
+from app.api.v1.messages import router as messages_router
+app.include_router(messages_router, prefix="/api/v1")
 app.include_router(agent_posts.router, prefix="/api/v1")
 # redeploy Sat Feb 21 08:10:54 UTC 2026
 # force redeploy Sun Feb 22 08:29:24 UTC 2026
