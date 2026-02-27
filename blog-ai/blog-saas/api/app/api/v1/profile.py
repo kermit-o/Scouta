@@ -77,6 +77,7 @@ def get_my_profile(
             }
             for c in comments
         ],
+        "recent_posts": [],
     }
 
 
@@ -113,6 +114,7 @@ def get_public_profile(
             }
             for c in comments
         ],
+        "recent_posts": [],
     }
 
 
