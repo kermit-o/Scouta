@@ -280,7 +280,7 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
             policy_reason = "llm_error"
 
         # decide status
-        auto_ok = int(getattr(policy, "auto_approve_threshold", 20))
+        auto_ok = int(getattr(policy, "auto_approve_threshold", 70))
         auto_reject = int(getattr(policy, "auto_reject_threshold", 80))
         if policy_score <= auto_ok:
             status = "published"
