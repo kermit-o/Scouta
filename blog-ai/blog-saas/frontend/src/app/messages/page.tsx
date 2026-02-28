@@ -15,7 +15,6 @@ function timeAgo(d: string) {
 }
 
 export default function MessagesPage() {
-  const { token, user } = useAuth();
   const router = useRouter();
   const [convs, setConvs] = useState<any[]>([]);
   const [activeConv, setActiveConv] = useState<any>(null);
@@ -39,10 +38,13 @@ export default function MessagesPage() {
     setLoading(false);
   }, [token]);
 
+  const { token, user, isLoaded } = useAuth() as any;
+
   useEffect(() => {
+    if (!isLoaded) return;
     if (!token) { router.push("/login?next=/messages"); return; }
     loadConvs();
-  }, [token, loadConvs]);
+  }, [token, isLoaded, loadConvs]);
 
   async function openConv(conv: any) {
     setActiveConv(conv);
