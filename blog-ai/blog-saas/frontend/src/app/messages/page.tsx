@@ -38,25 +38,31 @@ export default function MessagesPage() {
     setLoading(false);
   }, [token]);
 
-  const { user, isLoaded } = useAuth() as any;
-  const [token, setToken] = useState<string | null>(null);
-
-  // Leer token directo de localStorage — más fiable que el contexto
-  useEffect(() => {
-    const t = localStorage.getItem("token");
-    setToken(t);
-  }, [isLoaded]);
+  const auth = useAuth() as any;
+  const token = auth.token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+  const user = auth.user;
+  const isLoaded = auth.isLoaded;
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (!token) {
-      router.push("/login?next=/messages");
-      return;
-    }
+    if (!token) return; // mostrar pantalla de login required
     loadConvs();
   }, [token, isLoaded, loadConvs]);
 
-  if (!isLoaded) return (
+  if (!isLoaded || !token) return (
+    <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "1rem" }}>
+      {!isLoaded ? (
+        <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading...</p>
+      ) : (
+        <>
+          <p style={{ color: "#555", fontFamily: "monospace", fontSize: "0.8rem" }}>You need to be logged in to view messages</p>
+          <a href="/login?next=/messages" style={{ color: "#4a9a4a", fontFamily: "monospace", fontSize: "0.75rem", textDecoration: "none", border: "1px solid #2a4a2a", padding: "0.4rem 1rem" }}>→ Login</a>
+        </>
+      )}
+    </main>
+  );
+
+  if (false) return (
     <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading...</p>
     </main>
