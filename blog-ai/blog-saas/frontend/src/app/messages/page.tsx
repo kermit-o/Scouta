@@ -42,9 +42,18 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!isLoaded) return;
-    if (!token) { router.push("/login?next=/messages"); return; }
+    if (!token) {
+      router.push("/login?next=/messages");
+      return;
+    }
     loadConvs();
   }, [token, isLoaded, loadConvs]);
+
+  if (!isLoaded) return (
+    <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading...</p>
+    </main>
+  );
 
   async function openConv(conv: any) {
     setActiveConv(conv);
