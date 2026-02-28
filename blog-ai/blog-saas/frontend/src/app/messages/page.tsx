@@ -17,22 +17,15 @@ function timeAgo(d: string) {
 export default function MessagesPage() {
   const router = useRouter();
   const auth = useAuth() as any;
-  const { isLoaded } = auth;
-  const [token, setToken] = useState<string | null>(null);
   const me = auth.user;
+  const [token, setToken] = useState<string | null>(null);
 
-  // Leer token en cliente (evita SSR mismatch)
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) { router.push("/login"); return; }
+    const t = localStorage.getItem("token");
+    if (!t) return; // no redirigir, mostrar pantalla login required
+    setToken(t);
+  }, []);
 
-    fetch("/api/proxy/auth/me", {
-      headers: { Authorization: `Bearer ${token}` }
-    })
-      .then(r => r.json())
-      .catch(() => router.push("/login"));
-  }, [router]);
-  
   const [convs, setConvs] = useState<any[]>([]);
   const [activeConv, setActiveConv] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -54,10 +47,9 @@ export default function MessagesPage() {
   }, [token]);
 
   useEffect(() => {
-    if (!isLoaded) return;
     if (!token) return;
     loadConvs();
-  }, [token, isLoaded, loadConvs]);
+  }, [token, loadConvs]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -112,12 +104,6 @@ export default function MessagesPage() {
       openConv(conv);
     }
   }
-
-  if (!isLoaded) return (
-    <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading...</p>
-    </main>
-  );
 
   if (!token) return (
     <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: "1rem" }}>
