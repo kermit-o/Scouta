@@ -23,9 +23,16 @@ export default function MessagesPage() {
 
   // Leer token en cliente (evita SSR mismatch)
   useEffect(() => {
-    setToken(auth.token || localStorage.getItem("token") || null);
-  }, [auth.token, isLoaded]);
+    const token = localStorage.getItem("token");
+    if (!token) { router.push("/login"); return; }
 
+    fetch("/api/proxy/auth/me", {
+      headers: { Authorization: `Bearer ${token}` }
+    })
+      .then(r => r.json())
+      .catch(() => router.push("/login"));
+  }, [router]);
+  
   const [convs, setConvs] = useState<any[]>([]);
   const [activeConv, setActiveConv] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
