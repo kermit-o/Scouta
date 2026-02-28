@@ -19,11 +19,24 @@ export default function MessagesPage() {
   const auth = useAuth() as any;
   const me = auth.user;
   const [token, setToken] = useState<string | null>(null);
+  const [myId, setMyId] = useState<number | null>(null);
 
   useEffect(() => {
     const t = localStorage.getItem("token");
-    if (!t) return; // no redirigir, mostrar pantalla login required
+    if (!t) return;
     setToken(t);
+    // Obtener mi ID desde localStorage o API
+    const savedUser = localStorage.getItem("user");
+    if (savedUser) {
+      try {
+        const u = JSON.parse(savedUser);
+        setMyId(u.id);
+      } catch {}
+    }
+    // Fetch my ID from API as fallback
+    fetch("/api/proxy/api/v1/auth/me", { headers: { Authorization: `Bearer ${t}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then(u => { if (u?.id) setMyId(u.id); });
   }, []);
 
   const [convs, setConvs] = useState<any[]>([]);
@@ -186,7 +199,7 @@ export default function MessagesPage() {
               </div>
               <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {messages.map((m, i) => {
-                  const isMe = m.sender_id === me?.id;
+                  const isMe = m.sender_id === (myId || me?.id);
                   const showAvatar = !isMe && (i === 0 || messages[i-1]?.sender_id !== m.sender_id);
                   return (
                     <div key={m.id || i} style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", alignItems: "flex-end", gap: "0.5rem" }}>
