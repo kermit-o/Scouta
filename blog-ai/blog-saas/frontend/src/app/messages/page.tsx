@@ -38,7 +38,8 @@ export default function MessagesPage() {
     setLoading(false);
   }, [token]);
 
-  const { token, user, isLoaded } = useAuth() as any;
+  const { token: authToken, user, isLoaded } = useAuth() as any;
+  const token = authToken || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
 
   useEffect(() => {
     if (!isLoaded) return;
