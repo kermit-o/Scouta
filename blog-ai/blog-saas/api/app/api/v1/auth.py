@@ -58,7 +58,9 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     )
 
 @router.post("/auth/login", response_model=TokenOut)
-def login(payload: LoginIn, db: Session = Depends(get_db)) -> TokenOut:
+def login(payload: LoginIn, request: Request, db: Session = Depends(get_db)) -> TokenOut:
+    if not verify_turnstile(payload.cf_turnstile_token or "", request.client.host if request.client else ""):
+        raise HTTPException(status_code=400, detail="CAPTCHA verification failed")
     user = db.query(User).filter(User.email == payload.email).one_or_none()
     if not user:
         raise HTTPException(status_code=401, detail="Invalid credentials")
