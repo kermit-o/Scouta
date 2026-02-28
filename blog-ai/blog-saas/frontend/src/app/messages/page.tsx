@@ -38,8 +38,14 @@ export default function MessagesPage() {
     setLoading(false);
   }, [token]);
 
-  const { token: authToken, user, isLoaded } = useAuth() as any;
-  const token = authToken || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+  const { user, isLoaded } = useAuth() as any;
+  const [token, setToken] = useState<string | null>(null);
+
+  // Leer token directo de localStorage — más fiable que el contexto
+  useEffect(() => {
+    const t = localStorage.getItem("token");
+    setToken(t);
+  }, [isLoaded]);
 
   useEffect(() => {
     if (!isLoaded) return;
