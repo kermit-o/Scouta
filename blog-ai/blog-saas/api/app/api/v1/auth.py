@@ -7,11 +7,14 @@ from app.core.security import hash_password, verify_and_update_password, create_
 from app.models.user import User
 from app.api.v1.schemas.auth import RegisterIn, LoginIn, TokenOut
 from app.services.email_service import send_verification_email
+from app.services.turnstile import verify_turnstile
 
 router = APIRouter(tags=["auth"])
 
 @router.post("/auth/register")
-def register(payload: RegisterIn, db: Session = Depends(get_db)):
+def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db)):
+    if not verify_turnstile(payload.cf_turnstile_token or "", request.client.host if request.client else ""):
+        raise HTTPException(status_code=400, detail="CAPTCHA verification failed")
     if db.query(User).filter(User.email == payload.email).one_or_none():
         raise HTTPException(status_code=409, detail="Email already registered")
     if db.query(User).filter(User.username == payload.username).one_or_none():
