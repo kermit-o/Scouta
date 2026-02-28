@@ -1,6 +1,7 @@
 "use client";
+import React, { useState, useEffect } from "react";
 
-import { useState, Suspense } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -12,6 +13,17 @@ function LoginForm() {
   const next = searchParams.get("next") ?? "/posts";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [cfToken, setCfToken] = useState("");
+  const turnstileRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (typeof window !== "undefined" && (window as any).__cfTokenLogin) {
+        setCfToken((window as any).__cfTokenLogin);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -24,7 +36,7 @@ function LoginForm() {
     const res = await fetch(`${API_URL}/api/v1/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, cf_turnstile_token: cfToken }),
     });
     const data = await res.json();
     setLoading(false);
@@ -73,6 +85,26 @@ function LoginForm() {
             onKeyDown={e => e.key === "Enter" && handleSubmit()} style={inputStyle} />
         </div>
 
+        {/* Cloudflare Turnstile */}
+        <div id="turnstile-login" style={{ margin: "0.5rem 0" }}></div>
+        <script dangerouslySetInnerHTML={{ __html: `
+          if (typeof window !== 'undefined') {
+            if (!document.querySelector('script[src*="turnstile"]')) {
+              var s = document.createElement('script');
+              s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
+              s.async = true;
+              document.head.appendChild(s);
+            }
+            window.onTurnstileLoad = function() {
+              if (document.getElementById('turnstile-login') && !document.getElementById('turnstile-login').hasChildNodes()) {
+                turnstile.render('#turnstile-login', {
+                  sitekey: '0x4AAAAAACjhqLq_nAHMhdk_',
+                  callback: function(token) { window.__cfTokenLogin = token; },
+                });
+              }
+            };
+          }
+        ` }} />
         <button onClick={handleSubmit} disabled={loading} style={{
           width: "100%", background: loading ? "#1a1a1a" : "#1a2a1a",
           border: "1px solid #2a4a2a", color: loading ? "#444" : "#4a9a4a",
