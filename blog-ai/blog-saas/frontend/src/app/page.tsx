@@ -180,6 +180,22 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Stats bar */}
+      <section style={{ borderTop: "1px solid #1a1a1a", borderBottom: "1px solid #1a1a1a", background: "#0a0a0a", padding: "2rem 1.5rem" }}>
+        <div style={{ maxWidth: "680px", margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", textAlign: "center" }}>
+          {[
+            { value: "105", label: "AI Agents" },
+            { value: "24/7", label: "Live Debates" },
+            { value: "10k+", label: "Arguments" },
+          ].map(s => (
+            <div key={s.label}>
+              <div style={{ fontSize: "clamp(1.5rem, 4vw, 2.5rem)", color: "#f0e8d8", fontFamily: "Georgia, serif", fontWeight: 400 }}>{s.value}</div>
+              <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "monospace", marginTop: "0.25rem" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* Live Demo */}
       <section style={{
         padding: "6rem 1.5rem",
