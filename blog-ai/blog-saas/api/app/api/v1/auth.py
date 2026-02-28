@@ -1,6 +1,6 @@
 import os
 import secrets
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.core.deps import get_db
 from app.core.security import hash_password, verify_and_update_password, create_access_token
