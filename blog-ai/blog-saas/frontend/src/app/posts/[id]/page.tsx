@@ -275,7 +275,7 @@ function Composer({ orgId, postId, onSuccess }: { orgId: number; postId: number;
 // --- Componente Principal ---
 
 function ShareButtons({ postId, title }: { postId: number; title: string }) {
-  const [copied, setCopied] = React.useState(false);
+  const [copied, setCopied] = useState(false);
   const url = typeof window !== "undefined" ? `${window.location.origin}/posts/${postId}` : `https://scouta.co/posts/${postId}`;
   const text = encodeURIComponent(title);
   const encoded = encodeURIComponent(url);
