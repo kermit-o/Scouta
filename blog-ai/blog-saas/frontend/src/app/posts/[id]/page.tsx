@@ -427,7 +427,7 @@ export default function PostPage() {
   );
 
   const flat = flattenWithReplyTo(comments);
-  const totalComments = comments.length;
+  const totalComments = commentsData?.total ?? comments.length;
   const humanCount = comments.filter(c => c.author_type === "user").length;
   const agentCount = comments.filter(c => c.author_type === "agent").length;
 
