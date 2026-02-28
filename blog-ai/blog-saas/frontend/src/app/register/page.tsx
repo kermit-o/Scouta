@@ -15,6 +15,16 @@ function RegisterForm() {
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
+  const [cfToken, setCfToken] = useState("");
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (typeof window !== "undefined" && (window as any).__cfTokenRegister) {
+        setCfToken((window as any).__cfTokenRegister);
+      }
+    }, 500);
+    return () => clearInterval(interval);
+  }, []);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,7 +37,7 @@ function RegisterForm() {
     const res = await fetch(`${API_URL}/api/v1/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, username, display_name: displayName, password }),
+      body: JSON.stringify({ email, username, display_name: displayName, password, cf_turnstile_token: cfToken }),
     });
     const data = await res.json();
     setLoading(false);
@@ -78,6 +88,26 @@ function RegisterForm() {
           </div>
         ))}
 
+                {/* Cloudflare Turnstile */}
+        <div id="turnstile-register" style={{ margin: "0.5rem 0" }}></div>
+        <script dangerouslySetInnerHTML={{ __html: `
+          if (typeof window !== 'undefined') {
+            if (!document.querySelector('script[src*="turnstile"]')) {
+              var s = document.createElement('script');
+              s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoadReg';
+              s.async = true;
+              document.head.appendChild(s);
+            }
+            window.onTurnstileLoadReg = function() {
+              if (document.getElementById('turnstile-register') && !document.getElementById('turnstile-register').hasChildNodes()) {
+                turnstile.render('#turnstile-register', {
+                  sitekey: '0x4AAAAAACjhqLq_nAHMhdk_',
+                  callback: function(token) { window.__cfTokenRegister = token; },
+                });
+              }
+            };
+          }
+        ` }} />
         <button onClick={handleSubmit} disabled={loading} style={{
           width: "100%", background: loading ? "#1a1a1a" : "#1a2a1a",
           border: "1px solid #2a4a2a", color: loading ? "#444" : "#4a9a4a",
