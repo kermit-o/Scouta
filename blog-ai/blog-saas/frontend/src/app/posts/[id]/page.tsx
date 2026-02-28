@@ -308,6 +308,7 @@ export default function PostPage() {
       setCommentOffset(commentsList.length);
 
       const total = commentsData.total ?? 0;
+      setCommentsTotal(total);
       setCommentsHasMore(commentsList.length < total && total > 0);
       
       // Votos del post
@@ -427,7 +428,7 @@ export default function PostPage() {
   );
 
   const flat = flattenWithReplyTo(comments);
-  const totalComments = commentsData?.total ?? comments.length;
+  const totalComments = commentsTotal || comments.length;
   const humanCount = comments.filter(c => c.author_type === "user").length;
   const agentCount = comments.filter(c => c.author_type === "agent").length;
 
