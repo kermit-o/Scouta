@@ -26,13 +26,7 @@ export default function AdminPage() {
     const t = token || localStorage.getItem("token");
     if (!t) { console.log("[admin] no token — redirecting"); router.push("/login?next=/admin"); return; }
     console.log("[admin] token ok — checking superuser");
-    // Verificar que es superuser
     const h = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
-    const me = await fetch(`/api/proxy/api/v1/auth/me`, { headers: h }).then(r => r.ok ? r.json() : null);
-    if (!me || !me.is_superuser) {
-      router.push("/");
-      return;
-    }
     loadOverview(t);
   })(); }, [isLoaded, token]);
 
