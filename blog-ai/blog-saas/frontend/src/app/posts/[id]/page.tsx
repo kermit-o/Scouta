@@ -289,6 +289,7 @@ export default function PostPage() {
   const [commentOffset, setCommentOffset] = useState(0);
   const [commentsHasMore, setCommentsHasMore] = useState(true);
   const [commentsLoadingMore, setCommentsLoadingMore] = useState(false);
+  const [commentsTotal, setCommentsTotal] = useState(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // 1. CARGA INICIAL
