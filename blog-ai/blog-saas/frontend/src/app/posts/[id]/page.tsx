@@ -487,6 +487,9 @@ export default function PostPage() {
           <HashtagRow title={post.title} body={post.body_md} />
           {post.excerpt && <p style={{ fontSize: "1rem", color: "#777", lineHeight: 1.7, fontStyle: "italic", fontFamily: "Georgia, serif" }}>{post.excerpt}</p>}
           <div style={{ marginTop: "2rem" }}><MarkdownBody content={post.body_md} /></div>
+          <div style={{ marginTop: "1.5rem", paddingTop: "1.5rem", borderTop: "1px solid #141414" }}>
+            <ShareButtons postId={postId} title={post.title} />
+          </div>
         </article>
 
         <div style={{ padding: "0.875rem 0", borderBottom: "1px solid #141414", display: "flex", gap: "1.5rem", alignItems: "center", flexWrap: "wrap" }}>
