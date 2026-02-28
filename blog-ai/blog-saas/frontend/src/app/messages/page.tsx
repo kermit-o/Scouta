@@ -184,26 +184,64 @@ export default function MessagesPage() {
                   <span style={{ fontSize: "0.65rem", color: "#333", fontFamily: "monospace", marginLeft: "0.5rem" }}>@{activeConv.other_user?.username}</span>
                 </Link>
               </div>
-              <div style={{ flex: 1, overflowY: "auto", padding: "1rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+              <div style={{ flex: 1, overflowY: "auto", padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                 {messages.map((m, i) => {
                   const isMe = m.sender_id === me?.id;
+                  const showAvatar = !isMe && (i === 0 || messages[i-1]?.sender_id !== m.sender_id);
                   return (
-                    <div key={m.id || i} style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start" }}>
-                      <div style={{ maxWidth: "70%", padding: "0.5rem 0.875rem", background: isMe ? "#1a2a1a" : "#111", border: `1px solid ${isMe ? "#2a4a2a" : "#1a1a1a"}`, fontSize: "0.875rem", color: "#d8d0c0", fontFamily: "Georgia, serif", lineHeight: 1.5 }}>
+                    <div key={m.id || i} style={{ display: "flex", flexDirection: isMe ? "row-reverse" : "row", alignItems: "flex-end", gap: "0.5rem" }}>
+                      {/* Avatar */}
+                      {!isMe && (
+                        <div style={{ width: 28, height: 28, flexShrink: 0, visibility: showAvatar ? "visible" : "hidden" }}>
+                          {activeConv.other_user?.avatar_url
+                            ? <img src={activeConv.other_user.avatar_url} style={{ width: 28, height: 28, borderRadius: "50%", objectFit: "cover" }} />
+                            : <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#1a2a3a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", color: "#4a7a9a", fontFamily: "monospace" }}>{(activeConv.other_user?.display_name || "?")[0].toUpperCase()}</div>
+                          }
+                        </div>
+                      )}
+                      {/* Bubble */}
+                      <div style={{
+                        maxWidth: "68%",
+                        padding: "0.6rem 1rem",
+                        borderRadius: isMe ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                        background: isMe ? "#1a3a2a" : "#161616",
+                        border: `1px solid ${isMe ? "#2a5a3a" : "#202020"}`,
+                        fontSize: "0.9rem", color: "#e8e0d0",
+                        fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif",
+                        lineHeight: 1.5, wordBreak: "break-word" as const,
+                      }}>
                         {m.body}
-                        <div style={{ fontSize: "0.55rem", color: "#2a2a2a", fontFamily: "monospace", marginTop: "0.25rem", textAlign: isMe ? "right" : "left" }}>{m.created_at ? timeAgo(m.created_at) : ""}</div>
+                        <div style={{ fontSize: "0.55rem", color: isMe ? "#3a6a4a" : "#333", fontFamily: "monospace", marginTop: "0.3rem", textAlign: isMe ? "right" : "left" }}>
+                          {m.created_at ? timeAgo(m.created_at) : ""}
+                          {isMe && <span style={{ marginLeft: "0.3rem" }}>✓</span>}
+                        </div>
                       </div>
                     </div>
                   );
                 })}
                 <div ref={bottomRef} />
               </div>
-              <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #0f0f0f", display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
-                <textarea value={body} onChange={e => setBody(e.target.value)}
-                  onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                  placeholder="Type a message..." rows={1}
-                  style={{ flex: 1, background: "transparent", border: "none", borderBottom: "1px solid #1a1a1a", color: "#e8e0d0", padding: "0.5rem 0", fontSize: "0.9rem", fontFamily: "Georgia, serif", resize: "none", outline: "none" }} />
-                <button onClick={sendMessage} disabled={!body.trim()} style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: !body.trim() ? "#444" : "#4a9a4a", padding: "0.4rem 1rem", cursor: !body.trim() ? "not-allowed" : "pointer", fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.1em", flexShrink: 0 }}>→</button>
+              <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #111", background: "#0d0d0d" }}>
+                {/* Emoji shortcuts */}
+                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem", paddingBottom: "0.5rem", borderBottom: "1px solid #111", overflowX: "auto" }}>
+                  {["😊","😂","❤️","👍","🔥","💯","🤔","😅","🙏","✨","😎","👏","🥲","💀","😍","🫡","🤝","💪","🚀","👀"].map(e => (
+                    <button key={e} onClick={() => setBody(b => b + e)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.1rem", padding: "0.1rem", flexShrink: 0, lineHeight: 1 }}>{e}</button>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-end" }}>
+                  <textarea value={body} onChange={e => setBody(e.target.value)}
+                    onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                    placeholder="Type a message..." rows={1}
+                    style={{ flex: 1, background: "#111", border: "1px solid #1a1a1a", borderRadius: "20px", color: "#e8e0d0", padding: "0.5rem 1rem", fontSize: "0.9rem", fontFamily: "-apple-system, BlinkMacSystemFont, sans-serif", resize: "none", outline: "none" }} />
+                  <button onClick={sendMessage} disabled={!body.trim()} style={{
+                    width: 36, height: 36, borderRadius: "50%", flexShrink: 0,
+                    background: !body.trim() ? "#111" : "#1a3a2a",
+                    border: `1px solid ${!body.trim() ? "#1a1a1a" : "#2a5a3a"}`,
+                    color: !body.trim() ? "#333" : "#4a9a4a",
+                    cursor: !body.trim() ? "not-allowed" : "pointer",
+                    fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>↑</button>
+                </div>
               </div>
             </>
           )}
