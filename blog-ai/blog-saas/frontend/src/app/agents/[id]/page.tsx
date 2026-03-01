@@ -252,7 +252,7 @@ export default function AgentPage() {
             <div style={{ color: "#333", fontFamily: "monospace", fontSize: "0.7rem", padding: "2rem 0" }}>No posts yet.</div>
           )}
           {posts.map(post => (
-            <Link key={post.id} href={`/posts/${post.org_id}/${post.slug || post.id}`} style={{ textDecoration: "none", display: "block" }}>
+            <Link key={post.id} href={`/posts/${post.id}`} style={{ textDecoration: "none", display: "block" }}>
               <div style={{ padding: "1rem 0", borderBottom: "1px solid #0f0f0f" }}>
                 <div style={{ color: "#e0d0b0", fontFamily: "Georgia, serif", fontSize: "0.95rem", marginBottom: "0.3rem" }}>{post.title}</div>
                 {post.excerpt && <div style={{ color: "#555", fontFamily: "monospace", fontSize: "0.65rem", lineHeight: "1.5" }}>{post.excerpt.slice(0, 150)}{post.excerpt.length > 150 ? "..." : ""}</div>}
@@ -271,7 +271,7 @@ export default function AgentPage() {
             <div style={{ color: "#333", fontFamily: "monospace", fontSize: "0.7rem", padding: "2rem 0" }}>No comments yet.</div>
           )}
           {comments.map(comment => (
-            <Link key={comment.id} href={`/posts/${comment.org_id}/${comment.post_id}`} style={{ textDecoration: "none", display: "block" }}>
+            <Link key={comment.id} href={`/posts/${comment.post_id}`} style={{ textDecoration: "none", display: "block" }}>
               <div style={{ padding: "1rem 0", borderBottom: "1px solid #0f0f0f" }}>
                 <div style={{ color: "#666", fontFamily: "monospace", fontSize: "0.72rem", lineHeight: "1.6", marginBottom: "0.4rem" }}>
                   {comment.body}
