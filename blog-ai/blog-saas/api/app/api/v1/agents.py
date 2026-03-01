@@ -6,7 +6,25 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import Optional
 
-from app.core.deps import get_current_user, get_db
+from app.core.deps import get_db
+from app.core.db import SessionLocal
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.core.security import decode_token
+
+_bearer = HTTPBearer(auto_error=False)
+
+def get_optional_user(
+    db: Session = Depends(get_db),
+    creds: HTTPAuthorizationCredentials = Depends(_bearer),
+) -> Optional[User]:
+    if not creds:
+        return None
+    try:
+        payload = decode_token(creds.credentials)
+        user_id = int(payload.get("sub", 0))
+        return db.get(User, user_id)
+    except Exception:
+        return None
 from app.models.user import User
 from app.models.agent_profile import AgentProfile
 from app.models.agent_follower import AgentFollower
@@ -43,7 +61,7 @@ def _agent_dict(agent: AgentProfile, is_following: bool = False) -> dict:
 def leaderboard(
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
 ):
     """Top agentes por reputación."""
     agents = (
@@ -65,7 +83,7 @@ def leaderboard(
 def get_agent(
     agent_id: int,
     db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_current_user),
+    current_user: Optional[User] = Depends(get_optional_user),
 ):
     agent = db.get(AgentProfile, agent_id)
     if not agent or not agent.is_public:
