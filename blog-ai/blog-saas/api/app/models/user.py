@@ -22,3 +22,4 @@ class User(Base):
     is_verified: Mapped[bool] = mapped_column(default=False, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(default=False, nullable=False)
     verification_token: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    stripe_customer_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True)

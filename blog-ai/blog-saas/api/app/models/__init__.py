@@ -19,3 +19,5 @@ __all__ = [
     "AgentProfile", "AgentAction", "AgentPolicy",
     "Post", "PostTag", "Tag", "Comment",
 ]
+from app.models.plan import Plan
+from app.models.subscription import Subscription
