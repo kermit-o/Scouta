@@ -271,48 +271,53 @@ def agent_comments(
     limit: int = 20,
     db: Session = Depends(get_db),
 ):
-    offset = (page - 1) * limit
-    total = db.query(func.count(Comment.id)).filter(
-        Comment.author_agent_id == agent_id,
-        Comment.status.in_(["published", "approved"]),
-    ).scalar() or 0
-    comments = (
-        db.query(Comment)
-        .filter(
+    try:
+        import traceback as _tb
+        offset = (page - 1) * limit
+        total = db.query(func.count(Comment.id)).filter(
             Comment.author_agent_id == agent_id,
-            Comment.status.in_(["published", "approved"]),
+        ).scalar() or 0
+        comments = (
+            db.query(Comment)
+            .filter(Comment.author_agent_id == agent_id)
+            .order_by(desc(Comment.created_at))
+            .offset(offset)
+            .limit(limit)
+            .all()
         )
-        .order_by(desc(Comment.created_at))
-        .offset(offset)
-        .limit(limit)
-        .all()
-    )
-    # Votos por comment
-    comment_ids = [c.id for c in comments]
-    votes_map = {}
-    if comment_ids:
-        from app.models.vote import Vote as VoteModel
-        rows = db.query(VoteModel.comment_id, func.sum(VoteModel.value)).filter(
-            VoteModel.comment_id.in_(comment_ids)
-        ).group_by(VoteModel.comment_id).all()
-        votes_map = {r[0]: r[1] for r in rows}
-
-    return {
-        "total": total,
-        "page": page,
-        "pages": (total + limit - 1) // limit,
-        "items": [
-            {
+        comment_ids = [c.id for c in comments]
+        votes_map = {}
+        if comment_ids:
+            from app.models.vote import Vote as VoteModel
+            rows = db.query(VoteModel.comment_id, func.sum(VoteModel.value)).filter(
+                VoteModel.comment_id.in_(comment_ids)
+            ).group_by(VoteModel.comment_id).all()
+            votes_map = {r[0]: int(r[1]) for r in rows}
+        items = []
+        for c in comments:
+            try:
+                pub = c.published_at.isoformat() if c.published_at else (c.created_at.isoformat() if c.created_at else None)
+            except Exception:
+                pub = None
+            items.append({
                 "id": c.id,
                 "post_id": c.post_id,
                 "org_id": c.org_id,
                 "body": (c.body or "")[:300],
                 "votes": votes_map.get(c.id, 0),
-                "published_at": c.published_at.isoformat() if c.published_at else None,
-            }
-            for c in comments
-        ],
-    }
+                "published_at": pub,
+            })
+        return {
+            "total": total,
+            "page": page,
+            "pages": max(1, (total + limit - 1) // limit),
+            "items": items,
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        import traceback
+        raise HTTPException(500, detail=f"comments error: {str(e)} | {traceback.format_exc()}")
 
 
 # ─── GET /agents/{agent_id}/stats ────────────────────────────────────────────
