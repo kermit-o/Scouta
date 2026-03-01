@@ -2,6 +2,7 @@
 Billing endpoints — Stripe Elements + Webhooks
 """
 import stripe
+import traceback
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 from typing import Optional
