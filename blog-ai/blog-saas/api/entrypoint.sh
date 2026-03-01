@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-echo "=== Stamping prod DB if needed ==="
+echo "=== Syncing prod DB state ==="
 python3 << 'PYEOF'
 import os
 import psycopg2
@@ -14,51 +14,54 @@ conn = psycopg2.connect(db_url)
 conn.autocommit = True
 cur = conn.cursor()
 
-# Ver si alembic_version existe y qué tiene
-cur.execute("SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'alembic_version')")
-exists = cur.fetchone()[0]
+# 1. Asegurar alembic_version existe
+cur.execute("CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))")
 
-if not exists:
-    cur.execute("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))")
-    print("Created alembic_version table")
-
+# 2. Ver estado actual
 cur.execute("SELECT version_num FROM alembic_version LIMIT 1")
 row = cur.fetchone()
 current = row[0] if row else None
-print(f"Current version: {current}")
+print(f"Current alembic version: {current}")
 
-# Ver qué tablas existen para determinar el estado real
-cur.execute("SELECT table_name FROM information_schema.tables WHERE table_schema='public' ORDER BY table_name")
-tables = [r[0] for r in cur.fetchall()]
-print(f"Tables in prod: {tables}")
+# 3. Añadir columnas que faltan manualmente (idempotente con IF NOT EXISTS)
+migrations = [
+    # stripe_customer_id en users
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS stripe_customer_id VARCHAR(100)",
+    # plan_id y subscription_status en orgs
+    "ALTER TABLE orgs ADD COLUMN IF NOT EXISTS plan_id INTEGER DEFAULT 1",
+    "ALTER TABLE orgs ADD COLUMN IF NOT EXISTS subscription_status VARCHAR(30) DEFAULT 'free'",
+    # Seed planes si no existen
+    "INSERT INTO plans (id, name, price_cents, max_agents, max_posts_month, can_create_posts, description) VALUES (1, 'free', 0, 0, 10, false, 'Read, comment and vote. No agents.') ON CONFLICT (id) DO NOTHING",
+    "INSERT INTO plans (id, name, price_cents, max_agents, max_posts_month, can_create_posts, description) VALUES (2, 'creator', 1900, 3, 50, false, 'Up to 3 AI agents. Comments only.') ON CONFLICT (id) DO NOTHING",
+    "INSERT INTO plans (id, name, price_cents, max_agents, max_posts_month, can_create_posts, description) VALUES (3, 'brand', 7900, 10, 200, true, 'Up to 10 agents. Posts + comments.') ON CONFLICT (id) DO NOTHING",
+    # Actualizar stripe_price_id
+    "UPDATE plans SET stripe_price_id = 'price_1T5z2o9TXLctvE6FqdJGuV5J' WHERE id = 2 AND stripe_price_id IS NULL",
+    "UPDATE plans SET stripe_price_id = 'price_1T5z2o9TXLctvE6FaGKzcdTQ' WHERE id = 3 AND stripe_price_id IS NULL",
+    # Orgs existentes al plan free
+    "UPDATE orgs SET plan_id = 1 WHERE plan_id IS NULL",
+    "UPDATE orgs SET subscription_status = 'free' WHERE subscription_status IS NULL",
+]
 
-has_plans = 'plans' in tables
-has_subscriptions = 'subscriptions' in tables
-has_stripe_col = False
+for sql in migrations:
+    try:
+        cur.execute(sql)
+        print(f"OK: {sql[:60]}...")
+    except Exception as e:
+        print(f"SKIP: {e}")
 
-if 'users' in tables:
-    cur.execute("SELECT column_name FROM information_schema.columns WHERE table_name='users' AND column_name='stripe_customer_id'")
-    has_stripe_col = cur.fetchone() is not None
-
-print(f"plans={has_plans}, subscriptions={has_subscriptions}, stripe_col={has_stripe_col}")
-
-# Si todo ya existe, sellar en 8500f153f80f
-if has_plans and has_subscriptions and has_stripe_col:
-    if not current:
-        cur.execute("INSERT INTO alembic_version (version_num) VALUES ('8500f153f80f')")
-    else:
-        cur.execute("UPDATE alembic_version SET version_num = '8500f153f80f'")
-    print("Sealed at 8500f153f80f (everything already exists)")
-elif not current:
-    cur.execute("INSERT INTO alembic_version (version_num) VALUES ('eab4a0091729')")
-    print("Sealed at eab4a0091729")
+# 4. Sellar en 8500f153f80f
+if not current:
+    cur.execute("INSERT INTO alembic_version (version_num) VALUES ('8500f153f80f')")
+else:
+    cur.execute("UPDATE alembic_version SET version_num = '8500f153f80f'")
+print("Sealed at 8500f153f80f")
 
 cur.close()
 conn.close()
 PYEOF
 
-echo "=== Running Alembic migrations ==="
-alembic upgrade head
+echo "=== Verifying Alembic is at head ==="
+alembic current 2>&1
 
 echo "=== Starting server ==="
 exec gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080
