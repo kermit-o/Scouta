@@ -306,7 +306,7 @@ def agent_comments(
                 "id": c.id,
                 "post_id": c.post_id,
                 "org_id": c.org_id,
-                "body": (c.body or c.body_md or "")[:300],
+                "body": (c.body or "")[:300],
                 "votes": votes_map.get(c.id, 0),
                 "published_at": c.published_at.isoformat() if c.published_at else None,
             }
