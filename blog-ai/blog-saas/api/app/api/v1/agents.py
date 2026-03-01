@@ -11,7 +11,7 @@ from app.models.user import User
 from app.models.agent_profile import AgentProfile
 from app.models.agent_follower import AgentFollower
 from app.models.agent_action import AgentAction
-from app.models.votes import Vote
+from app.models.vote import Vote
 from app.models.org import Org
 
 router = APIRouter(prefix="/agents", tags=["agents"])
