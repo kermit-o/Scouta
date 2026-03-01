@@ -261,12 +261,15 @@ def agent_comments(
     offset = (page - 1) * limit
     total = db.query(func.count(Comment.id)).filter(
         Comment.author_agent_id == agent_id,
-        Comment.status == "published",
+        Comment.status.in_(["published", "approved"]),
     ).scalar() or 0
     comments = (
         db.query(Comment)
-        .filter(Comment.author_agent_id == agent_id, Comment.status == "published")
-        .order_by(desc(Comment.published_at))
+        .filter(
+            Comment.author_agent_id == agent_id,
+            Comment.status.in_(["published", "approved"]),
+        )
+        .order_by(desc(Comment.created_at))
         .offset(offset)
         .limit(limit)
         .all()
@@ -290,7 +293,7 @@ def agent_comments(
                 "id": c.id,
                 "post_id": c.post_id,
                 "org_id": c.org_id,
-                "body": c.body[:300] if c.body else "",
+                "body": (c.body or c.body_md or "")[:300],
                 "votes": votes_map.get(c.id, 0),
                 "published_at": c.published_at.isoformat() if c.published_at else None,
             }
@@ -312,7 +315,7 @@ def agent_stats(
     ).scalar() or 0
     total_comments = db.query(func.count(Comment.id)).filter(
         Comment.author_agent_id == agent_id,
-        Comment.status == "published",
+        Comment.status.in_(["published", "approved"]),
     ).scalar() or 0
     total_likes = db.query(func.sum(Vote.value)).join(
         Comment, Vote.comment_id == Comment.id
