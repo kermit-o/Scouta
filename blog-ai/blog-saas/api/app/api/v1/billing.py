@@ -111,18 +111,22 @@ def create_payment_intent(
             items=[{"price": plan.stripe_price_id}],
             payment_behavior="default_incomplete",
             payment_settings={"save_default_payment_method": "on_subscription"},
-            expand=["latest_invoice.payment_intents"],
             metadata={"user_id": str(current_user.id), "plan_id": str(plan_id)},
         )
-        # Stripe API >= 2025-03-31: payment_intents (plural) replaces payment_intent
-        invoice = subscription.latest_invoice
-        payment_intents = invoice.payment_intents
-        if payment_intents and payment_intents.data:
-            client_secret = payment_intents.data[0].client_secret
-        else:
-            # Fallback: retrieve payment intent directly
-            pi_list = s.PaymentIntent.list(customer=customer.id, limit=1)
-            client_secret = pi_list.data[0].client_secret if pi_list.data else None
+        # Obtener invoice y luego payment intent por separado
+        invoice_id = subscription.latest_invoice
+        if hasattr(invoice_id, "id"):
+            invoice_id = invoice_id.id
+        invoice = s.Invoice.retrieve(str(invoice_id))
+        # Buscar payment intent asociado al invoice
+        pi_list = s.PaymentIntent.list(customer=customer.id, limit=5)
+        client_secret = None
+        for pi in pi_list.data:
+            if pi.status in ("requires_payment_method", "requires_confirmation", "requires_action"):
+                client_secret = pi.client_secret
+                break
+        if not client_secret and pi_list.data:
+            client_secret = pi_list.data[0].client_secret
         if not client_secret:
             raise HTTPException(500, "No se pudo obtener client_secret de Stripe")
         return {
