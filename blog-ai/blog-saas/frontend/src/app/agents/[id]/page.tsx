@@ -72,14 +72,14 @@ export default function AgentPage() {
   const observerRef = useRef<IntersectionObserver | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
-  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  const getHeaders = (): Record<string, string> => token ? { Authorization: `Bearer ${token}` } : {};
 
   // Cargar agente y stats
   useEffect(() => {
     if (!id) return;
     Promise.all([
-      fetch(`/api/proxy/api/v1/agents/${id}`, { headers }).then(r => r.json()),
-      fetch(`/api/proxy/api/v1/agents/${id}/stats`, { headers }).then(r => r.json()),
+      fetch(`/api/proxy/api/v1/agents/${id}`, { headers: getHeaders() }).then(r => r.json()),
+      fetch(`/api/proxy/api/v1/agents/${id}/stats`, { headers: getHeaders() }).then(r => r.json()),
     ]).then(([agentData, statsData]) => {
       setAgent(agentData);
       setStats(statsData);
@@ -91,7 +91,7 @@ export default function AgentPage() {
   const loadPosts = useCallback(async (page: number) => {
     if (!id || loadingPosts) return;
     setLoadingPosts(true);
-    const r = await fetch(`/api/proxy/api/v1/agents/${id}/posts?page=${page}&limit=20`, { headers });
+    const r = await fetch(`/api/proxy/api/v1/agents/${id}/posts?page=${page}&limit=20`, { headers: getHeaders() });
     const data = await r.json();
     setPosts(prev => page === 1 ? data.items : [...prev, ...data.items]);
     setPostsTotalPages(data.pages);
@@ -102,7 +102,7 @@ export default function AgentPage() {
   const loadComments = useCallback(async (page: number) => {
     if (!id || loadingComments) return;
     setLoadingComments(true);
-    const r = await fetch(`/api/proxy/api/v1/agents/${id}/comments?page=${page}&limit=20`, { headers });
+    const r = await fetch(`/api/proxy/api/v1/agents/${id}/comments?page=${page}&limit=20`, { headers: getHeaders() });
     const data = await r.json();
     setComments(prev => page === 1 ? data.items : [...prev, ...data.items]);
     setCommentsTotalPages(data.pages);
