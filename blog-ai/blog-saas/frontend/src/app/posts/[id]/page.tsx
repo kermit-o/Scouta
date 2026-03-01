@@ -318,28 +318,17 @@ function ShareButtons({ postId, title }: { postId: number; title: string }) {
 
 
 // ─── Debate Banner ────────────────────────────────────────────────────────────
-function DebateBanner({ debateStatus, agentCount, humanCount, totalComments, comments }: {
+function DebateBanner({ debateStatus, agentCount, humanCount, totalComments, scores, leader }: {
   debateStatus: string;
   agentCount: number;
   humanCount: number;
   totalComments: number;
-  comments: any[];
+  scores: any[];
+  leader: any;
 }) {
   if (debateStatus !== "open" && debateStatus !== "closed") return null;
 
-  // Top agentes por votos netos
-  const agentScores: Record<number, { name: string; score: number; count: number }> = {};
-  for (const c of comments) {
-    if (c.author_type !== "agent") continue;
-    const id = c.author_agent_id;
-    if (!agentScores[id]) agentScores[id] = { name: c.author_display_name ?? "Agent", score: 0, count: 0 };
-    agentScores[id].score += (c.upvotes ?? 0) - (c.downvotes ?? 0);
-    agentScores[id].count += 1;
-  }
-  const topAgents = Object.values(agentScores)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, 3);
-
+  const topAgents = scores.slice(0, 3);
   const isOpen = debateStatus === "open";
 
   return (
@@ -378,23 +367,23 @@ function DebateBanner({ debateStatus, agentCount, humanCount, totalComments, com
           </div>
           <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
             {topAgents.map((a, i) => (
-              <div key={a.name} style={{
+              <div key={a.agent_id || a.name} style={{
                 display: "flex", alignItems: "center", gap: "0.4rem",
                 padding: "0.25rem 0.6rem",
-                border: "1px solid #1a2a1a",
-                background: "#0a0f0a",
+                border: `1px solid ${i === 0 ? "#2a3a1a" : "#1a2a1a"}`,
+                background: i === 0 ? "#0d140a" : "#0a0f0a",
               }}>
                 <span style={{ color: i === 0 ? "#c8a96e" : "#444", fontSize: "0.55rem", fontFamily: "monospace" }}>
                   {i === 0 ? "◆" : i === 1 ? "◇" : "○"}
                 </span>
-                <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: "#8a9a8a" }}>{a.name}</span>
-                {a.score !== 0 && (
-                  <span style={{ fontSize: "0.55rem", fontFamily: "monospace", color: a.score > 0 ? "#4a9a4a" : "#9a4a4a" }}>
-                    {a.score > 0 ? "+" : ""}{a.score}
+                <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: i === 0 ? "#a0b890" : "#8a9a8a" }}>{a.name}</span>
+                {a.net_votes !== 0 && (
+                  <span style={{ fontSize: "0.55rem", fontFamily: "monospace", color: a.net_votes > 0 ? "#4a9a4a" : "#9a4a4a" }}>
+                    {a.net_votes > 0 ? "+" : ""}{a.net_votes}
                   </span>
                 )}
                 <span style={{ fontSize: "0.5rem", fontFamily: "monospace", color: "#333" }}>
-                  {a.count}✦
+                  {a.comment_count}✦
                 </span>
               </div>
             ))}
@@ -424,16 +413,24 @@ export default function PostPage() {
   const [commentsTotal, setCommentsTotal] = useState(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const [debateStatus, setDebateStatus] = useState<string>("open");
+  const [debateScores, setDebateScores] = useState<any[]>([]);
+  const [debateLeader, setDebateLeader] = useState<any>(null);
 
   // 1. CARGA INICIAL
   const loadInitialData = useCallback(async () => {
     setLoading(true);
     const API = getApiBase();
     try {
-      const [p, c] = await Promise.all([
+      const API = getApiBase();
+      const [p, c, scoreRes] = await Promise.all([
         getPost(orgId, postId),
         getComments(orgId, postId, 50, 0),
+        fetch(`${API}/api/v1/orgs/1/posts/${postId}/debate-score`).then(r => r.ok ? r.json() : null).catch(() => null),
       ]);
+      if (scoreRes) {
+        setDebateScores(scoreRes.scores || []);
+        setDebateLeader(scoreRes.leader || null);
+      }
       
       setPost(p);
       const commentsData = c || {};
@@ -613,7 +610,8 @@ export default function PostPage() {
           agentCount={agentCount}
           humanCount={humanCount}
           totalComments={totalComments}
-          comments={comments}
+          scores={debateScores}
+          leader={debateLeader}
         />
         <Composer orgId={orgId} postId={postId} onSuccess={loadInitialData} />
 
