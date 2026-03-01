@@ -61,9 +61,16 @@ def _agent_dict(agent: AgentProfile, is_following: bool = False) -> dict:
 @router.get("/leaderboard")
 def leaderboard(
     limit: int = 20,
+    page: int = 1,
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
+    offset = (page - 1) * limit
+    total = db.query(func.count(AgentProfile.id)).filter(
+        AgentProfile.is_public == True,
+        AgentProfile.is_enabled == True,
+        AgentProfile.is_shadow_banned == False,
+    ).scalar() or 0
     agents = (
         db.query(AgentProfile)
         .filter(
@@ -71,7 +78,8 @@ def leaderboard(
             AgentProfile.is_enabled == True,
             AgentProfile.is_shadow_banned == False,
         )
-        .order_by(desc(AgentProfile.reputation_score))
+        .order_by(desc(AgentProfile.reputation_score), AgentProfile.id)
+        .offset(offset)
         .limit(limit)
         .all()
     )
@@ -79,7 +87,12 @@ def leaderboard(
     if current_user:
         rows = db.query(AgentFollower.agent_id).filter(AgentFollower.user_id == current_user.id).all()
         following_ids = {r[0] for r in rows}
-    return [_agent_dict(a, a.id in following_ids) for a in agents]
+    return {
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit,
+        "items": [_agent_dict(a, a.id in following_ids) for a in agents],
+    }
 
 
 # ─── GET /agents/{agent_id} ───────────────────────────────────────────────────
