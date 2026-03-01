@@ -1,98 +1,195 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+"""
+Agents public endpoints — reputation, follow, leaderboard
+"""
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func, desc
+from typing import Optional
 
-from app.core.deps import get_db, get_current_user, require_org_role
+from app.core.deps import get_current_user, get_db
 from app.models.user import User
 from app.models.agent_profile import AgentProfile
-from app.api.v1.schemas.agents import AgentCreateIn, AgentPatchIn, AgentOut
+from app.models.agent_follower import AgentFollower
+from app.models.agent_action import AgentAction
+from app.models.votes import Vote
+from app.models.org import Org
 
-router = APIRouter(tags=["agents"])
+router = APIRouter(prefix="/agents", tags=["agents"])
 
-@router.get("/orgs/{org_id}/agents", response_model=list[AgentOut])
-def list_agents(
-    org_id: int,
+
+def _agent_dict(agent: AgentProfile, is_following: bool = False) -> dict:
+    return {
+        "id": agent.id,
+        "org_id": agent.org_id,
+        "display_name": agent.display_name,
+        "handle": agent.handle,
+        "avatar_url": agent.avatar_url,
+        "bio": agent.bio or "",
+        "topics": agent.topics,
+        "style": agent.style,
+        "reputation_score": agent.reputation_score,
+        "total_comments": agent.total_comments,
+        "total_upvotes": agent.total_upvotes,
+        "total_downvotes": agent.total_downvotes,
+        "follower_count": agent.follower_count,
+        "is_public": agent.is_public,
+        "created_at": agent.created_at.isoformat(),
+        "is_following": is_following,
+    }
+
+
+# ─── GET /agents/leaderboard ──────────────────────────────────────────────────
+@router.get("/leaderboard")
+def leaderboard(
+    limit: int = 20,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-    enabled: bool | None = Query(default=None),
-) -> list[AgentOut]:
-    require_org_role(org_id=org_id, allowed_roles={"owner", "admin", "editor", "viewer"}, db=db, user=user)
-
-    q = db.query(AgentProfile).filter(AgentProfile.org_id == org_id)
-    if enabled is not None:
-        q = q.filter(AgentProfile.is_enabled == enabled)
-    rows = q.order_by(AgentProfile.id.asc()).all()
-
-    return [
-        AgentOut(
-            id=a.id, org_id=a.org_id, display_name=a.display_name, handle=a.handle,
-            avatar_url=a.avatar_url, persona_seed=a.persona_seed, topics=a.topics,
-            style=a.style, risk_level=a.risk_level, is_enabled=a.is_enabled
-        )
-        for a in rows
-    ]
-
-@router.post("/orgs/{org_id}/agents", response_model=AgentOut)
-def create_agent(
-    org_id: int,
-    payload: AgentCreateIn,
-    db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-) -> AgentOut:
-    require_org_role(org_id=org_id, allowed_roles={"owner", "admin"}, db=db, user=user)
-
-    existing = (
+    current_user: Optional[User] = Depends(get_current_user),
+):
+    """Top agentes por reputación."""
+    agents = (
         db.query(AgentProfile)
-        .filter(AgentProfile.org_id == org_id, AgentProfile.handle == payload.handle)
-        .one_or_none()
+        .filter(AgentProfile.is_public == True, AgentProfile.is_enabled == True, AgentProfile.is_shadow_banned == False)
+        .order_by(desc(AgentProfile.reputation_score))
+        .limit(limit)
+        .all()
     )
-    if existing:
-        raise HTTPException(status_code=409, detail="Handle already exists in org")
+    following_ids = set()
+    if current_user:
+        rows = db.query(AgentFollower.agent_id).filter(AgentFollower.user_id == current_user.id).all()
+        following_ids = {r[0] for r in rows}
+    return [_agent_dict(a, a.id in following_ids) for a in agents]
 
-    a = AgentProfile(
-        org_id=org_id,
-        display_name=payload.display_name,
-        handle=payload.handle,
-        avatar_url=payload.avatar_url or "",
-        persona_seed=payload.persona_seed or "",
-        topics=payload.topics or "",
-        style=payload.style or "concise",
-        risk_level=payload.risk_level if payload.risk_level is not None else 1,
-        is_enabled=True,
-    )
-    db.add(a)
-    db.commit()
-    db.refresh(a)
 
-    return AgentOut(
-        id=a.id, org_id=a.org_id, display_name=a.display_name, handle=a.handle,
-        avatar_url=a.avatar_url, persona_seed=a.persona_seed, topics=a.topics,
-        style=a.style, risk_level=a.risk_level, is_enabled=a.is_enabled
-    )
-
-@router.patch("/orgs/{org_id}/agents/{agent_id}", response_model=AgentOut)
-def patch_agent(
-    org_id: int,
+# ─── GET /agents/{agent_id} ───────────────────────────────────────────────────
+@router.get("/{agent_id}")
+def get_agent(
     agent_id: int,
-    payload: AgentPatchIn,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
-) -> AgentOut:
-    require_org_role(org_id=org_id, allowed_roles={"owner", "admin"}, db=db, user=user)
-
-    a = db.query(AgentProfile).filter(AgentProfile.org_id == org_id, AgentProfile.id == agent_id).one_or_none()
-    if not a:
-        raise HTTPException(status_code=404, detail="Agent not found")
-
-    data = payload.model_dump(exclude_unset=True)
-    for k, v in data.items():
-        setattr(a, k, v)
-
-    db.add(a)
-    db.commit()
-    db.refresh(a)
-
-    return AgentOut(
-        id=a.id, org_id=a.org_id, display_name=a.display_name, handle=a.handle,
-        avatar_url=a.avatar_url, persona_seed=a.persona_seed, topics=a.topics,
-        style=a.style, risk_level=a.risk_level, is_enabled=a.is_enabled
+    current_user: Optional[User] = Depends(get_current_user),
+):
+    agent = db.get(AgentProfile, agent_id)
+    if not agent or not agent.is_public:
+        raise HTTPException(404, "Agent not found")
+    is_following = False
+    if current_user:
+        is_following = db.query(AgentFollower).filter(
+            AgentFollower.user_id == current_user.id,
+            AgentFollower.agent_id == agent_id,
+        ).first() is not None
+    # Actividad reciente
+    recent_actions = (
+        db.query(AgentAction)
+        .filter(AgentAction.agent_id == agent_id, AgentAction.status == "published")
+        .order_by(desc(AgentAction.published_at))
+        .limit(10)
+        .all()
     )
+    activity = [
+        {
+            "id": a.id,
+            "action_type": a.action_type,
+            "target_type": a.target_type,
+            "target_id": a.target_id,
+            "content": a.content[:200] if a.content else "",
+            "published_at": a.published_at.isoformat() if a.published_at else None,
+        }
+        for a in recent_actions
+    ]
+    return {**_agent_dict(agent, is_following), "recent_activity": activity}
+
+
+# ─── POST /agents/{agent_id}/follow ──────────────────────────────────────────
+@router.post("/{agent_id}/follow")
+def follow_agent(
+    agent_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    agent = db.get(AgentProfile, agent_id)
+    if not agent or not agent.is_public:
+        raise HTTPException(404, "Agent not found")
+    existing = db.query(AgentFollower).filter(
+        AgentFollower.user_id == current_user.id,
+        AgentFollower.agent_id == agent_id,
+    ).first()
+    if existing:
+        raise HTTPException(400, "Ya sigues a este agente")
+    follow = AgentFollower(user_id=current_user.id, agent_id=agent_id)
+    db.add(follow)
+    agent.follower_count = (agent.follower_count or 0) + 1
+    db.commit()
+    return {"ok": True, "follower_count": agent.follower_count}
+
+
+# ─── DELETE /agents/{agent_id}/follow ────────────────────────────────────────
+@router.delete("/{agent_id}/follow")
+def unfollow_agent(
+    agent_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    agent = db.get(AgentProfile, agent_id)
+    if not agent:
+        raise HTTPException(404, "Agent not found")
+    existing = db.query(AgentFollower).filter(
+        AgentFollower.user_id == current_user.id,
+        AgentFollower.agent_id == agent_id,
+    ).first()
+    if not existing:
+        raise HTTPException(400, "No sigues a este agente")
+    db.delete(existing)
+    agent.follower_count = max(0, (agent.follower_count or 1) - 1)
+    db.commit()
+    return {"ok": True, "follower_count": agent.follower_count}
+
+
+# ─── POST /agents/{agent_id}/recalculate-reputation ──────────────────────────
+@router.post("/{agent_id}/recalculate-reputation")
+def recalculate_reputation(
+    agent_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Recalcula el score de reputación basado en votos y actividad."""
+    agent = db.get(AgentProfile, agent_id)
+    if not agent:
+        raise HTTPException(404, "Agent not found")
+
+    # Contar comentarios publicados
+    total_comments = db.query(func.count(AgentAction.id)).filter(
+        AgentAction.agent_id == agent_id,
+        AgentAction.status == "published",
+    ).scalar() or 0
+
+    # Votos en comentarios del agente
+    from app.models.comment import Comment
+    upvotes = db.query(func.sum(Vote.value)).join(
+        Comment, Vote.comment_id == Comment.id
+    ).filter(
+        Comment.author_agent_id == agent_id,
+        Vote.value > 0,
+    ).scalar() or 0
+
+    downvotes = abs(db.query(func.sum(Vote.value)).join(
+        Comment, Vote.comment_id == Comment.id
+    ).filter(
+        Comment.author_agent_id == agent_id,
+        Vote.value < 0,
+    ).scalar() or 0)
+
+    # Fórmula: score = (upvotes * 3) - (downvotes * 1) + (comments * 1) + (followers * 5)
+    score = (upvotes * 3) - (downvotes * 1) + (total_comments * 1) + (agent.follower_count * 5)
+
+    agent.total_comments = total_comments
+    agent.total_upvotes = upvotes
+    agent.total_downvotes = downvotes
+    agent.reputation_score = max(0, score)
+    db.commit()
+
+    return {
+        "reputation_score": agent.reputation_score,
+        "total_comments": total_comments,
+        "total_upvotes": upvotes,
+        "total_downvotes": downvotes,
+        "follower_count": agent.follower_count,
+    }

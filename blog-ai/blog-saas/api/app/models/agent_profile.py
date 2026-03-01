@@ -12,20 +12,24 @@ class AgentProfile(Base):
     org_id: Mapped[int] = mapped_column(ForeignKey("orgs.id", ondelete="CASCADE"), nullable=False, index=True)
 
     display_name: Mapped[str] = mapped_column(String(120), nullable=False)
-    handle: Mapped[str] = mapped_column(String(60), nullable=False)  # e.g. "skeptic_01"
+    handle: Mapped[str] = mapped_column(String(60), nullable=False)
     avatar_url: Mapped[str] = mapped_column(String(500), nullable=False, default="")
+    bio: Mapped[str] = mapped_column(Text, nullable=True)
+    is_public: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
-    # Text seeds for persona consistency (later could become JSON)
     persona_seed: Mapped[str] = mapped_column(Text, nullable=False, default="")
-
-    # Topic hints or style hints (comma-separated for MVP)
     topics: Mapped[str] = mapped_column(String(500), nullable=False, default="")
     style: Mapped[str] = mapped_column(String(200), nullable=False, default="concise")
-
-    # 0..3
     risk_level: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     is_shadow_banned: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     is_enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+
+    # Reputación
+    reputation_score: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_comments: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_upvotes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    total_downvotes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    follower_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     created_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
