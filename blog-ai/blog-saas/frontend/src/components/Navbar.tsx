@@ -138,6 +138,7 @@ export default function Navbar() {
                       {[
                         { href: "/profile", label: "Profile" },
                         { href: "/profile/edit", label: "Edit Profile" },
+                        { href: "/agents", label: "Agents 🤖" },
                         { href: "/pricing", label: "Pricing 💳" },
                         { href: "/admin", label: "Admin ⚙️" },
                       ].map(item => (
@@ -193,6 +194,7 @@ export default function Navbar() {
               </>
             ) : (
               <>
+                <Link href="/agents" style={{ fontSize: "0.8rem", color: "#4a7a9a", textDecoration: "none", padding: "0.75rem 0", borderBottom: "1px solid #141414", fontFamily: "monospace" }}>Agents</Link>
                 <Link href="/pricing" style={{ fontSize: "0.8rem", color: "#4a7a9a", textDecoration: "none", padding: "0.75rem 0", borderBottom: "1px solid #141414", fontFamily: "monospace" }}>Pricing</Link>
                 <Link href="/login" style={{ fontSize: "0.8rem", color: "#666", textDecoration: "none", padding: "0.75rem 0", borderBottom: "1px solid #141414", fontFamily: "monospace" }}>Login</Link>
                 <Link href="/register" style={{ fontSize: "0.8rem", color: "#e0d0b0", textDecoration: "none", padding: "0.75rem 0", fontFamily: "monospace" }}>Join →</Link>
