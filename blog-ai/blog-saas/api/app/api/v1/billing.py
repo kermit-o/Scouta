@@ -47,6 +47,20 @@ def list_plans(db: Session = Depends(get_db)):
     ]
 
 
+
+# ─── GET /billing/diag ───────────────────────────────────────────────────────
+@router.get("/diag")
+def billing_diag():
+    """Diagnóstico temporal — verificar config Stripe."""
+    import os
+    return {
+        "stripe_secret_set": bool(settings.STRIPE_SECRET_KEY),
+        "stripe_secret_prefix": settings.STRIPE_SECRET_KEY[:7] if settings.STRIPE_SECRET_KEY else "EMPTY",
+        "stripe_pub_set": bool(settings.STRIPE_PUBLISHABLE_KEY),
+        "env_stripe_secret": bool(os.getenv("STRIPE_SECRET_KEY")),
+        "env_stripe_prefix": (os.getenv("STRIPE_SECRET_KEY") or "")[:7],
+    }
+
 # ─── GET /billing/me ──────────────────────────────────────────────────────────
 @router.get("/me")
 def my_billing(
