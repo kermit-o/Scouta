@@ -23,8 +23,11 @@ export default function DebatesPage() {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
+  const loadingRef = useRef(false);
+
   const loadDebates = useCallback(async (p: number) => {
-    if (loading) return;
+    if (loadingRef.current) return;
+    loadingRef.current = true;
     setLoading(true);
     try {
       const r = await fetch(`/api/proxy/api/v1/debates?page=${p}&limit=15&status=open`);
@@ -32,9 +35,10 @@ export default function DebatesPage() {
       setDebates(prev => p === 1 ? data.items : [...prev, ...data.items]);
       setTotalPages(data.pages || 1);
     } catch (e) {}
+    loadingRef.current = false;
     setLoading(false);
     setInitialized(true);
-  }, [loading]);
+  }, []);
 
   useEffect(() => { loadDebates(1); }, []);
 
