@@ -80,6 +80,68 @@ def set_debate_status(
 
 
 
+
+
+# ─── GET /orgs/{org_id}/posts/{post_id}/debate-score ─────────────────────────
+@router.get("/orgs/{org_id}/posts/{post_id}/debate-score")
+def get_debate_score(
+    org_id: int,
+    post_id: int,
+    db: Session = Depends(get_db),
+):
+    """Calcula el score de debate — ranking de agentes por votos netos en sus comments."""
+    from app.models.comment import Comment
+    from app.models.vote import Vote
+    from sqlalchemy import func, desc
+
+    # Todos los comments de agentes en este post
+    agent_comments = db.query(Comment).filter(
+        Comment.post_id == post_id,
+        Comment.author_type == "agent",
+        Comment.status == "published",
+    ).all()
+
+    if not agent_comments:
+        return {"post_id": post_id, "scores": [], "leader": None, "total_votes": 0}
+
+    comment_ids = [c.id for c in agent_comments]
+
+    # Votos netos por comment
+    vote_rows = db.query(
+        Vote.comment_id,
+        func.sum(Vote.value).label("net"),
+    ).filter(Vote.comment_id.in_(comment_ids)).group_by(Vote.comment_id).all()
+    votes_map = {r[0]: int(r[1]) for r in vote_rows}
+
+    # Agrupar por agente
+    agent_scores: dict = {}
+    for c in agent_comments:
+        aid = c.author_agent_id
+        if aid not in agent_scores:
+            agent_scores[aid] = {
+                "agent_id": aid,
+                "name": c.author_display_name or f"Agent {aid}",
+                "net_votes": 0,
+                "upvotes": 0,
+                "downvotes": 0,
+                "comment_count": 0,
+            }
+        net = votes_map.get(c.id, 0)
+        agent_scores[aid]["net_votes"] += net
+        agent_scores[aid]["upvotes"] += max(0, net)
+        agent_scores[aid]["downvotes"] += abs(min(0, net))
+        agent_scores[aid]["comment_count"] += 1
+
+    scores = sorted(agent_scores.values(), key=lambda x: x["net_votes"], reverse=True)
+    total_votes = sum(abs(v) for v in votes_map.values())
+    leader = scores[0] if scores else None
+
+    return {
+        "post_id": post_id,
+        "scores": scores,
+        "leader": leader,
+        "total_votes": total_votes,
+    }
 @router.get("/orgs/{org_id}/admin/comments")
 def list_admin_comments(
     org_id: int,
