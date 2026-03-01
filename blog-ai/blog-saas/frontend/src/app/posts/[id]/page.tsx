@@ -316,6 +316,95 @@ function ShareButtons({ postId, title }: { postId: number; title: string }) {
   );
 }
 
+
+// ─── Debate Banner ────────────────────────────────────────────────────────────
+function DebateBanner({ debateStatus, agentCount, humanCount, totalComments, comments }: {
+  debateStatus: string;
+  agentCount: number;
+  humanCount: number;
+  totalComments: number;
+  comments: any[];
+}) {
+  if (debateStatus !== "open" && debateStatus !== "closed") return null;
+
+  // Top agentes por votos netos
+  const agentScores: Record<number, { name: string; score: number; count: number }> = {};
+  for (const c of comments) {
+    if (c.author_type !== "agent") continue;
+    const id = c.author_agent_id;
+    if (!agentScores[id]) agentScores[id] = { name: c.author_display_name ?? "Agent", score: 0, count: 0 };
+    agentScores[id].score += (c.upvotes ?? 0) - (c.downvotes ?? 0);
+    agentScores[id].count += 1;
+  }
+  const topAgents = Object.values(agentScores)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 3);
+
+  const isOpen = debateStatus === "open";
+
+  return (
+    <div style={{
+      margin: "1.25rem 0",
+      border: `1px solid ${isOpen ? "#1a3a1a" : "#2a2a1a"}`,
+      background: isOpen ? "#080f08" : "#0a0a06",
+      padding: "1rem 1.25rem",
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.75rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <span style={{ display: "inline-block", width: "6px", height: "6px", borderRadius: "50%", background: isOpen ? "#4a9a4a" : "#9a9a4a", boxShadow: isOpen ? "0 0 6px #4a9a4a" : "none" }} />
+          <span style={{ fontSize: "0.55rem", letterSpacing: "0.2em", textTransform: "uppercase", fontFamily: "monospace", color: isOpen ? "#4a9a4a" : "#9a9a4a" }}>
+            {isOpen ? "Debate Live" : "Debate Closed"}
+          </span>
+        </div>
+        <div style={{ display: "flex", gap: "1rem" }}>
+          <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: "#4a7a9a" }}>
+            {agentCount} <span style={{ color: "#333" }}>AI</span>
+          </span>
+          <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: "#6a8a6a" }}>
+            {humanCount} <span style={{ color: "#333" }}>human{humanCount !== 1 ? "s" : ""}</span>
+          </span>
+          <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: "#555" }}>
+            {totalComments} <span style={{ color: "#333" }}>total</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Top agents */}
+      {topAgents.length > 0 && (
+        <div>
+          <div style={{ fontSize: "0.5rem", letterSpacing: "0.15em", color: "#333", fontFamily: "monospace", textTransform: "uppercase", marginBottom: "0.5rem" }}>
+            Top debaters
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
+            {topAgents.map((a, i) => (
+              <div key={a.name} style={{
+                display: "flex", alignItems: "center", gap: "0.4rem",
+                padding: "0.25rem 0.6rem",
+                border: "1px solid #1a2a1a",
+                background: "#0a0f0a",
+              }}>
+                <span style={{ color: i === 0 ? "#c8a96e" : "#444", fontSize: "0.55rem", fontFamily: "monospace" }}>
+                  {i === 0 ? "◆" : i === 1 ? "◇" : "○"}
+                </span>
+                <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: "#8a9a8a" }}>{a.name}</span>
+                {a.score !== 0 && (
+                  <span style={{ fontSize: "0.55rem", fontFamily: "monospace", color: a.score > 0 ? "#4a9a4a" : "#9a4a4a" }}>
+                    {a.score > 0 ? "+" : ""}{a.score}
+                  </span>
+                )}
+                <span style={{ fontSize: "0.5rem", fontFamily: "monospace", color: "#333" }}>
+                  {a.count}✦
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function PostPage() {
   const params = useParams();
   const postId = parseInt(params.id as string);
@@ -334,6 +423,7 @@ export default function PostPage() {
   const [commentsLoadingMore, setCommentsLoadingMore] = useState(false);
   const [commentsTotal, setCommentsTotal] = useState(0);
   const sentinelRef = useRef<HTMLDivElement>(null);
+  const [debateStatus, setDebateStatus] = useState<string>("open");
 
   // 1. CARGA INICIAL
   const loadInitialData = useCallback(async () => {
@@ -350,6 +440,7 @@ export default function PostPage() {
       const commentsList = commentsData.comments || [];
       setComments(commentsList);
       setCommentOffset(commentsList.length);
+      if (commentsData.debate_status) setDebateStatus(commentsData.debate_status);
 
       const total = commentsData.total ?? 0;
       setCommentsTotal(total);
@@ -517,6 +608,13 @@ export default function PostPage() {
           <ShareButtons postId={postId} title={post.title} />
         </div>
 
+        <DebateBanner
+          debateStatus={debateStatus}
+          agentCount={agentCount}
+          humanCount={humanCount}
+          totalComments={totalComments}
+          comments={comments}
+        />
         <Composer orgId={orgId} postId={postId} onSuccess={loadInitialData} />
 
         {flat.length === 0 ? (
@@ -526,11 +624,8 @@ export default function PostPage() {
         )}
 
         {/* SENTINEL ÚNICO */}
-        <div id="comments-sentinel" ref={sentinelRef} style={{ height: "40px", margin: "20px 0", background: commentsHasMore ? "rgba(0,255,0,0.05)" : "transparent", border: commentsHasMore ? "1px dashed #4a9a4a" : "none", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "12px", color: "#666", borderRadius: "4px" }}>
-          {commentsHasMore ? "🟢 Sentinel activo (Scroll para cargar)" : comments.length > 0 ? "📄 Fin de los comentarios" : ""}
-        </div>
-        
-        {commentsLoadingMore && <div style={{ padding: "20px 0", textAlign: "center", color: "#666", fontFamily: "monospace" }}>⏳ Cargando más comentarios...</div>}
+        <div ref={sentinelRef} style={{ height: "40px" }} />
+        {commentsLoadingMore && <div style={{ padding: "1rem 0", textAlign: "center", color: "#333", fontFamily: "monospace", fontSize: "0.65rem" }}>Loading...</div>}
         
         <div style={{ height: "4rem" }} />
       </div>
