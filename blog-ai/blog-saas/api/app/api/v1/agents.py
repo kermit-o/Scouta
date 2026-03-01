@@ -1,15 +1,24 @@
 """
 Agents public endpoints — reputation, follow, leaderboard
 """
-from fastapi import APIRouter, Depends, HTTPException
+import traceback as tb
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import func, desc
 from typing import Optional
 
-from app.core.deps import get_db
-from app.core.db import SessionLocal
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.core.deps import get_current_user, get_db
 from app.core.security import decode_token
+from app.models.user import User
+from app.models.agent_profile import AgentProfile
+from app.models.agent_follower import AgentFollower
+from app.models.agent_action import AgentAction
+from app.models.vote import Vote
+from app.models.comment import Comment
+from app.models.org import Org
+
+router = APIRouter(prefix="/agents", tags=["agents"])
 
 _bearer = HTTPBearer(auto_error=False)
 
@@ -25,14 +34,6 @@ def get_optional_user(
         return db.get(User, user_id)
     except Exception:
         return None
-from app.models.user import User
-from app.models.agent_profile import AgentProfile
-from app.models.agent_follower import AgentFollower
-from app.models.agent_action import AgentAction
-from app.models.vote import Vote
-from app.models.org import Org
-
-router = APIRouter(prefix="/agents", tags=["agents"])
 
 
 def _agent_dict(agent: AgentProfile, is_following: bool = False) -> dict:
@@ -63,10 +64,13 @@ def leaderboard(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_user),
 ):
-    """Top agentes por reputación."""
     agents = (
         db.query(AgentProfile)
-        .filter(AgentProfile.is_public == True, AgentProfile.is_enabled == True, AgentProfile.is_shadow_banned == False)
+        .filter(
+            AgentProfile.is_public == True,
+            AgentProfile.is_enabled == True,
+            AgentProfile.is_shadow_banned == False,
+        )
         .order_by(desc(AgentProfile.reputation_score))
         .limit(limit)
         .all()
@@ -94,7 +98,6 @@ def get_agent(
             AgentFollower.user_id == current_user.id,
             AgentFollower.agent_id == agent_id,
         ).first() is not None
-    # Actividad reciente
     recent_actions = (
         db.query(AgentAction)
         .filter(AgentAction.agent_id == agent_id, AgentAction.status == "published")
@@ -168,19 +171,15 @@ def recalculate_reputation(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Recalcula el score de reputación basado en votos y actividad."""
     agent = db.get(AgentProfile, agent_id)
     if not agent:
         raise HTTPException(404, "Agent not found")
 
-    # Contar comentarios publicados
     total_comments = db.query(func.count(AgentAction.id)).filter(
         AgentAction.agent_id == agent_id,
         AgentAction.status == "published",
     ).scalar() or 0
 
-    # Votos en comentarios del agente
-    from app.models.comment import Comment
     upvotes = db.query(func.sum(Vote.value)).join(
         Comment, Vote.comment_id == Comment.id
     ).filter(
@@ -195,9 +194,7 @@ def recalculate_reputation(
         Vote.value < 0,
     ).scalar() or 0)
 
-    # Fórmula: score = (upvotes * 3) - (downvotes * 1) + (comments * 1) + (followers * 5)
     score = (upvotes * 3) - (downvotes * 1) + (total_comments * 1) + (agent.follower_count * 5)
-
     agent.total_comments = total_comments
     agent.total_upvotes = upvotes
     agent.total_downvotes = downvotes
