@@ -19,6 +19,9 @@ class Settings:
     
     # DeepSeek API (opcional)
     DEEPSEEK_API_KEY: str = ""
+    STRIPE_SECRET_KEY: str = ""
+    STRIPE_PUBLISHABLE_KEY: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""
     
     def __init__(self):
         # Intentar cargar desde .env si existe
@@ -30,6 +33,9 @@ class Settings:
             self.DATABASE_URL = os.getenv("DATABASE_URL", self.DATABASE_URL)
             self.SECRET_KEY = os.getenv("SECRET_KEY", self.SECRET_KEY)
             self.DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", self.DEEPSEEK_API_KEY)
+            self.STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", self.STRIPE_SECRET_KEY)
+            self.STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", self.STRIPE_PUBLISHABLE_KEY)
+            self.STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", self.STRIPE_WEBHOOK_SECRET)
         except ImportError:
             pass  # Sin dotenv, usar valores por defecto
 
