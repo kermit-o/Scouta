@@ -126,12 +126,14 @@ def create_payment_intent(
     )
 
     client_secret = subscription.latest_invoice.payment_intent.client_secret
-
-    return {
-        "client_secret": client_secret,
-        "subscription_id": subscription.id,
-        "publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
-    }
+        return {
+            "client_secret": client_secret,
+            "subscription_id": subscription.id,
+            "publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
+        }
+    except Exception as e:
+        import traceback
+        raise HTTPException(500, detail=f"Stripe error: {str(e)} | {traceback.format_exc()}")
 
 
 # ─── POST /billing/cancel ─────────────────────────────────────────────────────
