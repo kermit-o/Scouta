@@ -208,3 +208,123 @@ def recalculate_reputation(
         "total_downvotes": downvotes,
         "follower_count": agent.follower_count,
     }
+
+
+# ─── GET /agents/{agent_id}/posts ─────────────────────────────────────────────
+@router.get("/{agent_id}/posts")
+def agent_posts(
+    agent_id: int,
+    page: int = 1,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    from app.models.post import Post
+    offset = (page - 1) * limit
+    total = db.query(func.count(Post.id)).filter(
+        Post.author_agent_id == agent_id,
+        Post.status == "published",
+    ).scalar() or 0
+    posts = (
+        db.query(Post)
+        .filter(Post.author_agent_id == agent_id, Post.status == "published")
+        .order_by(desc(Post.published_at))
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    return {
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit,
+        "items": [
+            {
+                "id": p.id,
+                "org_id": p.org_id,
+                "title": p.title,
+                "slug": p.slug,
+                "excerpt": p.excerpt or "",
+                "published_at": p.published_at.isoformat() if p.published_at else None,
+            }
+            for p in posts
+        ],
+    }
+
+
+# ─── GET /agents/{agent_id}/comments ─────────────────────────────────────────
+@router.get("/{agent_id}/comments")
+def agent_comments(
+    agent_id: int,
+    page: int = 1,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    offset = (page - 1) * limit
+    total = db.query(func.count(Comment.id)).filter(
+        Comment.author_agent_id == agent_id,
+        Comment.status == "published",
+    ).scalar() or 0
+    comments = (
+        db.query(Comment)
+        .filter(Comment.author_agent_id == agent_id, Comment.status == "published")
+        .order_by(desc(Comment.published_at))
+        .offset(offset)
+        .limit(limit)
+        .all()
+    )
+    # Votos por comment
+    comment_ids = [c.id for c in comments]
+    votes_map = {}
+    if comment_ids:
+        from app.models.vote import Vote as VoteModel
+        rows = db.query(VoteModel.comment_id, func.sum(VoteModel.value)).filter(
+            VoteModel.comment_id.in_(comment_ids)
+        ).group_by(VoteModel.comment_id).all()
+        votes_map = {r[0]: r[1] for r in rows}
+
+    return {
+        "total": total,
+        "page": page,
+        "pages": (total + limit - 1) // limit,
+        "items": [
+            {
+                "id": c.id,
+                "post_id": c.post_id,
+                "org_id": c.org_id,
+                "body": c.body[:300] if c.body else "",
+                "votes": votes_map.get(c.id, 0),
+                "published_at": c.published_at.isoformat() if c.published_at else None,
+            }
+            for c in comments
+        ],
+    }
+
+
+# ─── GET /agents/{agent_id}/stats ────────────────────────────────────────────
+@router.get("/{agent_id}/stats")
+def agent_stats(
+    agent_id: int,
+    db: Session = Depends(get_db),
+):
+    from app.models.post import Post
+    total_posts = db.query(func.count(Post.id)).filter(
+        Post.author_agent_id == agent_id,
+        Post.status == "published",
+    ).scalar() or 0
+    total_comments = db.query(func.count(Comment.id)).filter(
+        Comment.author_agent_id == agent_id,
+        Comment.status == "published",
+    ).scalar() or 0
+    total_likes = db.query(func.sum(Vote.value)).join(
+        Comment, Vote.comment_id == Comment.id
+    ).filter(
+        Comment.author_agent_id == agent_id,
+        Vote.value > 0,
+    ).scalar() or 0
+    agent = db.get(AgentProfile, agent_id)
+    return {
+        "total_posts": total_posts,
+        "total_comments": total_comments,
+        "total_likes": int(total_likes),
+        "follower_count": agent.follower_count if agent else 0,
+        "reputation_score": agent.reputation_score if agent else 0,
+    }
