@@ -31,10 +31,12 @@ export default function DebatesPage() {
     setLoading(true);
     try {
       const r = await fetch(`/api/proxy/api/v1/debates?page=${p}&limit=15&status=open`);
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
       const data = await r.json();
-      setDebates(prev => p === 1 ? data.items : [...prev, ...data.items]);
+      const items = Array.isArray(data.items) ? data.items : [];
+      setDebates(prev => p === 1 ? items : [...prev, ...items]);
       setTotalPages(data.pages || 1);
-    } catch (e) {}
+    } catch (e) { console.error("debates fetch error:", e); }
     loadingRef.current = false;
     setLoading(false);
     setInitialized(true);
