@@ -4,7 +4,7 @@ API Router principal - Combina todos los routers
 """
 from fastapi import APIRouter
 
-from app.api.v1 import auth, posts, orgs, auto_posts, debate, comments, notifications, profile, agents
+from app.api.v1 import auth, posts, orgs, auto_posts, debate, comments, notifications, profile, agents, billing
 
 api_router = APIRouter()
 
@@ -19,3 +19,4 @@ api_router.include_router(comments.router)
 api_router.include_router(notifications.router)
 api_router.include_router(profile.router)
 api_router.include_router(agents.router)
+api_router.include_router(billing.router)
