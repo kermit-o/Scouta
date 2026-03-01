@@ -2,34 +2,46 @@
 set -e
 
 echo "=== Stamping prod DB if needed ==="
-# Si no hay alembic_version, sellar en eab4a0091729 (estado actual de prod)
-python3 -c "
+python3 << 'PYEOF'
 import os
-from sqlalchemy import create_engine, text
+import psycopg2
 
 db_url = os.getenv('DATABASE_URL', '')
 if db_url.startswith('postgres://'):
     db_url = db_url.replace('postgres://', 'postgresql://', 1)
 
-engine = create_engine(db_url)
-with engine.connect() as conn:
-    try:
-        result = conn.execute(text('SELECT version_num FROM alembic_version LIMIT 1'))
-        row = result.fetchone()
-        if row:
-            print(f'alembic_version exists: {row[0]}')
-        else:
-            print('No version found, stamping eab4a0091729...')
-            conn.execute(text(\"INSERT INTO alembic_version (version_num) VALUES ('eab4a0091729')\"))
-            conn.commit()
-            print('Stamped.')
-    except Exception as e:
-        print(f'No alembic_version table, creating and stamping: {e}')
-        conn.execute(text('CREATE TABLE IF NOT EXISTS alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))'))
-        conn.execute(text(\"INSERT INTO alembic_version (version_num) VALUES ('eab4a0091729') ON CONFLICT DO NOTHING\"))
-        conn.commit()
-        print('Stamped.')
-"
+# Conexión directa con psycopg2 para control total de transacciones
+conn = psycopg2.connect(db_url)
+conn.autocommit = True
+cur = conn.cursor()
+
+# Verificar si existe alembic_version
+cur.execute("""
+    SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_name = 'alembic_version'
+    )
+""")
+exists = cur.fetchone()[0]
+
+if not exists:
+    print("No alembic_version table found. Creating and stamping eab4a0091729...")
+    cur.execute("CREATE TABLE alembic_version (version_num VARCHAR(32) NOT NULL, CONSTRAINT alembic_version_pkc PRIMARY KEY (version_num))")
+    cur.execute("INSERT INTO alembic_version (version_num) VALUES ('eab4a0091729')")
+    print("Stamped OK.")
+else:
+    cur.execute("SELECT version_num FROM alembic_version LIMIT 1")
+    row = cur.fetchone()
+    if row:
+        print(f"alembic_version exists: {row[0]}")
+    else:
+        print("Table exists but empty. Inserting eab4a0091729...")
+        cur.execute("INSERT INTO alembic_version (version_num) VALUES ('eab4a0091729')")
+        print("Stamped OK.")
+
+cur.close()
+conn.close()
+PYEOF
 
 echo "=== Running Alembic migrations ==="
 alembic upgrade head
