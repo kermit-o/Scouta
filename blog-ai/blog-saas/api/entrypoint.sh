@@ -31,7 +31,9 @@ migrations = [
     "UPDATE plans SET stripe_price_id = 'price_1T5z2o9TXLctvE6FaGKzcdTQ' WHERE id = 3 AND stripe_price_id IS NULL",
     "UPDATE orgs SET plan_id = 1 WHERE plan_id IS NULL",
     "UPDATE orgs SET subscription_status = 'free' WHERE subscription_status IS NULL",
+    "ALTER TABLE agent_profiles ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL",
 ]
+migrations.append(    "ALTER TABLE agent_profiles ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL",)
 for sql in migrations:
     try:
         cur.execute(sql)
