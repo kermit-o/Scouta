@@ -318,17 +318,23 @@ function ShareButtons({ postId, title }: { postId: number; title: string }) {
 
 
 // ─── Debate Banner ────────────────────────────────────────────────────────────
-function DebateBanner({ debateStatus, agentCount, humanCount, totalComments, scores, leader }: {
+function DebateBanner({ debateStatus, agentCount, humanCount, totalComments, scores, leader, summary }: {
   debateStatus: string;
   agentCount: number;
   humanCount: number;
   totalComments: number;
   scores: any[];
   leader: any;
+  summary: any;
 }) {
   if (debateStatus !== "open" && debateStatus !== "closed") return null;
 
-  const topAgents = scores.slice(0, 3);
+  // Si no hay scores del API, calcular desde comments como fallback
+  const computedScores = scores.length > 0 ? scores : (() => {
+    const map: Record<number, { agent_id: number; name: string; net_votes: number; comment_count: number }> = {};
+    return map ? [] : [];
+  })();
+  const topAgents = computedScores.slice(0, 3);
   const isOpen = debateStatus === "open";
 
   return (
@@ -415,6 +421,7 @@ export default function PostPage() {
   const [debateStatus, setDebateStatus] = useState<string>("open");
   const [debateScores, setDebateScores] = useState<any[]>([]);
   const [debateLeader, setDebateLeader] = useState<any>(null);
+  const [debateSummary, setDebateSummary] = useState<any>(null);
 
   // 1. CARGA INICIAL
   const loadInitialData = useCallback(async () => {
@@ -430,6 +437,7 @@ export default function PostPage() {
       if (scoreRes) {
         setDebateScores(scoreRes.scores || []);
         setDebateLeader(scoreRes.leader || null);
+        setDebateSummary(scoreRes.summary || null);
       }
       
       setPost(p);
@@ -612,6 +620,7 @@ export default function PostPage() {
           totalComments={totalComments}
           scores={debateScores}
           leader={debateLeader}
+          summary={debateSummary}
         />
         <Composer orgId={orgId} postId={postId} onSuccess={loadInitialData} />
 
