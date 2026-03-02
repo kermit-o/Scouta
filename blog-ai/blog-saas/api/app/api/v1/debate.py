@@ -50,17 +50,98 @@ def set_debate_status(
     status: str = Query(..., pattern="^(none|open|closed)$"),
     db: Session = Depends(get_db),
 ):
-    """Cambiar debate_status de un post: none | open | closed"""
+    """Cambiar debate_status de un post: none | open | closed.
+    Al cerrar, genera resumen automático del ganador."""
+    import json as _json
+    from app.models.comment import Comment
+    from app.models.vote import Vote
+    from sqlalchemy import func
+
     post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="Post not found")
-    if not hasattr(post, "debate_status"):
-        raise HTTPException(status_code=400, detail="debate_status not supported")
+
     post.debate_status = status
+
+    # Al cerrar — generar resumen del debate
+    if status == "closed":
+        try:
+            # Calcular scores
+            agent_comments = db.query(Comment).filter(
+                Comment.post_id == post_id,
+                Comment.author_type == "agent",
+                Comment.status == "published",
+            ).all()
+
+            comment_ids = [c.id for c in agent_comments]
+            votes_map = {}
+            if comment_ids:
+                rows = db.query(Vote.comment_id, func.sum(Vote.value)).filter(
+                    Vote.comment_id.in_(comment_ids)
+                ).group_by(Vote.comment_id).all()
+                votes_map = {r[0]: int(r[1]) for r in rows}
+
+            # Nombres reales
+            agent_ids_set = {c.author_agent_id for c in agent_comments if c.author_agent_id}
+            profiles = db.query(AgentProfile).filter(AgentProfile.id.in_(agent_ids_set)).all()
+            name_map = {p.id: p.display_name for p in profiles}
+
+            # Scores por agente
+            agent_scores: dict = {}
+            for c in agent_comments:
+                aid = c.author_agent_id
+                if not aid:
+                    continue
+                if aid not in agent_scores:
+                    agent_scores[aid] = {"agent_id": aid, "name": name_map.get(aid) or f"Agent {aid}", "net_votes": 0, "comment_count": 0}
+                agent_scores[aid]["net_votes"] += votes_map.get(c.id, 0)
+                agent_scores[aid]["comment_count"] += 1
+
+            ranked = sorted(agent_scores.values(), key=lambda x: (x["net_votes"], x["comment_count"]), reverse=True)
+            winner = ranked[0] if ranked else None
+
+            # Top comment del ganador
+            best_comment = None
+            if winner:
+                winner_comments = [c for c in agent_comments if c.author_agent_id == winner["agent_id"]]
+                if winner_comments:
+                    best_comment = max(winner_comments, key=lambda c: votes_map.get(c.id, 0))
+
+            # Guardar resumen en post_metadata
+            existing_meta = {}
+            if post.post_metadata:
+                try:
+                    existing_meta = _json.loads(post.post_metadata)
+                except Exception:
+                    pass
+
+            existing_meta["debate_summary"] = {
+                "winner": winner,
+                "top_debaters": ranked[:3],
+                "total_participants": len(ranked),
+                "total_comments": len(agent_comments),
+                "best_comment": (best_comment.body or "")[:400] if best_comment else None,
+                "closed_at": __import__("datetime").datetime.utcnow().isoformat(),
+            }
+            post.post_metadata = _json.dumps(existing_meta)
+        except Exception as e:
+            # No fallar si el resumen falla
+            pass
+
     db.add(post)
     db.commit()
     db.refresh(post)
-    return {"post_id": post_id, "debate_status": post.debate_status}
+
+    # Devolver resumen si está disponible
+    summary = None
+    if post.post_metadata:
+        try:
+            meta = _json.loads(post.post_metadata)
+            summary = meta.get("debate_summary")
+        except Exception:
+            pass
+
+    return {"post_id": post_id, "debate_status": post.debate_status, "summary": summary}
 
 
     try:
@@ -139,11 +220,23 @@ def get_debate_score(
     total_votes = sum(abs(v) for v in votes_map.values())
     leader = scores[0] if scores else None
 
+    # Incluir summary si el debate está cerrado
+    import json as _json
+    summary = None
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if post and post.post_metadata:
+        try:
+            meta = _json.loads(post.post_metadata)
+            summary = meta.get("debate_summary")
+        except Exception:
+            pass
+
     return {
         "post_id": post_id,
         "scores": scores,
         "leader": leader,
         "total_votes": total_votes,
+        "summary": summary,
     }
 
 @router.get("/orgs/{org_id}/admin/comments")
