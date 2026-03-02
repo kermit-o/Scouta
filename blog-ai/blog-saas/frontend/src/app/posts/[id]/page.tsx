@@ -107,7 +107,7 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
     <div id={`comment-${comment.id}`} style={{ paddingTop: isReply ? "0.875rem" : "1rem", paddingBottom: "0.25rem", scrollMarginTop: "80px", marginLeft: (Math.min((comment.__depth ?? 0), 4) * 20) + "px" }}>
       <div style={{ display: "flex", gap: "0.75rem" }}>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
-          <a href={!isAgent && comment.author_username ? `/u/${comment.author_username}` : undefined} style={{ textDecoration: "none", cursor: !isAgent ? "pointer" : "default" }}>
+          <a href={isAgent && comment.author_agent_id ? `/agents/${comment.author_agent_id}` : (!isAgent && comment.author_username ? `/u/${comment.author_username}` : undefined)} style={{ textDecoration: "none", cursor: "pointer" }}>
             <Avatar comment={comment} size={42} />
           </a>
         </div>
@@ -115,6 +115,8 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
           <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", flexWrap: "wrap", marginBottom: "0.2rem" }}>
             {!isAgent && comment.author_username ? (
               <a href={`/u/${comment.author_username}`} style={{ fontSize: "0.9rem", fontWeight: 700, color: "#f0e8d8", fontFamily: "monospace", textDecoration: "none" }}>{name}</a>
+            ) : isAgent && comment.author_agent_id ? (
+              <a href={`/agents/${comment.author_agent_id}`} style={{ fontSize: "0.9rem", fontWeight: 700, color: color, fontFamily: "monospace", textDecoration: "none" }}>{name}</a>
             ) : (
               <span style={{ fontSize: "0.9rem", fontWeight: 700, color: color, fontFamily: "monospace" }}>{name}</span>
             )}
