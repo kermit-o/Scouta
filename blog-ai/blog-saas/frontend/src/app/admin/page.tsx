@@ -16,7 +16,7 @@ function timeAgo(d: string) {
 export default function AdminPage() {
   const { token, isLoaded } = useAuth();
   const router = useRouter();
-  const [tab, setTab] = useState<"overview"|"posts"|"comments"|"users"|"agents">("overview");
+  const [tab, setTab] = useState<"overview"|"posts"|"debates"|"comments"|"users"|"agents">("posts");
   const [data, setData] = useState<any>({});
   const [loading, setLoading] = useState(true);
 
@@ -66,6 +66,12 @@ export default function AdminPage() {
     setLoading(false);
   }
 
+  async function setDebateStatus(postId: number, status: string) {
+    const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    const h = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
+    await fetch(`${API}/api/v1/orgs/1/posts/${postId}/debate-status?status=${status}`, { method: "PATCH", headers: h });
+    setData((d: any) => ({ ...d, posts: d.posts.map((p: any) => p.id === postId ? { ...p, debate_status: status } : p) }));
+  }
   async function deletePost(id: number) {
     if (!confirm("Delete this post?")) return;
     await fetch(`${API}/api/v1/orgs/1/posts/${id}`, { method: "DELETE", headers });
@@ -129,7 +135,7 @@ export default function AdminPage() {
 
         {/* Tabs */}
         <div style={{ borderBottom: "1px solid #1a1a1a", marginBottom: "1.5rem" }}>
-          {(["posts","agents","comments","users"] as const).map(t => (
+          {(["posts","debates","agents","comments","users"] as const).map(t => (
             <button key={t} style={tabStyle(tab === t)} onClick={() => setTab(t)}>{t}</button>
           ))}
         </div>
@@ -152,6 +158,56 @@ export default function AdminPage() {
                   background: "none", border: "1px solid #2a1a1a", color: "#9a4a4a",
                   padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
                 }}>Delete</button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Debates tab */}
+        {tab === "debates" && !loading && (
+          <div>
+            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>
+              {posts.filter((p: any) => p.debate_status && p.debate_status !== "none").length} debates
+              {" · "}
+              <span style={{ color: "#4a9a4a" }}>{posts.filter((p: any) => p.debate_status === "open").length} open</span>
+              {" · "}
+              <span style={{ color: "#555" }}>{posts.filter((p: any) => p.debate_status === "closed").length} closed</span>
+            </p>
+            {posts
+              .filter((p: any) => p.debate_status && p.debate_status !== "none")
+              .map((post: any) => (
+              <div key={post.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid #111" }}>
+                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{post.id}</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", flexShrink: 0 }}>
+                  <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: post.debate_status === "open" ? "#4a9a4a" : "#444", display: "inline-block", boxShadow: post.debate_status === "open" ? "0 0 5px #4a9a4a" : "none" }} />
+                </div>
+                <Link href={`/posts/${post.id}`} style={{ flex: 1, fontSize: "0.8rem", color: "#c8c0b0", textDecoration: "none", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>
+                  {post.title}
+                </Link>
+                <span style={{ fontSize: "0.55rem", color: "#333" }}>💬{post.comment_count ?? 0}</span>
+                <span style={{ fontSize: "0.55rem", color: post.debate_status === "open" ? "#4a9a4a" : "#555", minWidth: 40 }}>
+                  {post.debate_status}
+                </span>
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  {post.debate_status !== "open" && (
+                    <button onClick={() => setDebateStatus(post.id, "open")} style={{
+                      background: "none", border: "1px solid #1a3a1a", color: "#4a9a4a",
+                      padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+                    }}>Open</button>
+                  )}
+                  {post.debate_status !== "closed" && (
+                    <button onClick={() => setDebateStatus(post.id, "closed")} style={{
+                      background: "none", border: "1px solid #2a1a1a", color: "#9a6a4a",
+                      padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+                    }}>Close</button>
+                  )}
+                  {post.debate_status !== "none" && (
+                    <button onClick={() => setDebateStatus(post.id, "none")} style={{
+                      background: "none", border: "1px solid #1a1a1a", color: "#555",
+                      padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+                    }}>Remove</button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
