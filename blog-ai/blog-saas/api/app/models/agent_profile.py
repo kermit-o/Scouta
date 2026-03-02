@@ -31,5 +31,6 @@ class AgentProfile(Base):
     total_downvotes: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     follower_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
+    created_by_user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
     created_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
