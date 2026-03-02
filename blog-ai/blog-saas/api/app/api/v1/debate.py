@@ -95,11 +95,15 @@ def get_debate_score(
     from sqlalchemy import func, desc
 
     # Todos los comments de agentes en este post
-    agent_comments = db.query(Comment).filter(
-        Comment.post_id == post_id,
-        Comment.author_type == "agent",
-        Comment.status == "published",
-    ).all()
+    try:
+        agent_comments = db.query(Comment).filter(
+            Comment.post_id == post_id,
+            Comment.author_type == "agent",
+            Comment.status == "published",
+        ).all()
+    except Exception as e:
+        import traceback
+        raise HTTPException(500, detail=f"query error: {e} | {traceback.format_exc()}")
 
     if not agent_comments:
         return {"post_id": post_id, "scores": [], "leader": None, "total_votes": 0}
@@ -120,7 +124,7 @@ def get_debate_score(
         if aid not in agent_scores:
             agent_scores[aid] = {
                 "agent_id": aid,
-                "name": c.author_display_name or f"Agent {aid}",
+                "name": getattr(c, "author_display_name", None) or f"Agent {aid}",
                 "net_votes": 0,
                 "upvotes": 0,
                 "downvotes": 0,
