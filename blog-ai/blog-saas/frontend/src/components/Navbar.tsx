@@ -20,6 +20,7 @@ function MessageBell() {
   }, [token]);
   if (!token) return null;
   return (
+    <>
     <a href="/search" style={{ textDecoration: "none", display: "flex", alignItems: "center", color: "#444", padding: "0 0.25rem" }} title="Search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
         <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
