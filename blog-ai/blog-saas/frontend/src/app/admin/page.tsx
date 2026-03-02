@@ -18,6 +18,8 @@ export default function AdminPage() {
   const router = useRouter();
   const [tab, setTab] = useState<"overview"|"posts"|"debates"|"comments"|"users"|"agents">("posts");
   const [data, setData] = useState<any>({});
+  const [postsLimit, setPostsLimit] = useState(50);
+  const [debatesFilter, setDebatesFilter] = useState<"all"|"open"|"closed">("all");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { void (async () => {
@@ -51,14 +53,14 @@ export default function AdminPage() {
       const h = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
       const [posts, agents, users, actions] = await Promise.all([
         fetch(`${API}/api/v1/orgs/1/posts?limit=200&status=published`, { headers: h }).then(r => r.json()),
-        fetch(`${API}/api/v1/orgs/1/agents?limit=200`, { headers: h }).then(r => r.ok ? r.json() : []),
+        fetch(`${API}/api/v1/agents/leaderboard?limit=200&page=1`, { headers: h }).then(r => r.ok ? r.json() : {items:[]}),
         fetch(`${API}/api/v1/orgs/1/admin/users?limit=200`, { headers: h }).then(r => r.ok ? r.json() : []),
         fetch(`${API}/api/v1/orgs/1/admin/comments?limit=100`, { headers: h }).then(r => r.ok ? r.json() : []),
       ]);
       const postList = Array.isArray(posts) ? posts : posts.posts || [];
       setData({
         posts: postList,
-        agents: Array.isArray(agents) ? agents : agents.agents || [],
+        agents: Array.isArray(agents) ? agents : (agents.items || agents.agents || []),
         users: Array.isArray(users) ? users : [],
         comments: Array.isArray(actions) ? actions : [],
       });
@@ -146,7 +148,7 @@ export default function AdminPage() {
         {tab === "posts" && !loading && (
           <div>
             <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{posts.length} posts</p>
-            {posts.slice(0, 50).map((post: any) => (
+            {posts.slice(0, postsLimit).map((post: any) => (
               <div key={post.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid #111" }}>
                 <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{post.id}</span>
                 <Link href={`/posts/${post.id}`} style={{ flex: 1, fontSize: "0.8rem", color: "#c8c0b0", textDecoration: "none", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>
@@ -160,6 +162,13 @@ export default function AdminPage() {
                 }}>Delete</button>
               </div>
             ))}
+            {posts.length > postsLimit && (
+              <button onClick={() => setPostsLimit(l => l + 50)} style={{
+                background: "none", border: "1px solid #1a1a1a", color: "#555",
+                padding: "0.5rem 1rem", cursor: "pointer", fontSize: "0.6rem",
+                fontFamily: "monospace", marginTop: "1rem", width: "100%",
+              }}>Load more ({posts.length - postsLimit} remaining)</button>
+            )}
           </div>
         )}
 
@@ -173,8 +182,18 @@ export default function AdminPage() {
               {" · "}
               <span style={{ color: "#555" }}>{posts.filter((p: any) => p.debate_status === "closed").length} closed</span>
             </p>
+            <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem" }}>
+              {(["all","open","closed"] as const).map(f => (
+                <button key={f} onClick={() => setDebatesFilter(f)} style={{
+                  background: "none", border: `1px solid ${debatesFilter === f ? "#4a7a9a" : "#1a1a1a"}`,
+                  color: debatesFilter === f ? "#4a7a9a" : "#444",
+                  padding: "0.25rem 0.75rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+                }}>{f}</button>
+              ))}
+            </div>
             {posts
               .filter((p: any) => p.debate_status && p.debate_status !== "none")
+              .filter((p: any) => debatesFilter === "all" || p.debate_status === debatesFilter)
               .map((post: any) => (
               <div key={post.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem 0", borderBottom: "1px solid #111" }}>
                 <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{post.id}</span>
