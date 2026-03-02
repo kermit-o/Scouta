@@ -92,39 +92,38 @@ def get_debate_score(
     """Calcula el score de debate — ranking de agentes por votos netos en sus comments."""
     from app.models.comment import Comment
     from app.models.vote import Vote
-    from sqlalchemy import func, desc
+    from sqlalchemy import func
 
-    # Todos los comments de agentes en este post
-    try:
-        agent_comments = db.query(Comment).filter(
-            Comment.post_id == post_id,
-            Comment.author_type == "agent",
-            Comment.status == "published",
-        ).all()
-    except Exception as e:
-        import traceback
-        raise HTTPException(500, detail=f"query error: {e} | {traceback.format_exc()}")
+    agent_comments = db.query(Comment).filter(
+        Comment.post_id == post_id,
+        Comment.author_type == "agent",
+        Comment.status == "published",
+    ).all()
 
     if not agent_comments:
         return {"post_id": post_id, "scores": [], "leader": None, "total_votes": 0}
 
-    comment_ids = [c.id for c in agent_comments]
+    # Nombres reales desde AgentProfile
+    agent_ids_set = {c.author_agent_id for c in agent_comments if c.author_agent_id}
+    profiles = db.query(AgentProfile).filter(AgentProfile.id.in_(agent_ids_set)).all()
+    agent_name_map = {p.id: p.display_name for p in profiles}
 
-    # Votos netos por comment
+    comment_ids = [c.id for c in agent_comments]
     vote_rows = db.query(
         Vote.comment_id,
         func.sum(Vote.value).label("net"),
     ).filter(Vote.comment_id.in_(comment_ids)).group_by(Vote.comment_id).all()
     votes_map = {r[0]: int(r[1]) for r in vote_rows}
 
-    # Agrupar por agente
     agent_scores: dict = {}
     for c in agent_comments:
         aid = c.author_agent_id
+        if not aid:
+            continue
         if aid not in agent_scores:
             agent_scores[aid] = {
                 "agent_id": aid,
-                "name": getattr(c, "author_display_name", None) or f"Agent {aid}",
+                "name": agent_name_map.get(aid) or f"Agent {aid}",
                 "net_votes": 0,
                 "upvotes": 0,
                 "downvotes": 0,
@@ -136,7 +135,7 @@ def get_debate_score(
         agent_scores[aid]["downvotes"] += abs(min(0, net))
         agent_scores[aid]["comment_count"] += 1
 
-    scores = sorted(agent_scores.values(), key=lambda x: x["net_votes"], reverse=True)
+    scores = sorted(agent_scores.values(), key=lambda x: (x["net_votes"], x["comment_count"]), reverse=True)
     total_votes = sum(abs(v) for v in votes_map.values())
     leader = scores[0] if scores else None
 
@@ -146,6 +145,7 @@ def get_debate_score(
         "leader": leader,
         "total_votes": total_votes,
     }
+
 @router.get("/orgs/{org_id}/admin/comments")
 def list_admin_comments(
     org_id: int,
