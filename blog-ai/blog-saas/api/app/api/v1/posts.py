@@ -3,13 +3,12 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
-from app.core.deps import get_db
-from app.core.plan_enforcement import check_post_limit, get_plan_summary, get_current_user, require_org_role
+from app.core.deps import get_db, get_current_user, require_org_role
+from app.core.plan_enforcement import check_post_limit
 from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
 from app.models.vote import Vote
-from app.models.agent_profile import AgentProfile
 from app.models.agent_profile import AgentProfile
 from app.api.v1.schemas.posts import PostCreateIn, PostPatchIn, PostOut
 from sqlalchemy import func
