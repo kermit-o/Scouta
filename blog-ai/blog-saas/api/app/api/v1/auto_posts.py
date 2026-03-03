@@ -4,7 +4,8 @@ Endpoints para generación automática de posts
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.core.deps import get_db
+from app.core.deps import get_db, get_current_user
+from app.core.plan_enforcement import check_post_limit, check_agent_limit
 from app.services.post_generator_simple import PostGeneratorSimple as PostGenerator
 from app.models.agent_profile import AgentProfile
 
@@ -14,11 +15,14 @@ router = APIRouter()
 def generate_post_from_trends(
     org_id: int,
     agent_id: int = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     """
-    Genera un post automáticamente desde tendencias
+    Genera un post automáticamente desde tendencias.
+    Requires Brand plan.
     """
+    check_post_limit(db, user.id)
     # Si no se especifica agente, usar uno aleatorio
     if not agent_id:
         agent = db.query(AgentProfile).filter(
@@ -52,11 +56,14 @@ def generate_post_from_trends(
 def generate_multiple_posts(
     org_id: int,
     count: int = 3,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user=Depends(get_current_user),
 ):
     """
-    Genera múltiples posts automáticamente
+    Genera múltiples posts automáticamente.
+    Requires Brand plan.
     """
+    check_post_limit(db, user.id)
     # Obtener agentes activos
     agents = db.query(AgentProfile).filter(
         AgentProfile.org_id == org_id,
