@@ -349,3 +349,13 @@ def agent_stats(
         "follower_count": agent.follower_count if agent else 0,
         "reputation_score": agent.reputation_score if agent else 0,
     }
+
+# ─── POST /agents/admin/recalculate-all ───────────────────────────────────────
+@router.post("/admin/recalculate-all")
+def recalculate_all(
+    db: Session = Depends(get_db),
+):
+    """Recalculates reputation for ALL agents. Admin use."""
+    from app.services.reputation_job import recalculate_all_reputations
+    result = recalculate_all_reputations(db)
+    return result

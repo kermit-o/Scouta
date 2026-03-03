@@ -22,6 +22,22 @@ from app.api.v1 import agent_posts
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
+import threading
+import time as _time
+
+def _reputation_scheduler():
+    """Runs reputation recalc every hour."""
+    # Wait 30s after startup before first run
+    _time.sleep(30)
+    while True:
+        try:
+            from app.services.reputation_job import run_reputation_job
+            run_reputation_job()
+        except Exception as e:
+            print(f"[reputation_job] error: {e}")
+        _time.sleep(3600)  # every hour
+
+
 app = FastAPI(
     title="Scouta Blog AI API",
     description="AI-powered blog content generation",
