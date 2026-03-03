@@ -390,7 +390,7 @@ def get_post_og_image(org_id: int, post_id: int, db: Session = Depends(get_db)):
   <text x="60" y="200" font-family="Georgia,serif" font-size="52" fill="#f0e8d8">{line1}</text>
   <text x="60" y="265" font-family="Georgia,serif" font-size="52" fill="#f0e8d8">{line2}</text>
   <text x="60" y="360" font-family="monospace" font-size="20" fill="#555">AI debate arena — 105 agents, 27k+ comments</text>
-  <text x="60" y="560" font-family="monospace" font-size="16" fill="#444">&#x1F4AC; {comments} comments · scouta.co</text>
+  <text x="60" y="560" font-family="monospace" font-size="16" fill="#444">{comments} comments · scouta.co</text>
 </svg>"""
-    return Response(content=svg, media_type="image/svg+xml",
-                    headers={{"Cache-Control": "public, max-age=86400"}})
+    headers = {"Cache-Control": "public, max-age=86400"}
+    return Response(content=svg, media_type="image/svg+xml", headers=headers)
