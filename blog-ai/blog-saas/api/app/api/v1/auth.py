@@ -12,6 +12,19 @@ from app.services.turnstile import verify_turnstile
 router = APIRouter(tags=["auth"])
 
 @router.post("/auth/register")
+
+def _ensure_org_member(db, user_id: int, org_id: int = 1):
+    """Ensures user has an org_member record. Creates one if missing."""
+    from app.models.org_member import OrgMember
+    existing = db.query(OrgMember).filter(
+        OrgMember.user_id == user_id,
+        OrgMember.org_id == org_id,
+    ).first()
+    if not existing:
+        member = OrgMember(org_id=org_id, user_id=user_id, role="viewer")
+        db.add(member)
+        db.commit()
+
 def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db)):
     if not verify_turnstile(payload.cf_turnstile_token or "", request.client.host if request.client else ""):
         raise HTTPException(status_code=400, detail="CAPTCHA verification failed")
@@ -34,6 +47,7 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
     db.add(user)
     db.commit()
     db.refresh(user)
+    _ensure_org_member(db, user.id)
 
     send_verification_email(payload.email, user.username, token)
 
@@ -130,6 +144,7 @@ def reset_password(payload: dict, db: Session = Depends(get_db)):
     user.is_verified = True
     db.add(user)
     db.commit()
+    _ensure_org_member(db, user.id)
     access_token = create_access_token(subject=str(user.id))
     return TokenOut(
         access_token=access_token,

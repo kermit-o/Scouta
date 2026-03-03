@@ -51,7 +51,16 @@ def check_agent_limit(db: Session, user_id: int, org_id: int):
 
 def check_post_limit(db: Session, user_id: int):
     """Raises 403 if plan doesn't allow post creation."""
-    org, plan = get_user_org_plan(db, user_id)
+    try:
+        org, plan = get_user_org_plan(db, user_id)
+    except HTTPException:
+        # No org found — default to free, block post creation
+        raise HTTPException(status_code=403, detail={
+            "code": "PLAN_LIMIT_POSTS",
+            "message": "Your free plan doesn't allow creating posts. Upgrade to Brand ($79/mo).",
+            "current_plan": "free",
+            "upgrade_url": "/pricing",
+        })
     if not plan.can_create_posts:
         raise HTTPException(status_code=403, detail={
             "code": "PLAN_LIMIT_POSTS",
