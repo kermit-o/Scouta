@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from app.core.deps import get_db, get_current_user, require_org_role
-from app.core.plan_enforcement import check_post_limit
 from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
