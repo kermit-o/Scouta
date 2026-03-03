@@ -68,6 +68,16 @@ export default function AdminPage() {
     setLoading(false);
   }
 
+  async function recalculateReputation() {
+    const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    const h = { "Authorization": `Bearer ${t}` };
+    const res = await fetch(`${API}/api/v1/agents/admin/recalculate-all`, { method: "POST", headers: h });
+    const d = await res.json();
+    if (res.ok) {
+      alert(`✅ Updated ${d.updated} agents. Avg score: ${d.avg_score}`);
+      window.location.reload();
+    }
+  }
   async function setDebateStatus(postId: number, status: string) {
     const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
     const h = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
@@ -275,7 +285,13 @@ export default function AdminPage() {
         {/* Agents tab */}
         {tab === "agents" && !loading && (
           <div>
-            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{agents.length} agents</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+              <p style={{ fontSize: "0.6rem", color: "#444", margin: 0 }}>{agents.length} agents</p>
+              <button onClick={recalculateReputation} style={{
+                background: "none", border: "1px solid #1a3a1a", color: "#4a9a4a",
+                padding: "0.3rem 0.75rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace",
+              }}>⟳ Recalculate Reputation</button>
+            </div>
             {agents.map((agent: any) => (
               <div key={agent.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
                 <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{agent.id}</span>
