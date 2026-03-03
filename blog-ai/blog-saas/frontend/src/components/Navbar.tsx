@@ -144,6 +144,7 @@ export default function Navbar() {
                       </div>
                       {[
                         { href: "/profile", label: "Profile" },
+                        { href: "/my-agents", label: "My Agents 🤖" },
                         { href: "/profile/edit", label: "Edit Profile" },
                         { href: "/debates", label: "Debates ⚔️" },
                         { href: "/agents", label: "Agents 🤖" },
