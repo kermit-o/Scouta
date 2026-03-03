@@ -376,21 +376,71 @@ def get_feed(
 def get_post_og_image(org_id: int, post_id: int, db: Session = Depends(get_db)):
     """Returns og:image as SVG for social sharing."""
     from fastapi.responses import Response
+
     p = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
-    title = (p.title or "Scouta Debate")[:80] if p else "Scouta — AI Debates"
+    raw_title = (p.title or "Scouta Debate") if p else "Scouta — AI Debates"
+    excerpt = (getattr(p, "excerpt", None) or "")[:120] if p else ""
     comments = getattr(p, "comment_count", 0) or 0 if p else 0
-    display = title[:55] + ("..." if len(title) > 55 else "")
-    display = display.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
-    line1 = display[:40]
-    line2 = display[40:] if len(display) > 40 else ""
+    debate_status = getattr(p, "debate_status", "none") if p else "none"
+
+    def esc(s): return s.replace("&","&amp;").replace("<","&lt;").replace(">","&gt;").replace('"',"&quot;")
+
+    # Smart word-wrap title into 2 lines ~38 chars each
+    def wrap(text, width=38):
+        words = text.split()
+        lines, cur = [], ""
+        for w in words:
+            if len(cur) + len(w) + 1 <= width:
+                cur = (cur + " " + w).strip()
+            else:
+                if cur: lines.append(cur)
+                cur = w
+        if cur: lines.append(cur)
+        return lines[:2]  # max 2 lines
+
+    title_lines = wrap(raw_title)
+    line1 = esc(title_lines[0]) if len(title_lines) > 0 else ""
+    line2 = esc(title_lines[1]) if len(title_lines) > 1 else ""
+    excerpt_display = esc(excerpt[:90] + ("..." if len(excerpt) > 90 else "")) if excerpt else ""
+
+    # Debate badge
+    badge_color = "#4a9a4a" if debate_status == "open" else "#555"
+    badge_text = "LIVE DEBATE" if debate_status == "open" else ("DEBATE CLOSED" if debate_status == "closed" else "DISCUSSION")
+    badge_dot = "#4a9a4a" if debate_status == "open" else "#333"
+
+    title_y2 = "260" if line2 else "230"
+
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
-  <rect width="1200" height="630" fill="#0a0a0a"/>
-  <rect x="0" y="0" width="4" height="630" fill="#4a9a4a"/>
-  <text x="60" y="90" font-family="Georgia,serif" font-size="20" fill="#4a9a4a" letter-spacing="8">SCOUTA</text>
-  <text x="60" y="200" font-family="Georgia,serif" font-size="52" fill="#f0e8d8">{line1}</text>
-  <text x="60" y="265" font-family="Georgia,serif" font-size="52" fill="#f0e8d8">{line2}</text>
-  <text x="60" y="360" font-family="monospace" font-size="20" fill="#555">AI debate arena — 105 agents, 27k+ comments</text>
-  <text x="60" y="560" font-family="monospace" font-size="16" fill="#444">{comments} comments · scouta.co</text>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#0d0f0d"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect x="0" y="0" width="3" height="630" fill="{badge_color}"/>
+  <rect x="0" y="580" width="1200" height="50" fill="#050505"/>
+
+  <!-- Header -->
+  <text x="60" y="75" font-family="monospace" font-size="14" fill="#4a9a4a" letter-spacing="6">S C O U T A</text>
+
+  <!-- Debate badge -->
+  <circle cx="64" cy="118" r="5" fill="{badge_dot}"/>
+  <text x="78" y="124" font-family="monospace" font-size="13" fill="{badge_color}" letter-spacing="3">{badge_text}</text>
+
+  <!-- Title -->
+  <text x="60" y="210" font-family="Georgia,serif" font-size="56" fill="#f0e8d8" font-weight="400">{line1}</text>
+  <text x="60" y="280" font-family="Georgia,serif" font-size="56" fill="#f0e8d8" font-weight="400">{line2}</text>
+
+  <!-- Excerpt -->
+  <text x="60" y="360" font-family="Georgia,serif" font-size="22" fill="#666" font-style="italic">{excerpt_display}</text>
+
+  <!-- Divider -->
+  <rect x="60" y="490" width="80" height="1" fill="#2a2a2a"/>
+
+  <!-- Footer -->
+  <text x="60" y="605" font-family="monospace" font-size="14" fill="#333">{comments} comments</text>
+  <text x="1140" y="605" font-family="monospace" font-size="14" fill="#2a2a2a" text-anchor="end">scouta.co</text>
 </svg>"""
-    headers = {"Cache-Control": "public, max-age=86400"}
+    headers = {"Cache-Control": "public, max-age=3600"}
     return Response(content=svg, media_type="image/svg+xml", headers=headers)
