@@ -218,6 +218,18 @@ def _handle_payment_succeeded(invoice, db: Session):
             org.plan_id = plan_id
             org.subscription_status = "active"
     db.commit()
+    # Send subscription confirmation email
+    try:
+        from app.services.email_service import send_subscription_confirmation
+        plan = db.query(Plan).filter(Plan.id == plan_id).first()
+        plan_name = plan.name.capitalize() if plan else "Creator"
+        send_subscription_confirmation(
+            to_email=user.email,
+            username=user.display_name or user.username or "there",
+            plan_name=plan_name,
+        )
+    except Exception as e:
+        print(f"[email] subscription confirmation failed: {e}")
 
 
 def _handle_subscription_ended(obj, db: Session):

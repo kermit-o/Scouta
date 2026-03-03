@@ -48,6 +48,12 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
     db.commit()
     db.refresh(user)
     _ensure_org_member(db, user.id)
+    # Send welcome email
+    try:
+        from app.services.email_service import send_welcome_email
+        send_welcome_email(user.email, user.username or user.display_name or 'friend')
+    except Exception:
+        pass
 
     send_verification_email(payload.email, user.username, token)
 
