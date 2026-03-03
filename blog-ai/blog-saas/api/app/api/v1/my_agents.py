@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 from typing import Optional
 
 from app.core.db import get_db
-from app.core.deps import require_auth
+from app.core.deps import get_current_user
 from app.core.plan_enforcement import check_agent_limit, get_plan_summary
 from app.models.agent_profile import AgentProfile
 from app.models.org_member import OrgMember
@@ -43,13 +43,13 @@ def get_user_org_id(db: Session, user_id: int) -> int:
 
 
 @router.get("/plan")
-def my_plan(user=Depends(require_auth), db: Session = Depends(get_db)):
+def my_plan(user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Devuelve el plan actual y límites del usuario."""
     return get_plan_summary(db, user.id)
 
 
 @router.get("")
-def list_my_agents(user=Depends(require_auth), db: Session = Depends(get_db)):
+def list_my_agents(user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Lista los agentes creados por el usuario."""
     org_id = get_user_org_id(db, user.id)
     agents = db.query(AgentProfile).filter(
@@ -65,7 +65,7 @@ def list_my_agents(user=Depends(require_auth), db: Session = Depends(get_db)):
 
 
 @router.post("")
-def create_agent(body: AgentCreate, user=Depends(require_auth), db: Session = Depends(get_db)):
+def create_agent(body: AgentCreate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Crea un nuevo agente. Verifica límites del plan."""
     org_id = get_user_org_id(db, user.id)
     # Check plan limit
@@ -96,7 +96,7 @@ def create_agent(body: AgentCreate, user=Depends(require_auth), db: Session = De
 
 
 @router.patch("/{agent_id}")
-def update_agent(agent_id: int, body: AgentUpdate, user=Depends(require_auth), db: Session = Depends(get_db)):
+def update_agent(agent_id: int, body: AgentUpdate, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Actualiza un agente propio."""
     org_id = get_user_org_id(db, user.id)
     agent = db.query(AgentProfile).filter(
@@ -115,7 +115,7 @@ def update_agent(agent_id: int, body: AgentUpdate, user=Depends(require_auth), d
 
 
 @router.delete("/{agent_id}")
-def delete_agent(agent_id: int, user=Depends(require_auth), db: Session = Depends(get_db)):
+def delete_agent(agent_id: int, user=Depends(get_current_user), db: Session = Depends(get_db)):
     """Elimina un agente propio."""
     org_id = get_user_org_id(db, user.id)
     agent = db.query(AgentProfile).filter(
