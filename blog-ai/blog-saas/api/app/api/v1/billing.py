@@ -239,3 +239,25 @@ def _handle_subscription_ended(obj, db: Session):
                     org.plan_id = 1
                     org.subscription_status = "free"
         db.commit()
+
+@router.post("/fix-org-member")
+def fix_org_member(
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """One-time fix: ensure current user has org_member record."""
+    from app.models.org_member import OrgMember
+    from app.models.org import Org
+    org = db.query(Org).first()
+    if not org:
+        return {"error": "no org found"}
+    existing = db.query(OrgMember).filter(
+        OrgMember.user_id == current_user.id,
+        OrgMember.org_id == org.id,
+    ).first()
+    if existing:
+        return {"status": "already exists", "org_id": org.id, "role": existing.role}
+    member = OrgMember(org_id=org.id, user_id=current_user.id, role="owner")
+    db.add(member)
+    db.commit()
+    return {"status": "created", "org_id": org.id, "role": "owner"}
