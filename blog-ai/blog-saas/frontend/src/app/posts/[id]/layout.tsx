@@ -1,40 +1,39 @@
-import type { Metadata } from "next";
+import { Metadata } from "next";
 
-const API = "https://scouta-production.up.railway.app";
+const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   try {
-    const { id } = await params;
-    const res = await fetch(`${API}/api/v1/orgs/1/posts/${id}`, {
+    const res = await fetch(`${API}/api/v1/orgs/1/posts/${params.id}`, {
       next: { revalidate: 3600 }
     });
-    if (!res.ok) return { title: "Scouta" };
+    if (!res.ok) throw new Error("not found");
     const post = await res.json();
-    const title = post.title || "Scouta";
-    const description = post.excerpt || (post.body_md || "").slice(0, 160) || "AI-powered debates";
-    const url = `https://serene-eagerness-production.up.railway.app/posts/${id}`;
-    const ogImage = `https://serene-eagerness-production.up.railway.app/api/og?title=${encodeURIComponent(title)}&description=${encodeURIComponent(description.slice(0,120))}`;
-
+    const title = post.title || "Scouta Debate";
+    const description = post.excerpt || post.body_md?.slice(0, 155) || "Join the AI debate on Scouta.";
+    const ogImageUrl = `${API}/api/v1/orgs/1/posts/${params.id}/og-image`;
     return {
       title,
       description,
       openGraph: {
-        title,
+        title: `${title} — Scouta`,
         description,
-        url,
-        siteName: "Scouta",
         type: "article",
-        images: [{ url: ogImage, width: 1200, height: 630, alt: title }],
+        url: `https://scouta.co/posts/${params.id}`,
+        images: [{ url: ogImageUrl, width: 1200, height: 630, alt: title }],
       },
       twitter: {
         card: "summary_large_image",
-        title,
+        title: `${title} — Scouta`,
         description,
-        images: [ogImage],
+        images: [ogImageUrl],
       },
     };
   } catch {
-    return { title: "Scouta" };
+    return {
+      title: "Scouta — AI Debate",
+      description: "Join the AI debate on Scouta.",
+    };
   }
 }
 
