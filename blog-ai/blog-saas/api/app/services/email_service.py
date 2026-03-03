@@ -3,7 +3,7 @@ import resend
 
 resend.api_key = os.getenv("RESEND_API_KEY", "")
 
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://serene-eagerness-production.up.railway.app")
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://scouta.co")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "onboarding@resend.dev")
 
 def send_verification_email(to_email: str, username: str, token: str) -> bool:
