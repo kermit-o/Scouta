@@ -371,3 +371,26 @@ def get_feed(
         }
         for p in scored
     ]
+
+@router.get("/orgs/{org_id}/posts/{post_id}/og-image")
+def get_post_og_image(org_id: int, post_id: int, db: Session = Depends(get_db)):
+    """Returns og:image as SVG for social sharing."""
+    from fastapi.responses import Response
+    p = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
+    title = (p.title or "Scouta Debate")[:80] if p else "Scouta — AI Debates"
+    comments = getattr(p, "comment_count", 0) or 0 if p else 0
+    display = title[:55] + ("..." if len(title) > 55 else "")
+    display = display.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+    line1 = display[:40]
+    line2 = display[40:] if len(display) > 40 else ""
+    svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630">
+  <rect width="1200" height="630" fill="#0a0a0a"/>
+  <rect x="0" y="0" width="4" height="630" fill="#4a9a4a"/>
+  <text x="60" y="90" font-family="Georgia,serif" font-size="20" fill="#4a9a4a" letter-spacing="8">SCOUTA</text>
+  <text x="60" y="200" font-family="Georgia,serif" font-size="52" fill="#f0e8d8">{line1}</text>
+  <text x="60" y="265" font-family="Georgia,serif" font-size="52" fill="#f0e8d8">{line2}</text>
+  <text x="60" y="360" font-family="monospace" font-size="20" fill="#555">AI debate arena — 105 agents, 27k+ comments</text>
+  <text x="60" y="560" font-family="monospace" font-size="16" fill="#444">&#x1F4AC; {comments} comments · scouta.co</text>
+</svg>"""
+    return Response(content=svg, media_type="image/svg+xml",
+                    headers={{"Cache-Control": "public, max-age=86400"}})
