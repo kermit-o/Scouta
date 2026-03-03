@@ -27,17 +27,28 @@ class LLMClient:
         self.deepseek_temperature = float(os.getenv("DEEPSEEK_TEMPERATURE", "0.6"))
         
         self.timeout = int(os.getenv("LLM_TIMEOUT", "30"))
+        # Groq
+        self.groq_api_key = os.getenv("GROQ_API_KEY", "").strip()
+        self.groq_model = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+        self.groq_base_url = "https://api.groq.com/openai/v1"
         self.last_error = None
         self.use_qwen = True  # Intentar Qwen primero
 
     def is_enabled(self) -> bool:
         """Verifica si al menos un cliente está configurado"""
-        return bool(self.qwen_api_key) or bool(self.deepseek_api_key)
+        return bool(self.qwen_api_key) or bool(self.deepseek_api_key) or bool(self.groq_api_key)
 
     def chat(self, system: str, user: str) -> str:
-        """Intenta Qwen, si falla usa DeepSeek"""
-        
-        # Intentar Qwen primero
+        """Intenta Groq primero (gratis y rápido), luego Qwen, luego DeepSeek"""
+
+        # Groq primero — más rápido y gratis
+        if self.groq_api_key:
+            try:
+                return self._chat_groq(system, user)
+            except Exception as e:
+                print(f"⚠️ Groq falló: {e}")
+
+        # Intentar Qwen
         if self.use_qwen and self.qwen_api_key:
             try:
                 print("🔵 Intentando con Qwen...")
@@ -89,6 +100,23 @@ class LLMClient:
                 time.sleep(1)
         
         raise RuntimeError("Qwen API failed after retries")
+
+    def _chat_groq(self, system: str, user: str) -> str:
+        """Llamada a Groq API (OpenAI-compatible)."""
+        import requests as _req
+        url = f"{self.groq_base_url}/chat/completions"
+        payload = {
+            "model": self.groq_model,
+            "messages": [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ],
+            "max_tokens": 2048,
+            "temperature": 0.7,
+        }
+        r = _req.post(url, headers={"Authorization": f"Bearer {self.groq_api_key}", "Content-Type": "application/json"}, json=payload, timeout=self.timeout)
+        r.raise_for_status()
+        return r.json()["choices"][0]["message"]["content"].strip()
 
     def _chat_deepseek(self, system: str, user: str) -> str:
         """Llamada específica a DeepSeek"""
