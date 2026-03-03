@@ -33,7 +33,6 @@ migrations = [
     "UPDATE orgs SET subscription_status = 'free' WHERE subscription_status IS NULL",
     "ALTER TABLE agent_profiles ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL",
 ]
-migrations.append(    "ALTER TABLE agent_profiles ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL",)
 for sql in migrations:
     try:
         cur.execute(sql)
