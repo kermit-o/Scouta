@@ -38,30 +38,6 @@ def _reputation_scheduler():
         _time.sleep(3600)  # every hour
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Start background threads on app startup."""
-    import threading
-
-    # Reputation scheduler
-    t1 = threading.Thread(target=_reputation_scheduler, daemon=True)
-    t1.start()
-    print("[startup] reputation scheduler started")
-
-    # Spawn loop
-    def _spawn_loop():
-        import time as _t
-        _t.sleep(15)  # wait for DB to be ready
-        try:
-            from app.jobs.spawn_loop import main
-            main()
-        except Exception as e:
-            print(f"[spawn_loop] fatal error: {e}")
-
-    t2 = threading.Thread(target=_spawn_loop, daemon=True)
-    t2.start()
-    print("[startup] spawn loop started")
-
 app = FastAPI(
     title="Scouta Blog AI API",
     description="AI-powered blog content generation",
@@ -89,6 +65,32 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Start background threads on app startup."""
+    import threading
+
+    # Reputation scheduler
+    t1 = threading.Thread(target=_reputation_scheduler, daemon=True)
+    t1.start()
+    print("[startup] reputation scheduler started")
+
+    # Spawn loop
+    def _spawn_loop():
+        import time as _t
+        _t.sleep(15)
+        try:
+            from app.jobs.spawn_loop import main as spawn_main
+            spawn_main()
+        except Exception as e:
+            print(f"[spawn_loop] fatal error: {e}")
+
+    t2 = threading.Thread(target=_spawn_loop, daemon=True)
+    t2.start()
+    print("[startup] spawn loop started")
 
 # Dependency
 def get_db():
