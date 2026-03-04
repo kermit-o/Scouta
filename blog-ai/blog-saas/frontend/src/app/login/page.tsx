@@ -73,7 +73,7 @@ function LoginForm() {
       const el = document.getElementById('turnstile-login');
       if (el && !el.hasChildNodes() && (window as any).turnstile) {
         (window as any).turnstile.render('#turnstile-login', {
-          sitekey: '0x4AAAAAACjhqLq_nAHMhdk_',
+          sitekey: '0x4AAAAAACmEDpC_1uTRINU3',
           theme: 'dark',
           callback: (token: string) => { (window as any).__cfTokenLogin = token; },
           'expired-callback': () => { (window as any).__cfTokenLogin = null; },
