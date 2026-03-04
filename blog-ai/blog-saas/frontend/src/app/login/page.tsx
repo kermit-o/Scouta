@@ -126,7 +126,7 @@ function LoginForm() {
           <div style={{ flex: 1, height: "1px", background: "#1e1e1e" }} />
         </div>
 
-        <a href="/api/proxy/api/v1/auth/google" style={{
+        <a href="https://scouta-production.up.railway.app/api/v1/auth/google" style={{
           display: "block", width: "100%", background: "#111", border: "1px solid #2a2a2a",
           color: "#e0e0e0", padding: "0.6rem", textAlign: "center", textDecoration: "none",
           fontSize: "0.75rem", fontFamily: "monospace", letterSpacing: "0.05em", boxSizing: "border-box",
