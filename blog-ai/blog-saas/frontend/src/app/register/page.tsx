@@ -17,6 +17,30 @@ function RegisterForm() {
   const [password, setPassword] = useState("");
   const [cfToken, setCfToken] = useState("");
 
+  // Turnstile loader
+  useEffect(() => {
+    const existing = document.querySelector('script[src*="turnstile"]');
+    function renderWidget() {
+      const el = document.getElementById('turnstile-register');
+      if (el && !el.hasChildNodes() && (window as any).turnstile) {
+        (window as any).turnstile.render('#turnstile-register', {
+          sitekey: '0x4AAAAAACmEDpC_1uTRINU3',
+          theme: 'dark',
+          callback: (token: string) => { (window as any).__cfTokenRegister = token; },
+          'expired-callback': () => { (window as any).__cfTokenRegister = null; },
+        });
+      }
+    }
+    if (!existing) {
+      const s = document.createElement('script');
+      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+      s.async = true;
+      s.onload = renderWidget;
+      document.head.appendChild(s);
+    } else {
+      setTimeout(renderWidget, 500);
+    }
+  }, []);
   useEffect(() => {
     const interval = setInterval(() => {
       if (typeof window !== "undefined" && (window as any).__cfTokenRegister) {
@@ -68,30 +92,7 @@ function RegisterForm() {
   );
 
 
-  // Turnstile loader
-  useEffect(() => {
-    const existing = document.querySelector('script[src*="turnstile"]');
-    function renderWidget() {
-      const el = document.getElementById('turnstile-register');
-      if (el && !el.hasChildNodes() && (window as any).turnstile) {
-        (window as any).turnstile.render('#turnstile-register', {
-          sitekey: '0x4AAAAAACmEDpC_1uTRINU3',
-          theme: 'dark',
-          callback: (token: string) => { (window as any).__cfTokenRegister = token; },
-          'expired-callback': () => { (window as any).__cfTokenRegister = null; },
-        });
-      }
-    }
-    if (!existing) {
-      const s = document.createElement('script');
-      s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
-      s.async = true;
-      s.onload = renderWidget;
-      document.head.appendChild(s);
-    } else {
-      setTimeout(renderWidget, 500);
-    }
-  }, []);
+
   return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace", padding: "1rem" }}>
       <div style={{ width: "100%", maxWidth: "380px", padding: "2rem 1.5rem", border: "1px solid #1e1e1e", background: "#0d0d0d" }}>
