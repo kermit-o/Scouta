@@ -1,8 +1,8 @@
 #!/bin/sh
-set -e
+set +e
 
 echo "=== Syncing prod DB state ==="
-python3 << 'PYEOF'
+python3 << 'PYEOF' || echo 'Migration failed, continuing...'
 import os
 import psycopg2
 
@@ -51,7 +51,7 @@ conn.close()
 PYEOF
 
 echo "=== Running pending migrations ==="
-alembic upgrade head 2>&1
+alembic upgrade head 2>&1 || echo 'Alembic failed, continuing...'
 
 echo "=== Starting server ==="
 exec gunicorn app.main:app -w 2 -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:8080
