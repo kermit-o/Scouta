@@ -16,6 +16,8 @@ function RegisterForm() {
   const [displayName, setDisplayName] = useState("");
   const [password, setPassword] = useState("");
   const [cfToken, setCfToken] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   // Turnstile loader
   useEffect(() => {
@@ -49,9 +51,6 @@ function RegisterForm() {
     }, 500);
     return () => clearInterval(interval);
   }, []);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-
   async function handleSubmit() {
     setError("");
     setLoading(true);
