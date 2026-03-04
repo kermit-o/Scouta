@@ -85,24 +85,38 @@ function LoginForm() {
         </div>
 
         {/* Cloudflare Turnstile */}
-        <div id="turnstile-login" style={{ margin: "0.5rem 0" }}></div>
+        <div id="turnstile-login" style={{ margin: "0.75rem 0" }}></div>
         <script dangerouslySetInnerHTML={{ __html: `
-          if (typeof window !== 'undefined') {
-            if (!document.querySelector('script[src*="turnstile"]')) {
-              var s = document.createElement('script');
-              s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?onload=onTurnstileLoad';
-              s.async = true;
-              document.head.appendChild(s);
+          (function() {
+            function loadTurnstile() {
+              if (!document.querySelector('script[src*="turnstile"]')) {
+                var s = document.createElement('script');
+                s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js';
+                s.async = true;
+                s.defer = true;
+                s.onload = function() { renderWidget(); };
+                document.head.appendChild(s);
+              } else if (window.turnstile) {
+                renderWidget();
+              }
             }
-            window.onTurnstileLoad = function() {
-              if (document.getElementById('turnstile-login') && !document.getElementById('turnstile-login').hasChildNodes()) {
-                turnstile.render('#turnstile-login', {
+            function renderWidget() {
+              var el = document.getElementById('turnstile-login');
+              if (el && !el.hasChildNodes() && window.turnstile) {
+                window.turnstile.render('#turnstile-login', {
                   sitekey: '0x4AAAAAACjhqLq_nAHMhdk_',
+                  theme: 'dark',
                   callback: function(token) { window.__cfTokenLogin = token; },
+                  'expired-callback': function() { window.__cfTokenLogin = null; },
                 });
               }
-            };
-          }
+            }
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', loadTurnstile);
+            } else {
+              loadTurnstile();
+            }
+          })();
         ` }} />
         <button onClick={handleSubmit} disabled={loading} style={{
           width: "100%", background: loading ? "#1a1a1a" : "#1a2a1a",
