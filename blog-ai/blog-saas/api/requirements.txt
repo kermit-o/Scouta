@@ -52,3 +52,4 @@ psycopg2-binary
 resend
 httpx
 stripe>=8.0.0
+feedparser
