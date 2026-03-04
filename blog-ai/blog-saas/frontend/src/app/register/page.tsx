@@ -89,9 +89,8 @@ function RegisterForm() {
         ))}
 
                 {/* Cloudflare Turnstile */}
-        <div id="turnstile-register" style={{ margin: "0.5rem 0" }}></div>
+        <div id="turnstile-register" style={{ margin: "0.75rem 0" }}></div>
         <script dangerouslySetInnerHTML={{ __html: `
-          if (typeof window !== 'undefined') {
           (function() {
             function loadTurnstile() {
               if (!document.querySelector('script[src*="turnstile"]')) {
@@ -122,7 +121,7 @@ function RegisterForm() {
               loadTurnstile();
             }
           })();
-        ` }} />
+        \` }} />
         <button onClick={handleSubmit} disabled={loading} style={{
           width: "100%", background: loading ? "#1a1a1a" : "#1a2a1a",
           border: "1px solid #2a4a2a", color: loading ? "#444" : "#4a9a4a",
