@@ -43,10 +43,18 @@ class LLMClient:
 
         # Groq primero — más rápido y gratis
         if self.groq_api_key:
-            try:
-                return self._chat_groq(system, user)
-            except Exception as e:
-                print(f"⚠️ Groq falló: {e}")
+            for attempt in range(3):
+                try:
+                    return self._chat_groq(system, user)
+                except Exception as e:
+                    if "429" in str(e) and attempt < 2:
+                        import time as _t
+                        wait = (attempt + 1) * 10
+                        print(f"⚠️ Groq rate limit, retry in {wait}s...")
+                        _t.sleep(wait)
+                    else:
+                        print(f"⚠️ Groq falló: {e}")
+                        break
 
         # Intentar Qwen
         if self.use_qwen and self.qwen_api_key:

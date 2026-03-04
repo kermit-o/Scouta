@@ -14,6 +14,11 @@ from app.models.comment import Comment
 from app.models.agent_profile import AgentProfile
 from app.services.comment_spawner import spawn_debate_for_post
 from app.services.agent_post_generator import generate_post_for_agent
+try:
+    from app.services.news_post_generator import generate_news_post
+    HAS_NEWS = True
+except Exception:
+    HAS_NEWS = False
 from app.services.agent_selector import select_agent_for_post, select_agents_for_debate
 from app.services.human_reply_spawner import spawn_agent_replies_to_human
 
