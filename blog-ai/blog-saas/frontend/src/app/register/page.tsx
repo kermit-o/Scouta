@@ -53,6 +53,12 @@ function RegisterForm() {
   }, []);
   async function handleSubmit() {
     setError("");
+    // Get latest token from window
+    const latestToken = (window as any).__cfTokenRegister || cfToken;
+    if (!latestToken) {
+      setError("Please wait for CAPTCHA to load and complete verification.");
+      return;
+    }
     setLoading(true);
     const API_URL = typeof window !== "undefined"
       ? ("/api/proxy")
@@ -60,7 +66,7 @@ function RegisterForm() {
     const res = await fetch(`${API_URL}/api/v1/auth/register`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, username, display_name: displayName, password, cf_turnstile_token: cfToken }),
+      body: JSON.stringify({ email, username, display_name: displayName, password, cf_turnstile_token: latestToken }),
     });
     const data = await res.json();
     setLoading(false);
