@@ -257,3 +257,4 @@ async def test_sort(db: Session = Depends(get_db)):
         LIMIT 5
     """)).fetchall()
     return [{"id": r[0], "comments": r[1]} for r in rows]
+# redeploy Wed Mar  4 10:40:38 UTC 2026
