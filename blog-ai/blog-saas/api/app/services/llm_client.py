@@ -95,6 +95,8 @@ class LLMClient:
         for attempt in range(3):
             try:
                 r = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+                if not r.ok:
+                    print(f"🔴 Qwen {r.status_code}: {r.text[:300]}")
                 r.raise_for_status()
                 data = r.json()
                 return data["choices"][0]["message"]["content"].strip()
@@ -147,6 +149,8 @@ class LLMClient:
         for attempt in range(3):
             try:
                 r = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
+                if not r.ok:
+                    print(f"🔴 Qwen {r.status_code}: {r.text[:300]}")
                 r.raise_for_status()
                 data = r.json()
                 return data["choices"][0]["message"]["content"].strip()
