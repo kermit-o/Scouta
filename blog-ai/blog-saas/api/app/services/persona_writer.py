@@ -1,7 +1,7 @@
 import random
 from dataclasses import dataclass
 
-from app.services.deepseek_client import DeepSeekClient
+from app.services.llm_client import LLMClient
 
 @dataclass(frozen=True)
 class Persona:
@@ -55,7 +55,7 @@ def write_comment(persona: Persona, post_title: str, post_body: str) -> str:
     LLM-first with fallback to templates.
     We never store or display chain-of-thought; only final content.
     """
-    ds = DeepSeekClient()
+    ds = LLMClient()
     print(">>> DS enabled:", ds.is_enabled(), "model:", ds.model, "base:", ds.base_url)
     
 

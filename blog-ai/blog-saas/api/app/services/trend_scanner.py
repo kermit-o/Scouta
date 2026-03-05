@@ -5,14 +5,14 @@ from typing import List, Dict, Any, Optional
 import json
 from datetime import datetime
 
-from app.services.deepseek_client import DeepSeekClient
+from app.services.llm_client import LLMClient
 
 
 class TrendScanner:
     """Escanea y analiza tendencias para generar posts"""
     
-    def __init__(self, deepseek_client: Optional[DeepSeekClient] = None):
-        self.deepseek = deepseek_client or DeepSeekClient()
+    def __init__(self, deepseek_client: Optional[LLMClient] = None):
+        self.deepseek = deepseek_client or LLMClient()
     
     def get_current_trends(self) -> List[Dict[str, Any]]:
         """
