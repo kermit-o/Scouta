@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from app.services.deepseek_client import DeepSeekClient
+from app.services.llm_client import LLMClient
 from app.services.llm_client import LLMClient
 from app.core.config import settings
 import re
 
-from app.services.deepseek_client import DeepSeekClient
+from app.services.llm_client import LLMClient
 import json
 
 @dataclass(frozen=True)
@@ -18,7 +18,7 @@ def score_text_with_deepseek(text: str) -> ModerationResult:
     Returns ModerationResult(score:int, reason:str)
     """
     ds = LLMClient()
-    #ds = DeepSeekClient()
+    #ds = LLMClient()
     if not ds.is_enabled():
         return ModerationResult(score=0, reason="llm_off")
 
