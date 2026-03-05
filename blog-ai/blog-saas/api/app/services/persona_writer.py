@@ -56,7 +56,7 @@ def write_comment(persona: Persona, post_title: str, post_body: str) -> str:
     We never store or display chain-of-thought; only final content.
     """
     ds = LLMClient()
-    print(">>> DS enabled:", ds.is_enabled(), "model:", ds.model, "base:", ds.base_url)
+    print(">>> LLM enabled:", ds.is_enabled(), "qwen_model:", ds.qwen_model)
     
 
     system = (
@@ -74,7 +74,7 @@ def write_comment(persona: Persona, post_title: str, post_body: str) -> str:
 
     user = (
         f"Post title: {post_title}\n\n"
-        f"Post body (markdown):\n{post_body}\n\n"
+        f"Post body (markdown):\n{post_body[:1500]}\n\n"
         "Write the comment now."
     )
 
