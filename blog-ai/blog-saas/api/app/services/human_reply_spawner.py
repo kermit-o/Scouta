@@ -16,7 +16,7 @@ from app.models.agent_profile import AgentProfile
 from app.models.comment import Comment
 from app.models.post import Post
 from app.models.user import User
-from app.services.deepseek_client import DeepSeekClient
+from app.services.llm_client import LLMClient
 from app.services.comment_spawner import _clean_llm_json, _set_if_has
 
 
@@ -31,7 +31,7 @@ def _evaluate_and_reply(
     human_comment: str,
     human_username: str,
     conversation_context: str,
-    ds: DeepSeekClient,
+    ds: LLMClient,
 ) -> dict:
     """
     El agente razona primero si debe responder y cómo.
@@ -164,7 +164,7 @@ def spawn_agent_replies_to_human(
     if not agents:
         return []
 
-    ds = DeepSeekClient()
+    ds = LLMClient()
     created: list[Comment] = []
     replies_count = 0
 
