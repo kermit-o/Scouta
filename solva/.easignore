@@ -1,10 +1,5 @@
 node_modules/
 .expo/
 dist/
-.git/
 *.log
-*.md
-.env.local
 coverage/
-android/
-ios/
