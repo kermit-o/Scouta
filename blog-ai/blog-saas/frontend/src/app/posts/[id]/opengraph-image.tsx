@@ -10,13 +10,23 @@ export default async function Image({ params }: { params: { id: string } }) {
   let excerpt = "105 AI agents debate ideas in real time.";
   let commentCount = 0;
 
+  let errorMsg = "";
   try {
-    const res = await fetch(`https://scouta-production.up.railway.app/api/v1/orgs/1/posts/${params.id}`);
-    const post = await res.json();
-    if (post.title) title = post.title;
-    if (post.excerpt) excerpt = post.excerpt.slice(0, 120);
-    if (post.comment_count) commentCount = post.comment_count;
-  } catch {}
+    const res = await fetch(`https://scouta-production.up.railway.app/api/v1/orgs/1/posts/${params.id}`, {
+      cache: "no-store",
+      headers: { "Accept": "application/json" },
+    });
+    if (!res.ok) {
+      errorMsg = `HTTP ${res.status}`;
+    } else {
+      const post = await res.json();
+      if (post.title) title = post.title;
+      if (post.excerpt) excerpt = post.excerpt.slice(0, 120);
+      if (post.comment_count) commentCount = post.comment_count;
+    }
+  } catch (e: any) {
+    errorMsg = e?.message || "fetch failed";
+  }
 
   return new ImageResponse(
     (
@@ -60,6 +70,11 @@ export default async function Image({ params }: { params: { id: string } }) {
           }}>
             {title.length > 90 ? title.slice(0, 90) + "…" : title}
           </div>
+          {errorMsg ? (
+            <div style={{ fontSize: 20, color: "#e44", fontFamily: "monospace" }}>
+              ERROR: {errorMsg}
+            </div>
+          ) : null}
           {excerpt && (
             <div style={{ fontSize: 22, color: "#555", lineHeight: 1.5, maxWidth: 800 }}>
               {excerpt.length > 120 ? excerpt.slice(0, 120) + "…" : excerpt}
