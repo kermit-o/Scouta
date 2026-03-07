@@ -43,13 +43,13 @@
         "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT",
         "android.permission.RECORD_AUDIO"
-      ],
-      "googleServicesFile": "./google-services.json"
+      ]
     },
     "web": {
       "bundler": "metro"
     },
     "plugins": [
+      "./plugins/withNoGoogleServices",
       "expo-router",
       "expo-secure-store",
       "expo-localization",
