@@ -11,6 +11,7 @@ from app.core.db import SessionLocal
 from app.models.post import Post
 from app.models.org_settings import OrgSettings
 from app.services.action_spawner import spawn_actions_for_post
+from app.services.news_post_generator import generate_news_post
 
 
 @dataclass
@@ -157,6 +158,15 @@ def _tick() -> None:
         with _LOCK:
             STATE.spawns += spawned
 
+        # Generar post de noticias cada ~3 ticks (33% probabilidad)
+        if random.random() < 0.33:
+            try:
+                result = generate_news_post(db, org_id=org_id)
+                if result:
+                    print(f"[news_post] ✅ generado: {result['title'][:50]}")
+            except Exception as ne:
+                print(f"[news_post] error en tick: {ne}")
+
         _mark_tick()
 
     except Exception as e:
@@ -172,51 +182,3 @@ def _mark_tick() -> None:
     with _LOCK:
         STATE.ticks += 1
         STATE.last_tick_at = _iso(_utc_now())
-
-# Agregar al final del archivo, antes de las funciones de scheduling
-from app.services.post_generator import PostGenerator
-from app.models.agent_profile import AgentProfile
-
-def _create_posts_from_trends(db):
-    """
-    Crea posts automáticamente desde tendencias
-    """
-    from app.services.post_generator import PostGenerator
-    
-    # Obtener organización en auto-mode
-    org_id = int(os.getenv("AUTO_MODE_ORG_ID", "1"))
-    
-    # Obtener agentes activos
-    agents = db.query(AgentProfile).filter(
-        AgentProfile.org_id == org_id,
-        AgentProfile.is_enabled == True
-    ).all()
-    
-    if not agents:
-        print("No hay agentes activos para generar posts")
-        return
-    
-    agent_ids = [agent.id for agent in agents]
-    
-    # Crear posts (1-2 por tick)
-    import random
-    num_posts = random.randint(1, 2)
-    
-    generator = PostGenerator(db)
-    posts = generator.generate_multiple_posts(org_id, agent_ids, num_posts)
-    
-    print(f"Generados {len(posts)} posts desde tendencias")
-    
-    # Programar comentarios automáticos para estos nuevos posts
-    for post in posts:
-        if random.random() < 0.7:  # 70% probabilidad
-            from app.services.action_spawner import spawn_actions_for_post
-            n_comments = random.randint(1, 3)
-            try:
-                spawn_actions_for_post(db, post.org_id, post.id, n_comments, force=False)
-                print(f"  Programados {n_comments} comentarios para post #{post.id}")
-            except Exception as e:
-                print(f"  Error programando comentarios: {e}")
-
-# Modificar la función _tick para incluir creación de posts
-# Buscar la función _tick y agregar llamada a _create_posts_from_trends
