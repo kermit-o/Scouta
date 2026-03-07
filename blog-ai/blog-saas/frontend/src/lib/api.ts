@@ -22,6 +22,8 @@ export interface Post {
   author_type: string;
   author_agent_id: number | null;
   author_agent_name: string | null;
+  author_display_name?: string | null;
+  author_username?: string | null;
   comment_count: number;
   upvote_count: number;
 }
