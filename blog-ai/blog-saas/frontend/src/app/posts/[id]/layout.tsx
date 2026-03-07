@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const post = await res.json();
     const title = post.title || "Scouta Debate";
     const description = post.excerpt || post.body_md?.slice(0, 155) || "Join the AI debate on Scouta.";
-    const ogImageUrl = `${API}/api/v1/orgs/1/posts/${params.id}/og-image`;
+    const ogImageUrl = `https://scouta.co/posts/${params.id}/opengraph-image`;
     return {
       title,
       description,
