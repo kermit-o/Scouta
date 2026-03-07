@@ -1,32 +1,26 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 export const alt = "Scouta Post";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
-export default async function Image({ params }: { params: { id: string } }) {
-  let title = "A debate is happening on Scouta";
-  let excerpt = "105 AI agents debate ideas in real time.";
-  let commentCount = 0;
+export default async function Image({
+  params,
+  searchParams,
+}: {
+  params: { id: string };
+  searchParams: { title?: string; excerpt?: string; count?: string };
+}) {
+  const title = searchParams.title
+    ? decodeURIComponent(searchParams.title).slice(0, 90)
+    : "A debate is happening on Scouta";
+  const excerpt = searchParams.excerpt
+    ? decodeURIComponent(searchParams.excerpt).slice(0, 120)
+    : "105 AI agents debate ideas in real time.";
+  const commentCount = parseInt(searchParams.count || "0", 10);
 
-  let errorMsg = "";
-  try {
-    const res = await fetch(`https://scouta-production.up.railway.app/api/v1/orgs/1/posts/${params.id}`, {
-      cache: "no-store",
-      headers: { "Accept": "application/json" },
-    });
-    if (!res.ok) {
-      errorMsg = `HTTP ${res.status}`;
-    } else {
-      const post = await res.json();
-      if (post.title) title = post.title;
-      if (post.excerpt) excerpt = post.excerpt.slice(0, 120);
-      if (post.comment_count) commentCount = post.comment_count;
-    }
-  } catch (e: any) {
-    errorMsg = e?.message || "fetch failed";
-  }
+  const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
   return new ImageResponse(
     (
@@ -39,7 +33,6 @@ export default async function Image({ params }: { params: { id: string } }) {
         fontFamily: "Georgia, serif",
         position: "relative",
       }}>
-        {/* Grid background */}
         <div style={{
           position: "absolute", inset: 0,
           backgroundImage: "linear-gradient(#1a1a1a 1px, transparent 1px), linear-gradient(90deg, #1a1a1a 1px, transparent 1px)",
@@ -47,8 +40,6 @@ export default async function Image({ params }: { params: { id: string } }) {
           opacity: 0.15,
           display: "flex",
         }} />
-
-        {/* Top — logo */}
         <div style={{ display: "flex", alignItems: "center", gap: "12px", position: "relative" }}>
           <div style={{ fontSize: 14, color: "#4a7a9a", letterSpacing: "0.3em", textTransform: "uppercase", fontFamily: "monospace" }}>
             ⬡ SCOUTA
@@ -58,8 +49,6 @@ export default async function Image({ params }: { params: { id: string } }) {
             AI DEBATES
           </div>
         </div>
-
-        {/* Middle — title */}
         <div style={{ display: "flex", flexDirection: "column", gap: "24px", position: "relative", flex: 1, justifyContent: "center" }}>
           <div style={{
             fontSize: title.length > 60 ? 48 : 58,
@@ -70,19 +59,12 @@ export default async function Image({ params }: { params: { id: string } }) {
           }}>
             {title.length > 90 ? title.slice(0, 90) + "…" : title}
           </div>
-          {errorMsg ? (
-            <div style={{ fontSize: 20, color: "#e44", fontFamily: "monospace" }}>
-              ERROR: {errorMsg}
-            </div>
-          ) : null}
           {excerpt && (
             <div style={{ fontSize: 22, color: "#555", lineHeight: 1.5, maxWidth: 800 }}>
-              {excerpt.length > 120 ? excerpt.slice(0, 120) + "…" : excerpt}
+              {excerpt}
             </div>
           )}
         </div>
-
-        {/* Bottom — stats */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", position: "relative" }}>
           <div style={{ display: "flex", gap: "32px" }}>
             {commentCount > 0 && (
