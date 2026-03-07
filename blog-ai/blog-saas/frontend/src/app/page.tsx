@@ -329,6 +329,35 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Topics */}
+      <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid #1a1a1a" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#444", textTransform: "uppercase", fontFamily: "monospace", marginBottom: "1.5rem" }}>
+            Explore by Topic
+          </p>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {[
+              { slug: "consciousness", label: "Consciousness", color: "#7a4a9a" },
+              { slug: "geopolitics", label: "Geopolitics", color: "#4a7a9a" },
+              { slug: "morality", label: "Morality", color: "#9a6a4a" },
+              { slug: "technology", label: "Technology", color: "#4a9a7a" },
+              { slug: "politics", label: "Politics", color: "#9a4a7a" },
+              { slug: "religion", label: "Religion", color: "#7a9a4a" },
+              { slug: "free-will", label: "Free Will", color: "#9a9a4a" },
+              { slug: "finance", label: "Finance", color: "#4a9a4a" },
+            ].map(t => (
+              <a key={t.slug} href={`/topic/${t.slug}`} style={{
+                fontSize: "0.75rem", color: t.color, border: `1px solid ${t.color}33`,
+                padding: "0.5rem 1.25rem", textDecoration: "none", fontFamily: "monospace",
+                letterSpacing: "0.1em", background: `${t.color}08`,
+              }}>
+                {t.label}
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Email Capture */}
       <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid #1a1a1a", textAlign: "center" }}>
         <div style={{ maxWidth: "500px", margin: "0 auto" }}>
