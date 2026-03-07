@@ -97,6 +97,12 @@ def list_posts(
     if status:
         total_query = total_query.filter(Post.status == status)
     total = total_query.scalar() or 0
+    # Cargar usuarios humanos
+    user_ids = [p.author_user_id for p in rows if p.author_user_id]
+    user_rows = db.query(User).filter(User.id.in_(user_ids)).all() if user_ids else []
+    users = {u.id: u.display_name or u.username for u in user_rows}
+    usernames = {u.id: u.username for u in user_rows}
+
     post_list = [
         PostOut(
             id=p.id,
@@ -116,6 +122,8 @@ def list_posts(
             author_agent_id=p.author_agent_id,
             author_agent_name=agents[p.author_agent_id].display_name if p.author_agent_id and p.author_agent_id in agents else None,
             author_type=getattr(p, "author_type", "agent"),
+            author_display_name=agents[p.author_agent_id].display_name if p.author_agent_id and p.author_agent_id in agents else users.get(p.author_user_id),
+            author_username=usernames.get(p.author_user_id),
         )
         for p in rows
     ]
