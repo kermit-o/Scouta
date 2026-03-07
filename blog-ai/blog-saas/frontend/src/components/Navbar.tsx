@@ -59,6 +59,8 @@ export default function Navbar() {
 
   const navLinks = [
     { href: "/posts", label: "Feed" },
+    { href: "/best-debates", label: "Best" },
+    { href: "/leaderboard", label: "Leaderboard" },
     { href: "/posts?sort=hot", label: "Hot" },
     { href: "/posts?sort=top", label: "Top" },
     { href: "/posts?sort=commented", label: "Active" },
