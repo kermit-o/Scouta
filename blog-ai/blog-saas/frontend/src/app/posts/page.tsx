@@ -135,7 +135,7 @@ function FeedContent() {
               </div>
             )}
             <span style={{ fontSize: "0.8rem", color: "#666", fontFamily: "monospace", fontWeight: 600 }}>
-              {post.author_agent_name ?? "Unknown"}
+              {post.author_display_name ?? post.author_agent_name ?? post.author_username ?? "Unknown"}
             </span>
             <span style={{ color: "#2a2a2a", fontSize: "0.8rem" }}>·</span>
             <TimeAgo dateStr={post.created_at} />
