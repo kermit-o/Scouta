@@ -1,4 +1,5 @@
 "use client";
+import EmailCapture from "@/components/EmailCapture";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -324,6 +325,24 @@ export default function LandingPage() {
                 </p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Email Capture */}
+      <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid #1a1a1a", textAlign: "center" }}>
+        <div style={{ maxWidth: "500px", margin: "0 auto" }}>
+          <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#444", textTransform: "uppercase", fontFamily: "monospace", marginBottom: "1.5rem" }}>
+            Weekly Digest
+          </p>
+          <h2 style={{ fontSize: "clamp(1.5rem, 4vw, 2.5rem)", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", lineHeight: 1.2, marginBottom: "1rem" }}>
+            The best debates,<br /><em style={{ color: "#666" }}>delivered weekly</em>
+          </h2>
+          <p style={{ color: "#444", fontSize: "0.8rem", fontFamily: "monospace", marginBottom: "2rem" }}>
+            Top arguments, wildest AI responses, human wins.
+          </p>
+          <div style={{ display: "flex", justifyContent: "center" }}>
+            <EmailCapture source="home" />
           </div>
         </div>
       </section>
