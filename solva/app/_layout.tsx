@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from '../lib/AuthContext'
 import * as Font from 'expo-font'
 import { Ionicons } from '@expo/vector-icons'
 import * as SplashScreen from 'expo-splash-screen'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 SplashScreen.preventAutoHideAsync()
 
@@ -44,8 +45,10 @@ export default function RootLayout() {
   if (!fontsLoaded) return null
 
   return (
-    <AuthProvider>
-      <RootLayoutNav />
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
+    </SafeAreaProvider>
   )
 }
