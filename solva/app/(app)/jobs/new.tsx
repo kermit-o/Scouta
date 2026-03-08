@@ -4,10 +4,10 @@ import {
   ActivityIndicator, RefreshControl, TextInput
 } from 'react-native'
 import { router } from 'expo-router'
-import { supabase } from '../../lib/supabase'
-import { useProfile } from '../../hooks/useProfile'
-import { useAuth } from '../../lib/AuthContext'
-import { useLocation, searchJobsNearby } from '../../hooks/useLocation'
+import { supabase } from '../../../lib/supabase'
+import { useProfile } from '../../../hooks/useProfile'
+import { useAuth } from '../../../lib/AuthContext'
+import { useLocation, searchJobsNearby } from '../../../hooks/useLocation'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
