@@ -81,7 +81,8 @@
           "photosPermission": "Solva necesita acceso a tus fotos.",
           "cameraPermission": "Solva necesita la camara para fotos de trabajos."
         }
-      ]
+      ],
+      "./plugins/withStripeVersionPin"
     ],
     "experiments": {
       "typedRoutes": true
