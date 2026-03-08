@@ -82,7 +82,8 @@
           "cameraPermission": "Solva necesita la camara para fotos de trabajos."
         }
       ],
-      "./plugins/withStripeVersionPin"
+      "./plugins/withNoJitpack",
+      "./plugins/withNoJitpackSettings"
     ],
     "experiments": {
       "typedRoutes": true
