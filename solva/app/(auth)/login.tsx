@@ -20,7 +20,19 @@ export default function LoginScreen() {
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
-    if (error) Alert.alert('Error', error.message)
+    if (error) {
+      const msg = error.message.toLowerCase()
+      if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('wrong password'))
+        Alert.alert('Credenciales incorrectas', 'Email o contraseña incorrectos. Inténtalo de nuevo.')
+      else if (msg.includes('email not confirmed'))
+        Alert.alert('Email no confirmado', 'Revisa tu bandeja de entrada y confirma tu email antes de iniciar sesión.')
+      else if (msg.includes('too many') || msg.includes('rate limit'))
+        Alert.alert('Demasiados intentos', 'Espera unos minutos antes de intentarlo de nuevo.')
+      else if (msg.includes('user not found') || msg.includes('no user'))
+        Alert.alert('Cuenta no encontrada', 'No existe una cuenta con este email. ¿Quieres registrarte?')
+      else
+        Alert.alert('Error al iniciar sesión', 'Algo salió mal. Inténtalo de nuevo o contacta soporte@solva.app')
+    }
     else router.replace('/(app)')
   }
 
