@@ -107,7 +107,7 @@ export default function RegisterScreen() {
       const json = await res.json()
       setLoading(false)
       if (res.status === 422 || json.error_code === 'user_already_exists') {
-        setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
+        showError('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
       } else if (res.status === 200 && json.access_token) {
         await supabase.auth.setSession({ access_token: json.access_token, refresh_token: json.refresh_token })
         router.replace('/(app)')
