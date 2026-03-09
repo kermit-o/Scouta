@@ -1,8 +1,14 @@
 import { Tabs, router } from 'expo-router'
 import { useEffect } from 'react'
 import { useProfile } from '../../hooks/useProfile'
-import { Ionicons } from '@expo/vector-icons'
+import { Text, Platform } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+function TabIcon({ emoji, active }: { emoji: string; active: boolean }) {
+  return (
+    <Text style={{ fontSize: 22, opacity: active ? 1 : 0.45 }}>{emoji}</Text>
+  )
+}
 
 export default function AppLayout() {
   const { profile, loading } = useProfile()
@@ -18,19 +24,20 @@ export default function AppLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#1a1a2e',
+        tabBarActiveTintColor: '#2563EB',
         tabBarInactiveTintColor: '#999',
         tabBarStyle: {
           backgroundColor: '#fff',
-          borderTopColor: '#eee',
+          borderTopColor: 'rgba(0,0,0,0.06)',
           borderTopWidth: 1,
           paddingBottom: insets.bottom + 6,
-          paddingTop: 6,
-          height: 60 + insets.bottom,
+          paddingTop: 8,
+          height: 64 + insets.bottom,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: '600',
+          marginTop: 2,
         },
       }}
     >
@@ -38,45 +45,35 @@ export default function AppLayout() {
         name="index"
         options={{
           title: 'Inicio',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon emoji="🏠" active={focused} />,
         }}
       />
       <Tabs.Screen
         name="jobs"
         options={{
           title: 'Jobs',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="briefcase-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon emoji="💼" active={focused} />,
         }}
       />
       <Tabs.Screen
         name="subscription"
         options={{
           title: 'Mi Plan',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="star-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon emoji="⭐" active={focused} />,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Mensajes',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubbles-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon emoji="💬" active={focused} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon emoji="👤" active={focused} />,
         }}
       />
     </Tabs>
