@@ -74,13 +74,15 @@ export default function RegisterScreen() {
   const [role, setRole] = useState<UserRole>('client')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   const strength = passwordStrength(password)
   const selectedCountry = COUNTRIES.find(c => c.value === country)!
   const canStep1 = fullName.trim().length > 0 && email.trim().length > 0 && password.length >= 6
 
   async function handleRegister() {
-    if (!acceptTerms) { Alert.alert('Error', 'Debes aceptar los términos'); return }
+    setErrorMsg(null)
+    if (!acceptTerms) { setErrorMsg('Debes aceptar los términos de servicio.'); return }
     setLoading(true)
     const { data, error } = await supabase.auth.signUp({
       email, password,
@@ -99,18 +101,15 @@ export default function RegisterScreen() {
       const msg = error.message.toLowerCase()
       const isEmailTaken = (error as any).status === 422 || msg.includes('already registered') || msg.includes('user already')
       if (isEmailTaken)
-        Alert.alert('Email en uso', 'Este email ya tiene una cuenta. ¿Olvidaste tu contraseña?', [
-          { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
-          { text: 'Cancelar', style: 'cancel' }
-        ])
+        setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
       else if (msg.includes('password') && msg.includes('short'))
-        Alert.alert('Contraseña muy corta', 'La contraseña debe tener al menos 6 caracteres.')
+        setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
       else if (msg.includes('invalid') && msg.includes('email'))
-        Alert.alert('Email inválido', 'Por favor introduce un email válido.')
+        setErrorMsg('Por favor introduce un email válido.')
       else if (msg.includes('rate limit') || msg.includes('too many'))
-        Alert.alert('Demasiados intentos', 'Espera unos minutos antes de intentarlo de nuevo.')
+        setErrorMsg('Demasiados intentos. Espera unos minutos.')
       else
-        Alert.alert('Error al registrarse', error.message)
+        setErrorMsg('Algo salió mal. Inténtalo de nuevo.')
     } else if (data.user && data.user.identities && data.user.identities.length === 0) {
       Alert.alert('Email en uso', 'Este email ya tiene una cuenta. ¿Olvidaste tu contraseña?', [
         { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
@@ -322,19 +321,28 @@ export default function RegisterScreen() {
             ))}
 
             {/* Terms */}
-            <TouchableOpacity
-              style={styles.termsRow}
-              onPress={() => setAcceptTerms(!acceptTerms)}
-              activeOpacity={0.8}
-            >
-              <View style={[styles.checkbox, acceptTerms && styles.checkboxActive]}>
-                {acceptTerms && <Svg width="12" height="12" viewBox="0 0 12 12" fill="none"><Path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></Svg>}
-              </View>
+            <View style={styles.termsRow}>
+              <TouchableOpacity
+                onPress={() => setAcceptTerms(!acceptTerms)}
+                activeOpacity={0.8}
+              >
+                <View style={[styles.checkbox, acceptTerms && styles.checkboxActive]}>
+                  {acceptTerms && <Svg width="12" height="12" viewBox="0 0 12 12" fill="none"><Path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></Svg>}
+                </View>
+              </TouchableOpacity>
               <Text style={styles.termsText}>
-                Acepto los <Text style={styles.termsLink} onPress={() => router.navigate('/terms')}>Términos de Servicio</Text> y la{' '}<Text style={styles.termsLink} onPress={() => router.navigate('/privacy')}>Política de Privacidad</Text>
+                Acepto los{' '}
+                <Text style={styles.termsLink} onPress={() => router.navigate('/terms')}>Términos de Servicio</Text>
+                {' '}y la{' '}
+                <Text style={styles.termsLink} onPress={() => router.navigate('/privacy')}>Política de Privacidad</Text>
               </Text>
-            </TouchableOpacity>
+            </View>
 
+            {errorMsg && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{errorMsg}</Text>
+              </View>
+            )}
             <TouchableOpacity
               style={[styles.btn, (!acceptTerms || loading) && styles.btnDisabled]}
               onPress={handleRegister}
@@ -455,6 +463,8 @@ const styles = StyleSheet.create({
 
   // Terms
   termsRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 16, marginBottom: 4 },
+  errorBox: { backgroundColor: '#FEF2F2', borderRadius: 8, padding: 12, marginBottom: 12 },
+  errorText: { color: '#DC2626', fontSize: 13, textAlign: 'center' },
   checkbox: {
     width: 24, height: 24, borderRadius: 8,
     borderWidth: 2, borderColor: '#E5E7EB',
