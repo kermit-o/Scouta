@@ -97,7 +97,8 @@ export default function RegisterScreen() {
     setLoading(false)
     if (error) {
       const msg = error.message.toLowerCase()
-      if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already'))
+      const isEmailTaken = (error as any).status === 422 || msg.includes('already registered') || msg.includes('user already')
+      if (isEmailTaken)
         Alert.alert('Email en uso', 'Este email ya tiene una cuenta. ¿Olvidaste tu contraseña?', [
           { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
           { text: 'Cancelar', style: 'cancel' }
@@ -109,7 +110,7 @@ export default function RegisterScreen() {
       else if (msg.includes('rate limit') || msg.includes('too many'))
         Alert.alert('Demasiados intentos', 'Espera unos minutos antes de intentarlo de nuevo.')
       else
-        Alert.alert('Error al registrarse', 'Algo salió mal. Inténtalo de nuevo o contacta soporte@solva.app')
+        Alert.alert('Error al registrarse', error.message)
     } else if (data.user && data.user.identities && data.user.identities.length === 0) {
       Alert.alert('Email en uso', 'Este email ya tiene una cuenta. ¿Olvidaste tu contraseña?', [
         { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
@@ -330,7 +331,7 @@ export default function RegisterScreen() {
                 {acceptTerms && <Svg width="12" height="12" viewBox="0 0 12 12" fill="none"><Path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></Svg>}
               </View>
               <Text style={styles.termsText}>
-                Acepto los <Text style={styles.termsLink} onPress={() => router.push('/terms')}>Términos de Servicio</Text> y la{' '}<Text style={styles.termsLink} onPress={() => router.push('/privacy')}>Política de Privacidad</Text>
+                Acepto los <Text style={styles.termsLink} onPress={() => router.navigate('/terms')}>Términos de Servicio</Text> y la{' '}<Text style={styles.termsLink} onPress={() => router.navigate('/privacy')}>Política de Privacidad</Text>
               </Text>
             </TouchableOpacity>
 
