@@ -105,6 +105,7 @@ export default function RegisterScreen() {
       error = e
     }
     setLoading(false)
+    console.log("SIGNUP_ERROR:", JSON.stringify(error), "DATA:", JSON.stringify(data?.user?.identities))
     if (error) {
       const msg = (error.message || '').toLowerCase()
       const code = error.code || error.status || (error as any).__httpStatus
