@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { Linking } from 'react-native'
+import Svg, { Path } from 'react-native-svg'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform
@@ -306,11 +308,10 @@ export default function RegisterScreen() {
               activeOpacity={0.8}
             >
               <View style={[styles.checkbox, acceptTerms && styles.checkboxActive]}>
-                {acceptTerms && <Ionicons name="checkmark" size={14} color="#fff" />}
+                {acceptTerms && <Svg width="12" height="12" viewBox="0 0 12 12" fill="none"><Path d="M2 6L5 9L10 3" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></Svg>}
               </View>
               <Text style={styles.termsText}>
-                Acepto los <Text style={styles.termsLink}>Términos de Servicio</Text> y la{' '}
-                <Text style={styles.termsLink}>Política de Privacidad</Text>
+                Acepto los <Text style={styles.termsLink} onPress={() => Linking.openURL("https://getsolva.co/terms")}>Términos de Servicio</Text> y la{' '}<Text style={styles.termsLink} onPress={() => Linking.openURL("https://getsolva.co/privacy")}>Política de Privacidad</Text>
               </Text>
             </TouchableOpacity>
 
