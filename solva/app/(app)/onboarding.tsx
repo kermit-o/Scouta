@@ -110,6 +110,11 @@ export default function RegisterScreen() {
         Alert.alert('Demasiados intentos', 'Espera unos minutos antes de intentarlo de nuevo.')
       else
         Alert.alert('Error al registrarse', 'Algo salió mal. Inténtalo de nuevo o contacta soporte@solva.app')
+    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
+      Alert.alert('Email en uso', 'Este email ya tiene una cuenta. ¿Olvidaste tu contraseña?', [
+        { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
+        { text: 'Cancelar', style: 'cancel' }
+      ])
     } else if (data.user) {
       Alert.alert('✅ ¡Bienvenido!', 'Tu cuenta fue creada exitosamente.', [
         { text: 'Continuar', onPress: () => router.replace('/(auth)/login') }
