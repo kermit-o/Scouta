@@ -1,47 +1,22 @@
 import { Tabs, router } from 'expo-router'
 import { useEffect } from 'react'
 import { useProfile } from '../../hooks/useProfile'
-import { View } from 'react-native'
+import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import Svg, { Path, Circle, Rect } from 'react-native-svg'
+import { Platform } from 'react-native'
 
-function HomeIcon({ color }: { color: string }) {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Path d="M3 9.5L12 3L21 9.5V20C21 20.55 20.55 21 20 21H15V15H9V21H4C3.45 21 3 20.55 3 20V9.5Z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill="none"/>
-    </Svg>
-  )
-}
-function SearchIcon({ color }: { color: string }) {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Circle cx="11" cy="11" r="7" stroke={color} strokeWidth="1.8" fill="none"/>
-      <Path d="M16.5 16.5L21 21" stroke={color} strokeWidth="1.8" strokeLinecap="round"/>
-    </Svg>
-  )
-}
-function JobsIcon({ color }: { color: string }) {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Rect x="2" y="7" width="20" height="14" rx="2" stroke={color} strokeWidth="1.8" fill="none"/>
-      <Path d="M16 7V5C16 3.9 15.1 3 14 3H10C8.9 3 8 3.9 8 5V7" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none"/>
-    </Svg>
-  )
-}
-function MessagesIcon({ color }: { color: string }) {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Path d="M21 15C21 16.1 20.1 17 19 17H7L3 21V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V15Z" stroke={color} strokeWidth="1.8" strokeLinejoin="round" fill="none"/>
-    </Svg>
-  )
-}
-function ProfileIcon({ color }: { color: string }) {
-  return (
-    <Svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <Circle cx="12" cy="8" r="4" stroke={color} strokeWidth="1.8" fill="none"/>
-      <Path d="M4 20C4 17 7.6 14 12 14C16.4 14 20 17 20 20" stroke={color} strokeWidth="1.8" strokeLinecap="round" fill="none"/>
-    </Svg>
-  )
+// Fix web: inyectar CSS de Ionicons manualmente
+if (Platform.OS === 'web') {
+  const style = document.createElement('style')
+  style.textContent = `
+    @font-face {
+      font-family: 'Ionicons';
+      src: url('https://cdn.jsdelivr.net/npm/ionicons@7.4.0/dist/fonts/ionicons.woff2') format('woff2');
+      font-weight: normal;
+      font-style: normal;
+    }
+  `
+  document.head.appendChild(style)
 }
 
 export default function AppLayout() {
@@ -79,35 +54,35 @@ export default function AppLayout() {
         name="index"
         options={{
           title: 'Inicio',
-          tabBarIcon: ({ color }) => <HomeIcon color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="search"
         options={{
           title: 'Buscar',
-          tabBarIcon: ({ color }) => <SearchIcon color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="search-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="jobs"
         options={{
           title: 'Jobs',
-          tabBarIcon: ({ color }) => <JobsIcon color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="briefcase-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: 'Mensajes',
-          tabBarIcon: ({ color }) => <MessagesIcon color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="chatbubble-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => <ProfileIcon color={color} />,
+          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
         }}
       />
     </Tabs>
