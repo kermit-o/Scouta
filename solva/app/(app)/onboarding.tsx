@@ -95,13 +95,27 @@ export default function RegisterScreen() {
       }
     })
     setLoading(false)
-    if (error) Alert.alert('Error', error.message)
-    else if (data.user) {
-      Alert.alert('✅ Cuenta creada', 'Tu cuenta fue creada exitosamente', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') }
+    if (error) {
+      const msg = error.message.toLowerCase()
+      if (msg.includes('already registered') || msg.includes('already been registered') || msg.includes('user already'))
+        Alert.alert('Email en uso', 'Este email ya tiene una cuenta. ¿Olvidaste tu contraseña?', [
+          { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
+          { text: 'Cancelar', style: 'cancel' }
+        ])
+      else if (msg.includes('password') && msg.includes('short'))
+        Alert.alert('Contraseña muy corta', 'La contraseña debe tener al menos 6 caracteres.')
+      else if (msg.includes('invalid') && msg.includes('email'))
+        Alert.alert('Email inválido', 'Por favor introduce un email válido.')
+      else if (msg.includes('rate limit') || msg.includes('too many'))
+        Alert.alert('Demasiados intentos', 'Espera unos minutos antes de intentarlo de nuevo.')
+      else
+        Alert.alert('Error al registrarse', 'Algo salió mal. Inténtalo de nuevo o contacta soporte@solva.app')
+    } else if (data.user) {
+      Alert.alert('✅ ¡Bienvenido!', 'Tu cuenta fue creada exitosamente.', [
+        { text: 'Continuar', onPress: () => router.replace('/(auth)/login') }
       ])
     } else {
-      Alert.alert('Info', 'Revisa tu email para confirmar tu cuenta')
+      Alert.alert('Confirma tu email', 'Te enviamos un email de verificación. Revisa tu bandeja de entrada.')
     }
   }
 
