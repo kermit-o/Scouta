@@ -280,6 +280,11 @@ export default function RegisterScreen() {
             </View>
             <Text style={styles.stepTitle}>¿Cómo usarás Solva?</Text>
             <Text style={styles.stepSub}>Podrás cambiar esto más adelante</Text>
+            {errorMsg && (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>⚠️ {errorMsg}</Text>
+              </View>
+            )}
 
             {ROLES.map(r => (
               <TouchableOpacity
@@ -333,11 +338,6 @@ export default function RegisterScreen() {
               </Text>
             </View>
 
-            {errorMsg && (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{errorMsg}</Text>
-              </View>
-            )}
             <TouchableOpacity
               style={[styles.btn, (!acceptTerms || loading) && styles.btnDisabled]}
               onPress={handleRegister}
