@@ -84,35 +84,24 @@ export default function RegisterScreen() {
     setErrorMsg(null)
     if (!acceptTerms) { setErrorMsg('Debes aceptar los términos de servicio.'); return }
     setLoading(true)
-    let data: any = null
-    let error: any = null
-    try {
-      const result = await supabase.auth.signUp({
-        email, password,
-        options: {
-          data: {
-            full_name: fullName,
-            role,
-            country: selectedCountry.value,
-            currency: selectedCountry.currency,
-            language: selectedCountry.language,
-          }
+    const { data, error } = await supabase.auth.signUp({
+      email, password,
+      options: {
+        data: {
+          full_name: fullName,
+          role,
+          country: selectedCountry.value,
+          currency: selectedCountry.currency,
+          language: selectedCountry.language,
         }
-      })
-      data = result.data
-      error = result.error
-    } catch (e: any) {
-      error = e
-    }
+      }
+    })
     setLoading(false)
-    console.log("SIGNUP_ERROR:", JSON.stringify(error), "DATA:", JSON.stringify(data?.user?.identities))
     if (error) {
       const msg = (error.message || '').toLowerCase()
-      const code = error.code || error.status || (error as any).__httpStatus
-      const isEmailTaken = code === 422 || msg.includes('already registered') || msg.includes('user already') || msg.includes('already exists')
-      if (isEmailTaken)
+      if (msg.includes('user already') || msg.includes('already registered') || (error as any).status === 422)
         setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
-      else if (msg.includes('password') && msg.includes('short'))
+      else if (msg.includes('weak') || (msg.includes('password') && msg.includes('short')))
         setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
       else if (msg.includes('invalid') && msg.includes('email'))
         setErrorMsg('Por favor introduce un email válido.')
@@ -120,15 +109,13 @@ export default function RegisterScreen() {
         setErrorMsg('Demasiados intentos. Espera unos minutos.')
       else
         setErrorMsg(error.message || 'Algo salió mal. Inténtalo de nuevo.')
-    } else if (data?.user && data.user.identities && data.user.identities.length === 0) {
+    } else if (data?.user && (data.user.identities?.length === 0)) {
       setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
     } else if (data?.user) {
       setErrorMsg(null)
-      Alert.alert('✅ ¡Bienvenido!', 'Tu cuenta fue creada exitosamente.', [
-        { text: 'Continuar', onPress: () => router.replace('/(auth)/login') }
-      ])
+      router.replace('/(auth)/login')
     } else {
-      Alert.alert('Confirma tu email', 'Te enviamos un email de verificación. Revisa tu bandeja de entrada.')
+      setErrorMsg('Revisa tu email para confirmar tu cuenta.')
     }
   }
 
