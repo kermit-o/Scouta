@@ -80,9 +80,16 @@ export default function RegisterScreen() {
   const selectedCountry = COUNTRIES.find(c => c.value === country)!
   const canStep1 = fullName.trim().length > 0 && email.trim().length > 0 && password.length >= 6
 
+  function showError(msg: string) {
+    setErrorMsg(msg)
+    if (typeof window !== 'undefined' && (window as any).alert) {
+      (window as any).alert(msg)
+    }
+  }
+
   async function handleRegister() {
     setErrorMsg(null)
-    if (!acceptTerms) { setErrorMsg('Debes aceptar los términos de servicio.'); return }
+    if (!acceptTerms) { showError('Debes aceptar los términos de servicio.'); return }
     setLoading(true)
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -93,11 +100,11 @@ export default function RegisterScreen() {
       if (error) {
         const msg = (error.message || '').toLowerCase()
         if (msg.includes('user already') || msg.includes('already registered'))
-          setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
+          showError('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
         else
-          setErrorMsg(error.message || 'Algo salió mal.')
+          showError(error.message || 'Algo salió mal.')
       } else if (data?.user && data.user.identities?.length === 0) {
-        setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
+        showError('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
       } else if (data?.user) {
         router.replace('/(auth)/login')
       }
@@ -105,9 +112,9 @@ export default function RegisterScreen() {
       setLoading(false)
       const msg = (e?.message || e?.msg || JSON.stringify(e) || '').toLowerCase()
       if (msg.includes('user already') || msg.includes('already registered') || e?.code === 422 || e?.status === 422)
-        setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
+        showError('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
       else
-        setErrorMsg('Algo salió mal. Inténtalo de nuevo.')
+        showError('Algo salió mal. Inténtalo de nuevo.')
     }
   }
 
