@@ -46,7 +46,20 @@
       ]
     },
     "web": {
-      "bundler": "metro"
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/favicon.png",
+      "name": "Solva",
+      "shortName": "Solva",
+      "description": "Encuentra profesionales de confianza cerca de ti",
+      "themeColor": "#2563EB",
+      "backgroundColor": "#F6F7FB",
+      "lang": "es",
+      "scope": "/",
+      "startUrl": "/",
+      "display": "standalone",
+      "orientation": "portrait",
+      "preferRelatedApplications": false
     },
     "plugins": [
       "./plugins/withNoGoogleServices",
