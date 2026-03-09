@@ -89,32 +89,36 @@ export default function RegisterScreen() {
 
   async function handleRegister() {
     setErrorMsg(null)
-    if (!acceptTerms) { showError('Debes aceptar los términos de servicio.'); return }
+    if (!acceptTerms) { setErrorMsg('Debes aceptar los términos de servicio.'); return }
     setLoading(true)
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email, password,
-        options: { data: { full_name: fullName, role, country: selectedCountry.value, currency: selectedCountry.currency, language: selectedCountry.language } }
+      const res = await fetch('https://qzyxcooctlahwhhixyiy.supabase.co/auth/v1/signup', {
+        method: 'POST',
+        headers: {
+          'apikey': 'sb_publishable_gvNlWZrANOGAqW4o7HquUw_uFGfDgCB',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          options: { data: { full_name: fullName, role, country: selectedCountry.value, currency: selectedCountry.currency, language: selectedCountry.language } }
+        })
       })
+      const json = await res.json()
       setLoading(false)
-      if (error) {
-        const msg = (error.message || '').toLowerCase()
-        if (msg.includes('user already') || msg.includes('already registered'))
-          showError('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
-        else
-          showError(error.message || 'Algo salió mal.')
-      } else if (data?.user && data.user.identities?.length === 0) {
-        showError('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
-      } else if (data?.user) {
+      if (res.status === 422 || json.error_code === 'user_already_exists') {
+        setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
+      } else if (res.status === 200 && json.access_token) {
+        await supabase.auth.setSession({ access_token: json.access_token, refresh_token: json.refresh_token })
+        router.replace('/(app)')
+      } else if (json.error || json.msg) {
+        setErrorMsg(json.msg || json.error || 'Algo salió mal.')
+      } else {
         router.replace('/(auth)/login')
       }
     } catch (e: any) {
       setLoading(false)
-      const msg = (e?.message || e?.msg || JSON.stringify(e) || '').toLowerCase()
-      if (msg.includes('user already') || msg.includes('already registered') || e?.code === 422 || e?.status === 422)
-        showError('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
-      else
-        showError('Algo salió mal. Inténtalo de nuevo.')
+      setErrorMsg('Error de conexión. Inténtalo de nuevo.')
     }
   }
 
