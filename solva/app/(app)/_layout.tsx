@@ -61,11 +61,26 @@ export default function AppLayout() {
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Inicio', tabBarIcon: ({ color }) => <HomeIcon color={color} /> }} />
-      <Tabs.Screen name="search" options={{ title: 'Buscar', tabBarIcon: ({ color }) => <SearchIcon color={color} /> }} />
-      <Tabs.Screen name="jobs" options={{ title: 'Jobs', tabBarIcon: ({ color }) => <JobsIcon color={color} /> }} />
-      <Tabs.Screen name="messages" options={{ title: 'Mensajes', tabBarIcon: ({ color }) => <MsgIcon color={color} /> }} />
-      <Tabs.Screen name="profile" options={{ title: 'Perfil', tabBarIcon: ({ color }) => <ProfileIcon color={color} /> }} />
+      {/* ── TABS VISIBLES ── */}
+      <Tabs.Screen name="index"    options={{ title: 'Inicio',   tabBarIcon: ({ color }) => <HomeIcon    color={color} /> }} />
+      <Tabs.Screen name="search"   options={{ title: 'Buscar',   tabBarIcon: ({ color }) => <SearchIcon  color={color} /> }} />
+      <Tabs.Screen name="jobs"     options={{ title: 'Jobs',     tabBarIcon: ({ color }) => <JobsIcon    color={color} /> }} />
+      <Tabs.Screen name="messages" options={{ title: 'Mensajes', tabBarIcon: ({ color }) => <MsgIcon     color={color} /> }} />
+      <Tabs.Screen name="profile"  options={{ title: 'Perfil',   tabBarIcon: ({ color }) => <ProfileIcon color={color} /> }} />
+
+      {/* ── PANTALLAS OCULTAS (sin tab) ── */}
+      <Tabs.Screen name="onboarding"   options={{ href: null }} />
+      <Tabs.Screen name="kyc"          options={{ href: null }} />
+      <Tabs.Screen name="subscription" options={{ href: null }} />
+      <Tabs.Screen name="pro/[id]"     options={{ href: null }} />
+      <Tabs.Screen name="jobs/new"     options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]"    options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/bid"      options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/chat"     options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/contract" options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/dispute"  options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/payment"  options={{ href: null }} />
+      <Tabs.Screen name="jobs/[id]/review"   options={{ href: null }} />
     </Tabs>
   )
 }
