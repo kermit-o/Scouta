@@ -84,22 +84,31 @@ export default function RegisterScreen() {
     setErrorMsg(null)
     if (!acceptTerms) { setErrorMsg('Debes aceptar los términos de servicio.'); return }
     setLoading(true)
-    const { data, error } = await supabase.auth.signUp({
-      email, password,
-      options: {
-        data: {
-          full_name: fullName,
-          role,
-          country: selectedCountry.value,
-          currency: selectedCountry.currency,
-          language: selectedCountry.language,
+    let data: any = null
+    let error: any = null
+    try {
+      const result = await supabase.auth.signUp({
+        email, password,
+        options: {
+          data: {
+            full_name: fullName,
+            role,
+            country: selectedCountry.value,
+            currency: selectedCountry.currency,
+            language: selectedCountry.language,
+          }
         }
-      }
-    })
+      })
+      data = result.data
+      error = result.error
+    } catch (e: any) {
+      error = e
+    }
     setLoading(false)
     if (error) {
-      const msg = error.message.toLowerCase()
-      const isEmailTaken = (error as any).status === 422 || msg.includes('already registered') || msg.includes('user already')
+      const msg = (error.message || '').toLowerCase()
+      const code = error.code || error.status || (error as any).__httpStatus
+      const isEmailTaken = code === 422 || msg.includes('already registered') || msg.includes('user already') || msg.includes('already exists')
       if (isEmailTaken)
         setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
       else if (msg.includes('password') && msg.includes('short'))
@@ -109,13 +118,11 @@ export default function RegisterScreen() {
       else if (msg.includes('rate limit') || msg.includes('too many'))
         setErrorMsg('Demasiados intentos. Espera unos minutos.')
       else
-        setErrorMsg('Algo salió mal. Inténtalo de nuevo.')
-    } else if (data.user && data.user.identities && data.user.identities.length === 0) {
-      Alert.alert('Email en uso', 'Este email ya tiene una cuenta. ¿Olvidaste tu contraseña?', [
-        { text: 'Iniciar sesión', onPress: () => router.replace('/(auth)/login') },
-        { text: 'Cancelar', style: 'cancel' }
-      ])
-    } else if (data.user) {
+        setErrorMsg(error.message || 'Algo salió mal. Inténtalo de nuevo.')
+    } else if (data?.user && data.user.identities && data.user.identities.length === 0) {
+      setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
+    } else if (data?.user) {
+      setErrorMsg(null)
       Alert.alert('✅ ¡Bienvenido!', 'Tu cuenta fue creada exitosamente.', [
         { text: 'Continuar', onPress: () => router.replace('/(auth)/login') }
       ])
