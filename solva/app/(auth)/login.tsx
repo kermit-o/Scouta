@@ -16,26 +16,38 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false)
 
   async function handleLogin() {
-    if (!email || !password) { Alert.alert('Error', 'Completa todos los campos'); return }
+    if (!email || !password) { setErrorMsg('Completa todos los campos'); return }
     setLoading(true)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     setLoading(false)
     if (error) {
       const msg = error.message.toLowerCase()
       if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('wrong password'))
-        Alert.alert('Credenciales incorrectas', 'Email o contraseña incorrectos. Inténtalo de nuevo.')
+        setErrorMsg('Email o contraseña incorrectos. Inténtalo de nuevo.')
       else if (msg.includes('email not confirmed'))
-        Alert.alert('Email no confirmado', 'Revisa tu bandeja de entrada y confirma tu email antes de iniciar sesión.')
+        setErrorMsg('Confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
       else if (msg.includes('too many') || msg.includes('rate limit'))
-        Alert.alert('Demasiados intentos', 'Espera unos minutos antes de intentarlo de nuevo.')
+        setErrorMsg('Demasiados intentos. Espera unos minutos.')
       else if (msg.includes('user not found') || msg.includes('no user'))
-        Alert.alert('Cuenta no encontrada', 'No existe una cuenta con este email. ¿Quieres registrarte?')
+        setErrorMsg('No existe una cuenta con este email.')
       else
-        Alert.alert('Error al iniciar sesión', 'Algo salió mal. Inténtalo de nuevo o contacta soporte@solva.app')
+        setErrorMsg('Algo salió mal. Inténtalo de nuevo.')
     }
     else router.replace('/(app)')
   }
 
+  async function handleOAuth(provider: 'google' | 'apple') {
+    const redirectTo = typeof window !== 'undefined'
+      ? window.location.origin + '/auth/callback'
+      : 'https://www.getsolva.co/auth/callback'
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo }
+    })
+    if (error) setErrorMsg('Error al conectar con ' + provider + '. Inténtalo de nuevo.')
+  }
+
+  const [errorMsg, setErrorMsg] = useState('')
   const canLogin = email.trim().length > 0 && password.length >= 6
 
   return (
@@ -118,12 +130,17 @@ export default function LoginScreen() {
         </View>
 
         {/* Social */}
+        {errorMsg ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
+          </View>
+        ) : null}
         <View style={styles.socialRow}>
-          <TouchableOpacity style={styles.socialBtn}>
+          <TouchableOpacity style={styles.socialBtn} onPress={() => handleOAuth('google')}>
             <Text style={styles.socialIcon}>G</Text>
             <Text style={styles.socialText}>Google</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialBtn}>
+          <TouchableOpacity style={styles.socialBtn} onPress={() => handleOAuth('apple')}>
             <Ionicons name="logo-apple" size={18} color="#1a1a2e" />
             <Text style={styles.socialText}>Apple</Text>
           </TouchableOpacity>
@@ -199,6 +216,8 @@ const styles = StyleSheet.create({
   socialText: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
 
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  errorBox: { backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, marginBottom: 12 },
+  errorText: { color: '#DC2626', fontSize: 13, textAlign: 'center' },
   footerText: { fontSize: 14, color: '#888' },
   footerLink: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
 })
