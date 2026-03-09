@@ -84,38 +84,30 @@ export default function RegisterScreen() {
     setErrorMsg(null)
     if (!acceptTerms) { setErrorMsg('Debes aceptar los términos de servicio.'); return }
     setLoading(true)
-    const { data, error } = await supabase.auth.signUp({
-      email, password,
-      options: {
-        data: {
-          full_name: fullName,
-          role,
-          country: selectedCountry.value,
-          currency: selectedCountry.currency,
-          language: selectedCountry.language,
-        }
-      }
-    })
-    setLoading(false)
-    if (error) {
-      const msg = (error.message || '').toLowerCase()
-      if (msg.includes('user already') || msg.includes('already registered') || (error as any).status === 422)
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email, password,
+        options: { data: { full_name: fullName, role, country: selectedCountry.value, currency: selectedCountry.currency, language: selectedCountry.language } }
+      })
+      setLoading(false)
+      if (error) {
+        const msg = (error.message || '').toLowerCase()
+        if (msg.includes('user already') || msg.includes('already registered'))
+          setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
+        else
+          setErrorMsg(error.message || 'Algo salió mal.')
+      } else if (data?.user && data.user.identities?.length === 0) {
         setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
-      else if (msg.includes('weak') || (msg.includes('password') && msg.includes('short')))
-        setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
-      else if (msg.includes('invalid') && msg.includes('email'))
-        setErrorMsg('Por favor introduce un email válido.')
-      else if (msg.includes('rate limit') || msg.includes('too many'))
-        setErrorMsg('Demasiados intentos. Espera unos minutos.')
+      } else if (data?.user) {
+        router.replace('/(auth)/login')
+      }
+    } catch (e: any) {
+      setLoading(false)
+      const msg = (e?.message || e?.msg || JSON.stringify(e) || '').toLowerCase()
+      if (msg.includes('user already') || msg.includes('already registered') || e?.code === 422 || e?.status === 422)
+        setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
       else
-        setErrorMsg(error.message || 'Algo salió mal. Inténtalo de nuevo.')
-    } else if (data?.user && (data.user.identities?.length === 0)) {
-      setErrorMsg('Este email ya tiene una cuenta. Inicia sesión o usa otro email.')
-    } else if (data?.user) {
-      setErrorMsg(null)
-      router.replace('/(auth)/login')
-    } else {
-      setErrorMsg('Revisa tu email para confirmar tu cuenta.')
+        setErrorMsg('Algo salió mal. Inténtalo de nuevo.')
     }
   }
 
