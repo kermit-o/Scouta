@@ -166,6 +166,43 @@ export default function ContractScreen() {
           <Text style={s.legalText}>{terms.dispute_resolution}</Text>
         </Section>
 
+        {/* Rol de plataforma */}
+        <Section id="platform" icon="globe-outline" iconBg="#EEF4FF" iconColor="#2563EB" title="Rol de Solva como intermediaria">
+          <Text style={s.legalText}>{terms.platform_role}</Text>
+        </Section>
+
+        {/* Profesional independiente */}
+        <Section id="contractor" icon="person-outline" iconBg="#F0FDF4" iconColor="#059669" title="Profesional independiente">
+          <Text style={s.legalText}>{terms.independent_contractor}</Text>
+        </Section>
+
+        {/* Condiciones escrow */}
+        <Section id="escrow" icon="lock-closed-outline" iconBg="#FFFBEB" iconColor="#D97706" title="Condiciones del escrow">
+          <Text style={s.legalText}>{terms.escrow_conditions}</Text>
+        </Section>
+
+        {/* Confidencialidad domicilio */}
+        <Section id="confidentiality" icon="home-outline" iconBg="#FFF1F2" iconColor="#E11D48" title="Confidencialidad del domicilio">
+          <Text style={s.legalText}>{terms.home_access_confidentiality}</Text>
+        </Section>
+
+        {/* Tratamiento de datos */}
+        <Section id="data" icon="shield-outline" iconBg="#F5F3FF" iconColor="#7C3AED" title="Tratamiento de datos personales">
+          <Text style={s.legalText}>{terms.data_processing}</Text>
+        </Section>
+
+        {/* Límite de responsabilidad */}
+        <Section id="liability" icon="warning-outline" iconBg="#FEF3C7" iconColor="#D97706" title="Límite de responsabilidad">
+          <Text style={s.legalText}>{terms.liability_limit}</Text>
+        </Section>
+
+        {/* B2B — solo si existe */}
+        {terms.b2b_clause ? (
+          <Section id="b2b" icon="business-outline" iconBg="#F3F4F6" iconColor="#374151" title="Condiciones B2B (empresas)">
+            <Text style={s.legalText}>{terms.b2b_clause}</Text>
+          </Section>
+        ) : null}
+
         {/* Disclaimer */}
         <View style={s.disclaimer}>
           <Ionicons name="warning-outline" size={16} color="#856404" />
