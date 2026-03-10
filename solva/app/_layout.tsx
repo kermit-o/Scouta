@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { Stack, router } from 'expo-router'
 import 'react-native-url-polyfill/auto'
 import { AuthProvider, useAuth } from '../lib/AuthContext'
