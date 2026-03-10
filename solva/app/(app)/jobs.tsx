@@ -3,9 +3,10 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, TextInput
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { supabase, Job } from '../../lib/supabase'
 import { useProfile } from '../../hooks/useProfile'
+import { useAuth } from '../../lib/AuthContext'
 import { useLocation, searchJobsNearby } from '../../hooks/useLocation'
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -18,6 +19,10 @@ const RADIUS_OPTIONS = [5, 10, 25, 50, 100]
 
 export default function JobsScreen() {
   const { profile } = useProfile()
+  const { session } = useAuth()
+  const { filter } = useLocalSearchParams<{ filter?: string }>()
+  const [activeTab, setActiveTab] = useState<'all' | 'mine'>(filter === 'mine' ? 'mine' : 'all')
+  const [myJobs, setMyJobs] = useState<any[]>([])
   const { coords, requestLocation, loading: locLoading } = useLocation()
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -25,6 +30,16 @@ export default function JobsScreen() {
   const [searchMode, setSearchMode] = useState<'all' | 'nearby'>('all')
   const [radius, setRadius] = useState(25)
   const [searchText, setSearchText] = useState('')
+
+  async function fetchMyJobs() {
+    if (!session?.user?.id) return
+    const { data } = await supabase
+      .from('jobs')
+      .select('*, contracts(id, status, amount)')
+      .eq('client_id', session.user.id)
+      .order('created_at', { ascending: false })
+    setMyJobs(data ?? [])
+  }
 
   async function fetchJobs() {
     setLoading(true)
@@ -121,11 +136,46 @@ export default function JobsScreen() {
         </View>
       )}
 
+      {/* Mis trabajos */}
+      {activeTab === 'mine' && (
+        <View style={s.myJobsList}>
+          {myJobs.length === 0
+            ? <Text style={s.emptyText}>No has publicado ningún trabajo aún.</Text>
+            : myJobs.map((job: any) => {
+                const contract = job.contracts?.[0]
+                const statusColor = job.status === 'open' ? '#10B981' : job.status === 'in_progress' ? '#2563EB' : '#888'
+                const statusLabel = job.status === 'open' ? 'Abierto' : job.status === 'in_progress' ? 'En progreso' : job.status
+                return (
+                  <TouchableOpacity
+                    key={job.id}
+                    style={s.myJobCard}
+                    onPress={() => contract
+                      ? router.push(`/(app)/jobs/${job.id}/contract`)
+                      : router.push(`/(app)/jobs/${job.id}`)
+                    }
+                    activeOpacity={0.85}
+                  >
+                    <View style={s.myJobTop}>
+                      <Text style={s.myJobTitle}>{job.title}</Text>
+                      <View style={[s.myJobBadge, { backgroundColor: statusColor + '20' }]}>
+                        <Text style={[s.myJobBadgeText, { color: statusColor }]}>{statusLabel}</Text>
+                      </View>
+                    </View>
+                    <Text style={s.myJobSub}>
+                      {contract ? `Ver contrato →` : `${job.budget_min ?? '?'}–${job.budget_max ?? '?'} ${job.currency}`}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              })
+          }
+        </View>
+      )}
+
       {/* Lista */}
       {loading
         ? <View style={s.center}><ActivityIndicator size="large" color="#1a1a2e" /></View>
         : (
-          <FlatList
+          {activeTab === 'all' && <FlatList
             data={jobs}
             keyExtractor={item => item.id}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -197,6 +247,20 @@ const s = StyleSheet.create({
   list: { padding: 16, gap: 12 },
   emptyContainer: { flex: 1 },
   empty: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 80 },
+  tabs: { flexDirection: 'row', paddingHorizontal: 16, gap: 8, marginBottom: 8 },
+  tab: { flex: 1, paddingVertical: 10, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', borderWidth: 1, borderColor: '#E5E7EB', flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  tabActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  tabText: { fontSize: 14, fontWeight: '600', color: '#666' },
+  tabTextActive: { color: '#fff' },
+  tabBadge: { backgroundColor: '#EF4444', borderRadius: 10, paddingHorizontal: 6, paddingVertical: 2 },
+  tabBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
+  myJobsList: { paddingHorizontal: 16, gap: 10, paddingBottom: 20 },
+  myJobCard: { backgroundColor: '#fff', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E5E7EB', borderLeftWidth: 4, borderLeftColor: '#2563EB' },
+  myJobTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 },
+  myJobTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', flex: 1 },
+  myJobBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  myJobBadgeText: { fontSize: 12, fontWeight: '700' },
+  myJobSub: { fontSize: 13, color: '#666' },
   emptyText: { fontSize: 18, fontWeight: '700', color: '#333' },
   emptySub: { fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' },
   card: { backgroundColor: '#f5f5ff', borderRadius: 16, padding: 16, gap: 6 },
