@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform
+  ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform
 } from 'react-native'
 import { Link, router } from 'expo-router'
 import { supabase, UserRole, SupportedCountry, SupportedCurrency, SupportedLanguage } from '../../lib/supabase'
@@ -72,19 +72,22 @@ export default function RegisterScreen() {
   const [role, setRole] = useState<UserRole>('client')
   const [acceptTerms, setAcceptTerms] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const strength = passwordStrength(password)
   const selectedCountry = COUNTRIES.find(c => c.value === country)!
   const canStep1 = fullName.trim().length > 0 && email.trim().length > 0 && password.length >= 6
 
   async function handleRegister() {
-    if (!acceptTerms) { Alert.alert('Error', 'Debes aceptar los términos'); return }
+    if (!acceptTerms) { setErrorMsg('Debes aceptar los términos para continuar.'); return }
+    setErrorMsg('')
     setLoading(true)
     const { data, error } = await supabase.auth.signUp({
-      email, password,
+      email: email.trim().toLowerCase(),
+      password,
       options: {
         data: {
-          full_name: fullName,
+          full_name: fullName.trim(),
           role,
           country: selectedCountry.value,
           currency: selectedCountry.currency,
@@ -93,14 +96,26 @@ export default function RegisterScreen() {
       }
     })
     setLoading(false)
-    if (error) Alert.alert('Error', error.message)
-    else if (data.user) {
-      Alert.alert('✅ Cuenta creada', 'Tu cuenta fue creada exitosamente', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') }
-      ])
-    } else {
-      Alert.alert('Info', 'Revisa tu email para confirmar tu cuenta')
+
+    if (error) {
+      if (error.message.includes('already registered') || error.status === 422) {
+        setErrorMsg('Este email ya está registrado. ¿Quieres iniciar sesión?')
+      } else if (error.message.includes('password')) {
+        setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
+      } else {
+        setErrorMsg(error.message)
+      }
+      return
     }
+
+    if (data.user && !data.session) {
+      // Email confirmation required
+      setErrorMsg('✅ Revisa tu email para confirmar tu cuenta antes de iniciar sesión.')
+      return
+    }
+
+    // Registro exitoso con sesión directa
+    router.replace('/(app)/onboarding')
   }
 
   return (
@@ -264,6 +279,17 @@ export default function RegisterScreen() {
             </View>
             <Text style={styles.stepTitle}>¿Cómo usarás Solva?</Text>
             <Text style={styles.stepSub}>Podrás cambiar esto más adelante</Text>
+
+            {errorMsg ? (
+              <View style={styles.errorBox}>
+                <Text style={styles.errorText}>{errorMsg}</Text>
+                {errorMsg.includes('ya está registrado') && (
+                  <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+                    <Text style={styles.errorLink}>Ir a iniciar sesión →</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            ) : null}
 
             {ROLES.map(r => (
               <TouchableOpacity
@@ -443,4 +469,7 @@ const styles = StyleSheet.create({
   checkboxActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
   termsText: { flex: 1, fontSize: 13, color: '#666', lineHeight: 20 },
   termsLink: { color: '#2563EB', fontWeight: '600' },
+  errorBox: { backgroundColor: '#FEF2F2', borderRadius: 14, padding: 14, gap: 6, borderWidth: 1, borderColor: '#FECACA' },
+  errorText: { fontSize: 13, color: '#DC2626', fontWeight: '500', lineHeight: 19 },
+  errorLink: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
 })
