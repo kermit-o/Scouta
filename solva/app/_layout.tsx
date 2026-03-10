@@ -11,15 +11,19 @@ SplashScreen.preventAutoHideAsync()
 
 function RootLayoutNav() {
   const { session, loading } = useAuth()
+  const prevSessionId = useRef<string | null>(null)
 
   useEffect(() => {
     if (loading) return
-    if (session) {
+    const currentId = session?.user?.id ?? null
+    if (currentId === prevSessionId.current) return
+    prevSessionId.current = currentId
+    if (currentId) {
       router.replace('/(app)')
     } else {
       router.replace('/(auth)/login')
     }
-  }, [session, loading])
+  }, [session?.user?.id, loading])
 
   if (loading) return null
 
