@@ -71,7 +71,7 @@ export default function DrawerMenu({ open, onClose }: Props) {
       title: 'Verificación',
       items: [
         { icon: '🪪', label: 'Verificación KYC', route: '/(app)/kyc', badge: kycStatus, badgeColor: kycColor },
-        { icon: '⭐', label: 'Mi reputación', route: '/(app)/profile' },
+        { icon: '⭐', label: 'Mi reputación', route: '/(app)/reputation' },
       ]
     },
     {
@@ -79,8 +79,8 @@ export default function DrawerMenu({ open, onClose }: Props) {
       items: [
         { icon: '💳', label: 'Mi suscripción', route: '/(app)/subscription', badge: 'Free', badgeColor: '#2563EB' },
         { icon: '💰', label: 'Mis pagos y cobros', route: '/(app)/payments' },
-        { icon: '🧾', label: 'Facturas', route: '/(app)/jobs' },
-        { icon: '🛡️', label: 'Garantía Solva', route: '/(app)/jobs' },
+        { icon: '🧾', label: 'Facturas', route: '/(app)/invoices' },
+        { icon: '🛡️', label: 'Garantía Solva', route: '/(app)/guarantee' },
       ]
     },
     ...(role === 'pro' || role === 'company' ? [{
@@ -94,10 +94,10 @@ export default function DrawerMenu({ open, onClose }: Props) {
     {
       title: 'Soporte',
       items: [
-        { icon: '❓', label: 'Centro de ayuda', route: '/(app)/profile' },
+        { icon: '❓', label: 'Centro de ayuda', route: '/(app)/help' },
         { icon: '💬', label: 'Chat con soporte', route: '/(app)/messages' },
         { icon: '📄', label: 'Términos y Privacidad', route: '/terms' },
-        { icon: '🚩', label: 'Reportar un problema', route: '/(app)/profile' },
+        { icon: '🚩', label: 'Reportar un problema', route: '/(app)/report' },
       ]
     },
   ]

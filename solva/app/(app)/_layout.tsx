@@ -48,6 +48,11 @@ function AppLayoutInner() {
         <Tabs.Screen name="messages" options={{ title: 'Mensajes', tabBarIcon: ({ color }) => <MsgIcon     color={color} /> }} />
         <Tabs.Screen name="profile"  options={{ title: 'Perfil',   tabBarIcon: ({ color }) => <ProfileIcon color={color} /> }} />
         <Tabs.Screen name="notifications"      options={{ href: null }} />
+        <Tabs.Screen name="reputation"         options={{ href: null }} />
+        <Tabs.Screen name="invoices"           options={{ href: null }} />
+        <Tabs.Screen name="guarantee"          options={{ href: null }} />
+        <Tabs.Screen name="help"               options={{ href: null }} />
+        <Tabs.Screen name="report"             options={{ href: null }} />
         <Tabs.Screen name="settings-country"   options={{ href: null }} />
         <Tabs.Screen name="settings-security"  options={{ href: null }} />
         <Tabs.Screen name="payments"           options={{ href: null }} />
