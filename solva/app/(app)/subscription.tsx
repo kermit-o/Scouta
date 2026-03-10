@@ -143,11 +143,8 @@ export default function SubscriptionScreen() {
             <View style={{ flex: 1 }}>
               <Text style={s.roiTitle}>¿Cuánto te cuesta el plan Free?</Text>
               <Text style={s.roiDesc}>
-                Con 10% de comisión, si facturas 500€/mes pagas 50€ a Solva.{'
-'}
-                Pro cuesta 14,99€ y reduce la comisión al 5% → pagas solo 25€.{'
-'}
-                <Text style={s.roiBold}>Ahorro neto: 10,01€/mes desde el primer mes.</Text>
+                {'Con 10% de comisión, si facturas 500€/mes pagas 50€ a Solva. Pro cuesta 14,99€ y reduce la comisión al 5%, pagas solo 25€.'}
+                <Text style={s.roiBold}>{'Ahorro neto: 10,01€/mes desde el primer mes.'}</Text>
               </Text>
             </View>
           </View>
