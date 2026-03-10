@@ -39,6 +39,8 @@ export default function ProfileScreen() {
   }, [profile])
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
 
   async function pickAndUploadAvatar() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
