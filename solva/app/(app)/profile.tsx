@@ -30,6 +30,13 @@ export default function ProfileScreen() {
   const [phone, setPhone] = useState(profile?.phone || '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '')
   const [uploading, setUploading] = useState(false)
+
+  // Sync state when profile loads asynchronously
+  useEffect(() => {
+    if (profile?.full_name) setFullName(profile.full_name)
+    if (profile?.phone) setPhone(profile.phone)
+    if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+  }, [profile])
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
 
