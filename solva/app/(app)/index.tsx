@@ -27,6 +27,7 @@ export default function HomeScreen() {
   const { openDrawer } = useDrawer()
   const { isTrialing, trialDaysLeft, isPro } = useSubscription()
   const [recentJobs, setRecentJobs] = useState<any[]>([])
+  const [activeJobs, setActiveJobs] = useState<any[]>([])
 
   useEffect(() => {
     supabase
@@ -36,7 +37,18 @@ export default function HomeScreen() {
       .order('created_at', { ascending: false })
       .limit(3)
       .then(({ data }) => { if (data) setRecentJobs(data) })
-  }, [])
+
+    if (profile?.id) {
+      // Mis trabajos activos (como cliente o pro)
+      supabase
+        .from('contracts')
+        .select('id, job_id, status, amount, currency, jobs(id, title, category)')
+        .or(`client_id.eq.${profile.id},pro_id.eq.${profile.id}`)
+        .in('status', ['active', 'in_progress'])
+        .limit(5)
+        .then(({ data }) => { if (data) setActiveJobs(data) })
+    }
+  }, [profile?.id])
 
   if (loading) return (
     <View style={styles.center}>
@@ -121,6 +133,28 @@ export default function HomeScreen() {
       {/* Jobs Cercanos */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
+          {activeJobs.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>⚡ Trabajos activos</Text>
+              </View>
+              {activeJobs.map((contract: any) => (
+                <TouchableOpacity
+                  key={contract.id}
+                  style={styles.activeJobCard}
+                  onPress={() => router.push(`/(app)/jobs/${contract.job_id}/contract`)}
+                  activeOpacity={0.85}
+                >
+                  <View style={styles.activeJobLeft}>
+                    <Text style={styles.activeJobTitle}>{contract.jobs?.title ?? 'Trabajo'}</Text>
+                    <Text style={styles.activeJobSub}>Ver contrato →</Text>
+                  </View>
+                  <Text style={styles.activeJobAmount}>{contract.amount} {contract.currency}</Text>
+                </TouchableOpacity>
+              ))}
+            </>
+          )}
+
           <Text style={styles.sectionTitle}>Jobs Disponibles</Text>
           <TouchableOpacity onPress={() => router.push('/(app)/jobs')}>
             <Text style={styles.sectionLink}>Ver todos</Text>
@@ -259,6 +293,17 @@ const styles = StyleSheet.create({
   // Section
   section: { marginBottom: 24 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
+  activeJobCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16, padding: 16,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginBottom: 10, borderWidth: 1, borderColor: '#E5E7EB',
+    borderLeftWidth: 4, borderLeftColor: '#2563EB',
+  },
+  activeJobLeft: { flex: 1 },
+  activeJobTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 2 },
+  activeJobSub: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
+  activeJobAmount: { fontSize: 16, fontWeight: '800', color: '#2563EB' },
   sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1a1a2e' },
   sectionLink: { fontSize: 13, fontWeight: '600', color: '#2563EB' },
 
