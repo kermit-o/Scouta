@@ -65,6 +65,7 @@ export default function NewBidScreen() {
   const canSubmit = !!amount && parseFloat(amount) > 0 && message.trim().length >= 20 && !saving
 
   return (
+    <>
     <View style={[s.screen, { paddingTop: insets.top }]}>
       <View style={s.header}>
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
@@ -184,6 +185,7 @@ export default function NewBidScreen() {
       </View>
     </View>
       <PaywallModal feature={paywallFeature} onClose={() => setPaywallFeature(null)} />
+    </>
   )
 }
 
