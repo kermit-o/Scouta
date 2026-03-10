@@ -64,7 +64,7 @@ export default function NewJobScreen() {
     if (error) {
       setErrorMsg('Error al publicar: ' + error.message)
     } else {
-      router.replace(`/(app)/jobs/${data.id}`)
+      router.replace('/(app)/jobs')
     }
   }
 
