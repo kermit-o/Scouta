@@ -8,3 +8,7 @@ expo-env.d.ts
 # @end expo-clinode_modules/
 .expo/
 ios/
+node_modules/
+.expo/
+*.log
+supabase/.temp/
