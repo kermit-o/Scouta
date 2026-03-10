@@ -29,7 +29,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .select('*')
       .eq('id', userId)
       .single()
-    if (!error && data) setProfile(data as UserProfile)
+    if (error) {
+      console.error('fetchProfile error:', error.message, 'userId:', userId)
+      // Si no existe el perfil, crearlo con datos básicos
+      if (error.code === 'PGRST116') {
+        const { data: authUser } = await supabase.auth.getUser()
+        if (authUser?.user) {
+          const meta = authUser.user.user_metadata
+          await supabase.from('users').upsert({
+            id: userId,
+            email: authUser.user.email || '',
+            full_name: meta?.full_name || meta?.name || authUser.user.email?.split('@')[0] || 'Usuario',
+            avatar_url: meta?.avatar_url || meta?.picture || null,
+            role: 'client',
+            country: 'ES',
+            currency: 'EUR',
+            language: 'es',
+          })
+          const { data: newProfile } = await supabase.from('users').select('*').eq('id', userId).single()
+          if (newProfile) setProfile(newProfile as UserProfile)
+        }
+      }
+    } else if (data) {
+      setProfile(data as UserProfile)
+    }
   }
 
   async function refreshProfile() {
