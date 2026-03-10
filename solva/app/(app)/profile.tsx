@@ -118,7 +118,7 @@ export default function ProfileScreen() {
     {
       icon: 'briefcase-outline' as const,
       label: 'Mis trabajos',
-      onPress: () => router.push('/(app)/jobs'),
+      onPress: () => router.push('/(app)/jobs?filter=mine'),
     },
   ]
 
