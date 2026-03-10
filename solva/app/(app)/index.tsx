@@ -7,6 +7,7 @@ import { useNotifications } from '../../hooks/useNotifications'
 import { router } from 'expo-router'
 import { useProfile } from '../../hooks/useProfile'
 import { Ionicons } from '@expo/vector-icons'
+import { useDrawer } from '../../lib/DrawerContext'
 
 const { width } = Dimensions.get('window')
 
@@ -26,6 +27,7 @@ export default function HomeScreen() {
   const { signOut } = useAuth()
   useNotifications()
   const { profile, loading } = useProfile()
+  const { openDrawer } = useDrawer()
 
   if (loading) return (
     <View style={styles.center}>
@@ -49,11 +51,8 @@ export default function HomeScreen() {
           <Text style={styles.greeting}>{greeting}</Text>
           <Text style={styles.name}>Hola, {firstName} 👋</Text>
         </View>
-        <TouchableOpacity
-          style={styles.notifBtn}
-          onPress={() => router.push('/(app)/profile')}
-        >
-          <Ionicons name="notifications-outline" size={22} color="#1a1a2e" />
+        <TouchableOpacity style={styles.notifBtn} onPress={openDrawer}>
+          <Ionicons name="menu-outline" size={26} color="#1a1a2e" />
         </TouchableOpacity>
       </View>
 
