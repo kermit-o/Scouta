@@ -1,455 +1,266 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import {
-  View, Text, StyleSheet, FlatList, TouchableOpacity,
-  ActivityIndicator, RefreshControl, TextInput
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  TextInput, ActivityIndicator, Switch
 } from 'react-native'
 import { router } from 'expo-router'
 import { supabase } from '../../../lib/supabase'
-import { useProfile } from '../../../hooks/useProfile'
 import { useAuth } from '../../../lib/AuthContext'
-import { useLocation, searchJobsNearby } from '../../../hooks/useLocation'
+import { useProfile } from '../../../hooks/useProfile'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const CATEGORY_LABELS: Record<string, string> = {
-  cleaning: '🧹 Limpieza', plumbing: '🔧 Fontanería', electrical: '⚡ Electricidad',
-  painting: '🎨 Pintura', moving: '📦 Mudanza', gardening: '🌿 Jardinería',
-  carpentry: '🪚 Carpintería', tech: '💻 Tecnología', design: '✏️ Diseño', other: '🔹 Otro'
-}
+const CATEGORIES = [
+  { key: 'cleaning',   label: '🧹 Limpieza' },
+  { key: 'plumbing',   label: '🔧 Fontanería' },
+  { key: 'electrical', label: '⚡ Electricidad' },
+  { key: 'painting',   label: '🎨 Pintura' },
+  { key: 'moving',     label: '📦 Mudanza' },
+  { key: 'gardening',  label: '🌿 Jardinería' },
+  { key: 'carpentry',  label: '🪚 Carpintería' },
+  { key: 'tech',       label: '💻 Tecnología' },
+  { key: 'design',     label: '✏️ Diseño' },
+  { key: 'other',      label: '🔹 Otro' },
+]
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  open:        { label: 'Abierto',      color: '#2563EB', bg: '#EEF4FF' },
-  in_progress: { label: 'En progreso',  color: '#D97706', bg: '#FEF3C7' },
-  completed:   { label: 'Completado',   color: '#059669', bg: '#D1FAE5' },
-  cancelled:   { label: 'Cancelado',    color: '#DC2626', bg: '#FEE2E2' },
-}
-
-const RADIUS_OPTIONS = [5, 10, 25, 50]
-
-export default function JobsScreen() {
-  const { profile } = useProfile()
-  const { session } = useAuth()
+export default function NewJobScreen() {
   const insets = useSafeAreaInsets()
-  const { coords, requestLocation, loading: locLoading } = useLocation()
+  const { session } = useAuth()
+  const { profile } = useProfile()
 
-  const [activeTab, setActiveTab] = useState<'available' | 'mine'>('available')
-  const [jobs, setJobs] = useState<any[]>([])
-  const [myJobs, setMyJobs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
-  const [searchText, setSearchText] = useState('')
-  const [nearbyMode, setNearbyMode] = useState(false)
-  const [radius, setRadius] = useState(25)
+  const [title, setTitle]           = useState('')
+  const [description, setDesc]      = useState('')
+  const [category, setCategory]     = useState('')
+  const [city, setCity]             = useState('')
+  const [budgetMin, setBudgetMin]   = useState('')
+  const [budgetMax, setBudgetMax]   = useState('')
+  const [isRemote, setIsRemote]     = useState(false)
+  const [loading, setLoading]       = useState(false)
+  const [errorMsg, setErrorMsg]     = useState('')
 
-  async function fetchAvailable() {
-    if (nearbyMode && coords) {
-      const { data } = await searchJobsNearby(coords.latitude, coords.longitude, radius)
-      setJobs(data ?? [])
+  async function handlePublish() {
+    setErrorMsg('')
+    if (!title.trim())       { setErrorMsg('El título es obligatorio.'); return }
+    if (!description.trim()) { setErrorMsg('La descripción es obligatoria.'); return }
+    if (!category)           { setErrorMsg('Selecciona una categoría.'); return }
+    if (!isRemote && !city.trim()) { setErrorMsg('Indica la ciudad o marca como remoto.'); return }
+
+    setLoading(true)
+    const { data, error } = await supabase.from('jobs').insert({
+      client_id:   session!.user.id,
+      title:       title.trim(),
+      description: description.trim(),
+      category,
+      city:        city.trim() || null,
+      budget_min:  budgetMin ? parseFloat(budgetMin) : null,
+      budget_max:  budgetMax ? parseFloat(budgetMax) : null,
+      currency:    profile?.currency ?? 'EUR',
+      country:     profile?.country  ?? 'ES',
+      is_remote:   isRemote,
+      status:      'open',
+    }).select().single()
+    setLoading(false)
+
+    if (error) {
+      setErrorMsg('Error al publicar: ' + error.message)
     } else {
-      let query = supabase
-        .from('jobs').select('*').eq('status', 'open')
-        .eq('country', profile?.country ?? 'ES')
-        .order('created_at', { ascending: false })
-      if (searchText.trim()) query = query.ilike('title', `%${searchText.trim()}%`)
-      const { data } = await query
-      setJobs(data ?? [])
+      router.replace(`/(app)/jobs/${data.id}`)
     }
   }
 
-  async function fetchMine() {
-    const col = profile?.role === 'pro' ? 'pro_id' : 'client_id'
-    const { data } = await supabase
-      .from('jobs').select('*, bids(count)')
-      .eq(col, session!.user.id)
-      .order('created_at', { ascending: false })
-    setMyJobs(data ?? [])
-  }
-
-  async function fetchAll() {
-    setLoading(true)
-    await Promise.all([fetchAvailable(), fetchMine()])
-    setLoading(false)
-    setRefreshing(false)
-  }
-
-  useEffect(() => { fetchAll() }, [nearbyMode, coords, radius, profile])
-
-  async function toggleNearby() {
-    if (nearbyMode) { setNearbyMode(false); return }
-    if (!coords) await requestLocation()
-    setNearbyMode(true)
-  }
-
-  function onRefresh() { setRefreshing(true); fetchAll() }
-
-  const renderAvailableJob = ({ item }: { item: any }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/(app)/jobs/${item.id}`)}
-      activeOpacity={0.85}
-    >
-      <View style={styles.cardTop}>
-        <View style={styles.cardLeft}>
-          <View style={styles.categoryBadge}>
-            <Text style={styles.categoryText}>
-              {(CATEGORY_LABELS[item.category] ?? item.category).toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.jobTitle} numberOfLines={1}>{item.title}</Text>
-          <Text style={styles.jobDesc} numberOfLines={2}>{item.description}</Text>
-          <View style={styles.metaRow}>
-            {item.city && (
-              <View style={styles.metaItem}>
-                <Ionicons name="location-outline" size={12} color="#888" />
-                <Text style={styles.metaText}>{item.city}</Text>
-              </View>
-            )}
-            {item.distance_km != null && (
-              <View style={styles.metaItem}>
-                <Ionicons name="navigate-outline" size={12} color="#2563EB" />
-                <Text style={[styles.metaText, { color: '#2563EB' }]}>{item.distance_km}km</Text>
-              </View>
-            )}
-            {item.is_remote && (
-              <View style={styles.metaItem}>
-                <Ionicons name="globe-outline" size={12} color="#888" />
-                <Text style={styles.metaText}>Remoto</Text>
-              </View>
-            )}
-          </View>
-        </View>
-        <View style={styles.cardRight}>
-          <Text style={styles.jobPrice}>
-            {item.budget_max
-              ? `${item.currency} ${item.budget_max}`
-              : item.budget_min
-              ? `${item.currency} ${item.budget_min}+`
-              : 'Negociar'}
-          </Text>
-          <Text style={styles.jobTime}>
-            {new Date(item.created_at).toLocaleDateString('es', { day: 'numeric', month: 'short' })}
-          </Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  )
-
-  const renderMyJob = ({ item }: { item: any }) => {
-    const status = STATUS_CONFIG[item.status] ?? STATUS_CONFIG.open
-    const bidsCount = item.bids?.[0]?.count ?? 0
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardTop}>
-          <View style={styles.cardLeft}>
-            <View style={[styles.statusBadge, { backgroundColor: status.bg }]}>
-              <Text style={[styles.statusText, { color: status.color }]}>
-                {status.label}{item.status === 'open' && bidsCount > 0 ? ` · ${bidsCount} ofertas` : ''}
-              </Text>
-            </View>
-            <Text style={styles.jobTitle} numberOfLines={1}>{item.title}</Text>
-            <View style={styles.metaRow}>
-              {item.city && (
-                <View style={styles.metaItem}>
-                  <Ionicons name="location-outline" size={12} color="#888" />
-                  <Text style={styles.metaText}>{item.city}</Text>
-                </View>
-              )}
-            </View>
-          </View>
-          <View style={styles.cardRight}>
-            <Text style={styles.jobPrice}>
-              {item.budget_max ? `${item.currency} ${item.budget_max}` : 'Negociar'}
-            </Text>
-          </View>
-        </View>
-
-        {/* Action buttons */}
-        <View style={styles.cardActions}>
-          {item.status === 'open' && bidsCount > 0 && profile?.role !== 'pro' && (
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => router.push(`/(app)/jobs/${item.id}`)}
-            >
-              <Ionicons name="eye-outline" size={15} color="#2563EB" />
-              <Text style={styles.actionBtnText}>Ver ofertas ({bidsCount})</Text>
-            </TouchableOpacity>
-          )}
-          {item.status === 'in_progress' && (
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={() => router.push(`/(app)/jobs/${item.id}`)}
-            >
-              <Ionicons name="document-text-outline" size={15} color="#2563EB" />
-              <Text style={styles.actionBtnText}>Ver contrato</Text>
-            </TouchableOpacity>
-          )}
-          {item.status === 'completed' && (
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.actionBtnOutline]}
-              onPress={() => router.push(`/(app)/jobs/${item.id}`)}
-            >
-              <Ionicons name="star-outline" size={15} color="#555" />
-              <Text style={[styles.actionBtnText, { color: '#555' }]}>Dejar reseña</Text>
-            </TouchableOpacity>
-          )}
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBtnOutline]}
-            onPress={() => router.push(`/(app)/jobs/${item.id}`)}
-          >
-            <Ionicons name="chevron-forward" size={15} color="#555" />
-            <Text style={[styles.actionBtnText, { color: '#555' }]}>Ver detalle</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    )
-  }
-
-  const currentData = activeTab === 'available' ? jobs : myJobs
-
   return (
-    <View style={[styles.screen, { paddingTop: insets.top }]}>
+    <View style={[s.screen, { paddingTop: insets.top }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Trabajos</Text>
-          <Text style={styles.headerSub}>
-            {profile?.role === 'pro' ? 'Encuentra oportunidades' : 'Gestiona tus publicaciones'}
-          </Text>
-        </View>
-        <View style={styles.headerBtns}>
-          <TouchableOpacity
-            style={styles.iconBtn}
-            onPress={() => router.push('/(app)/search')}
-          >
-            <Ionicons name="sparkles-outline" size={20} color="#2563EB" />
-          </TouchableOpacity>
-          {profile?.role !== 'pro' && (
-            <TouchableOpacity
-              style={styles.publishBtn}
-              onPress={() => router.push('/(app)/jobs/new')}
-            >
-              <Ionicons name="add" size={18} color="#fff" />
-              <Text style={styles.publishBtnText}>Publicar</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+      <View style={s.header}>
+        <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
+        </TouchableOpacity>
+        <Text style={s.headerTitle}>Publicar trabajo</Text>
+        <View style={{ width: 40 }} />
       </View>
 
-      {/* Tabs */}
-      <View style={styles.tabsRow}>
-        {(['available', 'mine'] as const).map(tab => (
-          <TouchableOpacity
-            key={tab}
-            style={[styles.tab, activeTab === tab && styles.tabActive]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
-              {tab === 'available' ? 'Disponibles' : 'Mis trabajos'}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {/* Search + Nearby (solo en tab disponibles) */}
-      {activeTab === 'available' && (
-        <View style={styles.searchSection}>
-          <View style={styles.searchRow}>
-            <View style={styles.searchInput}>
-              <Ionicons name="search-outline" size={18} color="#888" />
-              <TextInput
-                style={styles.searchText}
-                value={searchText}
-                onChangeText={setSearchText}
-                onSubmitEditing={fetchAll}
-                placeholder="Buscar trabajos..."
-                placeholderTextColor="#aaa"
-                returnKeyType="search"
-              />
-            </View>
-            <TouchableOpacity
-              style={[styles.nearbyBtn, nearbyMode && styles.nearbyBtnActive]}
-              onPress={toggleNearby}
-              disabled={locLoading}
-            >
-              <Ionicons
-                name="navigate"
-                size={18}
-                color={nearbyMode ? '#fff' : '#888'}
-              />
-            </TouchableOpacity>
+      <ScrollView
+        contentContainerStyle={s.container}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {errorMsg ? (
+          <View style={s.errorBox}>
+            <Text style={s.errorText}>⚠️ {errorMsg}</Text>
           </View>
+        ) : null}
 
-          {nearbyMode && (
-            <View style={styles.radiusRow}>
-              {RADIUS_OPTIONS.map(r => (
-                <TouchableOpacity
-                  key={r}
-                  style={[styles.radiusChip, radius === r && styles.radiusChipActive]}
-                  onPress={() => setRadius(r)}
-                >
-                  <Text style={[styles.radiusText, radius === r && styles.radiusTextActive]}>
-                    {r}km
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Lista */}
-      {loading
-        ? <View style={styles.center}><ActivityIndicator size="large" color="#2563EB" /></View>
-        : (
-          <FlatList
-            data={currentData}
-            keyExtractor={item => item.id}
-            renderItem={activeTab === 'available' ? renderAvailableJob : renderMyJob}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563EB" />}
-            contentContainerStyle={currentData.length === 0 ? styles.emptyContainer : styles.list}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              <View style={styles.empty}>
-                <Ionicons name="briefcase-outline" size={48} color="#ddd" />
-                <Text style={styles.emptyTitle}>
-                  {activeTab === 'available' ? 'No hay trabajos disponibles' : 'Sin trabajos aún'}
-                </Text>
-                <Text style={styles.emptySub}>
-                  {activeTab === 'available'
-                    ? nearbyMode ? 'Prueba ampliar el radio' : 'Sé el primero en publicar'
-                    : profile?.role !== 'pro' ? 'Publica tu primer trabajo' : 'Espera nuevas oportunidades'
-                  }
-                </Text>
-                {activeTab === 'mine' && profile?.role !== 'pro' && (
-                  <TouchableOpacity
-                    style={styles.emptyBtn}
-                    onPress={() => router.push('/(app)/jobs/new')}
-                  >
-                    <Text style={styles.emptyBtnText}>Publicar trabajo</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            }
+        {/* Título */}
+        <Text style={s.label}>Título del trabajo *</Text>
+        <View style={s.inputRow}>
+          <Ionicons name="briefcase-outline" size={18} color="#888" />
+          <TextInput
+            style={s.input}
+            value={title}
+            onChangeText={setTitle}
+            placeholder="ej: Limpieza de hogar 3 habitaciones"
+            placeholderTextColor="#aaa"
+            maxLength={80}
           />
-        )
-      }
+        </View>
+
+        {/* Descripción */}
+        <Text style={s.label}>Descripción *</Text>
+        <TextInput
+          style={s.textarea}
+          value={description}
+          onChangeText={setDesc}
+          placeholder="Describe el trabajo con detalle: qué necesitas, cuándo, condiciones especiales..."
+          placeholderTextColor="#aaa"
+          multiline
+          numberOfLines={5}
+          textAlignVertical="top"
+          maxLength={500}
+        />
+        <Text style={s.charCount}>{description.length}/500</Text>
+
+        {/* Categoría */}
+        <Text style={s.label}>Categoría *</Text>
+        <View style={s.categoriesGrid}>
+          {CATEGORIES.map(c => (
+            <TouchableOpacity
+              key={c.key}
+              style={[s.categoryChip, category === c.key && s.categoryChipActive]}
+              onPress={() => setCategory(c.key)}
+              activeOpacity={0.7}
+            >
+              <Text style={[s.categoryText, category === c.key && s.categoryTextActive]}>
+                {c.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Remoto toggle */}
+        <View style={s.switchRow}>
+          <View>
+            <Text style={s.switchLabel}>Trabajo remoto</Text>
+            <Text style={s.switchDesc}>No requiere presencia física</Text>
+          </View>
+          <Switch
+            value={isRemote}
+            onValueChange={setIsRemote}
+            trackColor={{ false: '#E5E7EB', true: '#BFDBFE' }}
+            thumbColor={isRemote ? '#2563EB' : '#9CA3AF'}
+          />
+        </View>
+
+        {/* Ciudad */}
+        {!isRemote && (
+          <>
+            <Text style={s.label}>Ciudad *</Text>
+            <View style={s.inputRow}>
+              <Ionicons name="location-outline" size={18} color="#888" />
+              <TextInput
+                style={s.input}
+                value={city}
+                onChangeText={setCity}
+                placeholder="ej: Madrid, Barcelona..."
+                placeholderTextColor="#aaa"
+              />
+            </View>
+          </>
+        )}
+
+        {/* Presupuesto */}
+        <Text style={s.label}>Presupuesto ({profile?.currency ?? 'EUR'})</Text>
+        <View style={s.budgetRow}>
+          <View style={[s.inputRow, { flex: 1 }]}>
+            <Text style={s.budgetPrefix}>Mín</Text>
+            <TextInput
+              style={s.input}
+              value={budgetMin}
+              onChangeText={setBudgetMin}
+              placeholder="0"
+              placeholderTextColor="#aaa"
+              keyboardType="numeric"
+            />
+          </View>
+          <Text style={s.budgetDash}>—</Text>
+          <View style={[s.inputRow, { flex: 1 }]}>
+            <Text style={s.budgetPrefix}>Máx</Text>
+            <TextInput
+              style={s.input}
+              value={budgetMax}
+              onChangeText={setBudgetMax}
+              placeholder="0"
+              placeholderTextColor="#aaa"
+              keyboardType="numeric"
+            />
+          </View>
+        </View>
+        <Text style={s.budgetHint}>Déjalo vacío si prefieres negociar directamente.</Text>
+
+        {/* Escrow info */}
+        <View style={s.escrowCard}>
+          <Ionicons name="shield-checkmark" size={20} color="#2563EB" />
+          <View style={{ flex: 1 }}>
+            <Text style={s.escrowTitle}>Pago protegido con escrow</Text>
+            <Text style={s.escrowDesc}>
+              El pago queda retenido hasta que confirmas que el trabajo está completado. Tu dinero está seguro.
+            </Text>
+          </View>
+        </View>
+
+        <View style={{ height: 20 }} />
+      </ScrollView>
+
+      {/* Footer */}
+      <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <TouchableOpacity
+          style={[s.publishBtn, loading && s.publishBtnDisabled]}
+          onPress={handlePublish}
+          disabled={loading}
+          activeOpacity={0.85}
+        >
+          {loading
+            ? <ActivityIndicator color="#fff" />
+            : <>
+                <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                <Text style={s.publishBtnText}>Publicar trabajo</Text>
+              </>
+          }
+        </TouchableOpacity>
+      </View>
     </View>
   )
 }
 
-const styles = StyleSheet.create({
+const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F6F7FB' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-
-  // Header
-  header: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: 24, paddingTop: 16, paddingBottom: 12,
-  },
-  headerTitle: { fontSize: 24, fontWeight: '800', color: '#1a1a2e' },
-  headerSub: { fontSize: 13, color: '#888', marginTop: 2 },
-  headerBtns: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  iconBtn: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: '#EEF4FF', alignItems: 'center', justifyContent: 'center',
-  },
-  publishBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#2563EB', borderRadius: 12,
-    paddingHorizontal: 14, paddingVertical: 10,
-    shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
-  },
-  publishBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
-
-  // Tabs
-  tabsRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 24, marginBottom: 16 },
-  tab: {
-    flex: 1, paddingVertical: 12, borderRadius: 14,
-    backgroundColor: '#fff', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E5E7EB',
-  },
-  tabActive: {
-    backgroundColor: '#2563EB', borderColor: '#2563EB',
-    shadowColor: '#2563EB', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25, shadowRadius: 8, elevation: 4,
-  },
-  tabText: { fontSize: 14, fontWeight: '600', color: '#888' },
-  tabTextActive: { color: '#fff' },
-
-  // Search
-  searchSection: { paddingHorizontal: 24, marginBottom: 12 },
-  searchRow: { flexDirection: 'row', gap: 10 },
-  searchInput: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14,
-    borderWidth: 1, borderColor: '#E5E7EB',
-  },
-  searchText: { flex: 1, paddingVertical: 12, fontSize: 15, color: '#1a1a2e' },
-  nearbyBtn: {
-    width: 48, height: 48, borderRadius: 14,
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  nearbyBtnActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  radiusRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
-  radiusChip: {
-    paddingHorizontal: 14, paddingVertical: 6, borderRadius: 10,
-    backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB',
-  },
-  radiusChipActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
-  radiusText: { fontSize: 13, fontWeight: '600', color: '#888' },
-  radiusTextActive: { color: '#fff' },
-
-  // List
-  list: { paddingHorizontal: 24, paddingBottom: 30, gap: 12 },
-  emptyContainer: { flex: 1, paddingHorizontal: 24 },
-
-  // Card
-  card: {
-    backgroundColor: '#fff', borderRadius: 20, padding: 16,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
-  },
-  cardTop: { flexDirection: 'row', gap: 12 },
-  cardLeft: { flex: 1, minWidth: 0 },
-  cardRight: { alignItems: 'flex-end', justifyContent: 'flex-start' },
-  categoryBadge: {
-    alignSelf: 'flex-start', backgroundColor: '#EEF4FF',
-    borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3, marginBottom: 7,
-  },
-  categoryText: { fontSize: 10, fontWeight: '700', color: '#2563EB', letterSpacing: 0.5 },
-  statusBadge: {
-    alignSelf: 'flex-start', borderRadius: 6,
-    paddingHorizontal: 8, paddingVertical: 3, marginBottom: 7,
-  },
-  statusText: { fontSize: 10, fontWeight: '700', letterSpacing: 0.3 },
-  jobTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 6 },
-  jobDesc: { fontSize: 13, color: '#666', lineHeight: 18, marginBottom: 8 },
-  jobPrice: { fontSize: 16, fontWeight: '800', color: '#1a1a2e' },
-  jobTime: { fontSize: 11, color: '#aaa', marginTop: 3 },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  metaText: { fontSize: 12, color: '#888' },
-
-  // Card actions
-  cardActions: { flexDirection: 'row', gap: 8, marginTop: 14, flexWrap: 'wrap' },
-  actionBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#EEF4FF', borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 8,
-  },
-  actionBtnOutline: { backgroundColor: '#F6F7FB' },
-  actionBtnText: { fontSize: 13, fontWeight: '600', color: '#2563EB' },
-
-  // Empty
-  empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 10 },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: '#333' },
-  emptySub: { fontSize: 14, color: '#aaa', textAlign: 'center' },
-  emptyBtn: {
-    marginTop: 8, backgroundColor: '#2563EB', borderRadius: 14,
-    paddingHorizontal: 24, paddingVertical: 12,
-  },
-  emptyBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14 },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E5E7EB' },
+  headerTitle: { fontSize: 17, fontWeight: '700', color: '#1a1a2e' },
+  container: { paddingHorizontal: 20, paddingBottom: 20, gap: 8 },
+  errorBox: { backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14 },
+  errorText: { color: '#DC2626', fontSize: 13, fontWeight: '500' },
+  label: { fontSize: 13, fontWeight: '700', color: '#555', marginTop: 8 },
+  inputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 14, borderWidth: 1, borderColor: '#E5E7EB' },
+  input: { flex: 1, paddingVertical: 14, fontSize: 15, color: '#1a1a2e' },
+  textarea: { backgroundColor: '#fff', borderRadius: 14, padding: 14, fontSize: 14, color: '#1a1a2e', borderWidth: 1, borderColor: '#E5E7EB', minHeight: 120, lineHeight: 22 },
+  charCount: { fontSize: 11, color: '#aaa', textAlign: 'right', marginTop: -4 },
+  categoriesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 4 },
+  categoryChip: { borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E5E7EB' },
+  categoryChipActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  categoryText: { fontSize: 13, fontWeight: '500', color: '#374151' },
+  categoryTextActive: { color: '#fff' },
+  switchRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#E5E7EB', marginTop: 8 },
+  switchLabel: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
+  switchDesc: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  budgetRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
+  budgetPrefix: { fontSize: 12, fontWeight: '600', color: '#888' },
+  budgetDash: { fontSize: 18, color: '#ccc' },
+  budgetHint: { fontSize: 12, color: '#9CA3AF', marginTop: 4 },
+  escrowCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, backgroundColor: '#EEF4FF', borderRadius: 14, padding: 16, borderWidth: 1, borderColor: '#DBEAFE', marginTop: 8 },
+  escrowTitle: { fontSize: 13, fontWeight: '700', color: '#1a1a2e', marginBottom: 4 },
+  escrowDesc: { fontSize: 12, color: '#555', lineHeight: 18 },
+  footer: { paddingHorizontal: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: 'rgba(0,0,0,0.05)', backgroundColor: '#fff' },
+  publishBtn: { backgroundColor: '#2563EB', borderRadius: 16, height: 56, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 6 },
+  publishBtnDisabled: { opacity: 0.5, shadowOpacity: 0 },
+  publishBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
 })

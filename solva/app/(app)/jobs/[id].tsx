@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Alert, TextInput
+  ActivityIndicator, TextInput
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { supabase, Job, Bid } from '../../../lib/supabase'
@@ -45,6 +45,8 @@ export default function JobDetailScreen() {
   const [bidMessage, setBidMessage] = useState('')
   const [bidDays, setBidDays] = useState('')
   const [submittingBid, setSubmittingBid] = useState(false)
+  const [msgError, setMsgError] = useState("")
+  const [msgSuccess, setMsgSuccess] = useState("")
 
   async function fetchJob() {
     const { data } = await supabase.from('jobs').select('*').eq('id', id).single()
@@ -84,12 +86,11 @@ export default function JobDetailScreen() {
     })
     setAccepting(null)
     if (error) {
-      Alert.alert('⚠️ Oferta aceptada', 'Bid aceptado pero error al crear contrato: ' + error.message)
+      setMsgError('Bid aceptado pero error al crear contrato: ' + error.message)
     } else {
-      Alert.alert('✅ Contrato creado', 'El contrato fue generado según las leyes de ' + job!.country, [
-        { text: 'Ver contrato', onPress: () => router.push(`/(app)/jobs/${id}/contract`) },
-        { text: 'OK', onPress: () => { fetchJob(); fetchBids(); setViewMode('detail') } }
-      ])
+      setMsgSuccess('✅ Contrato creado según las leyes de ' + job!.country)
+      fetchJob(); fetchBids(); setViewMode('detail')
+      setTimeout(() => router.push(`/(app)/jobs/${id}/contract`), 1500)
     }
   }
 
@@ -106,7 +107,7 @@ export default function JobDetailScreen() {
       status: 'pending',
     })
     setSubmittingBid(false)
-    if (error) Alert.alert('Error', error.message)
+    if (error) setMsgError(error.message)
     else { fetchBids(); setViewMode('detail') }
   }
 
@@ -315,6 +316,12 @@ export default function JobDetailScreen() {
   // ── VISTA PRINCIPAL: DETALLE JOB ──
   return (
     <View style={[s.screen, { paddingTop: insets.top }]}>
+      {msgError ? (
+        <View style={s.msgError}><Text style={s.msgErrorText}>⚠️ {msgError}</Text></View>
+      ) : null}
+      {msgSuccess ? (
+        <View style={s.msgSuccess}><Text style={s.msgSuccessText}>{msgSuccess}</Text></View>
+      ) : null}
       <View style={s.header}>
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
@@ -689,4 +696,8 @@ const s = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#E5E7EB', backgroundColor: '#fff',
   },
   outlineBtnText: { fontSize: 15, fontWeight: '600', color: '#555' },
+  msgError: { backgroundColor: '#FEF2F2', padding: 14, marginHorizontal: 20, borderRadius: 12, marginTop: 8 },
+  msgErrorText: { color: '#DC2626', fontSize: 13, fontWeight: '500' },
+  msgSuccess: { backgroundColor: '#F0FDF4', padding: 14, marginHorizontal: 20, borderRadius: 12, marginTop: 8 },
+  msgSuccessText: { color: '#16A34A', fontSize: 13, fontWeight: '500' },
 })
