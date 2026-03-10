@@ -25,6 +25,12 @@ export default function NewBidScreen() {
   const [saving, setSaving] = useState(false)
 
   async function handleSubmit() {
+    // Verificar límite de bids
+    const limit = await checkPlanLimit(session!.user.id, 'bid')
+    if (!limit.allowed) {
+      setPaywallFeature('bid')
+      return
+    }
     const { allowed, reason } = await canSendBid()
     if (!allowed) return Alert.alert('Límite alcanzado', reason ?? 'Actualiza a Pro para enviar más bids')
     if (!amount) return Alert.alert('Error', 'El precio es obligatorio')
@@ -177,6 +183,7 @@ export default function NewBidScreen() {
         </TouchableOpacity>
       </View>
     </View>
+      <PaywallModal feature={paywallFeature} onClose={() => setPaywallFeature(null)} />
   )
 }
 
