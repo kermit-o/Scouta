@@ -19,7 +19,7 @@ function AppLayoutInner() {
   const insets = useSafeAreaInsets()
 
   useEffect(() => {
-    if (!loading && profile && !profile.onboarding_completed) {
+    if (!loading && profile && profile.onboarding_completed === false && profile.created_at && (Date.now() - new Date(profile.created_at).getTime() < 60000)) {
       router.replace('/(app)/onboarding')
     }
   }, [profile, loading])
