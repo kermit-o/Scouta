@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, ScrollView, Image
+  ActivityIndicator, ScrollView, Image
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase'
@@ -43,7 +43,7 @@ export default function ProfileScreen() {
   async function pickAndUploadAvatar() {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
     if (status !== 'granted') {
-      Alert.alert('Permiso requerido', 'Necesitamos acceso a tu galería')
+      setErrorMsg('Necesitamos acceso a tu galería para cambiar tu foto.')
       return
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -64,14 +64,14 @@ export default function ProfileScreen() {
       const { data: { publicUrl } } = supabase.storage.from('avatars').getPublicUrl(fileName)
       setAvatarUrl(publicUrl)
     } catch (e: any) {
-      Alert.alert('Error', e.message)
+      setErrorMsg('Error al subir imagen: ' + e.message)
     } finally {
       setUploading(false)
     }
   }
 
   async function handleSave() {
-    if (!fullName.trim()) { Alert.alert('Error', 'El nombre no puede estar vacío'); return }
+    if (!fullName.trim()) { setErrorMsg('El nombre no puede estar vacío'); return }
     setSaving(true)
     const { error } = await supabase.from('users').update({
       full_name: fullName.trim(),
@@ -80,11 +80,12 @@ export default function ProfileScreen() {
     }).eq('id', session!.user.id)
     setSaving(false)
     if (error) {
-      Alert.alert('Error', error.message)
+      setErrorMsg('Error al guardar: ' + error.message)
     } else {
       await refreshProfile()
       setEditing(false)
-      Alert.alert('✅ Guardado', 'Perfil actualizado correctamente')
+      setSuccessMsg('✅ Perfil actualizado correctamente')
+      setTimeout(() => setSuccessMsg(''), 3000)
     }
   }
 
@@ -127,6 +128,19 @@ export default function ProfileScreen() {
       keyboardShouldPersistTaps="handled"
     >
       {/* Header */}
+      {errorMsg ? (
+        <View style={styles.errorBox}>
+          <Text style={styles.errorText}>⚠️ {errorMsg}</Text>
+          <TouchableOpacity onPress={() => setErrorMsg('')}>
+            <Ionicons name="close" size={16} color="#DC2626" />
+          </TouchableOpacity>
+        </View>
+      ) : null}
+      {successMsg ? (
+        <View style={styles.successBox}>
+          <Text style={styles.successText}>{successMsg}</Text>
+        </View>
+      ) : null}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mi Perfil</Text>
         <TouchableOpacity
@@ -265,8 +279,7 @@ export default function ProfileScreen() {
       {/* Logout */}
       <TouchableOpacity
         style={styles.logoutBtn}
-        onPress={() => Alert.alert('Cerrar sesión', '¿Estás seguro?', [
-          { text: 'Cancelar', style: 'cancel' },
+        onPress_OLD={() => {          { text: 'Cancelar', style: 'cancel' },
           { text: 'Salir', style: 'destructive', onPress: signOut }
         ])}
         activeOpacity={0.8}
@@ -280,6 +293,10 @@ export default function ProfileScreen() {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1, backgroundColor: '#F6F7FB' },
+  errorBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FEF2F2', borderRadius: 12, padding: 14, marginHorizontal: 24, marginTop: 12 },
+  errorText: { flex: 1, color: '#DC2626', fontSize: 13, fontWeight: '500' },
+  successBox: { backgroundColor: '#F0FDF4', borderRadius: 12, padding: 14, marginHorizontal: 24, marginTop: 12 },
+  successText: { color: '#16A34A', fontSize: 13, fontWeight: '500', textAlign: 'center' },
   container: { paddingHorizontal: 24 },
 
   // Header
