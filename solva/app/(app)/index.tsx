@@ -10,6 +10,7 @@ import { useProfile } from '../../hooks/useProfile'
 import { Ionicons } from '@expo/vector-icons'
 import { useDrawer } from '../../lib/DrawerContext'
 import { supabase } from '../../lib/supabase'
+import { useSubscription } from '../../hooks/useSubscription'
 
 const { width } = Dimensions.get('window')
 
@@ -24,6 +25,7 @@ export default function HomeScreen() {
   useNotifications()
   const { profile, loading } = useProfile()
   const { openDrawer } = useDrawer()
+  const { isTrialing, trialDaysLeft, isPro } = useSubscription()
   const [recentJobs, setRecentJobs] = useState<any[]>([])
 
   useEffect(() => {
@@ -62,6 +64,23 @@ export default function HomeScreen() {
           <Ionicons name="menu-outline" size={26} color="#1a1a2e" />
         </TouchableOpacity>
       </View>
+
+      {/* Trial Banner */}
+      {isTrialing && trialDaysLeft !== null && trialDaysLeft <= 7 && (
+        <TouchableOpacity
+          style={styles.trialBanner}
+          onPress={() => router.push('/(app)/subscription')}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.trialBannerEmoji}>⚡</Text>
+          <Text style={styles.trialBannerText}>
+            {trialDaysLeft === 0
+              ? 'Tu trial Pro expira hoy — activa tu plan'
+              : `${trialDaysLeft} días de Pro gratis restantes`}
+          </Text>
+          <Text style={styles.trialBannerCta}>Activar →</Text>
+        </TouchableOpacity>
+      )}
 
       {/* KYC Banner */}
       {!profile?.is_verified && (
@@ -280,6 +299,10 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 16, fontWeight: '700', color: '#1a1a2e' },
   statLabel: { fontSize: 11, color: '#888', marginTop: 4 },
   statDivider: { width: 1, height: 36, backgroundColor: '#F0F0F0' },
+  trialBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1a1a2e', borderRadius: 14, padding: 14, marginBottom: 16 },
+  trialBannerEmoji: { fontSize: 16 },
+  trialBannerText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#fff' },
+  trialBannerCta: { fontSize: 13, fontWeight: '700', color: '#60A5FA' },
   emptyJobs: { alignItems: 'center', paddingVertical: 28, gap: 8 },
   emptyJobsText: { fontSize: 14, color: '#aaa' },
   emptyJobsLink: { fontSize: 14, fontWeight: '700', color: '#2563EB' },

@@ -41,7 +41,14 @@ Deno.serve(async (req) => {
     }
 
     const provider = PROVIDER_BY_COUNTRY[country] ?? 'stripe'
-    const platformFee = Math.round(amount * PLATFORM_FEE_PCT * 100) / 100
+
+    // Comisión dinámica según plan del pro
+    let commissionPct = PLATFORM_FEE_PCT
+    if (pro_id) {
+      const { data: pct } = await supabase.rpc('get_commission_pct', { p_user_id: pro_id })
+      if (pct != null) commissionPct = pct / 100
+    }
+    const platformFee = Math.round(amount * commissionPct * 100) / 100
     const proAmount = Math.round((amount - platformFee) * 100) / 100
 
     if (provider === 'stripe') {

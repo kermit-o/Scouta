@@ -84,7 +84,7 @@ Deno.serve(async (req) => {
     // 2. Construye filtros para Supabase
     let dbQuery = supabase
       .from('jobs')
-      .select('*')
+      .select('*, client:client_id(profile_quality_score, subscriptions(plan, status))')
       .eq('status', 'open')
       .eq('country', country ?? 'ES')
       .order('created_at', { ascending: false })
@@ -154,16 +154,34 @@ Deno.serve(async (req) => {
         // Presupuesto compatible
         if (parsed.budget_max && job.budget_max && job.budget_max <= parsed.budget_max) score += 2
 
+        // Boost por plan del cliente del job (pro/company aparecen antes)
+        if (job.client_plan === 'pro')     score += 3
+        if (job.client_plan === 'company') score += 5
+
+        // Boost por quality score del job (descripción IA)
+        if (job.client_quality_score) score += Math.floor(job.client_quality_score / 20)
+
         return { ...job, _relevance: score }
       })
 
       jobs = jobsWithScore.sort((a: any, b: any) => b._relevance - a._relevance)
     }
 
+    // Añadir client_plan y client_quality_score como campos planos
+    const enriched = (jobs ?? []).map((j: any) => {
+      const sub = j.client?.subscriptions?.[0]
+      return {
+        ...j,
+        client_plan: sub?.status === 'active' || sub?.status === 'trialing' ? sub?.plan : 'free',
+        client_quality_score: j.client?.profile_quality_score ?? 0,
+        client: undefined, // no exponer datos del cliente
+      }
+    })
+
     return new Response(JSON.stringify({
-      jobs: jobs ?? [],
+      jobs: enriched,
       parsed,
-      total: jobs?.length ?? 0,
+      total: enriched.length,
     }), {
       headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
     })
