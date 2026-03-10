@@ -62,9 +62,9 @@ export default function DrawerMenu({ open, onClose }: Props) {
       title: 'Mi cuenta',
       items: [
         { icon: '👤', label: 'Editar perfil', route: '/(app)/profile' },
-        { icon: '🔔', label: 'Notificaciones', route: '/(app)/profile' },
-        { icon: '🌍', label: 'País y moneda', route: '/(app)/profile' },
-        { icon: '🔒', label: 'Seguridad', route: '/(app)/profile' },
+        { icon: '🔔', label: 'Notificaciones', route: '/(app)/notifications' },
+        { icon: '🌍', label: 'País y moneda', route: '/(app)/settings-country' },
+        { icon: '🔒', label: 'Seguridad', route: '/(app)/settings-security' },
       ]
     },
     {
@@ -78,7 +78,7 @@ export default function DrawerMenu({ open, onClose }: Props) {
       title: 'Económico',
       items: [
         { icon: '💳', label: 'Mi suscripción', route: '/(app)/subscription', badge: 'Free', badgeColor: '#2563EB' },
-        { icon: '💰', label: 'Mis pagos y cobros', route: '/(app)/jobs' },
+        { icon: '💰', label: 'Mis pagos y cobros', route: '/(app)/payments' },
         { icon: '🧾', label: 'Facturas', route: '/(app)/jobs' },
         { icon: '🛡️', label: 'Garantía Solva', route: '/(app)/jobs' },
       ]
@@ -86,7 +86,7 @@ export default function DrawerMenu({ open, onClose }: Props) {
     ...(role === 'pro' || role === 'company' ? [{
       title: 'Mi negocio',
       items: [
-        { icon: '📊', label: 'Dashboard Pro', route: '/(app)/profile' },
+        { icon: '📊', label: 'Dashboard Pro', route: '/(app)/dashboard-pro' },
         { icon: '🗺️', label: 'Mi zona de trabajo', route: '/(app)/search' },
         { icon: '📋', label: 'Mis servicios', route: '/(app)/jobs' },
       ]

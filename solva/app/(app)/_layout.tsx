@@ -47,6 +47,11 @@ function AppLayoutInner() {
         <Tabs.Screen name="jobs"     options={{ title: 'Jobs',     tabBarIcon: ({ color }) => <JobsIcon    color={color} /> }} />
         <Tabs.Screen name="messages" options={{ title: 'Mensajes', tabBarIcon: ({ color }) => <MsgIcon     color={color} /> }} />
         <Tabs.Screen name="profile"  options={{ title: 'Perfil',   tabBarIcon: ({ color }) => <ProfileIcon color={color} /> }} />
+        <Tabs.Screen name="notifications"      options={{ href: null }} />
+        <Tabs.Screen name="settings-country"   options={{ href: null }} />
+        <Tabs.Screen name="settings-security"  options={{ href: null }} />
+        <Tabs.Screen name="payments"           options={{ href: null }} />
+        <Tabs.Screen name="dashboard-pro"      options={{ href: null }} />
         <Tabs.Screen name="onboarding"         options={{ href: null }} />
         <Tabs.Screen name="kyc"                options={{ href: null }} />
         <Tabs.Screen name="subscription"       options={{ href: null }} />
