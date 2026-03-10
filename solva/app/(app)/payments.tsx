@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabase'
+import { useSubscription } from '../../hooks/useSubscription'
 import { useAuth } from '../../lib/AuthContext'
 
 type Payment = { id: string; amount: number; currency: string; status: string; created_at: string; job_id: string }
@@ -14,6 +15,8 @@ const STATUS_LABEL: Record<string, string> = { completed: 'Completado', pending:
 export default function PaymentsScreen() {
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
+  const { isPro, isTrialing } = useSubscription()
+  const [showUpgradeHint, setShowUpgradeHint] = useState(false)
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
 
