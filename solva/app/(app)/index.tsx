@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, ActivityIndicator, ScrollView,
   TouchableOpacity, Dimensions
@@ -8,6 +9,7 @@ import { router } from 'expo-router'
 import { useProfile } from '../../hooks/useProfile'
 import { Ionicons } from '@expo/vector-icons'
 import { useDrawer } from '../../lib/DrawerContext'
+import { supabase } from '../../lib/supabase'
 
 const { width } = Dimensions.get('window')
 
@@ -17,17 +19,22 @@ const FLAG: Record<string, string> = {
   NL: '🇳🇱', DE: '🇩🇪', PT: '🇵🇹', IT: '🇮🇹', GB: '🇬🇧'
 }
 
-const MOCK_JOBS = [
-  { id: '1', category: 'Limpieza', title: 'Limpieza hogar 3 habitaciones', distance: '0.8 km', duration: '3h', price: 85, time: 'Hace 5 min' },
-  { id: '2', category: 'Fontanería', title: 'Reparar fuga en cocina urgente', distance: '1.2 km', duration: '2h', price: 120, time: 'Hace 12 min' },
-  { id: '3', category: 'Electricidad', title: 'Instalación puntos de luz', distance: '2.1 km', duration: '4h', price: 200, time: 'Hace 28 min' },
-]
-
 export default function HomeScreen() {
   const { signOut } = useAuth()
   useNotifications()
   const { profile, loading } = useProfile()
   const { openDrawer } = useDrawer()
+  const [recentJobs, setRecentJobs] = useState<any[]>([])
+
+  useEffect(() => {
+    supabase
+      .from('jobs')
+      .select('id, title, category, city, budget_min, budget_max, currency, created_at, status')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(3)
+      .then(({ data }) => { if (data) setRecentJobs(data) })
+  }, [])
 
   if (loading) return (
     <View style={styles.center}>
@@ -102,37 +109,54 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.jobsList}>
-          {MOCK_JOBS.map((job) => (
-            <TouchableOpacity
-              key={job.id}
-              style={styles.jobCard}
-              onPress={() => router.push('/(app)/jobs')}
-              activeOpacity={0.85}
-            >
-              <View style={styles.jobTop}>
-                <View style={styles.jobLeft}>
-                  <View style={styles.categoryBadge}>
-                    <Text style={styles.categoryText}>{job.category.toUpperCase()}</Text>
+          {recentJobs.length === 0 ? (
+            <View style={styles.emptyJobs}>
+              <Ionicons name="briefcase-outline" size={32} color="#ddd" />
+              <Text style={styles.emptyJobsText}>Aún no hay jobs publicados</Text>
+              <TouchableOpacity onPress={() => router.push('/(app)/jobs/new')}>
+                <Text style={styles.emptyJobsLink}>¡Sé el primero en publicar!</Text>
+              </TouchableOpacity>
+            </View>
+          ) : recentJobs.map((job) => {
+            const timeAgo = (() => {
+              const diff = Math.floor((Date.now() - new Date(job.created_at).getTime()) / 60000)
+              if (diff < 60) return `Hace ${diff}m`
+              if (diff < 1440) return `Hace ${Math.floor(diff/60)}h`
+              return `Hace ${Math.floor(diff/1440)}d`
+            })()
+            const budget = job.budget_min || job.budget_max
+              ? `${job.budget_min ?? '?'}–${job.budget_max ?? '?'} ${job.currency ?? 'EUR'}`
+              : 'A negociar'
+            return (
+              <TouchableOpacity
+                key={job.id}
+                style={styles.jobCard}
+                onPress={() => router.push(`/(app)/jobs/${job.id}`)}
+                activeOpacity={0.85}
+              >
+                <View style={styles.jobTop}>
+                  <View style={styles.jobLeft}>
+                    <View style={styles.categoryBadge}>
+                      <Text style={styles.categoryText}>{(job.category ?? 'other').toUpperCase()}</Text>
+                    </View>
+                    <Text style={styles.jobTitle} numberOfLines={1}>{job.title}</Text>
+                    <View style={styles.jobMeta}>
+                      {job.city && (
+                        <View style={styles.metaItem}>
+                          <Ionicons name="location-outline" size={13} color="#888" />
+                          <Text style={styles.metaText}>{job.city}</Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <Text style={styles.jobTitle} numberOfLines={1}>{job.title}</Text>
-                  <View style={styles.jobMeta}>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="location-outline" size={13} color="#888" />
-                      <Text style={styles.metaText}>{job.distance}</Text>
-                    </View>
-                    <View style={styles.metaItem}>
-                      <Ionicons name="time-outline" size={13} color="#888" />
-                      <Text style={styles.metaText}>{job.duration}</Text>
-                    </View>
+                  <View style={styles.jobRight}>
+                    <Text style={styles.jobPrice}>{budget}</Text>
+                    <Text style={styles.jobTime}>{timeAgo}</Text>
                   </View>
                 </View>
-                <View style={styles.jobRight}>
-                  <Text style={styles.jobPrice}>€{job.price}</Text>
-                  <Text style={styles.jobTime}>{job.time}</Text>
-                </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            )
+          })}
         </View>
       </View>
 
@@ -256,4 +280,7 @@ const styles = StyleSheet.create({
   statValue: { fontSize: 16, fontWeight: '700', color: '#1a1a2e' },
   statLabel: { fontSize: 11, color: '#888', marginTop: 4 },
   statDivider: { width: 1, height: 36, backgroundColor: '#F0F0F0' },
+  emptyJobs: { alignItems: 'center', paddingVertical: 28, gap: 8 },
+  emptyJobsText: { fontSize: 14, color: '#aaa' },
+  emptyJobsLink: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
 })
