@@ -1,5 +1,9 @@
 {
   "dependencies": {
     "react-markdown": "^10.1.0"
+  },
+  "devDependencies": {
+    "@expo/cli": "^55.0.15",
+    "supabase": "^2.76.17"
   }
 }
