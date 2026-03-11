@@ -46,7 +46,7 @@ export default function HomeScreen() {
       .from('contracts')
       .select('id, job_id, status, amount, currency, jobs(id, title, category)')
       .eq('client_id', profile.id)
-      .in('status', ['active', 'in_progress'])
+      .eq('status', 'active')
       .limit(5)
       .then(({ data, error }) => {
         console.log('activeJobs:', JSON.stringify(data), 'err:', error?.message)
