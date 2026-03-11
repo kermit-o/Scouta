@@ -46,7 +46,7 @@ export default function HomeScreen() {
         .or(`client_id.eq.${profile.id},pro_id.eq.${profile.id}`)
         .in('status', ['active', 'in_progress'])
         .limit(5)
-        .then(({ data }) => { if (data) setActiveJobs(data) })
+        .then(({ data, error }) => { console.log('activeJobs:', JSON.stringify(data), 'error:', error?.message); if (data) setActiveJobs(data) })
     }
   }, [profile?.id])
 
