@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView
 } from 'react-native'
 import { Link, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'

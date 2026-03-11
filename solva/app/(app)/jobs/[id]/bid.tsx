@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  Alert, ActivityIndicator, ScrollView
+  ActivityIndicator, ScrollView
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { supabase } from '../../../../lib/supabase'
@@ -32,11 +32,11 @@ export default function NewBidScreen() {
       return
     }
     const { allowed, reason } = await canSendBid()
-    if (!allowed) return Alert.alert('Límite alcanzado', reason ?? 'Actualiza a Pro para enviar más bids')
-    if (!amount) return Alert.alert('Error', 'El precio es obligatorio')
-    if (parseFloat(amount) <= 0) return Alert.alert('Error', 'El precio debe ser mayor a 0')
-    if (!message.trim()) return Alert.alert('Error', 'El mensaje es obligatorio')
-    if (message.trim().length < 20) return Alert.alert('Error', 'El mensaje debe tener al menos 20 caracteres')
+    if (!allowed) { setPaywallFeature('bid'); return }
+    if (!amount) { setErrorMsg('El precio es obligatorio.'); return }
+    if (parseFloat(amount) <= 0) { setErrorMsg('El precio debe ser mayor a 0.'); return }
+    if (!message.trim()) { setErrorMsg('El mensaje es obligatorio.'); return }
+    if (message.trim().length < 20) { setErrorMsg('El mensaje debe tener al menos 20 caracteres.'); return }
 
     setSaving(true)
     const { error } = await supabase.from('bids').insert({
@@ -50,7 +50,7 @@ export default function NewBidScreen() {
     setSaving(false)
 
     if (error) {
-      Alert.alert('Error', error.message)
+      setErrorMsg(error.message)
     } else {
       const { data: job } = await supabase.from('jobs').select('client_id, title').eq('id', id).single()
       if (job) {
@@ -259,4 +259,6 @@ const s = StyleSheet.create({
   },
   footerBtnDisabled: { opacity: 0.45, shadowOpacity: 0 },
   footerBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  errorBox: { backgroundColor: '#FEF2F2', borderRadius: 12, padding: 12, margin: 16 },
+  errorText: { color: '#DC2626', fontSize: 13, fontWeight: '500' },
 })

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
-  ActivityIndicator, Alert, Image
+  ActivityIndicator, Image
 } from 'react-native'
 import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
@@ -86,8 +86,8 @@ export default function KycScreen() {
   }
 
   async function handleSubmit() {
-    if (!frontUrl) return Alert.alert('Error', 'Sube la foto frontal del documento')
-    if (!selfieUrl) return Alert.alert('Error', 'Sube una selfie')
+    if (!frontUrl) { setErrorMsg('Sube la foto frontal del documento.'); return }
+    if (!selfieUrl) { setErrorMsg('Sube una selfie con tu documento.'); return }
 
     setSaving(true)
     const payload = {
@@ -106,7 +106,7 @@ export default function KycScreen() {
 
     setSaving(false)
     if (error) {
-      Alert.alert('Error', error.message)
+      setErrorMsg(error.message)
     } else {
       Alert.alert('✅ Enviado', 'Revisaremos tus documentos en 24-48h', [
         { text: 'OK', onPress: () => { loadKyc(); router.back() } }

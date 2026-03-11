@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
-  ActivityIndicator, ScrollView, Image, Alert
+  ActivityIndicator, ScrollView, Image
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
@@ -85,9 +85,9 @@ export default function ReviewScreen() {
   }
 
   async function handleSubmit() {
-    if (rating === 0) return Alert.alert('Error', 'Selecciona una puntuación')
-    if (comment.trim().length < 20) return Alert.alert('Error', 'El comentario debe tener al menos 20 caracteres')
-    if (!contract) return Alert.alert('Error', 'Contrato no encontrado')
+    if (rating === 0) { setErrorMsg('Selecciona una puntuación.'); return }
+    if (comment.trim().length < 20) { setErrorMsg('El comentario debe tener al menos 20 caracteres.'); return }
+    if (!contract) { setErrorMsg('Contrato no encontrado.'); return }
 
     const reviewedId = contract.client_id === session!.user.id ? contract.pro_id : contract.client_id
 
@@ -99,7 +99,7 @@ export default function ReviewScreen() {
       setVerifyResult(verifyData?.result ?? null)
       setVerifying(false)
       if (verifyData?.result && !verifyData.result.is_valid) {
-        Alert.alert('Fotos no válidas', 'Las fotos no parecen ser reales o relevantes al trabajo. Por favor sube fotos del trabajo realizado.', [{ text: 'Entendido' }])
+        setErrorMsg('Las fotos no parecen ser reales o relevantes al trabajo. Por favor sube fotos del trabajo realizado.')
         return
       }
     }
@@ -119,7 +119,7 @@ export default function ReviewScreen() {
       photos_verified_at: verifyResult ? new Date().toISOString() : null,
     })
     setSaving(false)
-    if (error) Alert.alert('Error', error.message)
+    if (error) { setErrorMsg(error.message); return }
     else Alert.alert('¡Gracias por tu reseña!', 'Tu opinión ayuda a construir la comunidad de Solva', [
       { text: 'OK', onPress: () => router.replace('/(app)/jobs') }
     ])
