@@ -38,16 +38,20 @@ export default function HomeScreen() {
       .limit(3)
       .then(({ data }) => { if (data) setRecentJobs(data) })
 
-    if (profile?.id) {
-      // Mis trabajos activos (como cliente o pro)
-      supabase
-        .from('contracts')
-        .select('id, job_id, status, amount, currency, jobs(id, title, category)')
-        .eq('client_id', profile.id)
-        .in('status', ['active', 'in_progress'])
-        .limit(5)
-        .then(({ data, error }) => { console.log('activeJobs client:', JSON.stringify(data), 'error:', error?.message); if (data) setActiveJobs(data) })
-    }
+  }, [])
+
+  useEffect(() => {
+    if (!profile?.id) return
+    supabase
+      .from('contracts')
+      .select('id, job_id, status, amount, currency, jobs(id, title, category)')
+      .eq('client_id', profile.id)
+      .in('status', ['active', 'in_progress'])
+      .limit(5)
+      .then(({ data, error }) => {
+        console.log('activeJobs:', JSON.stringify(data), 'err:', error?.message)
+        if (data) setActiveJobs(data)
+      })
   }, [profile?.id])
 
   if (loading) return (
