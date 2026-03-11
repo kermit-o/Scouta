@@ -23,14 +23,14 @@ export default function PaymentsScreen() {
   useEffect(() => {
     async function load() {
       if (!session?.user?.id) return
-      const { data } = await supabase.from('payments').select('*').eq('payer_id', session.user.id).order('created_at', { ascending: false }).limit(30)
+      const { data } = await supabase.from('payments').select('*').eq('client_id', session.user.id).order('created_at', { ascending: false }).limit(30)
       setPayments(data || [])
       setLoading(false)
     }
     load()
   }, [session])
 
-  const total = payments.filter(p => p.status === 'completed').reduce((s, p) => s + p.amount, 0)
+  const total = payments.filter(p => p.status === 'released').reduce((s, p) => s + p.amount, 0)
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -45,7 +45,7 @@ export default function PaymentsScreen() {
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total pagado</Text>
           <Text style={styles.summaryAmount}>€{(total / 100).toFixed(2)}</Text>
-          <Text style={styles.summaryNote}>{payments.filter(p => p.status === 'completed').length} transacciones completadas</Text>
+          <Text style={styles.summaryNote}>{payments.filter(p => p.status === 'released').length} transacciones completadas</Text>
         </View>
         {loading ? <ActivityIndicator color="#2563EB" style={{ marginTop: 40 }} /> : payments.length === 0 ? (
           <View style={styles.empty}>
