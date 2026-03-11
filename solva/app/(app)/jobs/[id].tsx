@@ -89,6 +89,24 @@ export default function JobDetailScreen() {
       setMsgError('Bid aceptado pero error al crear contrato: ' + error.message)
     } else {
       setMsgSuccess('✅ Contrato creado según las leyes de ' + job!.country)
+      // Email al pro — bid aceptado
+      try {
+        const { data: proProfile } = await supabase.from('users').select('email, full_name').eq('id', bid.pro_id).single()
+        if (proProfile?.email) {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              to: proProfile.email,
+              template: 'bid_accepted',
+              data: {
+                proName: proProfile.full_name ?? 'Profesional',
+                jobTitle: job!.title,
+                amount: bid.amount,
+                currency: job!.currency,
+              }
+            }
+          })
+        }
+      } catch (_) {}
       fetchJob(); fetchBids(); setViewMode('detail')
       setTimeout(() => router.push(`/(app)/jobs/${id}/contract`), 1500)
     }
@@ -107,8 +125,31 @@ export default function JobDetailScreen() {
       status: 'pending',
     })
     setSubmittingBid(false)
-    if (error) setMsgError(error.message)
-    else { fetchBids(); setViewMode('detail') }
+    if (error) { setMsgError(error.message) }
+    else {
+      fetchBids(); setViewMode('detail')
+      // Email al cliente — nueva oferta recibida
+      try {
+        const { data: clientProfile } = await supabase.from('users').select('email, full_name').eq('id', job!.client_id).single()
+        const { data: proProfile } = await supabase.from('users').select('full_name').eq('id', session!.user.id).single()
+        if (clientProfile?.email) {
+          await supabase.functions.invoke('send-email', {
+            body: {
+              to: clientProfile.email,
+              template: 'bid_received',
+              data: {
+                clientName: clientProfile.full_name ?? 'Cliente',
+                proName: proProfile?.full_name ?? 'Profesional',
+                jobTitle: job!.title,
+                amount: parseFloat(bidAmount),
+                currency: job!.currency,
+                message: bidMessage,
+              }
+            }
+          })
+        }
+      } catch (_) {}
+    }
   }
 
   if (loading) return (
