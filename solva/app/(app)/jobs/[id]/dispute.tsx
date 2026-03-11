@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
-  TouchableOpacity, ActivityIndicator, Alert, Image
+  TouchableOpacity, ActivityIndicator, Image
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
@@ -45,6 +45,7 @@ export default function DisputeScreen() {
   const [evidenceUrls, setEvidenceUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const [msgText, setMsgText] = useState('')
   const [sendingMsg, setSendingMsg] = useState(false)
 
@@ -99,7 +100,7 @@ export default function DisputeScreen() {
   }
 
   async function handleOpenDispute() {
-    if (description.trim().length < 30) return Alert.alert('Error', 'La descripción debe tener al menos 30 caracteres')
+    if (description.trim().length < 30) { setErrorMsg('La descripción debe tener al menos 30 caracteres.'); return }
     if (!contract) return
     setSaving(true)
     const againstId = contract.client_id === session!.user.id ? contract.pro_id : contract.client_id
@@ -108,7 +109,7 @@ export default function DisputeScreen() {
       opened_by: session!.user.id, against: againstId,
       reason, description: description.trim(), evidence_urls: evidenceUrls,
     }).select().single()
-    if (error) { Alert.alert('Error', error.message); setSaving(false); return }
+    if (error) { setErrorMsg(error.message); setSaving(false); return }
     await supabase.from('contracts').update({ status: 'disputed' }).eq('id', contract.id)
     await notifyUser(againstId, '⚠️ Disputa abierta', 'Se ha abierto una disputa en uno de tus contratos.', { job_id: id as string })
     setSaving(false)

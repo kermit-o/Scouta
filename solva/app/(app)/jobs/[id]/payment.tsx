@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../lib/AuthContext'
@@ -21,6 +21,8 @@ export default function PaymentScreen() {
   const [payment, setPayment] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
   const [releasing, setReleasing] = useState(false)
 
   async function fetchData() {
@@ -43,7 +45,7 @@ export default function PaymentScreen() {
         body: { contract_id: contract.id, amount: contract.amount, currency: contract.currency, country: contract.country, client_id: contract.client_id, pro_id: contract.pro_id }
       })
       if (fnError) throw new Error(fnError.message)
-      if (fnData.provider === 'mercadopago') { Alert.alert('MercadoPago', 'Integración próxima'); setProcessing(false); return }
+      if (fnData.provider === 'mercadopago') { setErrorMsg('Pago con MercadoPago disponible próximamente.'); setProcessing(false); return }
       const stripe = await (window as any).Stripe?.(process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY)
       if (!stripe) {
         await supabase.from('payments').insert({
@@ -52,7 +54,7 @@ export default function PaymentScreen() {
           currency: contract.currency, country: contract.country, provider: 'stripe',
           provider_payment_id: fnData.payment_intent_id, status: 'held', held_at: new Date().toISOString(),
         })
-        Alert.alert('✅ Pago en escrow', 'Pago simulado correctamente (modo test)')
+        setSuccessMsg('✅ Pago retenido en escrow correctamente (modo test).')
         fetchData(); setProcessing(false); return
       }
       const { error } = await stripe.confirmPayment(fnData.client_secret, { payment_method: { type: 'card' } })
@@ -64,23 +66,16 @@ export default function PaymentScreen() {
         provider_payment_id: fnData.payment_intent_id, status: 'held', held_at: new Date().toISOString(),
       })
       fetchData()
-    } catch (err: any) { Alert.alert('Error', err.message) }
+    } catch (err: any) { setErrorMsg(err.message) }
     finally { setProcessing(false) }
   }
 
   async function handleRelease() {
     if (!payment || !contract) return
-    Alert.alert(
-      'Confirmar entrega',
-      `¿Confirmas que el trabajo está completo? Se liberarán ${payment.pro_amount} ${payment.currency} al profesional.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Confirmar y liberar', style: 'default', onPress: async () => {
-          setReleasing(true)
-          const { error } = await supabase.functions.invoke('release-payment', { body: { payment_id: payment.id, contract_id: contract.id } })
+    setSuccessMsg('¿Confirmas que el trabajo está completado y quieres liberar el pago al profesional?')
           setReleasing(false)
-          if (error) Alert.alert('Error', error.message)
-          else { Alert.alert('✅ Pago liberado', 'El profesional ha recibido su pago.', [{ text: 'OK', onPress: () => router.replace('/(app)/jobs') }]) }
+          if (error) { setErrorMsg(error.message); return }
+          else { setSuccessMsg('✅ Pago liberado. El profesional ha recibido su pago.'); setTimeout(() => router.replace('/(app)/jobs'), 1500) }
         }}
       ]
     )
