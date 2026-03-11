@@ -72,13 +72,15 @@ export default function PaymentScreen() {
 
   async function handleRelease() {
     if (!payment || !contract) return
-    setSuccessMsg('¿Confirmas que el trabajo está completado y quieres liberar el pago al profesional?')
-          setReleasing(false)
-          if (error) { setErrorMsg(error.message); return }
-          else { setSuccessMsg('✅ Pago liberado. El profesional ha recibido su pago.'); setTimeout(() => router.replace('/(app)/jobs'), 1500) }
-        }}
-      ]
-    )
+    if (!window.confirm('¿Confirmas que el trabajo está completado?')) return
+    setReleasing(true)
+    const { error } = await supabase.functions.invoke('release-payment', {
+      body: { paymentId: payment.id, contractId: contract.id }
+    })
+    setReleasing(false)
+    if (error) { setErrorMsg(error.message); return }
+    setSuccessMsg('✅ Pago liberado. El profesional ha recibido su pago.')
+    setTimeout(() => router.replace('/(app)/jobs'), 1500)
   }
 
   if (loading) return <View style={s.center}><ActivityIndicator size="large" color="#2563EB" /></View>
