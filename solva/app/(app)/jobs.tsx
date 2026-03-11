@@ -198,9 +198,8 @@ export default function JobsScreen() {
       )}
 
       {/* Lista */}
-      {activeTab === 'all' && (loading
-        ? <View style={s.center}><ActivityIndicator size="large" color="#1a1a2e" /></View>
-        : (<FlatList
+      {activeTab === 'all' && loading && <View style={s.center}><ActivityIndicator size="large" color="#1a1a2e" /></View>}
+      {activeTab === 'all' && !loading && <FlatList
             data={jobs}
             keyExtractor={item => item.id}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -240,8 +239,7 @@ export default function JobsScreen() {
                 </View>
               </TouchableOpacity>
             )}
-          />
-        )}
+          />}
       {activeTab === 'history' && (
         <View style={s.myJobsList}>
           {historyJobs.length === 0
