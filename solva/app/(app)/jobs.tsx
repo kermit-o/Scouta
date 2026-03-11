@@ -174,8 +174,7 @@ export default function JobsScreen() {
       {/* Lista */}
       {loading
         ? <View style={s.center}><ActivityIndicator size="large" color="#1a1a2e" /></View>
-        : (
-          {activeTab === 'all' && <FlatList
+        : (<FlatList
             data={jobs}
             keyExtractor={item => item.id}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -216,8 +215,8 @@ export default function JobsScreen() {
               </TouchableOpacity>
             )}
           />
-        )
-      }
+        )}
+      {activeTab === 'mine' && null}
     </View>
   )
 }
