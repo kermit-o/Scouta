@@ -198,7 +198,7 @@ export default function JobsScreen() {
       )}
 
       {/* Lista */}
-      {loading
+      {activeTab === 'all' && (loading
         ? <View style={s.center}><ActivityIndicator size="large" color="#1a1a2e" /></View>
         : (<FlatList
             data={jobs}
