@@ -167,7 +167,14 @@ export default function JobsScreen() {
       {activeTab === 'mine' && (
         <View style={s.myJobsList}>
           {myJobs.length === 0
-            ? <Text style={s.emptyText}>No has publicado ningún trabajo aún.</Text>
+            ? <View style={s.emptyState}>
+                <Text style={s.emptyStateIcon}>📋</Text>
+                <Text style={s.emptyStateTitle}>Sin trabajos aún</Text>
+                <Text style={s.emptyStateSub}>Publica tu primer trabajo y recibe ofertas de profesionales</Text>
+                <TouchableOpacity style={s.emptyStateBtn} onPress={() => router.push('/(app)/jobs/new')}>
+                  <Text style={s.emptyStateBtnText}>+ Publicar trabajo</Text>
+                </TouchableOpacity>
+              </View>
             : myJobs.map((job: any) => {
                 const contract = job.contracts?.[0]
                 const statusColor = job.status === 'open' ? '#10B981' : job.status === 'in_progress' ? '#2563EB' : '#888'
@@ -244,7 +251,11 @@ export default function JobsScreen() {
       {activeTab === 'history' && (
         <View style={s.myJobsList}>
           {historyJobs.length === 0
-            ? <Text style={s.emptyText}>No hay trabajos completados aún.</Text>
+            ? <View style={s.emptyState}>
+                <Text style={s.emptyStateIcon}>🏆</Text>
+                <Text style={s.emptyStateTitle}>Sin historial</Text>
+                <Text style={s.emptyStateSub}>Aquí aparecerán los trabajos completados</Text>
+              </View>
             : historyJobs.map((contract: any) => {
                 const isCompleted = contract.status === 'completed'
                 const statusColor = isCompleted ? '#059669' : '#9CA3AF'
@@ -316,6 +327,18 @@ const s = StyleSheet.create({
   myJobBadge: { borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
   myJobBadgeText: { fontSize: 12, fontWeight: '700' },
   myJobSub: { fontSize: 13, color: '#666' },
+  emptyState: {
+    alignItems: 'center', justifyContent: 'center',
+    paddingVertical: 60, paddingHorizontal: 32, gap: 10,
+  },
+  emptyStateIcon: { fontSize: 48, marginBottom: 8 },
+  emptyStateTitle: { fontSize: 20, fontWeight: '800', color: '#1a1a2e', textAlign: 'center' },
+  emptyStateSub: { fontSize: 14, color: '#888', textAlign: 'center', lineHeight: 20 },
+  emptyStateBtn: {
+    marginTop: 8, backgroundColor: '#2563EB', borderRadius: 14,
+    paddingHorizontal: 24, paddingVertical: 12,
+  },
+  emptyStateBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   emptyText: { fontSize: 18, fontWeight: '700', color: '#333' },
   emptySub: { fontSize: 14, color: '#999', marginTop: 8, textAlign: 'center' },
   card: { backgroundColor: '#f5f5ff', borderRadius: 16, padding: 16, gap: 6 },
