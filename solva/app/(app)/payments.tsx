@@ -23,7 +23,7 @@ export default function PaymentsScreen() {
   useEffect(() => {
     async function load() {
       if (!session?.user?.id) return
-      const { data } = await supabase.from('payments').select('*').eq('client_id', session.user.id).order('created_at', { ascending: false }).limit(30)
+      const { data } = await supabase.from('payments').select('*, contracts(job_id, jobs(title))').eq('client_id', session.user.id).order('created_at', { ascending: false }).limit(30)
       setPayments(data || [])
       setLoading(false)
     }
@@ -59,7 +59,7 @@ export default function PaymentsScreen() {
               <View key={p.id} style={[styles.row, i < payments.length - 1 && styles.rowBorder]}>
                 <View style={[styles.statusDot, { backgroundColor: STATUS_COLOR[p.status] || '#9CA3AF' }]} />
                 <View style={styles.rowInfo}>
-                  <Text style={styles.rowLabel}>Job #{p.job_id.slice(0, 8)}</Text>
+                  <Text style={styles.rowLabel}>{p.contracts?.jobs?.title ?? 'Contrato #' + p.contract_id?.slice(0, 8)}</Text>
                   <Text style={styles.rowDate}>{new Date(p.created_at).toLocaleDateString('es-ES')}</Text>
                 </View>
                 <View style={styles.rowRight}>
