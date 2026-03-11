@@ -21,8 +21,9 @@ export default function JobsScreen() {
   const { profile } = useProfile()
   const { session } = useAuth()
   const { filter } = useLocalSearchParams<{ filter?: string }>()
-  const [activeTab, setActiveTab] = useState<'all' | 'mine'>(filter === 'mine' ? 'mine' : 'all')
+  const [activeTab, setActiveTab] = useState<'all' | 'mine' | 'history'>(filter === 'mine' ? 'mine' : 'all')
   const [myJobs, setMyJobs] = useState<any[]>([])
+  const [historyJobs, setHistoryJobs] = useState<any[]>([])
   const { coords, requestLocation, loading: locLoading } = useLocation()
   const [jobs, setJobs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -30,6 +31,18 @@ export default function JobsScreen() {
   const [searchMode, setSearchMode] = useState<'all' | 'nearby'>('all')
   const [radius, setRadius] = useState(25)
   const [searchText, setSearchText] = useState('')
+
+  async function fetchHistory() {
+    if (!session?.user?.id) return
+    const { data } = await supabase
+      .from('contracts')
+      .select('id, job_id, status, amount, currency, completed_at, jobs(id, title, category, status)')
+      .or(`client_id.eq.${session.user.id},pro_id.eq.${session.user.id}`)
+      .in('status', ['completed', 'cancelled'])
+      .order('completed_at', { ascending: false })
+      .limit(20)
+    setHistoryJobs(data ?? [])
+  }
 
   async function fetchMyJobs() {
     if (!session?.user?.id) return
@@ -216,6 +229,37 @@ export default function JobsScreen() {
             )}
           />
         )}
+      {activeTab === 'history' && (
+        <View style={s.myJobsList}>
+          {historyJobs.length === 0
+            ? <Text style={s.emptyText}>No hay trabajos completados aún.</Text>
+            : historyJobs.map((contract: any) => {
+                const isCompleted = contract.status === 'completed'
+                const statusColor = isCompleted ? '#059669' : '#9CA3AF'
+                const statusLabel = isCompleted ? 'Completado' : 'Cancelado'
+                return (
+                  <TouchableOpacity
+                    key={contract.id}
+                    style={s.myJobCard}
+                    onPress={() => router.push(`/(app)/jobs/${contract.job_id}/contract`)}
+                    activeOpacity={0.85}
+                  >
+                    <View style={s.myJobTop}>
+                      <Text style={s.myJobTitle}>{contract.jobs?.title ?? 'Trabajo'}</Text>
+                      <View style={[s.myJobBadge, { backgroundColor: statusColor + '20' }]}>
+                        <Text style={[s.myJobBadgeText, { color: statusColor }]}>{statusLabel}</Text>
+                      </View>
+                    </View>
+                    <Text style={s.myJobSub}>
+                      {contract.amount} {contract.currency}
+                      {contract.completed_at ? ` · ${new Date(contract.completed_at).toLocaleDateString('es-ES')}` : ''}
+                    </Text>
+                  </TouchableOpacity>
+                )
+              })
+          }
+        </View>
+      )}
       {activeTab === 'mine' && null}
     </View>
   )
