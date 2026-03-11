@@ -44,7 +44,7 @@ export default function PaymentsScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total pagado</Text>
-          <Text style={styles.summaryAmount}>€{(total / 100).toFixed(2)}</Text>
+          <Text style={styles.summaryAmount}>€{total.toFixed(2)}</Text>
           <Text style={styles.summaryNote}>{payments.filter(p => p.status === 'released').length} transacciones completadas</Text>
         </View>
         {loading ? <ActivityIndicator color="#2563EB" style={{ marginTop: 40 }} /> : payments.length === 0 ? (
@@ -63,7 +63,7 @@ export default function PaymentsScreen() {
                   <Text style={styles.rowDate}>{new Date(p.created_at).toLocaleDateString('es-ES')}</Text>
                 </View>
                 <View style={styles.rowRight}>
-                  <Text style={styles.rowAmount}>€{(p.amount / 100).toFixed(2)}</Text>
+                  <Text style={styles.rowAmount}>€{p.amount.toFixed(2)}</Text>
                   <Text style={[styles.rowStatus, { color: STATUS_COLOR[p.status] || '#9CA3AF' }]}>{STATUS_LABEL[p.status] || p.status}</Text>
                 </View>
               </View>
