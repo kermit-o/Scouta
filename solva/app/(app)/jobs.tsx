@@ -149,6 +149,19 @@ export default function JobsScreen() {
         </View>
       )}
 
+      {/* Tabs */}
+      <View style={s.tabs}>
+        <TouchableOpacity style={[s.tab, activeTab === 'all' && s.tabActive]} onPress={() => setActiveTab('all')}>
+          <Text style={[s.tabText, activeTab === 'all' && s.tabTextActive]}>Disponibles</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[s.tab, activeTab === 'mine' && s.tabActive]} onPress={() => setActiveTab('mine')}>
+          <Text style={[s.tabText, activeTab === 'mine' && s.tabTextActive]}>Mis trabajos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[s.tab, activeTab === 'history' && s.tabActive]} onPress={() => setActiveTab('history')}>
+          <Text style={[s.tabText, activeTab === 'history' && s.tabTextActive]}>Historial</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Mis trabajos */}
       {activeTab === 'mine' && (
         <View style={s.myJobsList}>
