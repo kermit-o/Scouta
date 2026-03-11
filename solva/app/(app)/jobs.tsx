@@ -37,7 +37,7 @@ export default function JobsScreen() {
     const { data } = await supabase
       .from('contracts')
       .select('id, job_id, status, amount, currency, completed_at, jobs(id, title, category, status)')
-      .or(`client_id.eq.${session.user.id},pro_id.eq.${session.user.id}`)
+      .eq('client_id', session.user.id)
       .in('status', ['completed', 'cancelled'])
       .order('completed_at', { ascending: false })
       .limit(20)
@@ -50,6 +50,7 @@ export default function JobsScreen() {
       .from('jobs')
       .select('*, contracts(id, status, amount)')
       .eq('client_id', session.user.id)
+      .in('status', ['open', 'in_progress', 'completed'])
       .order('created_at', { ascending: false })
     setMyJobs(data ?? [])
   }
