@@ -49,7 +49,6 @@ export default function HomeScreen() {
       .eq('status', 'active')
       .limit(5)
       .then(({ data, error }) => {
-        console.log('activeJobs:', JSON.stringify(data), 'err:', error?.message)
         if (data) setActiveJobs(data)
       })
   }, [profile?.id])
