@@ -27,6 +27,8 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets()
 
   const [fullName, setFullName] = useState(profile?.full_name || '')
+  const [bio, setBio] = useState(profile?.bio || '')
+  const [skillsText, setSkillsText] = useState((profile?.skills ?? []).join(', '))
   const [phone, setPhone] = useState(profile?.phone || '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '')
   const [uploading, setUploading] = useState(false)
@@ -36,6 +38,8 @@ export default function ProfileScreen() {
     if (profile?.full_name) setFullName(profile.full_name)
     if (profile?.phone) setPhone(profile.phone)
     if (profile?.avatar_url) setAvatarUrl(profile.avatar_url)
+    if (profile?.bio) setBio(profile.bio)
+    if (profile?.skills) setSkillsText(profile.skills.join(', '))
   }, [profile])
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -79,6 +83,8 @@ export default function ProfileScreen() {
       full_name: fullName.trim(),
       phone: phone.trim() || null,
       avatar_url: avatarUrl || null,
+      bio: bio.trim() || null,
+      skills: skillsText.split(',').map((s: string) => s.trim()).filter(Boolean),
     }).eq('id', session!.user.id)
     setSaving(false)
     if (error) {
@@ -233,6 +239,23 @@ export default function ProfileScreen() {
           />
 
           <Text style={styles.label}>Teléfono</Text>
+          <Text style={styles.inputLabel}>Bio</Text>
+          <TextInput
+            style={[styles.input, { height: 90, textAlignVertical: 'top' }]}
+            value={bio}
+            onChangeText={setBio}
+            placeholder="Cuéntanos sobre ti y tu experiencia..."
+            multiline
+            maxLength={300}
+          />
+          <Text style={styles.inputLabel}>Especialidades (separadas por coma)</Text>
+          <TextInput
+            style={styles.input}
+            value={skillsText}
+            onChangeText={setSkillsText}
+            placeholder="Limpieza, Fontanería, Pintura..."
+          />
+          <Text style={styles.inputLabel}>Teléfono</Text>
           <TextInput
             style={styles.input}
             value={phone}
