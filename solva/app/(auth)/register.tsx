@@ -36,6 +36,7 @@ const ROLES: { label: string; icon: string; value: UserRole; desc: string; featu
     label: 'Ofrezco servicios',
     icon: '🔧',
     value: 'pro',
+    badge: 'PRO',
     desc: 'Encuentra trabajos cerca de ti y genera ingresos',
     features: ['Accede a trabajos cercanos', 'Cobra de forma segura', 'Construye tu reputación'],
   },
@@ -43,6 +44,7 @@ const ROLES: { label: string; icon: string; value: UserRole; desc: string; featu
     label: 'Empresa',
     icon: '🏢',
     value: 'company',
+    badge: 'PRO',
     desc: 'Gestiona un equipo o empresa en Solva',
     features: ['Multi-usuario', 'Dashboard empresa', 'Facturación centralizada'],
   },
@@ -303,7 +305,10 @@ export default function RegisterScreen() {
                     <Text style={styles.roleIcon}>{r.icon}</Text>
                   </View>
                   <View style={styles.roleInfo}>
-                    <Text style={styles.roleLabel}>{r.label}</Text>
+                    <View style={styles.roleLabelRow}>
+                      <Text style={styles.roleLabel}>{r.label}</Text>
+                      {r.badge && <View style={styles.proBadge}><Text style={styles.proBadgeText}>{r.badge}</Text></View>}
+                    </View>
                     <Text style={styles.roleDesc}>{r.desc}</Text>
                   </View>
                   {role === r.value && (
@@ -445,6 +450,9 @@ const styles = StyleSheet.create({
   roleIconBoxSelected: { backgroundColor: '#2563EB' },
   roleIcon: { fontSize: 22 },
   roleInfo: { flex: 1 },
+  roleLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  proBadge: { backgroundColor: '#2563EB', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  proBadgeText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.5 },
   roleLabel: { fontSize: 16, fontWeight: '700', color: '#1a1a2e', marginBottom: 3 },
   roleDesc: { fontSize: 13, color: '#666', lineHeight: 18 },
   roleCheck: {
