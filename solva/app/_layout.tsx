@@ -18,11 +18,10 @@ function RootLayoutNav() {
     const currentId = session?.user?.id ?? null
     if (currentId === prevSessionId.current) return
     prevSessionId.current = currentId
-    if (currentId) {
-      router.replace('/(app)')
-    } else {
+    if (!currentId) {
       router.replace('/(auth)/login')
     }
+    // Si hay sesión, no redirigir — dejar que la ruta actual se mantenga
   }, [session?.user?.id, loading])
 
   if (loading) return null
