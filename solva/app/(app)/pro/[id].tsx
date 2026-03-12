@@ -83,6 +83,28 @@ export default function ProProfileScreen() {
           </View>
         </View>
 
+        {/* Bio */}
+        {pro.bio && (
+          <View style={s.bioCard}>
+            <Text style={s.bioTitle}>Sobre mí</Text>
+            <Text style={s.bioText}>{pro.bio}</Text>
+          </View>
+        )}
+
+        {/* Skills */}
+        {pro.skills?.length > 0 && (
+          <View style={s.skillsCard}>
+            <Text style={s.bioTitle}>Especialidades</Text>
+            <View style={s.skillsRow}>
+              {pro.skills.map((skill: string, i: number) => (
+                <View key={i} style={s.skillChip}>
+                  <Text style={s.skillChipText}>{skill}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
         {/* Stats */}
         <View style={s.statsRow}>
           {[
@@ -284,6 +306,22 @@ const s = StyleSheet.create({
   },
   jobItemTitle: { flex: 1, fontSize: 14, color: '#1a1a2e', fontWeight: '500' },
   jobItemDate: { fontSize: 12, color: '#aaa' },
+  bioCard: {
+    backgroundColor: '#fff', borderRadius: 16, padding: 18,
+    borderWidth: 1, borderColor: '#E5E7EB',
+  },
+  bioTitle: { fontSize: 14, fontWeight: '700', color: '#1a1a2e', marginBottom: 8 },
+  bioText: { fontSize: 14, color: '#555', lineHeight: 22 },
+  skillsCard: {
+    backgroundColor: '#fff', borderRadius: 16, padding: 18,
+    borderWidth: 1, borderColor: '#E5E7EB',
+  },
+  skillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  skillChip: {
+    backgroundColor: '#EEF4FF', borderRadius: 20,
+    paddingHorizontal: 12, paddingVertical: 6,
+  },
+  skillChipText: { fontSize: 13, color: '#2563EB', fontWeight: '600' },
   emptyReviews: {
     backgroundColor: '#fff', borderRadius: 16, padding: 32,
     alignItems: 'center', gap: 8, borderWidth: 1, borderColor: '#E5E7EB',
