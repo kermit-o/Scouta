@@ -63,6 +63,7 @@ export default function OnboardingScreen() {
           avg_price: avgPrice ? parseFloat(avgPrice) : null,
           currency: profile?.currency ?? 'EUR',
           language: profile?.language ?? 'es',
+          is_onboarding: true,
         }
       })
       if (data) setAiResult(data)
