@@ -4,7 +4,7 @@ const supabase = createClient(
   Deno.env.get('SUPABASE_URL')!,
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 )
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
+const DEEPSEEK_API_KEY = Deno.env.get('DEEPSEEK_API_KEY')!
 
 const cors = {
   'Access-Control-Allow-Origin': '*',
@@ -24,18 +24,20 @@ Deno.serve(async (req) => {
       avg_price,
       currency,
       language = 'es', // 'es' | 'fr' | 'pt' | 'en'
+      is_onboarding = false,
     } = await req.json()
 
     if (!user_id || !category) {
       return new Response(JSON.stringify({ error: 'Faltan parámetros' }), { status: 400, headers: cors })
     }
 
-    // Verificar plan Pro
+    // Verificar plan Pro (skip si es onboarding)
     const { data: limit } = await supabase.rpc('check_plan_limit', {
       p_user_id: user_id,
       p_feature: 'ai_content',
     })
-    if (!limit?.allowed) {
+    const isOnboarding = !limit?.allowed && limit?.upgrade_required
+    if (!limit?.allowed && !isOnboarding) {
       return new Response(JSON.stringify({ error: 'Plan Pro requerido', upgrade_required: true }), { status: 403, headers: cors })
     }
 
@@ -63,35 +65,37 @@ DATOS DEL PROFESIONAL:
 - Especialidad: ${specialty ?? 'general'}
 - Años de experiencia: ${years_experience ?? 1}
 - Ciudad: ${city ?? 'no especificada'}
-- Precio medio: ${avg_price ? `${avg_price} ${currency ?? 'EUR'}` : 'no especificado'}
+- Precio por hora: ${avg_price ? `${avg_price} ${currency ?? 'EUR'}/h` : 'no especificado'}
 
 GENERA EXACTAMENTE este JSON (sin markdown, sin texto extra):
 {
   "profile_title": "Título del perfil (max 60 chars, impactante, con especialidad y ciudad si aplica)",
-  "short_description": "Descripción corta para cards de búsqueda (max 140 chars, beneficio principal del cliente, primera persona)",
-  "long_description": "Descripción completa del perfil (250-350 chars, experiencia + especialidad + propuesta de valor + llamada a la acción)",
+  "short_description": "Frase de marketing impactante (max 140 chars, beneficio principal para el cliente, tono confiado y profesional)",
+  "long_description": "Bio de marketing profesional (250-350 chars): empieza con gancho, menciona experiencia y especialidad, añade propuesta de valor única y termina con llamada a la acción. Tono cercano pero experto, escrita en primera persona)",
   "keywords": ["5 palabras clave SEO relevantes para búsquedas en la app"],
   "bid_template": "Plantilla de respuesta para bids (100-150 chars, personalizable, profesional, incluye {{job_title}} como placeholder)",
   "usp": "Propuesta única de valor en 10 palabras máximo",
   "quality_tips": ["3 consejos específicos para mejorar el perfil de este profesional"]
 }`
 
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('https://api.deepseek.com/v1/chat/completions', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_API_KEY,
-        'anthropic-version': '2023-06-01',
+        'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'deepseek-chat',
         max_tokens: 1000,
         messages: [{ role: 'user', content: prompt }],
       }),
     })
 
     const aiData = await response.json()
-    const rawText = aiData.content?.[0]?.text ?? '{}'
+    if (!response.ok || aiData.error) {
+      return new Response(JSON.stringify({ debug_error: aiData }), { status: 200, headers: { ...cors, 'Content-Type': 'application/json' } })
+    }
+    const rawText = aiData.choices?.[0]?.message?.content ?? '{}'
 
     let generated: any
     try {
@@ -105,6 +109,8 @@ GENERA EXACTAMENTE este JSON (sin markdown, sin texto extra):
     await supabase.from('users').update({
       ai_description_generated: true,
       ai_keywords: generated.keywords ?? [],
+      bio: generated.long_description ?? generated.short_description ?? null,
+      skills: generated.keywords ?? [],
     }).eq('id', user_id)
 
     // Recalcular quality score
