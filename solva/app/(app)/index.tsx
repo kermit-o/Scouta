@@ -95,7 +95,7 @@ export default function HomeScreen() {
               ? 'Tu trial Pro expira hoy — activa tu plan'
               : `${trialDaysLeft} días de Pro gratis restantes`}
           </Text>
-          <Text style={styles.trialBannerCta}>Activar →</Text>
+          <Text style={styles.trialBannerCta}>{t('home.activate')}</Text>
         </TouchableOpacity>
       )}
 
@@ -152,7 +152,7 @@ export default function HomeScreen() {
                 >
                   <View style={styles.activeJobLeft}>
                     <Text style={styles.activeJobTitle}>{contract.jobs?.title ?? 'Trabajo'}</Text>
-                    <Text style={styles.activeJobSub}>Ver contrato →</Text>
+                    <Text style={styles.activeJobSub}>{t('home.viewContract')}</Text>
                   </View>
                   <Text style={styles.activeJobAmount}>{contract.amount} {contract.currency}</Text>
                 </TouchableOpacity>
@@ -170,7 +170,7 @@ export default function HomeScreen() {
           {recentJobs.length === 0 ? (
             <View style={styles.emptyJobs}>
               <Ionicons name="briefcase-outline" size={32} color="#ddd" />
-              <Text style={styles.emptyJobsText}>Aún no hay jobs publicados</Text>
+              <Text style={styles.emptyJobsText}>{t('home.noJobs')}</Text>
               <TouchableOpacity onPress={() => router.push('/(app)/jobs/new')}>
                 <Text style={styles.emptyJobsLink}>¡Sé el primero en publicar!</Text>
               </TouchableOpacity>
@@ -225,12 +225,12 @@ export default function HomeScreen() {
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{FLAG[profile.country ?? 'ES']} {profile.country}</Text>
-              <Text style={styles.statLabel}>País</Text>
+              <Text style={styles.statLabel}>{t('profile.country')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{profile.currency ?? 'EUR'}</Text>
-              <Text style={styles.statLabel}>Moneda</Text>
+              <Text style={styles.statLabel}>{t('profile.currency')}</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>

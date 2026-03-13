@@ -141,7 +141,7 @@ export default function KycScreen() {
       {canEdit && (
         <>
           {/* Tipo de documento */}
-          <Text style={s.label}>Tipo de documento</Text>
+          <Text style={s.label}>{t('kyc.docType')}</Text>
           <View style={s.grid}>
             {DOC_TYPES.map(dt => (
               <TouchableOpacity
@@ -157,7 +157,7 @@ export default function KycScreen() {
           </View>
 
           {/* Foto frontal */}
-          <Text style={s.label}>Foto frontal del documento *</Text>
+          <Text style={s.label}>{t('kyc.frontPhoto')}</Text>
           <TouchableOpacity style={s.uploadBtn} onPress={() => uploadDoc('front')} disabled={uploading === 'front'}>
             {frontUrl
               ? <Image source={{ uri: frontUrl }} style={s.docImage} />
@@ -166,7 +166,7 @@ export default function KycScreen() {
           </TouchableOpacity>
 
           {/* Foto trasera */}
-          <Text style={s.label}>Foto trasera (opcional para pasaporte)</Text>
+          <Text style={s.label}>{t('kyc.backPhoto')}</Text>
           <TouchableOpacity style={s.uploadBtn} onPress={() => uploadDoc('back')} disabled={uploading === 'back'}>
             {backUrl
               ? <Image source={{ uri: backUrl }} style={s.docImage} />
@@ -175,7 +175,7 @@ export default function KycScreen() {
           </TouchableOpacity>
 
           {/* Selfie */}
-          <Text style={s.label}>Selfie sosteniendo el documento *</Text>
+          <Text style={s.label}>{t('kyc.selfie')}</Text>
           <TouchableOpacity style={[s.uploadBtn, s.selfieBtn]} onPress={() => uploadDoc('selfie')} disabled={uploading === 'selfie'}>
             {selfieUrl
               ? <Image source={{ uri: selfieUrl }} style={s.docImage} />
@@ -197,7 +197,7 @@ export default function KycScreen() {
           >
             {saving
               ? <ActivityIndicator color="#fff" />
-              : <Text style={s.btnText}>Enviar para verificacion</Text>
+              : <Text style={s.btnText}>{t('kyc.submit')}</Text>
             }
           </TouchableOpacity>
         </>

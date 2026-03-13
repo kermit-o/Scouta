@@ -90,7 +90,10 @@
     "findPros": "Trouver des professionnels",
     "exploreServices": "Explorer les services",
     "verifyIdentity": "Vérifiez votre identité",
-    "hello": "Bonjour"
+    "hello": "Bonjour",
+    "activate": "Activer →",
+    "viewContract": "Voir le contrat →",
+    "noJobs": "Aucun travail publié pour l'instant"
   },
   "jobs": {
     "title": "Travaux",
@@ -328,5 +331,21 @@
     "warningDesc": "Ouvrir un litige mettra le contrat en pause et le paiement sera bloqué jusqu'à la résolution. Utilisez-le uniquement si vous ne pouvez pas parvenir à un accord direct.",
     "descPlaceholder": "Expliquez en détail ce qui s'est passé, quand, et ce que vous avez essayé pour résoudre...",
     "replyPlaceholder": "Écrivez votre réponse..."
+  },
+  "security": {
+    "title": "Sécurité",
+    "changePassword": "Changer le mot de passe",
+    "newPassword": "Nouveau mot de passe",
+    "confirmPassword": "Confirmer le mot de passe",
+    "updatePassword": "Mettre à jour le mot de passe",
+    "activeSessions": "Sessions actives",
+    "closeAllSessions": "Fermer toutes les sessions"
+  },
+  "kyc": {
+    "docType": "Type de document",
+    "frontPhoto": "Photo recto du document *",
+    "backPhoto": "Photo verso (optionnel pour passeport)",
+    "selfie": "Selfie tenant le document *",
+    "submit": "Soumettre pour vérification"
   }
 }

@@ -90,7 +90,10 @@
     "findPros": "Find professionals",
     "exploreServices": "Explore services",
     "verifyIdentity": "Verify your identity for more trust",
-    "hello": "Hallo"
+    "hello": "Hallo",
+    "activate": "Activeren →",
+    "viewContract": "Contract bekijken →",
+    "noJobs": "Nog geen jobs gepubliceerd"
   },
   "jobs": {
     "title": "Klussen",
@@ -328,5 +331,21 @@
     "warningDesc": "Het openen van een geschil pauzeert het contract en de betaling wordt geblokkeerd tot de oplossing. Gebruik dit alleen als je geen directe overeenkomst kunt bereiken.",
     "descPlaceholder": "Leg in detail uit wat er is gebeurd, wanneer, en wat je hebt geprobeerd om het op te lossen...",
     "replyPlaceholder": "Schrijf je antwoord..."
+  },
+  "security": {
+    "title": "Beveiliging",
+    "changePassword": "Wachtwoord wijzigen",
+    "newPassword": "Nieuw wachtwoord",
+    "confirmPassword": "Wachtwoord bevestigen",
+    "updatePassword": "Wachtwoord bijwerken",
+    "activeSessions": "Actieve sessies",
+    "closeAllSessions": "Alle sessies sluiten"
+  },
+  "kyc": {
+    "docType": "Documenttype",
+    "frontPhoto": "Voorkant document *",
+    "backPhoto": "Achterkant (optioneel voor paspoort)",
+    "selfie": "Selfie met document *",
+    "submit": "Indienen voor verificatie"
   }
 }

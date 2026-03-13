@@ -90,7 +90,10 @@
     "findPros": "Find professionals",
     "exploreServices": "Explore services",
     "verifyIdentity": "Verify your identity for more trust",
-    "hello": "Hallo"
+    "hello": "Hallo",
+    "activate": "Aktivieren →",
+    "viewContract": "Vertrag ansehen →",
+    "noJobs": "Noch keine Jobs veröffentlicht"
   },
   "jobs": {
     "title": "Aufträge",
@@ -328,5 +331,21 @@
     "warningDesc": "Das Öffnen eines Streitfalls pausiert den Vertrag und die Zahlung wird bis zur Lösung blockiert. Nur verwenden, wenn du keine direkte Einigung erzielen kannst.",
     "descPlaceholder": "Erkläre im Detail was passiert ist, wann, und was du versucht hast um es zu lösen...",
     "replyPlaceholder": "Schreibe deine Antwort..."
+  },
+  "security": {
+    "title": "Sicherheit",
+    "changePassword": "Passwort ändern",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Passwort bestätigen",
+    "updatePassword": "Passwort aktualisieren",
+    "activeSessions": "Aktive Sitzungen",
+    "closeAllSessions": "Alle Sitzungen beenden"
+  },
+  "kyc": {
+    "docType": "Dokumenttyp",
+    "frontPhoto": "Vorderseite des Dokuments *",
+    "backPhoto": "Rückseite (optional für Reisepass)",
+    "selfie": "Selfie mit Dokument *",
+    "submit": "Zur Verifizierung einreichen"
   }
 }
