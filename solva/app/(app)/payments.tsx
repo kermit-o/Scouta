@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -10,12 +11,14 @@ import { useAuth } from '../../lib/AuthContext'
 type Payment = { id: string; amount: number; currency: string; status: string; created_at: string; job_id: string }
 
 const STATUS_COLOR: Record<string, string> = { completed: '#16A34A', pending: '#F59E0B', failed: '#DC2626', refunded: '#6B7280' }
-const STATUS_LABEL: Record<string, string> = { completed: 'Completado', pending: 'Pendiente', failed: 'Fallido', refunded: 'Devuelto' }
+// STATUS_LABEL replaced by i18n
+const STATUS_LABEL_FALLBACK: Record<string, string> = { completed: 'Completado', pending: 'Pendiente', failed: 'Fallido', refunded: 'Devuelto' }
 
 export default function PaymentsScreen() {
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
   const { isPro, isTrialing } = useSubscription()
+  const { t } = useTranslation()
   const [showUpgradeHint, setShowUpgradeHint] = useState(false)
   const [payments, setPayments] = useState<Payment[]>([])
   const [loading, setLoading] = useState(true)
@@ -64,7 +67,7 @@ export default function PaymentsScreen() {
                 </View>
                 <View style={styles.rowRight}>
                   <Text style={styles.rowAmount}>€{p.amount.toFixed(2)}</Text>
-                  <Text style={[styles.rowStatus, { color: STATUS_COLOR[p.status] || '#9CA3AF' }]}>{STATUS_LABEL[p.status] || p.status}</Text>
+                  <Text style={[styles.rowStatus, { color: STATUS_COLOR[p.status] || '#9CA3AF' }]}>{t(`payments.status.${p.status}`) || p.status || p.status}</Text>
                 </View>
               </View>
             ))}

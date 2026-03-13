@@ -118,7 +118,8 @@
     "pay": "Pay",
     "release": "Release payment",
     "jobDetails": "Job details",
-    "negotiate": "Negotiable"
+    "negotiate": "Negotiable",
+    "category": "Category"
   },
   "search": {
     "title": "Search",
@@ -168,7 +169,9 @@
     "status": {
       "pending": "Pending",
       "released": "Released",
-      "refunded": "Refunded"
+      "refunded": "Refunded",
+      "completed": "Completed",
+      "failed": "Failed"
     }
   },
   "roles": {
