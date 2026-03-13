@@ -22,6 +22,7 @@ export default function JobsScreen() {
   const { profile } = useProfile()
   const { session } = useAuth()
   const { t } = useTranslation()
+  const { t } = useTranslation()
   const { filter } = useLocalSearchParams<{ filter?: string }>()
   const [activeTab, setActiveTab] = useState<'all' | 'mine' | 'history'>(filter === 'mine' ? 'mine' : 'all')
   const [myJobs, setMyJobs] = useState<any[]>([])

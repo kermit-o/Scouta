@@ -14,6 +14,7 @@ export default function MessagesScreen() {
   const { session } = useAuth()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
+  const { t } = useTranslation()
   const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
