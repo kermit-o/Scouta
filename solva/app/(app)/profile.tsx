@@ -335,7 +335,7 @@ export default function ProfileScreen() {
               <TouchableOpacity
                 key={lang.code}
                 style={[styles.langOption, i18n.language === lang.code && styles.langOptionActive]}
-                onPress={async () => { await changeLanguage(lang.code); setShowLangModal(false) }}
+                onPress={async () => { await changeLanguage(lang.code); await supabase.from('users').update({ language: lang.code }).eq('id', session!.user.id); setShowLangModal(false) }}
               >
                 <Text style={styles.langFlag}>{lang.flag}</Text>
                 <Text style={[styles.langLabel, i18n.language === lang.code && styles.langLabelActive]}>{lang.label}</Text>
