@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity, ScrollView,
@@ -26,6 +27,7 @@ const STATUS_INFO: Record<string, { label: string; color: string; desc: string }
 export default function KycScreen() {
   const { session } = useAuth()
   const { profile, refreshProfile } = useProfile()
+  const { t } = useTranslation()
   const [kyc, setKyc] = useState<KycVerification | null>(null)
   const [loading, setLoading] = useState(true)
   const [docType, setDocType] = useState<KycDocType>('dni')
