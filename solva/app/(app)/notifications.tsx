@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +16,7 @@ const SETTINGS = [
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [settings, setSettings] = useState<Record<string, boolean>>({
     new_jobs: true, bids: true, messages: true,
     contracts: true, reviews: true, promotions: false,
@@ -26,7 +28,7 @@ export default function NotificationsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Notificaciones</Text>
+        <Text style={styles.title}>{t('notifications.title') ?? 'Notifications'}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>

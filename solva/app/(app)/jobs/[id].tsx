@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -32,6 +33,7 @@ export default function JobDetailScreen() {
   const { profile } = useProfile()
   const insets = useSafeAreaInsets()
 
+  const { t } = useTranslation()
   const [job, setJob] = useState<Job | null>(null)
   const [bids, setBids] = useState<Bid[]>([])
   const [myBid, setMyBid] = useState<Bid | null>(null)
@@ -176,7 +178,7 @@ export default function JobDetailScreen() {
           <TouchableOpacity style={s.backBtn} onPress={() => setViewMode('detail')}>
             <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
           </TouchableOpacity>
-          <Text style={s.headerTitle}>Hacer oferta</Text>
+          <Text style={s.headerTitle}>{t('jobs.bid')}</Text>
           <View style={{ width: 40 }} />
         </View>
 

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -17,6 +18,7 @@ export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { session } = useAuth()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [contract, setContract] = useState<any>(null)
   const [payment, setPayment] = useState<any>(null)
   const [loading, setLoading] = useState(true)

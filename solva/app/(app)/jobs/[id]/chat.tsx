@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
 import {
   View, Text, StyleSheet, FlatList, TextInput,
@@ -24,6 +25,7 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { session } = useAuth()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [messages, setMessages] = useState<Message[]>([])
   const [contract, setContract] = useState<any>(null)
   const [otherUser, setOtherUser] = useState<any>(null)
@@ -195,7 +197,7 @@ export default function ChatScreen() {
           style={s.input}
           value={text}
           onChangeText={setText}
-          placeholder="Escribe un mensaje..."
+          placeholder={t("messages.typeMessage")}
           placeholderTextColor="#9CA3AF"
           multiline
           maxLength={500}

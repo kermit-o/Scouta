@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, Image,
@@ -26,6 +27,7 @@ export default function ProProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { session } = useAuth()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [pro, setPro] = useState<any>(null)
   const [reviews, setReviews] = useState<Review[]>([])
   const [jobs, setJobs] = useState<any[]>([])
@@ -58,7 +60,7 @@ export default function ProProfileScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Perfil profesional</Text>
+        <Text style={s.headerTitle}>{t('profile.proProfile')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -86,7 +88,7 @@ export default function ProProfileScreen() {
         {/* Bio */}
         {pro.bio && (
           <View style={s.bioCard}>
-            <Text style={s.bioTitle}>Sobre mí</Text>
+            <Text style={s.bioTitle}>{t('profile.aboutMe')}</Text>
             <Text style={s.bioText}>{pro.bio}</Text>
           </View>
         )}
@@ -94,7 +96,7 @@ export default function ProProfileScreen() {
         {/* Skills */}
         {pro.skills?.length > 0 && (
           <View style={s.skillsCard}>
-            <Text style={s.bioTitle}>Especialidades</Text>
+            <Text style={s.bioTitle}>{t('profile.specialties')}</Text>
             <View style={s.skillsRow}>
               {pro.skills.map((skill: string, i: number) => (
                 <View key={i} style={s.skillChip}>
@@ -131,7 +133,7 @@ export default function ProProfileScreen() {
         {isOwnProfile && (
           <TouchableOpacity style={s.editBtn} onPress={() => router.push('/(app)/profile')} activeOpacity={0.85}>
             <Ionicons name="create-outline" size={18} color="#2563EB" />
-            <Text style={s.editBtnText}>Editar mi perfil</Text>
+            <Text style={s.editBtnText}>{t('profile.editProfile')}</Text>
           </TouchableOpacity>
         )}
 
@@ -158,14 +160,14 @@ export default function ProProfileScreen() {
         {/* Reviews */}
         <View style={s.section}>
           <View style={s.sectionHeader}>
-            <Text style={s.sectionTitle}>Reseñas</Text>
+            <Text style={s.sectionTitle}>{t('profile.reviews')}</Text>
             <Text style={s.sectionCount}>{reviews.length}</Text>
           </View>
 
           {reviews.length === 0 ? (
             <View style={s.emptyReviews}>
               <Ionicons name="star-outline" size={32} color="#ccc" />
-              <Text style={s.emptyReviewsText}>Sin reseñas aún</Text>
+              <Text style={s.emptyReviewsText}>{t('profile.noReviews')}</Text>
             </View>
           ) : (
             reviews.map(review => (
