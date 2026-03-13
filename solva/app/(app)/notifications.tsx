@@ -5,18 +5,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useState } from 'react'
 
-const SETTINGS = [
-  { key: 'new_jobs', label: t('notifications.newJobs'), desc: t('notifications.newJobsDesc'), icon: '💼' },
-  { key: 'bids', label: t('notifications.bids'), desc: t('notifications.bidsDesc'), icon: '📩' },
-  { key: 'messages', label: t('notifications.messages'), desc: t('notifications.messagesDesc'), icon: '💬' },
-  { key: 'contracts', label: t('notifications.contracts'), desc: t('notifications.contractsDesc'), icon: '📄' },
-  { key: 'reviews', label: t('notifications.reviews'), desc: t('notifications.reviewsDesc'), icon: '⭐' },
-  { key: 'promotions', label: t('notifications.promotions'), desc: t('notifications.promotionsDesc'), icon: '🎁' },
-]
+
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
+  const SETTINGS = [
+    { key: 'new_jobs', label: t('notifications.newJobs'), desc: t('notifications.newJobsDesc'), icon: '💼' },
+    { key: 'bids', label: t('notifications.bids'), desc: t('notifications.bidsDesc'), icon: '📩' },
+    { key: 'messages', label: t('notifications.messages'), desc: t('notifications.messagesDesc'), icon: '💬' },
+    { key: 'contracts', label: t('notifications.contracts'), desc: t('notifications.contractsDesc'), icon: '📄' },
+    { key: 'reviews', label: t('notifications.reviews'), desc: t('notifications.reviewsDesc'), icon: '⭐' },
+    { key: 'promotions', label: t('notifications.promotions'), desc: t('notifications.promotionsDesc'), icon: '🎁' },
+  ]
   const [settings, setSettings] = useState<Record<string, boolean>>({
     new_jobs: true, bids: true, messages: true,
     contracts: true, reviews: true, promotions: false,
