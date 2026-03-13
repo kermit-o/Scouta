@@ -24,7 +24,24 @@ const COUNTRIES: { label: string; flag: string; value: SupportedCountry; currenc
   { label: 'Brasil',       flag: '🇧🇷', value: 'BR', currency: 'BRL', language: 'pt-BR' },
   { label: 'Chile',        flag: '🇨🇱', value: 'CL', currency: 'CLP', language: 'es' },
 ]
- }[] = [
+
+function passwordStrength(pwd: string): number {
+  if (pwd.length === 0) return 0
+  let s = 0
+  if (pwd.length >= 8) s++
+  if (/[A-Z]/.test(pwd)) s++
+  if (/[0-9]/.test(pwd)) s++
+  if (/[^A-Za-z0-9]/.test(pwd)) s++
+  return s
+}
+
+const STRENGTH_COLOR = ['#EF4444', '#F97316', '#EAB308', '#10B981']
+const STRENGTH_LABEL = ['Muy débil', 'Débil', 'Buena', 'Fuerte']
+
+export default function RegisterScreen() {
+  const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
+  const ROLES = [
   {
     label: t('roles.seekServices'),
     icon: '👤',
@@ -49,25 +66,6 @@ const COUNTRIES: { label: string; flag: string; value: SupportedCountry; currenc
     features: [t('roles.features.multiUser'), t('roles.features.dashboard'), t('roles.features.billing')],
   },
 ]
-
-function passwordStrength(pwd: string): number {
-  if (pwd.length === 0) return 0
-  let s = 0
-  if (pwd.length >= 8) s++
-  if (/[A-Z]/.test(pwd)) s++
-  if (/[0-9]/.test(pwd)) s++
-  if (/[^A-Za-z0-9]/.test(pwd)) s++
-  return s
-}
-
-const STRENGTH_COLOR = ['#EF4444', '#F97316', '#EAB308', '#10B981']
-const STRENGTH_LABEL = ['Muy débil', 'Débil', 'Buena', 'Fuerte']
-
-export default function RegisterScreen() {
-  const insets = useSafeAreaInsets()
-  const { t } = useTranslation()
-const ROLES: { label: string; icon: string; value: UserRole; desc: string; features: string[]
-  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
