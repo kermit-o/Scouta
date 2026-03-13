@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput } from 'react-native'
 import { router } from 'expo-router'
@@ -21,6 +22,7 @@ const CATEGORIES = [
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets()
   const { session, profile } = useAuth()
+  const { t } = useTranslation()
   const [step, setStep] = useState(1)
   const [selected, setSelected] = useState<string[]>([])
   const [specialty, setSpecialty] = useState('')

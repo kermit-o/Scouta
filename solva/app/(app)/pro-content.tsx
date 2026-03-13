@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -46,6 +47,7 @@ export default function ProContentScreen() {
   const { session } = useAuth()
   const { profile, refreshProfile } = useProfile()
 
+  const { t } = useTranslation()
   const [step, setStep] = useState<'form' | 'result'>('form')
   const [category, setCategory] = useState('')
   const [specialty, setSpecialty] = useState('')
@@ -112,7 +114,7 @@ export default function ProContentScreen() {
           <TouchableOpacity style={s.backBtn} onPress={() => setStep('form')}>
             <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
           </TouchableOpacity>
-          <Text style={s.headerTitle}>Tu perfil generado ✨</Text>
+          <Text style={s.headerTitle}>{t('proContent.title')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -120,8 +122,8 @@ export default function ProContentScreen() {
           {/* Quality score */}
           <View style={s.scoreCard}>
             <View style={s.scoreLeft}>
-              <Text style={s.scoreTitle}>Puntuación del perfil</Text>
-              <Text style={s.scoreDesc}>Basada en completitud y optimización SEO</Text>
+              <Text style={s.scoreTitle}>{t('proContent.score')}</Text>
+              <Text style={s.scoreDesc}>{t('proContent.scoreDesc')}</Text>
             </View>
             <View style={s.scoreCircle}>
               <Text style={s.scoreValue}>{result.quality_score}</Text>
@@ -137,7 +139,7 @@ export default function ProContentScreen() {
 
           {/* Título */}
           <View style={s.resultSection}>
-            <Text style={s.resultLabel}>Título del perfil</Text>
+            <Text style={s.resultLabel}>{t('proContent.profileTitle')}</Text>
             <View style={s.resultBox}>
               <Text style={s.resultText}>{result.profile_title}</Text>
             </View>
@@ -145,7 +147,7 @@ export default function ProContentScreen() {
 
           {/* Descripción corta */}
           <View style={s.resultSection}>
-            <Text style={s.resultLabel}>Descripción en búsquedas</Text>
+            <Text style={s.resultLabel}>{t('proContent.searchDesc')}</Text>
             <View style={s.resultBox}>
               <Text style={s.resultText}>{result.short_description}</Text>
             </View>
@@ -154,7 +156,7 @@ export default function ProContentScreen() {
 
           {/* Descripción larga */}
           <View style={s.resultSection}>
-            <Text style={s.resultLabel}>Descripción completa del perfil</Text>
+            <Text style={s.resultLabel}>{t('proContent.fullDesc')}</Text>
             <View style={s.resultBox}>
               <Text style={s.resultText}>{result.long_description}</Text>
             </View>
@@ -162,7 +164,7 @@ export default function ProContentScreen() {
 
           {/* Keywords */}
           <View style={s.resultSection}>
-            <Text style={s.resultLabel}>Keywords SEO</Text>
+            <Text style={s.resultLabel}>{t('proContent.keywords')}</Text>
             <View style={s.keywordsRow}>
               {result.keywords.map((kw, i) => (
                 <View key={i} style={s.kwChip}>
@@ -174,7 +176,7 @@ export default function ProContentScreen() {
 
           {/* Plantilla bid */}
           <View style={s.resultSection}>
-            <Text style={s.resultLabel}>Plantilla de respuesta a bids</Text>
+            <Text style={s.resultLabel}>{t('proContent.bidTemplate')}</Text>
             <View style={[s.resultBox, s.resultBoxBlue]}>
               <Text style={s.resultTextBlue}>{result.bid_template}</Text>
             </View>

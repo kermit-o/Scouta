@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useRef, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TextInput,
@@ -35,6 +36,7 @@ export default function DisputeScreen() {
   const insets = useSafeAreaInsets()
   const scrollRef = useRef<ScrollView>(null)
 
+  const { t } = useTranslation()
   const [contract, setContract] = useState<any>(null)
   const [dispute, setDispute] = useState<Dispute | null>(null)
   const [messages, setMessages] = useState<any[]>([])
@@ -138,7 +140,7 @@ export default function DisputeScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Disputa</Text>
+        <Text style={s.headerTitle}>{t('dispute.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -156,7 +158,7 @@ export default function DisputeScreen() {
               <Text style={s.statusDesc}>{dispute.description}</Text>
               {dispute.resolution_note && (
                 <View style={s.resolutionBox}>
-                  <Text style={s.resolutionTitle}>Resolución de Solva</Text>
+                  <Text style={s.resolutionTitle}>{t('dispute.resolution')}</Text>
                   <Text style={s.resolutionNote}>{dispute.resolution_note}</Text>
                   {dispute.refund_pct > 0 && (
                     <View style={s.refundBadge}>
@@ -171,7 +173,7 @@ export default function DisputeScreen() {
             {/* Evidencias */}
             {dispute.evidence_urls?.length > 0 && (
               <View style={s.card}>
-                <Text style={s.cardTitle}>Evidencias adjuntas</Text>
+                <Text style={s.cardTitle}>{t('dispute.evidence')}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   {dispute.evidence_urls.map((url: string, i: number) => (
                     <Image key={i} source={{ uri: url }} style={s.evidencePhoto} />
@@ -186,7 +188,7 @@ export default function DisputeScreen() {
               {messages.length === 0 ? (
                 <View style={s.emptyMsgs}>
                   <Ionicons name="chatbubbles-outline" size={28} color="#ccc" />
-                  <Text style={s.emptyMsgsText}>Aún no hay mensajes</Text>
+                  <Text style={s.emptyMsgsText}>{t('dispute.noMessages')}</Text>
                 </View>
               ) : (
                 messages.map(msg => {
@@ -208,7 +210,7 @@ export default function DisputeScreen() {
 
             <View style={s.infoCard}>
               <Ionicons name="time-outline" size={16} color="#2563EB" />
-              <Text style={s.infoText}>El equipo de Solva revisará la disputa en 48-72h hábiles.</Text>
+              <Text style={s.infoText}>{t('dispute.reviewTime')}</Text>
             </View>
           </>
         ) : (
@@ -217,8 +219,8 @@ export default function DisputeScreen() {
             <View style={s.warningCard}>
               <Ionicons name="warning" size={20} color="#D97706" />
               <View style={{ flex: 1 }}>
-                <Text style={s.warningTitle}>Importante antes de continuar</Text>
-                <Text style={s.warningDesc}>Abrir una disputa pausará el contrato y el pago quedará bloqueado hasta la resolución. Úsalo solo si no puedes llegar a un acuerdo directo.</Text>
+                <Text style={s.warningTitle}>{t('dispute.warning')}</Text>
+                <Text style={s.warningDesc}>{t('dispute.warningDesc')}</Text>
               </View>
             </View>
 

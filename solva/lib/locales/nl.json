@@ -194,5 +194,102 @@
       "dashboard": "Company dashboard",
       "billing": "Centralized billing"
     }
+  },
+  "dashboardPro": {
+    "title": "Pro Dashboard",
+    "upgradeTitle": "Word Pro",
+    "upgradeDesc": "Verander je rol naar Professional om toegang te krijgen tot het dashboard en jobs te ontvangen.",
+    "seePlans": "Pro-plannen bekijken",
+    "summary": "Hier is je activiteitsoverzicht",
+    "viewJobs": "Beschikbare jobs bekijken",
+    "completeProfile": "Mijn profiel voltooien"
+  },
+  "subscription": {
+    "title": "Solva-plannen",
+    "active": "Actief",
+    "performance": "Jouw prestaties deze maand",
+    "monthly": "Maandelijks",
+    "annual": "Jaarlijks",
+    "popular": "MEEST POPULAIR",
+    "trial": "14 dagen gratis starten"
+  },
+  "reputation": {
+    "title": "Mijn reputatie",
+    "empty": "Nog geen beoordelingen",
+    "emptyDesc": "Voltooi jobs om je eerste beoordeling te ontvangen."
+  },
+  "guarantee": {
+    "title": "Solva-garantie",
+    "heroTitle": "Jouw gemoedsrust, gegarandeerd",
+    "heroDesc": "Solva beschermt elke transactie van begin tot eind zodat je met volledig vertrouwen kunt inhuren."
+  },
+  "invoices": {
+    "title": "Facturen",
+    "empty": "Nog geen facturen",
+    "emptyDesc": "Je facturen verschijnen hier zodra je je eerste betaling hebt voltooid."
+  },
+  "settingsCountry": {
+    "title": "Land en valuta",
+    "hint": "Selecteer je land om prijzen in je lokale valuta te zien."
+  },
+  "report": {
+    "title": "Probleem melden",
+    "successDesc": "Ons team beoordeelt je melding binnen 24 uur. Bedankt voor het helpen verbeteren van Solva.",
+    "category": "Categorie",
+    "description": "Beschrijving",
+    "placeholder": "Beschrijf het probleem zo gedetailleerd mogelijk...",
+    "submit": "Melding versturen"
+  },
+  "help": {
+    "title": "Helpcentrum",
+    "contactDesc": "Schrijf ons en we reageren binnen 2 uur.",
+    "chat": "Chatten met support",
+    "faq": "Veelgestelde vragen"
+  },
+  "proContent": {
+    "title": "Jouw gegenereerd profiel ✨",
+    "score": "Profielscore",
+    "scoreDesc": "Gebaseerd op volledigheid en SEO-optimalisatie",
+    "profileTitle": "Profieltitel",
+    "searchDesc": "Zoekomschrijving",
+    "fullDesc": "Volledige profielbeschrijving",
+    "keywords": "SEO-zoekwoorden",
+    "bidTemplate": "Sjabloon voor bod-antwoord"
+  },
+  "bid": {
+    "title": "Bod uitbrengen",
+    "currency": "Valuta van je profiel",
+    "price": "Jouw prijs",
+    "days": "Geschatte leveringsdagen",
+    "message": "Bericht aan klant",
+    "sent": "✅ Bod verzonden",
+    "sentDesc": "De klant ontvangt je voorstel"
+  },
+  "review": {
+    "title": "Beoordeling achterlaten",
+    "subtitle": "Jouw mening is belangrijk voor de community",
+    "score": "Score *",
+    "addPhotos": "Foto's toevoegen",
+    "thanks": "Bedankt voor je beoordeling!",
+    "thanksDesc": "Jouw mening helpt de Solva-community op te bouwen"
+  },
+  "contract": {
+    "title": "Servicecontract",
+    "service": "Service",
+    "total": "Totaal",
+    "guarantee": "Solva-garantie inbegrepen",
+    "legal": "Juridisch kader",
+    "paymentProtection": "Betalingsbescherming",
+    "cancellation": "Annuleringsbeleid",
+    "notFound": "Contract niet gevonden"
+  },
+  "dispute": {
+    "title": "Geschil",
+    "resolution": "Solva-resolutie",
+    "evidence": "Bijgevoegde bewijzen",
+    "noMessages": "Nog geen berichten",
+    "reviewTime": "Het Solva-team beoordeelt het geschil binnen 48-72 werkuren.",
+    "warning": "Belangrijk voor het doorgaan",
+    "warningDesc": "Het openen van een geschil pauzeert het contract en de betaling wordt geblokkeerd tot de oplossing. Gebruik dit alleen als je geen directe overeenkomst kunt bereiken."
   }
 }

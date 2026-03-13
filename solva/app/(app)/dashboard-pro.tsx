@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,6 +12,7 @@ export default function DashboardProScreen() {
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
   const { profile } = useProfile()
+  const { t } = useTranslation()
   const [stats, setStats] = useState({ jobs: 0, bids: 0, contracts: 0, earnings: 0, rating: 0, reviews: 0 })
   const [loading, setLoading] = useState(true)
 
@@ -43,15 +45,15 @@ export default function DashboardProScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Dashboard Pro</Text>
+        <Text style={styles.title}>{t('dashboardPro.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <View style={styles.upgradeContainer}>
         <Text style={styles.upgradeIcon}>🚀</Text>
-        <Text style={styles.upgradeTitle}>Conviértete en Pro</Text>
-        <Text style={styles.upgradeDesc}>Cambia tu rol a Profesional para acceder al dashboard y empezar a recibir jobs.</Text>
+        <Text style={styles.upgradeTitle}>{t('dashboardPro.upgradeTitle')}</Text>
+        <Text style={styles.upgradeDesc}>{t('dashboardPro.upgradeDesc')}</Text>
         <TouchableOpacity style={styles.upgradeBtn} onPress={() => router.push('/(app)/subscription')}>
-          <Text style={styles.upgradeBtnText}>Ver planes Pro</Text>
+          <Text style={styles.upgradeBtnText}>{t('dashboardPro.seePlans')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -63,14 +65,14 @@ export default function DashboardProScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Dashboard Pro</Text>
+        <Text style={styles.title}>{t('dashboardPro.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       {loading ? <ActivityIndicator color="#2563EB" style={{ marginTop: 60 }} /> : (
         <ScrollView contentContainerStyle={styles.container}>
           <View style={styles.welcomeCard}>
             <Text style={styles.welcomeText}>Hola, {profile?.full_name?.split(' ')[0]} 👋</Text>
-            <Text style={styles.welcomeSub}>Aquí tienes el resumen de tu actividad</Text>
+            <Text style={styles.welcomeSub}>{t('dashboardPro.summary')}</Text>
           </View>
           <View style={styles.statsGrid}>
             {[
@@ -88,11 +90,11 @@ export default function DashboardProScreen() {
           </View>
           <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/(app)/jobs')}>
             <Ionicons name="briefcase-outline" size={20} color="#fff" />
-            <Text style={styles.actionBtnText}>Ver jobs disponibles</Text>
+            <Text style={styles.actionBtnText}>{t('dashboardPro.viewJobs')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#F6F7FB', borderWidth: 1, borderColor: '#E5E7EB' }]} onPress={() => router.push('/(app)/profile')}>
             <Ionicons name="person-outline" size={20} color="#1a1a2e" />
-            <Text style={[styles.actionBtnText, { color: '#1a1a2e' }]}>Completar mi perfil</Text>
+            <Text style={[styles.actionBtnText, { color: '#1a1a2e' }]}>{t('dashboardPro.completeProfile')}</Text>
           </TouchableOpacity>
         </ScrollView>
       )}

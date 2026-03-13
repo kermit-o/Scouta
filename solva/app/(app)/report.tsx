@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,6 +12,7 @@ const CATEGORIES = ['Bug / Error técnico', 'Problema con un job', 'Problema con
 export default function ReportScreen() {
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
+  const { t } = useTranslation()
   const [category, setCategory] = useState('')
   const [description, setDescription] = useState('')
   const [loading, setLoading] = useState(false)
@@ -38,15 +40,15 @@ export default function ReportScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Reportar problema</Text>
+        <Text style={styles.title}>{t('report.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <View style={styles.successContainer}>
         <Text style={styles.successIcon}>✅</Text>
         <Text style={styles.successTitle}>¡Reporte enviado!</Text>
-        <Text style={styles.successDesc}>Nuestro equipo revisará tu reporte en menos de 24 horas. Gracias por ayudarnos a mejorar Solva.</Text>
+        <Text style={styles.successDesc}>{t('report.successDesc')}</Text>
         <TouchableOpacity style={styles.btn} onPress={() => router.back()}>
-          <Text style={styles.btnText}>Volver</Text>
+          <Text style={styles.btnText}>{t('common.back')}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -58,12 +60,12 @@ export default function ReportScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Reportar problema</Text>
+        <Text style={styles.title}>{t('report.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         {error ? <View style={styles.errorBox}><Text style={styles.errorText}>⚠️ {error}</Text></View> : null}
-        <Text style={styles.sectionLabel}>Categoría</Text>
+        <Text style={styles.sectionLabel}>{t('report.category')}</Text>
         <View style={styles.categoriesGrid}>
           {CATEGORIES.map(c => (
             <TouchableOpacity
@@ -76,19 +78,19 @@ export default function ReportScreen() {
             </TouchableOpacity>
           ))}
         </View>
-        <Text style={styles.sectionLabel}>Descripción</Text>
+        <Text style={styles.sectionLabel}>{t('report.description')}</Text>
         <TextInput
           style={styles.textarea}
           value={description}
           onChangeText={setDescription}
-          placeholder="Describe el problema con el mayor detalle posible..."
+          placeholder={t("report.placeholder")}
           placeholderTextColor="#aaa"
           multiline
           numberOfLines={6}
           textAlignVertical="top"
         />
         <TouchableOpacity style={[styles.btn, loading && { opacity: 0.6 }]} onPress={submit} disabled={loading} activeOpacity={0.85}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Enviar reporte</Text>}
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t('report.submit')}</Text>}
         </TouchableOpacity>
       </ScrollView>
     </View>

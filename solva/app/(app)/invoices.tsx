@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,15 +12,15 @@ export default function InvoicesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Facturas</Text>
+        <Text style={styles.title}>{t('invoices.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <View style={styles.empty}>
         <Text style={styles.emptyIcon}>🧾</Text>
-        <Text style={styles.emptyTitle}>Sin facturas aún</Text>
-        <Text style={styles.emptyDesc}>Tus facturas aparecerán aquí una vez completes tu primer pago.</Text>
+        <Text style={styles.emptyTitle}>{t('invoices.empty')}</Text>
+        <Text style={styles.emptyDesc}>{t('invoices.emptyDesc')}</Text>
         <TouchableOpacity style={styles.btn} onPress={() => router.push('/(app)/jobs')}>
-          <Text style={styles.btnText}>Ver jobs disponibles</Text>
+          <Text style={styles.btnText}>{t('dashboardPro.viewJobs')}</Text>
         </TouchableOpacity>
       </View>
     </View>
