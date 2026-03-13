@@ -7,18 +7,19 @@ import { useAuth } from '../../../../lib/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const PAYMENT_STATUS = {
-  pending:  { label: t('payments.statusPending'), color: '#D97706', bg: '#FEF3C7', icon: 'time-outline' },
-  held:     { label: t('payments.statusHeld'),         color: '#2563EB', bg: '#DBEAFE', icon: 'lock-closed' },
-  released: { label: t('payments.statusReleased'),   color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
-  refunded: { label: t('payments.statusRefunded'),       color: '#DC2626', bg: '#FEE2E2', icon: 'arrow-undo' },
-}
+
 
 export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { session } = useAuth()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
+  const PAYMENT_STATUS = {
+    pending:  { label: t('payments.statusPending'),  color: '#D97706', bg: '#FEF3C7', icon: 'time-outline' },
+    held:     { label: t('payments.statusHeld'),     color: '#2563EB', bg: '#DBEAFE', icon: 'lock-closed' },
+    released: { label: t('payments.statusReleased'), color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
+    refunded: { label: t('payments.statusRefunded'), color: '#DC2626', bg: '#FEE2E2', icon: 'arrow-undo' },
+  }
   const [contract, setContract] = useState<any>(null)
   const [payment, setPayment] = useState<any>(null)
   const [loading, setLoading] = useState(true)
