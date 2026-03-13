@@ -32,16 +32,16 @@ export default function SecurityScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Seguridad</Text>
+        <Text style={styles.title}>{t('security.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>Cambiar contraseña</Text>
+          <Text style={styles.sectionTitle}>{t('security.changePassword')}</Text>
           {msg && <View style={[styles.msgBox, { backgroundColor: msg.ok ? '#F0FDF4' : '#FEF2F2' }]}>
             <Text style={{ color: msg.ok ? '#16A34A' : '#DC2626', fontSize: 13 }}>{msg.text}</Text>
           </View>}
-          <Text style={styles.label}>Nueva contraseña</Text>
+          <Text style={styles.label}>{t('security.newPassword')}</Text>
           <View style={styles.inputRow}>
             <Ionicons name="lock-closed-outline" size={18} color="#888" />
             <TextInput style={styles.input} value={newPassword} onChangeText={setNewPassword} secureTextEntry={!showNew} placeholder={t("auth.min8chars")} placeholderTextColor="#aaa" />
@@ -49,7 +49,7 @@ export default function SecurityScreen() {
               <Ionicons name={showNew ? 'eye-off-outline' : 'eye-outline'} size={18} color="#888" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.label}>Confirmar contraseña</Text>
+          <Text style={styles.label}>{t('security.confirmPassword')}</Text>
           <View style={styles.inputRow}>
             <Ionicons name="lock-closed-outline" size={18} color="#888" />
             <TextInput style={styles.input} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirm} placeholder={t("auth.repeatPassword")} placeholderTextColor="#aaa" />
@@ -58,15 +58,15 @@ export default function SecurityScreen() {
             </TouchableOpacity>
           </View>
           <TouchableOpacity style={[styles.btn, loading && { opacity: 0.6 }]} onPress={changePassword} disabled={loading} activeOpacity={0.85}>
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Actualizar contraseña</Text>}
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t('security.updatePassword')}</Text>}
           </TouchableOpacity>
         </View>
 
         <View style={[styles.card, { marginTop: 16 }]}>
-          <Text style={styles.sectionTitle}>Sesiones activas</Text>
+          <Text style={styles.sectionTitle}>{t('security.activeSessions')}</Text>
           <TouchableOpacity style={styles.dangerRow} onPress={async () => { await supabase.auth.signOut({ scope: 'global' }); router.replace('/(auth)/login') }}>
             <Ionicons name="log-out-outline" size={20} color="#DC2626" />
-            <Text style={styles.dangerText}>Cerrar todas las sesiones</Text>
+            <Text style={styles.dangerText}>{t('security.closeAllSessions')}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

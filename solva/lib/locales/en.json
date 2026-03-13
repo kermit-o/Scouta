@@ -90,7 +90,10 @@
     "findPros": "Find professionals",
     "exploreServices": "Explore services",
     "verifyIdentity": "Verify your identity for more trust",
-    "hello": "Hello"
+    "hello": "Hello",
+    "activate": "Activate →",
+    "viewContract": "View contract →",
+    "noJobs": "No jobs posted yet"
   },
   "jobs": {
     "title": "Jobs",
@@ -328,5 +331,21 @@
     "warningDesc": "Opening a dispute will pause the contract and payment will be blocked until resolved. Use only if you cannot reach a direct agreement.",
     "descPlaceholder": "Explain in detail what happened, when, and what you tried to resolve it...",
     "replyPlaceholder": "Write your reply..."
+  },
+  "security": {
+    "title": "Security",
+    "changePassword": "Change password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "updatePassword": "Update password",
+    "activeSessions": "Active sessions",
+    "closeAllSessions": "Close all sessions"
+  },
+  "kyc": {
+    "docType": "Document type",
+    "frontPhoto": "Front photo of document *",
+    "backPhoto": "Back photo (optional for passport)",
+    "selfie": "Selfie holding the document *",
+    "submit": "Submit for verification"
   }
 }
