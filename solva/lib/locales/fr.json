@@ -84,7 +84,8 @@
     "yourProfile": "Votre profil",
     "findPros": "Trouver des professionnels",
     "exploreServices": "Explorer les services",
-    "verifyIdentity": "Vérifiez votre identité"
+    "verifyIdentity": "Vérifiez votre identité",
+    "hello": "Bonjour"
   },
   "jobs": {
     "title": "Travaux",

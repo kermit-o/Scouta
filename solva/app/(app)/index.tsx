@@ -75,7 +75,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View>
           <Text style={styles.greeting}>{greeting}</Text>
-          <Text style={styles.name}>Hola, {firstName} 👋</Text>
+          <Text style={styles.name}>{t('home.hello') ?? 'Hello'}, {firstName} 👋</Text>
         </View>
         <TouchableOpacity style={styles.notifBtn} onPress={openDrawer}>
           <Ionicons name="menu-outline" size={26} color="#1a1a2e" />
