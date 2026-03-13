@@ -12,23 +12,9 @@ import { notifyUser } from '../../../../hooks/useNotifications'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const REASONS: { label: string; icon: string; value: DisputeReason; desc: string }[] = [
-  { label: t('dispute.reasonNotDone'),   icon: '🚫', value: 'work_not_done',        desc: t('dispute.reasonNotDoneDesc') },
-  { label: t('dispute.reasonPoorQuality'),     icon: '⚠️', value: 'work_poor_quality',    desc: t('dispute.reasonPoorQualityDesc') },
-  { label: t('dispute.reasonPayment'),       icon: '💳', value: 'payment_not_released', desc: t('dispute.reasonPaymentDesc') },
-  { label: t('dispute.reasonNoShow'),         icon: '❌', value: 'no_show',              desc: t('dispute.reasonNoShowDesc') },
-  { label: t('dispute.reasonScope'),      icon: '📋', value: 'scope_change',         desc: t('dispute.reasonScopeDesc') },
-  { label: t('dispute.reasonOther'),            icon: '🔹', value: 'other',                desc: t('dispute.reasonOtherDesc') },
-]
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  open:             { label: t('dispute.statusOpen'),            color: '#DC2626', bg: '#FEE2E2', icon: 'alert-circle' },
-  under_review:     { label: t('dispute.statusReview'),        color: '#D97706', bg: '#FEF3C7', icon: 'time' },
-  resolved_client:  { label: t('dispute.statusResolvedClient'), color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
-  resolved_pro:     { label: t('dispute.statusResolvedPro'),     color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
-  resolved_split:   { label: t('dispute.statusResolvedSplit'),color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
-  closed:           { label: t('dispute.statusClosed'),            color: '#888',    bg: '#F3F4F6', icon: 'close-circle' },
-}
+
+
 
 export default function DisputeScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -37,6 +23,22 @@ export default function DisputeScreen() {
   const scrollRef = useRef<ScrollView>(null)
 
   const { t } = useTranslation()
+  const REASONS: { label: string; icon: string; value: DisputeReason; desc: string }[] = [
+    { label: t('dispute.reasonNotDone'),        icon: '🚫', value: 'work_not_done',        desc: t('dispute.reasonNotDoneDesc') },
+    { label: t('dispute.reasonPoorQuality'),    icon: '⚠️', value: 'work_poor_quality',    desc: t('dispute.reasonPoorQualityDesc') },
+    { label: t('dispute.reasonPayment'),        icon: '💳', value: 'payment_not_released', desc: t('dispute.reasonPaymentDesc') },
+    { label: t('dispute.reasonNoShow'),         icon: '❌', value: 'no_show',              desc: t('dispute.reasonNoShowDesc') },
+    { label: t('dispute.reasonScope'),          icon: '📋', value: 'scope_change',         desc: t('dispute.reasonScopeDesc') },
+    { label: t('dispute.reasonOther'),          icon: '🔹', value: 'other',                desc: t('dispute.reasonOtherDesc') },
+  ]
+  const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
+    open:            { label: t('dispute.statusOpen'),           color: '#DC2626', bg: '#FEE2E2', icon: 'alert-circle' },
+    under_review:    { label: t('dispute.statusReview'),         color: '#D97706', bg: '#FEF3C7', icon: 'time' },
+    resolved_client: { label: t('dispute.statusResolvedClient'), color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
+    resolved_pro:    { label: t('dispute.statusResolvedPro'),    color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
+    resolved_split:  { label: t('dispute.statusResolvedSplit'),  color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
+    closed:          { label: t('dispute.statusClosed'),         color: '#888',    bg: '#F3F4F6', icon: 'close-circle' },
+  }
   const [contract, setContract] = useState<any>(null)
   const [dispute, setDispute] = useState<Dispute | null>(null)
   const [messages, setMessages] = useState<any[]>([])
