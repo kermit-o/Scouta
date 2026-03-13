@@ -11,6 +11,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useDrawer } from '../../lib/DrawerContext'
 import { supabase } from '../../lib/supabase'
 import { useSubscription } from '../../hooks/useSubscription'
+import { useTranslation } from 'react-i18next'
 
 const { width } = Dimensions.get('window')
 
@@ -22,6 +23,7 @@ const FLAG: Record<string, string> = {
 
 export default function HomeScreen() {
   const { signOut } = useAuth()
+  const { t } = useTranslation()
   useNotifications()
   const { profile, loading } = useProfile()
   const { openDrawer } = useDrawer()
