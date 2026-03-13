@@ -92,7 +92,7 @@ export default function NewBidScreen() {
 
         {/* Precio */}
         <View style={s.card}>
-          <Text style={s.label}>{t('bid.price')} Text style={s.required}>*</Text></Text>
+          <Text style={s.label}>{t('bid.price')} <Text style={s.required}>*</Text></Text>
           <View style={s.inputRow}>
             <Ionicons name="cash-outline" size={20} color="#888" />
             <TextInput
