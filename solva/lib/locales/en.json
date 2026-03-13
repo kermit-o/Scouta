@@ -347,5 +347,31 @@
     "backPhoto": "Back photo (optional for passport)",
     "selfie": "Selfie holding the document *",
     "submit": "Submit for verification"
+  },
+  "drawer": {
+    "account": "MY ACCOUNT",
+    "verification": "VERIFICATION",
+    "economic": "ECONOMIC",
+    "business": "MY BUSINESS",
+    "support": "SUPPORT",
+    "editProfile": "Edit profile",
+    "notifications": "Notifications",
+    "countryAndCurrency": "Country & currency",
+    "security": "Security",
+    "kyc": "KYC Verification",
+    "reputation": "My reputation",
+    "subscription": "My subscription",
+    "payments": "Payments & earnings",
+    "invoices": "Invoices",
+    "guarantee": "Solva Guarantee",
+    "dashboardPro": "Pro Dashboard",
+    "workZone": "My work zone",
+    "myServices": "My services",
+    "help": "Help center",
+    "supportChat": "Chat with support",
+    "terms": "Terms & Privacy",
+    "report": "Report a problem",
+    "verified": "Verified",
+    "unverified": "Unverified"
   }
 }

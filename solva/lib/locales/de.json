@@ -347,5 +347,31 @@
     "backPhoto": "Rückseite (optional für Reisepass)",
     "selfie": "Selfie mit Dokument *",
     "submit": "Zur Verifizierung einreichen"
+  },
+  "drawer": {
+    "account": "MEIN KONTO",
+    "verification": "VERIFIZIERUNG",
+    "economic": "FINANZIELL",
+    "business": "MEIN GESCHÄFT",
+    "support": "SUPPORT",
+    "editProfile": "Profil bearbeiten",
+    "notifications": "Benachrichtigungen",
+    "countryAndCurrency": "Land & Währung",
+    "security": "Sicherheit",
+    "kyc": "KYC-Verifizierung",
+    "reputation": "Meine Reputation",
+    "subscription": "Mein Abonnement",
+    "payments": "Zahlungen & Einnahmen",
+    "invoices": "Rechnungen",
+    "guarantee": "Solva-Garantie",
+    "dashboardPro": "Pro-Dashboard",
+    "workZone": "Mein Arbeitsgebiet",
+    "myServices": "Meine Dienste",
+    "help": "Hilfezentrum",
+    "supportChat": "Chat mit Support",
+    "terms": "AGB & Datenschutz",
+    "report": "Problem melden",
+    "verified": "Verifiziert",
+    "unverified": "Nicht verifiziert"
   }
 }

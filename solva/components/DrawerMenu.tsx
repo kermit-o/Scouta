@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useRef } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity, Animated,
@@ -57,47 +58,48 @@ export default function DrawerMenu({ open, onClose }: Props) {
   const kycStatus = isVerified ? 'Verificado' : 'Pendiente'
   const kycColor = isVerified ? '#16A34A' : '#F59E0B'
 
+  const { t } = useTranslation()
   const SECTIONS: Section[] = [
     {
-      title: 'Mi cuenta',
+      title: t('drawer.account'),
       items: [
-        { icon: '👤', label: 'Editar perfil', route: '/(app)/profile' },
-        { icon: '🔔', label: 'Notificaciones', route: '/(app)/notifications' },
-        { icon: '🌍', label: 'País y moneda', route: '/(app)/settings-country' },
-        { icon: '🔒', label: 'Seguridad', route: '/(app)/settings-security' },
+        { icon: '👤', label: t('drawer.editProfile'), route: '/(app)/profile' },
+        { icon: '🔔', label: t('drawer.notifications'), route: '/(app)/notifications' },
+        { icon: '🌍', label: t('drawer.countryAndCurrency'), route: '/(app)/settings-country' },
+        { icon: '🔒', label: t('drawer.security'), route: '/(app)/settings-security' },
       ]
     },
     {
-      title: 'Verificación',
+      title: t('drawer.verification'),
       items: [
-        { icon: '🪪', label: 'Verificación KYC', route: '/(app)/kyc', badge: kycStatus, badgeColor: kycColor },
-        { icon: '⭐', label: 'Mi reputación', route: '/(app)/reputation' },
+        { icon: '🪪', label: t('drawer.kyc'), route: '/(app)/kyc', badge: kycStatus, badgeColor: kycColor },
+        { icon: '⭐', label: t('drawer.reputation'), route: '/(app)/reputation' },
       ]
     },
     {
-      title: 'Económico',
+      title: t('drawer.economic'),
       items: [
-        { icon: '💳', label: 'Mi suscripción', route: '/(app)/subscription', badge: 'Free', badgeColor: '#2563EB' },
-        { icon: '💰', label: 'Mis pagos y cobros', route: '/(app)/payments' },
-        { icon: '🧾', label: 'Facturas', route: '/(app)/invoices' },
-        { icon: '🛡️', label: 'Garantía Solva', route: '/(app)/guarantee' },
+        { icon: '💳', label: t('drawer.subscription'), route: '/(app)/subscription', badge: 'Free', badgeColor: '#2563EB' },
+        { icon: '💰', label: t('drawer.payments'), route: '/(app)/payments' },
+        { icon: '🧾', label: t('drawer.invoices'), route: '/(app)/invoices' },
+        { icon: '🛡️', label: t('drawer.guarantee'), route: '/(app)/guarantee' },
       ]
     },
     ...(role === 'pro' || role === 'company' ? [{
-      title: 'Mi negocio',
+      title: t('drawer.business'),
       items: [
-        { icon: '📊', label: 'Dashboard Pro', route: '/(app)/dashboard-pro' },
-        { icon: '🗺️', label: 'Mi zona de trabajo', route: '/(app)/search' },
-        { icon: '📋', label: 'Mis servicios', route: '/(app)/jobs' },
+        { icon: '📊', label: t('drawer.dashboardPro'), route: '/(app)/dashboard-pro' },
+        { icon: '🗺️', label: t('drawer.workZone'), route: '/(app)/search' },
+        { icon: '📋', label: t('drawer.myServices'), route: '/(app)/jobs' },
       ]
     }] : []),
     {
-      title: 'Soporte',
+      title: t('drawer.support'),
       items: [
-        { icon: '❓', label: 'Centro de ayuda', route: '/(app)/help' },
-        { icon: '💬', label: 'Chat con soporte', route: '/(app)/messages' },
-        { icon: '📄', label: 'Términos y Privacidad', route: '/terms' },
-        { icon: '🚩', label: 'Reportar un problema', route: '/(app)/report' },
+        { icon: '❓', label: t('drawer.help'), route: '/(app)/help' },
+        { icon: '💬', label: t('drawer.supportChat'), route: '/(app)/messages' },
+        { icon: '📄', label: t('drawer.terms'), route: '/terms' },
+        { icon: '🚩', label: t('drawer.report'), route: '/(app)/report' },
       ]
     },
   ]
@@ -133,7 +135,7 @@ export default function DrawerMenu({ open, onClose }: Props) {
               <Text style={styles.headerEmail} numberOfLines={1}>{profile?.role === 'pro' ? '🔧 Profesional' : profile?.role === 'company' ? '🏢 Empresa' : '👤 Cliente'}</Text>
               <View style={[styles.verifiedBadge, { backgroundColor: isVerified ? '#DCFCE7' : '#FEF3C7' }]}>
                 <Text style={[styles.verifiedText, { color: isVerified ? '#16A34A' : '#D97706' }]}>
-                  {isVerified ? '✅ Verificado' : '⏳ Sin verificar'}
+                  {isVerified ? '✅ ' + t('drawer.verified') : '⏳ ' + t('drawer.unverified')}
                 </Text>
               </View>
             </View>
