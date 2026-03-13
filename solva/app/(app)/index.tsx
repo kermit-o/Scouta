@@ -61,7 +61,7 @@ export default function HomeScreen() {
 
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario'
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches'
+  const greeting = hour < 12 ? t('home.goodMorning') ?? 'Good morning' : hour < 20 ? t('home.goodAfternoon') ?? 'Good afternoon' : t('home.goodEvening') ?? 'Good evening'
 
   return (
     <ScrollView
@@ -101,7 +101,7 @@ export default function HomeScreen() {
       {!profile?.is_verified && (
         <TouchableOpacity style={styles.kycBanner} onPress={() => router.push('/(app)/kyc')}>
           <Ionicons name="shield-checkmark-outline" size={16} color="#2563EB" />
-          <Text style={styles.kycText}>Verifica tu identidad para mayor confianza</Text>
+          <Text style={styles.kycText}>{t('home.verifyIdentity') ?? 'Verify your identity'}</Text>
           <Ionicons name="chevron-forward" size={16} color="#2563EB" />
         </TouchableOpacity>
       )}
@@ -116,7 +116,7 @@ export default function HomeScreen() {
           <View style={styles.actionIconPrimary}>
             <Ionicons name="add-circle-outline" size={22} color="#fff" />
           </View>
-          <Text style={styles.actionTitlePrimary}>Publicar Job</Text>
+          <Text style={styles.actionTitlePrimary}>{t('jobs.postJob')}</Text>
           <Text style={styles.actionSubPrimary}>Encuentra profesionales</Text>
         </TouchableOpacity>
 
@@ -128,7 +128,7 @@ export default function HomeScreen() {
           <View style={styles.actionIconSecondary}>
             <Ionicons name="search-outline" size={22} color="#1a1a2e" />
           </View>
-          <Text style={styles.actionTitleSecondary}>Buscar Pros</Text>
+          <Text style={styles.actionTitleSecondary}>{t('search.title')}</Text>
           <Text style={styles.actionSubSecondary}>Explora servicios</Text>
         </TouchableOpacity>
       </View>
@@ -139,7 +139,7 @@ export default function HomeScreen() {
           {activeJobs.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>⚡ Trabajos activos</Text>
+                <Text style={styles.sectionTitle}>{t('home.activeJobs')}</Text>
               </View>
               {activeJobs.map((contract: any) => (
                 <TouchableOpacity
@@ -158,9 +158,9 @@ export default function HomeScreen() {
             </>
           )}
 
-          <Text style={styles.sectionTitle}>Jobs Disponibles</Text>
+          <Text style={styles.sectionTitle}>{t('home.availableJobs') ?? 'Available Jobs'}</Text>
           <TouchableOpacity onPress={() => router.push('/(app)/jobs')}>
-            <Text style={styles.sectionLink}>Ver todos</Text>
+            <Text style={styles.sectionLink}>{t('home.viewAll')}</Text>
           </TouchableOpacity>
         </View>
 
@@ -219,7 +219,7 @@ export default function HomeScreen() {
       {/* Stats del perfil */}
       {profile && (
         <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>Tu perfil</Text>
+          <Text style={styles.statsTitle}>{t('home.yourProfile') ?? 'Your profile'}</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{FLAG[profile.country ?? 'ES']} {profile.country}</Text>

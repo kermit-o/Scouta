@@ -4,6 +4,7 @@ import { View } from 'react-native'
 import { useProfile } from '../../hooks/useProfile'
 import { useAuth } from '../../lib/AuthContext'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 import { DrawerProvider, useDrawer } from '../../lib/DrawerContext'
 import DrawerMenu from '../../components/DrawerMenu'
 import Svg, { Path, Circle } from 'react-native-svg'
@@ -19,6 +20,7 @@ function AppLayoutInner() {
   const { profile, loading } = useProfile()
   const { isOpen, closeDrawer } = useDrawer()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
 
   useEffect(() => {
     if (!loading && profile && profile.onboarding_completed === false && profile.created_at && (Date.now() - new Date(profile.created_at).getTime() < 60000)) {
@@ -51,11 +53,11 @@ function AppLayoutInner() {
           tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
         }}
       >
-        <Tabs.Screen name="index"    options={{ title: 'Inicio',   tabBarIcon: ({ color }) => <HomeIcon    color={color} /> }} />
-        <Tabs.Screen name="search"   options={{ title: 'Buscar',   tabBarIcon: ({ color }) => <SearchIcon  color={color} /> }} />
-        <Tabs.Screen name="jobs"     options={{ title: 'Jobs',     tabBarIcon: ({ color }) => <JobsIcon    color={color} /> }} />
-        <Tabs.Screen name="messages" options={{ title: 'Mensajes', tabBarIcon: ({ color }) => <MsgIcon     color={color} /> }} />
-        <Tabs.Screen name="profile"  options={{ title: 'Perfil',   tabBarIcon: ({ color }) => <ProfileIcon color={color} /> }} />
+        <Tabs.Screen name="index"    options={{ title: t('home.title'),   tabBarIcon: ({ color }) => <HomeIcon    color={color} /> }} />
+        <Tabs.Screen name="search"   options={{ title: t('search.title'),   tabBarIcon: ({ color }) => <SearchIcon  color={color} /> }} />
+        <Tabs.Screen name="jobs"     options={{ title: t('jobs.title'),     tabBarIcon: ({ color }) => <JobsIcon    color={color} /> }} />
+        <Tabs.Screen name="messages" options={{ title: t('messages.title'), tabBarIcon: ({ color }) => <MsgIcon     color={color} /> }} />
+        <Tabs.Screen name="profile"  options={{ title: t('profile.title'),   tabBarIcon: ({ color }) => <ProfileIcon color={color} /> }} />
         <Tabs.Screen name="notifications"      options={{ href: null }} />
         <Tabs.Screen name="reputation"         options={{ href: null }} />
         <Tabs.Screen name="invoices"           options={{ href: null }} />

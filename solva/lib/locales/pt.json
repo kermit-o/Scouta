@@ -60,7 +60,7 @@
     "experience": "Years of experience",
     "experiencePlaceholder": "e.g. 5",
     "avgPrice": "Average price per hour",
-    "generateAI": "\u2728 Generate my profile with AI",
+    "generateAI": "✨ Generate my profile with AI",
     "profileReady": "Your profile is ready",
     "profileReadySub": "AI has generated optimized content for your profile",
     "suggestedTitle": "Suggested title",
@@ -71,12 +71,20 @@
     "begin": "Get started"
   },
   "home": {
-    "title": "In\u00edcio",
-    "activeJobs": "\u26a1 Active jobs",
+    "title": "Início",
+    "activeJobs": "⚡ Active jobs",
     "viewAll": "View all",
     "noActiveJobs": "No active jobs",
     "recentActivity": "Recent activity",
-    "welcome": "Welcome back"
+    "welcome": "Welcome back",
+    "goodMorning": "Good morning",
+    "goodAfternoon": "Good afternoon",
+    "goodEvening": "Good evening",
+    "availableJobs": "Available Jobs",
+    "yourProfile": "Your profile",
+    "findPros": "Find professionals",
+    "exploreServices": "Explore services",
+    "verifyIdentity": "Verify your identity for more trust"
   },
   "jobs": {
     "title": "Trabalhos",
@@ -108,7 +116,8 @@
     "rejectBid": "Reject bid",
     "pay": "Pay",
     "release": "Release payment",
-    "jobDetails": "Job details"
+    "jobDetails": "Job details",
+    "negotiate": "Negotiable"
   },
   "search": {
     "title": "Pesquisar",
@@ -139,7 +148,7 @@
     "skillsPlaceholder": "Cleaning, Plumbing, Painting...",
     "saving": "Saving...",
     "saveChanges": "Save changes",
-    "profileUpdated": "\u2705 Profile updated successfully",
+    "profileUpdated": "✅ Profile updated successfully",
     "proProfile": "Professional profile",
     "reviews": "Reviews",
     "noReviews": "No reviews yet",
@@ -165,9 +174,9 @@
     "client": "Client",
     "pro": "Professional",
     "company": "Company",
-    "seekServices": "Procuro servi\u00e7os",
+    "seekServices": "Procuro serviços",
     "seekServicesSub": "Post jobs and hire verified professionals",
-    "offerServices": "Ofere\u00e7o servi\u00e7os",
+    "offerServices": "Ofereço serviços",
     "offerServicesSub": "Find jobs near you and earn income",
     "companySub": "Manage a team or company on Solva",
     "features": {
