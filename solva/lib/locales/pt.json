@@ -119,7 +119,11 @@
     "release": "Release payment",
     "jobDetails": "Job details",
     "negotiate": "Negotiable",
-    "category": "Categoria"
+    "category": "Categoria",
+    "searchPlaceholder": "Buscar trabalhos...",
+    "newTitlePlaceholder": "ex: Limpeza de casa 3 quartos",
+    "newDescPlaceholder": "Descreva o trabalho em detalhes: o que você precisa, quando, condições especiais...",
+    "newLocationPlaceholder": "ex: Lisboa, Porto..."
   },
   "search": {
     "title": "Pesquisar",

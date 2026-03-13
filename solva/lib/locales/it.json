@@ -119,7 +119,11 @@
     "release": "Release payment",
     "jobDetails": "Job details",
     "negotiate": "Negotiable",
-    "category": "Categoria"
+    "category": "Categoria",
+    "searchPlaceholder": "Cerca lavori...",
+    "newTitlePlaceholder": "es: Pulizia casa 3 camere",
+    "newDescPlaceholder": "Descrivi il lavoro in dettaglio: cosa ti serve, quando, condizioni speciali...",
+    "newLocationPlaceholder": "es: Roma, Milano..."
   },
   "search": {
     "title": "Cerca",
