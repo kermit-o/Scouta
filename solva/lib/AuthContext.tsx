@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { Session } from '@supabase/supabase-js'
 import { supabase, UserProfile } from './supabase'
+import { changeLanguage } from './i18n'
 
 interface AuthContextType {
   session: Session | null
@@ -47,7 +48,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             language: 'es',
           })
           const { data: newProfile } = await supabase.from('users').select('*').eq('id', userId).single()
-          if (newProfile) setProfile(newProfile as UserProfile)
+          if (newProfile) {
+        setProfile(newProfile as UserProfile)
+        if ((newProfile as UserProfile).language) changeLanguage((newProfile as UserProfile).language)
+      }
         }
       }
     } else if (data) {
