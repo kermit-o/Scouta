@@ -118,7 +118,8 @@
     "pay": "Pagar",
     "release": "Liberar pago",
     "jobDetails": "Detalles del trabajo",
-    "negotiate": "A negociar"
+    "negotiate": "A negociar",
+    "category": "Categoría"
   },
   "search": {
     "title": "Buscar",
@@ -168,7 +169,9 @@
     "status": {
       "pending": "Pendiente",
       "released": "Liberado",
-      "refunded": "Reembolsado"
+      "refunded": "Devuelto",
+      "completed": "Completado",
+      "failed": "Fallido"
     }
   },
   "roles": {

@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -28,6 +29,7 @@ export default function NewJobScreen() {
   const { session } = useAuth()
   const { profile } = useProfile()
 
+  const { t } = useTranslation()
   const [title, setTitle]           = useState('')
   const [description, setDesc]      = useState('')
   const [category, setCategory]     = useState('')
@@ -75,7 +77,7 @@ export default function NewJobScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Publicar trabajo</Text>
+        <Text style={s.headerTitle}>{t('jobs.postJob')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -105,7 +107,7 @@ export default function NewJobScreen() {
         </View>
 
         {/* Descripción */}
-        <Text style={s.label}>Descripción *</Text>
+        <Text style={s.label}>{t('profile.bio')} *</Text>
         <TextInput
           style={s.textarea}
           value={description}
@@ -120,7 +122,7 @@ export default function NewJobScreen() {
         <Text style={s.charCount}>{description.length}/500</Text>
 
         {/* Categoría */}
-        <Text style={s.label}>Categoría *</Text>
+        <Text style={s.label}>{t('jobs.category') ?? 'Category'} *</Text>
         <View style={s.categoriesGrid}>
           {CATEGORIES.map(c => (
             <TouchableOpacity
@@ -168,7 +170,7 @@ export default function NewJobScreen() {
         )}
 
         {/* Presupuesto */}
-        <Text style={s.label}>Presupuesto ({profile?.currency ?? 'EUR'})</Text>
+        <Text style={s.label}>{t('jobs.budget')} ({profile?.currency ?? 'EUR'})</Text>
         <View style={s.budgetRow}>
           <View style={[s.inputRow, { flex: 1 }]}>
             <Text style={s.budgetPrefix}>Mín</Text>
@@ -222,7 +224,7 @@ export default function NewJobScreen() {
             ? <ActivityIndicator color="#fff" />
             : <>
                 <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-                <Text style={s.publishBtnText}>Publicar trabajo</Text>
+                <Text style={s.publishBtnText}>{t('jobs.postJob')}</Text>
               </>
           }
         </TouchableOpacity>
