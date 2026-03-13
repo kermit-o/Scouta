@@ -84,7 +84,8 @@
     "yourProfile": "Your profile",
     "findPros": "Find professionals",
     "exploreServices": "Explore services",
-    "verifyIdentity": "Verify your identity for more trust"
+    "verifyIdentity": "Verify your identity for more trust",
+    "hello": "Ciao"
   },
   "jobs": {
     "title": "Lavori",

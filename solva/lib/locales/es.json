@@ -84,7 +84,8 @@
     "yourProfile": "Tu perfil",
     "findPros": "Encuentra profesionales",
     "exploreServices": "Explora servicios",
-    "verifyIdentity": "Verifica tu identidad para mayor confianza"
+    "verifyIdentity": "Verifica tu identidad para mayor confianza",
+    "hello": "Hola"
   },
   "jobs": {
     "title": "Trabajos",
