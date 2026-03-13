@@ -325,6 +325,25 @@ export default function ProfileScreen() {
         <Text style={styles.logoutText}>Cerrar sesión</Text>
       </TouchableOpacity>
     </ScrollView>
+      <Modal visible={showLangModal} transparent animationType="slide" onRequestClose={() => setShowLangModal(false)}>
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowLangModal(false)}>
+          <View style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>{t('profile.language')}</Text>
+            {LANGUAGES.map(lang => (
+              <TouchableOpacity
+                key={lang.code}
+                style={[styles.langOption, i18n.language === lang.code && styles.langOptionActive]}
+                onPress={async () => { await changeLanguage(lang.code); setShowLangModal(false) }}
+              >
+                <Text style={styles.langFlag}>{lang.flag}</Text>
+                <Text style={[styles.langLabel, i18n.language === lang.code && styles.langLabelActive]}>{lang.label}</Text>
+                {i18n.language === lang.code && <Ionicons name="checkmark" size={18} color="#2563EB" />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </TouchableOpacity>
+      </Modal>
   )
 }
 
@@ -440,4 +459,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF2F2',
   },
   logoutText: { fontSize: 14, fontWeight: '700', color: '#EF4444' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24, paddingBottom: 40 },
+  modalHandle: { width: 40, height: 4, backgroundColor: '#E5E7EB', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  modalTitle: { fontSize: 18, fontWeight: '800', color: '#1a1a2e', marginBottom: 16 },
+  langOption: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 16, borderRadius: 12, marginBottom: 4 },
+  langOptionActive: { backgroundColor: '#EEF4FF' },
+  langFlag: { fontSize: 24 },
+  langLabel: { flex: 1, fontSize: 16, fontWeight: '500', color: '#1a1a2e' },
+  langLabelActive: { color: '#2563EB', fontWeight: '700' },
 })
