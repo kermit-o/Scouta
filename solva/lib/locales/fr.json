@@ -119,7 +119,11 @@
     "release": "Libérer le paiement",
     "jobDetails": "Détails du travail",
     "negotiate": "À négocier",
-    "category": "Catégorie"
+    "category": "Catégorie",
+    "searchPlaceholder": "Rechercher des travaux...",
+    "newTitlePlaceholder": "ex: Nettoyage maison 3 chambres",
+    "newDescPlaceholder": "Décrivez le travail en détail: ce dont vous avez besoin, quand, conditions spéciales...",
+    "newLocationPlaceholder": "ex: Paris, Lyon..."
   },
   "search": {
     "title": "Recherche",

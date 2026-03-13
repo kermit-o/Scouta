@@ -119,7 +119,11 @@
     "release": "Release payment",
     "jobDetails": "Job details",
     "negotiate": "Negotiable",
-    "category": "Categorie"
+    "category": "Categorie",
+    "searchPlaceholder": "Zoek jobs...",
+    "newTitlePlaceholder": "bijv. Huisreiniging 3 slaapkamers",
+    "newDescPlaceholder": "Beschrijf de klus in detail: wat je nodig hebt, wanneer, speciale voorwaarden...",
+    "newLocationPlaceholder": "bijv. Amsterdam, Rotterdam..."
   },
   "search": {
     "title": "Zoeken",

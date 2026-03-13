@@ -119,7 +119,11 @@
     "release": "Release payment",
     "jobDetails": "Job details",
     "negotiate": "Negotiable",
-    "category": "Kategorie"
+    "category": "Kategorie",
+    "searchPlaceholder": "Jobs suchen...",
+    "newTitlePlaceholder": "z.B. Hausreinigung 3 Zimmer",
+    "newDescPlaceholder": "Beschreibe den Job im Detail: was du brauchst, wann, besondere Bedingungen...",
+    "newLocationPlaceholder": "z.B. Berlin, München..."
   },
   "search": {
     "title": "Suche",

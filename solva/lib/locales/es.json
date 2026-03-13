@@ -119,7 +119,11 @@
     "release": "Liberar pago",
     "jobDetails": "Detalles del trabajo",
     "negotiate": "A negociar",
-    "category": "Categoría"
+    "category": "Categoría",
+    "searchPlaceholder": "Buscar trabajos...",
+    "newTitlePlaceholder": "ej: Limpieza de hogar 3 habitaciones",
+    "newDescPlaceholder": "Describe el trabajo con detalle: qué necesitas, cuándo, condiciones especiales...",
+    "newLocationPlaceholder": "ej: Madrid, Barcelona..."
   },
   "search": {
     "title": "Buscar",

@@ -119,7 +119,11 @@
     "release": "Release payment",
     "jobDetails": "Job details",
     "negotiate": "Negotiable",
-    "category": "Category"
+    "category": "Category",
+    "searchPlaceholder": "Search jobs...",
+    "newTitlePlaceholder": "e.g. Home cleaning 3 bedrooms",
+    "newDescPlaceholder": "Describe the job in detail: what you need, when, special conditions...",
+    "newLocationPlaceholder": "e.g. London, Manchester..."
   },
   "search": {
     "title": "Search",
