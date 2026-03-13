@@ -12,13 +12,13 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const CATEGORIES = [
-  { label: 'Todos',        icon: '✨', value: null },
-  { label: 'Limpieza',     icon: '🧹', value: 'cleaning' },
-  { label: 'Fontanería',   icon: '🔧', value: 'plumbing' },
-  { label: 'Electricidad', icon: '⚡', value: 'electrical' },
-  { label: 'Mudanza',      icon: '📦', value: 'moving' },
-  { label: 'Pintura',      icon: '🎨', value: 'painting' },
-  { label: 'Jardinería',   icon: '🌿', value: 'gardening' },
+  { labelKey: 'search.catAll',         icon: '✨', value: null },
+  { labelKey: 'search.catCleaning',     icon: '🧹', value: 'cleaning' },
+  { labelKey: 'search.catPlumbing',     icon: '🔧', value: 'plumbing' },
+  { labelKey: 'search.catElectrical',   icon: '⚡', value: 'electrical' },
+  { labelKey: 'search.catMoving',       icon: '📦', value: 'moving' },
+  { labelKey: 'search.catPainting',     icon: '🎨', value: 'painting' },
+  { labelKey: 'search.catGardening',    icon: '🌿', value: 'gardening' },
 ]
 
 const EXAMPLES = [
@@ -87,7 +87,7 @@ export default function SearchScreen() {
         </TouchableOpacity>
         <View>
           <Text style={styles.headerTitle}>{t('search.title')}</Text>
-          <Text style={styles.headerSub}>Describe lo que necesitas</Text>
+          <Text style={styles.headerSub}>{t('search.subtitle')}</Text>
         </View>
       </View>
 
@@ -136,14 +136,14 @@ export default function SearchScreen() {
       >
         {CATEGORIES.map(cat => (
           <TouchableOpacity
-            key={cat.label}
+            key={t(cat.labelKey)}
             style={[styles.catChip, activeCategory === cat.value && styles.catChipActive]}
             onPress={() => setActiveCategory(cat.value)}
             activeOpacity={0.8}
           >
             <Text style={styles.catIcon}>{cat.icon}</Text>
             <Text style={[styles.catText, activeCategory === cat.value && styles.catTextActive]}>
-              {cat.label}
+              {t(cat.labelKey)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -152,7 +152,7 @@ export default function SearchScreen() {
       {/* Estado inicial — ejemplos */}
       {!searched && (
         <ScrollView style={styles.scroll} contentContainerStyle={styles.examplesContent} showsVerticalScrollIndicator={false}>
-          <Text style={styles.sectionLabel}>💡 Prueba con...</Text>
+          <Text style={styles.sectionLabel}>{t('search.trySuggestions')}</Text>
           {EXAMPLES.map((ex, i) => (
             <TouchableOpacity
               key={i}
@@ -168,7 +168,7 @@ export default function SearchScreen() {
           <View style={styles.tipCard}>
             <View style={styles.tipHeader}>
               <Ionicons name="sparkles" size={16} color="#2563EB" />
-              <Text style={styles.tipTitle}>La IA entiende lenguaje natural</Text>
+              <Text style={styles.tipTitle}>{t('search.aiTip')}</Text>
             </View>
             {[
               'Urgencia — "para mañana", "urgente"',
@@ -223,14 +223,14 @@ export default function SearchScreen() {
           ListEmptyComponent={
             <View style={styles.empty}>
               <Ionicons name="search-outline" size={48} color="#ddd" />
-              <Text style={styles.emptyTitle}>Sin resultados</Text>
-              <Text style={styles.emptySub}>Prueba con otros términos o publica tu propio trabajo</Text>
+              <Text style={styles.emptyTitle}>{t('search.noResults')}</Text>
+              <Text style={styles.emptySub}>{t('search.noResultsDesc')}</Text>
               {profile?.role !== 'pro' && (
                 <TouchableOpacity
                   style={styles.emptyBtn}
                   onPress={() => router.push('/(app)/jobs/new')}
                 >
-                  <Text style={styles.emptyBtnText}>Publicar trabajo</Text>
+                  <Text style={styles.emptyBtnText}>{t('jobs.postJob')}</Text>
                 </TouchableOpacity>
               )}
             </View>

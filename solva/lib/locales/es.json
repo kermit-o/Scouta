@@ -134,7 +134,19 @@
     "placeholder": "Ej: fontanero urgente para mañana...",
     "filters": "Filtros",
     "noPros": "No se encontraron profesionales",
-    "noProsSub": "Intenta ajustar los filtros de búsqueda"
+    "noProsSub": "Intenta ajustar los filtros de búsqueda",
+    "subtitle": "Describe lo que necesitas",
+    "aiTip": "La IA entiende lenguaje natural",
+    "noResults": "Sin resultados",
+    "noResultsDesc": "Prueba con otros términos o publica tu propio trabajo",
+    "trySuggestions": "💡 Prueba con...",
+    "catAll": "Todos",
+    "catCleaning": "Limpieza",
+    "catPlumbing": "Fontanería",
+    "catElectrical": "Electricidad",
+    "catMoving": "Mudanza",
+    "catPainting": "Pintura",
+    "catGardening": "Jardinería"
   },
   "messages": {
     "title": "Mensajes",
@@ -144,7 +156,7 @@
     "send": "Enviar"
   },
   "profile": {
-    "title": "Perfil",
+    "title": "Mi Perfil",
     "editProfile": "Editar perfil",
     "myJobs": "Mis trabajos",
     "payments": "Pagos",
@@ -168,7 +180,16 @@
     "verified": "Verificado",
     "aboutMe": "Sobre mí",
     "specialties": "Especialidades",
-    "namePlaceholder": "Tu nombre"
+    "namePlaceholder": "Tu nombre",
+    "rating": "valoración",
+    "country": "País",
+    "role": "Rol",
+    "currency": "Moneda",
+    "editInfo": "Editar información",
+    "specialtiesLabel": "Especialidades (separadas por coma)",
+    "kyc": "Verificación KYC",
+    "subscription": "Mi Suscripción",
+    "viewPublic": "Ver perfil público"
   },
   "payments": {
     "title": "Pagos",

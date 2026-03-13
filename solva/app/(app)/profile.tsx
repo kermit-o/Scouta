@@ -108,7 +108,7 @@ export default function ProfileScreen() {
   const menuItems = [
     {
       icon: 'shield-checkmark-outline' as const,
-      label: 'Verificación KYC',
+      label: t('profile.kyc'),
       badge: profile?.is_verified ? 'Verificado' : 'Pendiente',
       badgeColor: profile?.is_verified ? '#10B981' : '#F59E0B',
       badgeBg: profile?.is_verified ? '#D1FAE5' : '#FEF3C7',
@@ -116,7 +116,7 @@ export default function ProfileScreen() {
     },
     {
       icon: 'star-outline' as const,
-      label: 'Mi Suscripción',
+      label: t('profile.subscription'),
       badge: 'Free',
       badgeColor: '#2563EB',
       badgeBg: '#EEF4FF',
@@ -124,7 +124,7 @@ export default function ProfileScreen() {
     },
     {
       icon: 'eye-outline' as const,
-      label: 'Ver perfil público',
+      label: t('profile.viewPublic'),
       onPress: () => router.push(`/(app)/pro/${session!.user.id}`),
     },
     {
@@ -165,7 +165,7 @@ export default function ProfileScreen() {
         </View>
       ) : null}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mi Perfil</Text>
+        <Text style={styles.headerTitle}>{t('profile.title')}</Text>
         <TouchableOpacity
           style={styles.editBtn}
           onPress={() => setEditing(!editing)}
@@ -215,7 +215,7 @@ export default function ProfileScreen() {
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={14} color="#F59E0B" />
               <Text style={styles.ratingText}>4.9</Text>
-              <Text style={styles.ratingLabel}>valoración</Text>
+              <Text style={styles.ratingLabel}>{t('profile.rating')}</Text>
             </View>
           </View>
         </View>
@@ -224,17 +224,17 @@ export default function ProfileScreen() {
         <View style={styles.statsRow}>
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{FLAG[profile?.country ?? 'ES']} {profile?.country}</Text>
-            <Text style={styles.statLabel}>País</Text>
+            <Text style={styles.statLabel}>{t('profile.country')}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{ROLE_LABEL[profile?.role ?? 'client']}</Text>
-            <Text style={styles.statLabel}>Rol</Text>
+            <Text style={styles.statLabel}>{t('profile.role')}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statItem}>
             <Text style={styles.statValue}>{profile?.currency ?? 'EUR'}</Text>
-            <Text style={styles.statLabel}>Moneda</Text>
+            <Text style={styles.statLabel}>{t('profile.currency')}</Text>
           </View>
         </View>
       </View>
@@ -242,9 +242,9 @@ export default function ProfileScreen() {
       {/* Edit Form */}
       {editing && (
         <View style={styles.editCard}>
-          <Text style={styles.editCardTitle}>Editar información</Text>
+          <Text style={styles.editCardTitle}>{t('profile.editInfo')}</Text>
 
-          <Text style={styles.label}>Nombre completo</Text>
+          <Text style={styles.label}>{t('profile.fullName')}</Text>
           <TextInput
             style={styles.input}
             value={fullName}
@@ -253,8 +253,8 @@ export default function ProfileScreen() {
             placeholderTextColor="#aaa"
           />
 
-          <Text style={styles.label}>Teléfono</Text>
-          <Text style={styles.inputLabel}>Bio</Text>
+          <Text style={styles.label}>{t('profile.phone')}</Text>
+          <Text style={styles.inputLabel}>{t('profile.bio')}</Text>
           <TextInput
             style={[styles.input, { height: 90, textAlignVertical: 'top' }]}
             value={bio}
@@ -263,14 +263,14 @@ export default function ProfileScreen() {
             multiline
             maxLength={300}
           />
-          <Text style={styles.inputLabel}>Especialidades (separadas por coma)</Text>
+          <Text style={styles.inputLabel}>{t('profile.specialtiesLabel')}</Text>
           <TextInput
             style={styles.input}
             value={skillsText}
             onChangeText={setSkillsText}
             placeholder={t('profile.skillsPlaceholder')}
           />
-          <Text style={styles.inputLabel}>Teléfono</Text>
+          <Text style={styles.inputLabel}>{t('profile.phone')}</Text>
           <TextInput
             style={styles.input}
             value={phone}
@@ -323,7 +323,7 @@ export default function ProfileScreen() {
         activeOpacity={0.8}
       >
         <Ionicons name="log-out-outline" size={18} color="#EF4444" />
-        <Text style={styles.logoutText}>Cerrar sesión</Text>
+        <Text style={styles.logoutText}>{t('auth.logout')}</Text>
       </TouchableOpacity>
     </ScrollView>
     <Modal visible={showLangModal} transparent animationType="slide" onRequestClose={() => setShowLangModal(false)}>
