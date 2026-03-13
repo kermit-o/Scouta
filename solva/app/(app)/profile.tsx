@@ -143,6 +143,7 @@ export default function ProfileScreen() {
   ]
 
   return (
+    <>
     <ScrollView
       style={styles.scroll}
       contentContainerStyle={[styles.container, { paddingTop: insets.top + 16, paddingBottom: insets.bottom + 40 }]}
@@ -325,7 +326,7 @@ export default function ProfileScreen() {
         <Text style={styles.logoutText}>Cerrar sesión</Text>
       </TouchableOpacity>
     </ScrollView>
-      <Modal visible={showLangModal} transparent animationType="slide" onRequestClose={() => setShowLangModal(false)}>
+    <Modal visible={showLangModal} transparent animationType="slide" onRequestClose={() => setShowLangModal(false)}>
         <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setShowLangModal(false)}>
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
@@ -344,6 +345,7 @@ export default function ProfileScreen() {
           </View>
         </TouchableOpacity>
       </Modal>
+    </>
   )
 }
 
