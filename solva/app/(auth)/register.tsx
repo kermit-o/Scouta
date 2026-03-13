@@ -24,8 +24,7 @@ const COUNTRIES: { label: string; flag: string; value: SupportedCountry; currenc
   { label: 'Brasil',       flag: '🇧🇷', value: 'BR', currency: 'BRL', language: 'pt-BR' },
   { label: 'Chile',        flag: '🇨🇱', value: 'CL', currency: 'CLP', language: 'es' },
 ]
-
-const ROLES: { label: string; icon: string; value: UserRole; desc: string; features: string[] }[] = [
+ }[] = [
   {
     label: t('roles.seekServices'),
     icon: '👤',
@@ -67,6 +66,7 @@ const STRENGTH_LABEL = ['Muy débil', 'Débil', 'Buena', 'Fuerte']
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
+const ROLES: { label: string; icon: string; value: UserRole; desc: string; features: string[]
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
