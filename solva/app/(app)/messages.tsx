@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
@@ -12,6 +13,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 export default function MessagesScreen() {
   const { session } = useAuth()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [contracts, setContracts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -57,7 +59,7 @@ export default function MessagesScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mensajes</Text>
-        <Text style={styles.headerSub}>Tus conversaciones activas</Text>
+        <Text style={styles.headerSub}>{t('messages.noMessagesSub')}</Text>
       </View>
 
       {/* Search */}
@@ -67,7 +69,7 @@ export default function MessagesScreen() {
           style={styles.searchInput}
           value={search}
           onChangeText={setSearch}
-          placeholder="Buscar mensajes..."
+          placeholder={t('common.search') + '...'}
           placeholderTextColor="#aaa"
         />
         {search.length > 0 && (
@@ -86,7 +88,7 @@ export default function MessagesScreen() {
           <View style={styles.empty}>
             <Ionicons name="chatbubbles-outline" size={52} color="#ddd" />
             <Text style={styles.emptyTitle}>
-              {search ? 'Sin resultados' : 'No hay conversaciones'}
+              {search ? t('common.error') : t('messages.noMessages')}
             </Text>
             <Text style={styles.emptySub}>
               {search

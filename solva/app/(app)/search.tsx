@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
@@ -38,6 +39,7 @@ export default function SearchScreen() {
   const { coords, requestLocation } = useLocation()
   const insets = useSafeAreaInsets()
 
+  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [results, setResults] = useState<any[]>([])
@@ -83,7 +85,7 @@ export default function SearchScreen() {
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
         <View>
-          <Text style={styles.headerTitle}>Buscar con IA</Text>
+          <Text style={styles.headerTitle}>{t('search.title')}</Text>
           <Text style={styles.headerSub}>Describe lo que necesitas</Text>
         </View>
       </View>
@@ -117,7 +119,7 @@ export default function SearchScreen() {
           {loading
             ? <ActivityIndicator color="#fff" size="small" />
             : <>
-                <Text style={styles.searchBtnText}>Buscar</Text>
+                <Text style={styles.searchBtnText}>{t('common.search')}</Text>
                 <Ionicons name="arrow-forward" size={16} color="#fff" />
               </>
           }
