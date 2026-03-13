@@ -134,7 +134,19 @@
     "placeholder": "es: idraulico urgente per domani...",
     "filters": "Filters",
     "noPros": "No professionals found",
-    "noProsSub": "Try adjusting your search filters"
+    "noProsSub": "Try adjusting your search filters",
+    "subtitle": "Descrivi cosa hai bisogno",
+    "aiTip": "L'IA capisce il linguaggio naturale",
+    "noResults": "Nessun risultato",
+    "noResultsDesc": "Prova altri termini o pubblica il tuo lavoro",
+    "trySuggestions": "💡 Prova...",
+    "catAll": "Tutti",
+    "catCleaning": "Pulizie",
+    "catPlumbing": "Idraulica",
+    "catElectrical": "Elettricità",
+    "catMoving": "Trasloco",
+    "catPainting": "Pittura",
+    "catGardening": "Giardinaggio"
   },
   "messages": {
     "title": "Messaggi",
@@ -144,14 +156,14 @@
     "send": "Send"
   },
   "profile": {
-    "title": "Profilo",
+    "title": "Il mio Profilo",
     "editProfile": "Edit profile",
-    "myJobs": "My jobs",
+    "myJobs": "I miei lavori",
     "payments": "Payments",
     "settings": "Settings",
-    "language": "Language",
-    "fullName": "Full name",
-    "phone": "Phone",
+    "language": "Lingua",
+    "fullName": "Nome completo",
+    "phone": "Telefono",
     "bio": "Bio",
     "bioPlaceholder": "Tell us about you and your experience...",
     "skills": "Specialties (comma separated)",
@@ -168,7 +180,16 @@
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
-    "namePlaceholder": "Il tuo nome"
+    "namePlaceholder": "Il tuo nome",
+    "rating": "valutazione",
+    "country": "Paese",
+    "role": "Ruolo",
+    "currency": "Valuta",
+    "editInfo": "Modifica informazioni",
+    "specialtiesLabel": "Specialità (separate da virgola)",
+    "kyc": "Verifica KYC",
+    "subscription": "Il mio Abbonamento",
+    "viewPublic": "Vedi profilo pubblico"
   },
   "payments": {
     "title": "Payments",

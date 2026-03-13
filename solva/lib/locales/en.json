@@ -134,7 +134,19 @@
     "placeholder": "e.g. urgent plumber for tomorrow...",
     "filters": "Filters",
     "noPros": "No professionals found",
-    "noProsSub": "Try adjusting your search filters"
+    "noProsSub": "Try adjusting your search filters",
+    "subtitle": "Describe what you need",
+    "aiTip": "AI understands natural language",
+    "noResults": "No results",
+    "noResultsDesc": "Try other terms or post your own job",
+    "trySuggestions": "💡 Try...",
+    "catAll": "All",
+    "catCleaning": "Cleaning",
+    "catPlumbing": "Plumbing",
+    "catElectrical": "Electrical",
+    "catMoving": "Moving",
+    "catPainting": "Painting",
+    "catGardening": "Gardening"
   },
   "messages": {
     "title": "Messages",
@@ -144,7 +156,7 @@
     "send": "Send"
   },
   "profile": {
-    "title": "Profile",
+    "title": "My Profile",
     "editProfile": "Edit profile",
     "myJobs": "My jobs",
     "payments": "Payments",
@@ -168,7 +180,16 @@
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
-    "namePlaceholder": "Your name"
+    "namePlaceholder": "Your name",
+    "rating": "rating",
+    "country": "Country",
+    "role": "Role",
+    "currency": "Currency",
+    "editInfo": "Edit information",
+    "specialtiesLabel": "Specialties (comma separated)",
+    "kyc": "KYC Verification",
+    "subscription": "My Subscription",
+    "viewPublic": "View public profile"
   },
   "payments": {
     "title": "Payments",

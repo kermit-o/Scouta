@@ -134,7 +134,19 @@
     "placeholder": "ex: encanador urgente para amanhã...",
     "filters": "Filters",
     "noPros": "No professionals found",
-    "noProsSub": "Try adjusting your search filters"
+    "noProsSub": "Try adjusting your search filters",
+    "subtitle": "Descreva o que você precisa",
+    "aiTip": "A IA entende linguagem natural",
+    "noResults": "Sem resultados",
+    "noResultsDesc": "Tente outros termos ou publique seu próprio trabalho",
+    "trySuggestions": "💡 Tente...",
+    "catAll": "Todos",
+    "catCleaning": "Limpeza",
+    "catPlumbing": "Encanamento",
+    "catElectrical": "Elétrica",
+    "catMoving": "Mudança",
+    "catPainting": "Pintura",
+    "catGardening": "Jardinagem"
   },
   "messages": {
     "title": "Mensagens",
@@ -144,14 +156,14 @@
     "send": "Send"
   },
   "profile": {
-    "title": "Perfil",
+    "title": "Meu Perfil",
     "editProfile": "Edit profile",
-    "myJobs": "My jobs",
+    "myJobs": "Meus trabalhos",
     "payments": "Payments",
     "settings": "Settings",
-    "language": "Language",
-    "fullName": "Full name",
-    "phone": "Phone",
+    "language": "Idioma",
+    "fullName": "Nome completo",
+    "phone": "Telefone",
     "bio": "Bio",
     "bioPlaceholder": "Tell us about you and your experience...",
     "skills": "Specialties (comma separated)",
@@ -168,7 +180,16 @@
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
-    "namePlaceholder": "Seu nome"
+    "namePlaceholder": "Seu nome",
+    "rating": "avaliação",
+    "country": "País",
+    "role": "Função",
+    "currency": "Moeda",
+    "editInfo": "Editar informações",
+    "specialtiesLabel": "Especialidades (separadas por vírgula)",
+    "kyc": "Verificação KYC",
+    "subscription": "Minha Assinatura",
+    "viewPublic": "Ver perfil público"
   },
   "payments": {
     "title": "Payments",

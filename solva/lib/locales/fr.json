@@ -134,7 +134,19 @@
     "placeholder": "ex: plombier urgent pour demain...",
     "filters": "Filtres",
     "noPros": "Aucun professionnel trouvé",
-    "noProsSub": "Essayez d'ajuster vos filtres"
+    "noProsSub": "Essayez d'ajuster vos filtres",
+    "subtitle": "Décrivez ce dont vous avez besoin",
+    "aiTip": "L'IA comprend le langage naturel",
+    "noResults": "Aucun résultat",
+    "noResultsDesc": "Essayez d'autres termes ou publiez votre propre travail",
+    "trySuggestions": "💡 Essayez...",
+    "catAll": "Tous",
+    "catCleaning": "Nettoyage",
+    "catPlumbing": "Plomberie",
+    "catElectrical": "Électricité",
+    "catMoving": "Déménagement",
+    "catPainting": "Peinture",
+    "catGardening": "Jardinage"
   },
   "messages": {
     "title": "Messages",
@@ -144,7 +156,7 @@
     "send": "Envoyer"
   },
   "profile": {
-    "title": "Profil",
+    "title": "Mon Profil",
     "editProfile": "Modifier le profil",
     "myJobs": "Mes travaux",
     "payments": "Paiements",
@@ -168,7 +180,16 @@
     "verified": "Vérifié",
     "aboutMe": "À propos",
     "specialties": "Spécialités",
-    "namePlaceholder": "Votre nom"
+    "namePlaceholder": "Votre nom",
+    "rating": "évaluation",
+    "country": "Pays",
+    "role": "Rôle",
+    "currency": "Devise",
+    "editInfo": "Modifier les informations",
+    "specialtiesLabel": "Spécialités (séparées par virgule)",
+    "kyc": "Vérification KYC",
+    "subscription": "Mon Abonnement",
+    "viewPublic": "Voir profil public"
   },
   "payments": {
     "title": "Paiements",

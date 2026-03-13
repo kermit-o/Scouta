@@ -134,7 +134,19 @@
     "placeholder": "z.B. dringend Klempner für morgen...",
     "filters": "Filters",
     "noPros": "No professionals found",
-    "noProsSub": "Try adjusting your search filters"
+    "noProsSub": "Try adjusting your search filters",
+    "subtitle": "Beschreibe was du brauchst",
+    "aiTip": "KI versteht natürliche Sprache",
+    "noResults": "Keine Ergebnisse",
+    "noResultsDesc": "Versuche andere Begriffe oder veröffentliche deinen eigenen Job",
+    "trySuggestions": "💡 Versuche...",
+    "catAll": "Alle",
+    "catCleaning": "Reinigung",
+    "catPlumbing": "Klempnerei",
+    "catElectrical": "Elektrik",
+    "catMoving": "Umzug",
+    "catPainting": "Malerei",
+    "catGardening": "Gartenarbeit"
   },
   "messages": {
     "title": "Nachrichten",
@@ -144,14 +156,14 @@
     "send": "Send"
   },
   "profile": {
-    "title": "Profil",
+    "title": "Mein Profil",
     "editProfile": "Edit profile",
-    "myJobs": "My jobs",
+    "myJobs": "Meine Jobs",
     "payments": "Payments",
     "settings": "Settings",
-    "language": "Language",
-    "fullName": "Full name",
-    "phone": "Phone",
+    "language": "Sprache",
+    "fullName": "Vollständiger Name",
+    "phone": "Telefon",
     "bio": "Bio",
     "bioPlaceholder": "Tell us about you and your experience...",
     "skills": "Specialties (comma separated)",
@@ -168,7 +180,16 @@
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
-    "namePlaceholder": "Dein Name"
+    "namePlaceholder": "Dein Name",
+    "rating": "Bewertung",
+    "country": "Land",
+    "role": "Rolle",
+    "currency": "Währung",
+    "editInfo": "Informationen bearbeiten",
+    "specialtiesLabel": "Spezialitäten (durch Komma getrennt)",
+    "kyc": "KYC-Verifizierung",
+    "subscription": "Mein Abonnement",
+    "viewPublic": "Öffentliches Profil ansehen"
   },
   "payments": {
     "title": "Payments",

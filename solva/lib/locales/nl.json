@@ -134,7 +134,19 @@
     "placeholder": "bijv. dringend loodgieter voor morgen...",
     "filters": "Filters",
     "noPros": "No professionals found",
-    "noProsSub": "Try adjusting your search filters"
+    "noProsSub": "Try adjusting your search filters",
+    "subtitle": "Beschrijf wat je nodig hebt",
+    "aiTip": "AI begrijpt natuurlijke taal",
+    "noResults": "Geen resultaten",
+    "noResultsDesc": "Probeer andere termen of plaats je eigen klus",
+    "trySuggestions": "💡 Probeer...",
+    "catAll": "Alle",
+    "catCleaning": "Schoonmaak",
+    "catPlumbing": "Loodgieter",
+    "catElectrical": "Elektra",
+    "catMoving": "Verhuizing",
+    "catPainting": "Schilderwerk",
+    "catGardening": "Tuinieren"
   },
   "messages": {
     "title": "Berichten",
@@ -144,14 +156,14 @@
     "send": "Send"
   },
   "profile": {
-    "title": "Profiel",
+    "title": "Mijn Profiel",
     "editProfile": "Edit profile",
-    "myJobs": "My jobs",
+    "myJobs": "Mijn jobs",
     "payments": "Payments",
     "settings": "Settings",
-    "language": "Language",
-    "fullName": "Full name",
-    "phone": "Phone",
+    "language": "Taal",
+    "fullName": "Volledige naam",
+    "phone": "Telefoon",
     "bio": "Bio",
     "bioPlaceholder": "Tell us about you and your experience...",
     "skills": "Specialties (comma separated)",
@@ -168,7 +180,16 @@
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
-    "namePlaceholder": "Jouw naam"
+    "namePlaceholder": "Jouw naam",
+    "rating": "beoordeling",
+    "country": "Land",
+    "role": "Rol",
+    "currency": "Valuta",
+    "editInfo": "Informatie bewerken",
+    "specialtiesLabel": "Specialiteiten (gescheiden door komma)",
+    "kyc": "KYC-verificatie",
+    "subscription": "Mijn Abonnement",
+    "viewPublic": "Openbaar profiel bekijken"
   },
   "payments": {
     "title": "Payments",
