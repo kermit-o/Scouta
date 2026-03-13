@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -19,6 +20,7 @@ export default function NewBidScreen() {
   const insets = useSafeAreaInsets()
   const { canSendBid } = useSubscription()
 
+  const { t } = useTranslation()
   const [amount, setAmount] = useState('')
   const [message, setMessage] = useState('')
   const [deliveryDays, setDeliveryDays] = useState('')
@@ -56,7 +58,7 @@ export default function NewBidScreen() {
       if (job) {
         await notifyUser(job.client_id, '💼 Nueva oferta recibida', `${profile?.full_name} hizo una oferta en: ${job.title}`, { job_id: id as string })
       }
-      Alert.alert('✅ Oferta enviada', 'El cliente recibirá tu propuesta', [
+      Alert.alert(t('bid.sent'), t('bid.sentDesc'), [
         { text: 'OK', onPress: () => router.back() }
       ])
     }
@@ -71,7 +73,7 @@ export default function NewBidScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Hacer oferta</Text>
+        <Text style={s.headerTitle}>{t('bid.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -83,14 +85,14 @@ export default function NewBidScreen() {
             <Ionicons name="cash-outline" size={22} color="#2563EB" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.currencyLabel}>Moneda de tu perfil</Text>
+            <Text style={s.currencyLabel}>{t('bid.currency')}</Text>
             <Text style={s.currencyValue}>{profile?.currency ?? 'EUR'}</Text>
           </View>
         </View>
 
         {/* Precio */}
         <View style={s.card}>
-          <Text style={s.label}>Tu precio <Text style={s.required}>*</Text></Text>
+          <Text style={s.label}>{t('bid.price')} Text style={s.required}>*</Text></Text>
           <View style={s.inputRow}>
             <Ionicons name="cash-outline" size={20} color="#888" />
             <TextInput
@@ -107,7 +109,7 @@ export default function NewBidScreen() {
 
         {/* Días */}
         <View style={s.card}>
-          <Text style={s.label}>Días estimados de entrega <Text style={s.optional}>(opcional)</Text></Text>
+          <Text style={s.label}>{t('bid.days')} Text style={s.optional}>(opcional)</Text></Text>
           <View style={s.inputRow}>
             <Ionicons name="time-outline" size={20} color="#888" />
             <TextInput
@@ -123,7 +125,7 @@ export default function NewBidScreen() {
 
         {/* Mensaje */}
         <View style={s.card}>
-          <Text style={s.label}>Mensaje al cliente <Text style={s.required}>*</Text> <Text style={s.optional}>(mín. 20 caracteres)</Text></Text>
+          <Text style={s.label}>{t('bid.message')} Text style={s.required}>*</Text> <Text style={s.optional}>(mín. 20 caracteres)</Text></Text>
           <TextInput
             style={s.textarea}
             value={message}

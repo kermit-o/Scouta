@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -20,14 +21,14 @@ export default function GuaranteeScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Garantía Solva</Text>
+        <Text style={styles.title}>{t('guarantee.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.heroCard}>
           <Text style={styles.heroIcon}>🛡️</Text>
-          <Text style={styles.heroTitle}>Tu tranquilidad, garantizada</Text>
-          <Text style={styles.heroDesc}>Solva protege cada transacción de principio a fin para que puedas contratar con total confianza.</Text>
+          <Text style={styles.heroTitle}>{t('guarantee.heroTitle')}</Text>
+          <Text style={styles.heroDesc}>{t('guarantee.heroDesc')}</Text>
         </View>
         <View style={styles.card}>
           {FEATURES.map((f, i) => (

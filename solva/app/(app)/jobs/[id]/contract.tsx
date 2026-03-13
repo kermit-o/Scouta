@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -16,6 +17,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 export default function ContractScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [contract, setContract] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -35,7 +37,7 @@ export default function ContractScreen() {
   if (!contract) return (
     <View style={s.center}>
       <Ionicons name="document-outline" size={48} color="#ccc" />
-      <Text style={s.notFound}>Contrato no encontrado</Text>
+      <Text style={s.notFound}>{t('contract.notFound')}</Text>
     </View>
   )
 
@@ -77,7 +79,7 @@ export default function ContractScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Contrato de servicio</Text>
+        <Text style={s.headerTitle}>{t('contract.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -100,7 +102,7 @@ export default function ContractScreen() {
           {/* Montos */}
           <View style={s.amountRow}>
             <View style={s.amountItem}>
-              <Text style={s.amountLabel}>Servicio</Text>
+              <Text style={s.amountLabel}>{t('contract.service')}</Text>
               <Text style={s.amountValue}>{contract.amount} {contract.currency}</Text>
             </View>
             <View style={s.amountDivider} />
@@ -110,7 +112,7 @@ export default function ContractScreen() {
             </View>
             <View style={s.amountDivider} />
             <View style={s.amountItem}>
-              <Text style={s.amountLabel}>Total</Text>
+              <Text style={s.amountLabel}>{t('contract.total')}</Text>
               <Text style={[s.amountValue, s.amountTotal]}>{total.toFixed(2)} {contract.currency}</Text>
             </View>
           </View>
@@ -142,7 +144,7 @@ export default function ContractScreen() {
         <View style={s.guaranteeCard}>
           <Ionicons name="shield-checkmark" size={22} color="#059669" />
           <View style={{ flex: 1 }}>
-            <Text style={s.guaranteeTitle}>Garantía Solva incluida</Text>
+            <Text style={s.guaranteeTitle}>{t('contract.guarantee')}</Text>
             <Text style={s.guaranteeDesc}>
               Tienes {terms.warranty_days} días para reportar problemas tras la entrega. Sin coste adicional.
             </Text>
@@ -150,15 +152,15 @@ export default function ContractScreen() {
         </View>
 
         {/* Secciones colapsables */}
-        <Section id="legal" icon="gavel" iconBg="#EDE9FE" iconColor="#7C3AED" title="Marco legal">
+        <Section id="legal" icon="gavel" iconBg="#EDE9FE" iconColor="#7C3AED" title={t('contract.legal')}>
           <Text style={s.legalText}>{terms.law}</Text>
         </Section>
 
-        <Section id="payment" icon="lock-closed" iconBg="#DBEAFE" iconColor="#2563EB" title="Protección del pago">
+        <Section id="payment" icon="lock-closed" iconBg="#DBEAFE" iconColor="#2563EB" title={t('contract.paymentProtection')}>
           <Text style={s.legalText}>{terms.payment_protection}</Text>
         </Section>
 
-        <Section id="cancel" icon="close-circle-outline" iconBg="#FEE2E2" iconColor="#DC2626" title="Política de cancelación">
+        <Section id="cancel" icon="close-circle-outline" iconBg="#FEE2E2" iconColor="#DC2626" title={t('contract.cancellation')}>
           <Text style={s.legalText}>{terms.cancellation_policy}</Text>
         </Section>
 

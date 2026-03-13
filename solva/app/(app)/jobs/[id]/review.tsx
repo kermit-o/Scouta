@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput,
@@ -36,6 +37,7 @@ export default function ReviewScreen() {
   const { profile } = useProfile()
   const insets = useSafeAreaInsets()
 
+  const { t } = useTranslation()
   const [rating, setRating] = useState(0)
   const [comment, setComment] = useState('')
   const [photosBefore, setPhotosBefore] = useState<string[]>([])
@@ -120,7 +122,7 @@ export default function ReviewScreen() {
     })
     setSaving(false)
     if (error) { setErrorMsg(error.message); return }
-    else Alert.alert('¡Gracias por tu reseña!', 'Tu opinión ayuda a construir la comunidad de Solva', [
+    else Alert.alert(t('review.thanks'), t('review.thanksDesc'), [
       { text: 'OK', onPress: () => router.replace('/(app)/jobs') }
     ])
   }
@@ -135,7 +137,7 @@ export default function ReviewScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Dejar reseña</Text>
+        <Text style={s.headerTitle}>{t('review.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -146,12 +148,12 @@ export default function ReviewScreen() {
             <Ionicons name="star" size={32} color="#F59E0B" />
           </View>
           <Text style={s.heroTitle}>¿Cómo fue el trabajo?</Text>
-          <Text style={s.heroDesc}>Tu opinión es importante para la comunidad</Text>
+          <Text style={s.heroDesc}>{t('review.subtitle')}</Text>
         </View>
 
         {/* Rating */}
         <View style={s.ratingCard}>
-          <Text style={s.label}>Puntuación *</Text>
+          <Text style={s.label}>{t('review.score')}</Text>
           <StarRating rating={rating} onRate={setRating} />
           {rating > 0 && (
             <View style={[s.ratingBadge, { backgroundColor: RATING_COLORS[rating] + '18' }]}>
@@ -213,7 +215,7 @@ export default function ReviewScreen() {
                 ? <ActivityIndicator size="small" color={item.color} />
                 : <>
                     <Ionicons name="cloud-upload-outline" size={18} color={item.color} />
-                    <Text style={[s.uploadBtnText, { color: item.color }]}>Agregar fotos</Text>
+                    <Text style={[s.uploadBtnText, { color: item.color }]}>{t('review.addPhotos')}</Text>
                   </>
               }
             </TouchableOpacity>

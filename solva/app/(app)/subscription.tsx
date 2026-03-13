@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
@@ -50,6 +51,7 @@ export default function SubscriptionScreen() {
   const { profile } = useProfile()
   const { subscription, loading, isPro, isTrialing, isBusiness, trialDaysLeft, startTrial } = useSubscription()
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [analytics, setAnalytics] = useState<ProAnalytics | null>(null)
   const [upgrading, setUpgrading] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState('')
@@ -98,7 +100,7 @@ export default function SubscriptionScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Planes Solva</Text>
+        <Text style={s.headerTitle}>{t('subscription.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -131,7 +133,7 @@ export default function SubscriptionScreen() {
           {isPro && (
             <View style={s.activePill}>
               <View style={s.activeDot} />
-              <Text style={s.activePillText}>Activo</Text>
+              <Text style={s.activePillText}>{t('subscription.active')}</Text>
             </View>
           )}
         </View>
@@ -153,7 +155,7 @@ export default function SubscriptionScreen() {
         {/* Stats si es Pro */}
         {isPro && analytics && (
           <View style={s.statsCard}>
-            <Text style={s.statsTitle}>Tu rendimiento este mes</Text>
+            <Text style={s.statsTitle}>{t('subscription.performance')}</Text>
             <View style={s.statsRow}>
               {[
                 { value: analytics.bids_this_month, label: 'Bids enviados', color: '#2563EB' },
@@ -172,14 +174,14 @@ export default function SubscriptionScreen() {
         {/* Toggle anual/mensual */}
         {!isPro && (
           <View style={s.toggleRow}>
-            <Text style={[s.toggleLabel, !annual && s.toggleActive]}>Mensual</Text>
+            <Text style={[s.toggleLabel, !annual && s.toggleActive]}>{t('subscription.monthly')}</Text>
             <Switch
               value={annual}
               onValueChange={setAnnual}
               trackColor={{ false: '#E5E7EB', true: '#BFDBFE' }}
               thumbColor={annual ? '#2563EB' : '#9CA3AF'}
             />
-            <Text style={[s.toggleLabel, annual && s.toggleActive]}>Anual</Text>
+            <Text style={[s.toggleLabel, annual && s.toggleActive]}>{t('subscription.annual')}</Text>
             {annual && <View style={s.savePill}><Text style={s.savePillText}>-20%</Text></View>}
           </View>
         )}
@@ -191,7 +193,7 @@ export default function SubscriptionScreen() {
             <View style={s.planCard}>
               <View style={s.popularBadge}>
                 <Ionicons name="star" size={10} color="#fff" />
-                <Text style={s.popularText}>MÁS POPULAR</Text>
+                <Text style={s.popularText}>{t('subscription.popular')}</Text>
               </View>
               <View style={s.planTop}>
                 <Text style={s.planEmoji}>⚡</Text>
@@ -226,7 +228,7 @@ export default function SubscriptionScreen() {
                   ? <ActivityIndicator color="#fff" />
                   : <>
                       <Ionicons name="sparkles" size={16} color="#fff" />
-                      <Text style={s.upgradeBtnText}>Empezar 14 días gratis</Text>
+                      <Text style={s.upgradeBtnText}>{t('subscription.trial')}</Text>
                     </>
                 }
               </TouchableOpacity>
@@ -263,7 +265,7 @@ export default function SubscriptionScreen() {
               >
                 {upgrading === 'company'
                   ? <ActivityIndicator color="#fff" />
-                  : <Text style={s.upgradeBtnText}>Empezar 14 días gratis</Text>
+                  : <Text style={s.upgradeBtnText}>{t('subscription.trial')}</Text>
                 }
               </TouchableOpacity>
             </View>

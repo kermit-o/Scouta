@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -15,6 +16,7 @@ const FAQS = [
 
 export default function HelpScreen() {
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [open, setOpen] = useState<number | null>(null)
 
   return (
@@ -23,20 +25,20 @@ export default function HelpScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Centro de ayuda</Text>
+        <Text style={styles.title}>{t('help.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.contactCard}>
           <Text style={styles.contactTitle}>¿Necesitas ayuda?</Text>
-          <Text style={styles.contactDesc}>Escríbenos y te respondemos en menos de 2 horas.</Text>
+          <Text style={styles.contactDesc}>{t('help.contactDesc')}</Text>
           <TouchableOpacity style={styles.contactBtn} onPress={() => router.push('/(app)/messages')}>
             <Ionicons name="chatbubble-outline" size={18} color="#fff" />
-            <Text style={styles.contactBtnText}>Chatear con soporte</Text>
+            <Text style={styles.contactBtnText}>{t('help.chat')}</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.faqTitle}>Preguntas frecuentes</Text>
+        <Text style={styles.faqTitle}>{t('help.faq')}</Text>
         <View style={styles.card}>
           {FAQS.map((faq, i) => (
             <TouchableOpacity

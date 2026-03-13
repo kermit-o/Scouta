@@ -194,5 +194,102 @@
       "dashboard": "Tableau de bord",
       "billing": "Facturation centralisée"
     }
+  },
+  "dashboardPro": {
+    "title": "Dashboard Pro",
+    "upgradeTitle": "Devenez Pro",
+    "upgradeDesc": "Changez votre rôle en Professionnel pour accéder au tableau de bord et commencer à recevoir des missions.",
+    "seePlans": "Voir les plans Pro",
+    "summary": "Voici le résumé de votre activité",
+    "viewJobs": "Voir les missions disponibles",
+    "completeProfile": "Compléter mon profil"
+  },
+  "subscription": {
+    "title": "Plans Solva",
+    "active": "Actif",
+    "performance": "Vos performances ce mois",
+    "monthly": "Mensuel",
+    "annual": "Annuel",
+    "popular": "LE PLUS POPULAIRE",
+    "trial": "Commencer 14 jours gratuits"
+  },
+  "reputation": {
+    "title": "Ma réputation",
+    "empty": "Aucune évaluation pour l'instant",
+    "emptyDesc": "Complétez des missions pour recevoir votre premier avis."
+  },
+  "guarantee": {
+    "title": "Garantie Solva",
+    "heroTitle": "Votre tranquillité, garantie",
+    "heroDesc": "Solva protège chaque transaction du début à la fin pour que vous puissiez embaucher en toute confiance."
+  },
+  "invoices": {
+    "title": "Factures",
+    "empty": "Aucune facture pour l'instant",
+    "emptyDesc": "Vos factures apparaîtront ici une fois votre premier paiement effectué."
+  },
+  "settingsCountry": {
+    "title": "Pays et devise",
+    "hint": "Sélectionnez votre pays pour voir les prix dans votre devise locale."
+  },
+  "report": {
+    "title": "Signaler un problème",
+    "successDesc": "Notre équipe examinera votre signalement en moins de 24 heures. Merci de nous aider à améliorer Solva.",
+    "category": "Catégorie",
+    "description": "Description",
+    "placeholder": "Décrivez le problème avec le plus de détails possible...",
+    "submit": "Envoyer le signalement"
+  },
+  "help": {
+    "title": "Centre d'aide",
+    "contactDesc": "Écrivez-nous et nous répondons en moins de 2 heures.",
+    "chat": "Chatter avec le support",
+    "faq": "Questions fréquentes"
+  },
+  "proContent": {
+    "title": "Votre profil généré ✨",
+    "score": "Score du profil",
+    "scoreDesc": "Basé sur la complétude et l'optimisation SEO",
+    "profileTitle": "Titre du profil",
+    "searchDesc": "Description dans les recherches",
+    "fullDesc": "Description complète du profil",
+    "keywords": "Mots-clés SEO",
+    "bidTemplate": "Modèle de réponse aux offres"
+  },
+  "bid": {
+    "title": "Faire une offre",
+    "currency": "Devise de votre profil",
+    "price": "Votre prix",
+    "days": "Jours de livraison estimés",
+    "message": "Message au client",
+    "sent": "✅ Offre envoyée",
+    "sentDesc": "Le client recevra votre proposition"
+  },
+  "review": {
+    "title": "Laisser un avis",
+    "subtitle": "Votre opinion est importante pour la communauté",
+    "score": "Note *",
+    "addPhotos": "Ajouter des photos",
+    "thanks": "Merci pour votre avis !",
+    "thanksDesc": "Votre opinion aide à construire la communauté Solva"
+  },
+  "contract": {
+    "title": "Contrat de service",
+    "service": "Service",
+    "total": "Total",
+    "guarantee": "Garantie Solva incluse",
+    "legal": "Cadre juridique",
+    "paymentProtection": "Protection du paiement",
+    "cancellation": "Politique d'annulation",
+    "notFound": "Contrat introuvable"
+  },
+  "dispute": {
+    "title": "Litige",
+    "resolution": "Résolution Solva",
+    "evidence": "Preuves jointes",
+    "noMessages": "Aucun message pour l'instant",
+    "reviewTime": "L'équipe Solva examinera le litige dans 48-72h ouvrables.",
+    "warning": "Important avant de continuer",
+    "warningDesc": "Ouvrir un litige mettra le contrat en pause et le paiement sera bloqué jusqu'à la résolution. Utilisez-le uniquement si vous ne pouvez pas parvenir à un accord direct."
   }
 }

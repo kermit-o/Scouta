@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -11,6 +12,7 @@ type Review = { id: string; rating: number; comment: string | null; created_at: 
 export default function ReputationScreen() {
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
+  const { t } = useTranslation()
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -33,7 +35,7 @@ export default function ReputationScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Mi reputación</Text>
+        <Text style={styles.title}>{t('reputation.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>
@@ -62,8 +64,8 @@ export default function ReputationScreen() {
          reviews.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>⭐</Text>
-            <Text style={styles.emptyTitle}>Sin valoraciones aún</Text>
-            <Text style={styles.emptyDesc}>Completa jobs para recibir tu primera reseña.</Text>
+            <Text style={styles.emptyTitle}>{t('reputation.empty')}</Text>
+            <Text style={styles.emptyDesc}>{t('reputation.emptyDesc')}</Text>
           </View>
         ) : (
           <View style={styles.card}>

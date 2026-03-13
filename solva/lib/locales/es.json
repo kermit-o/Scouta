@@ -194,5 +194,102 @@
       "dashboard": "Dashboard empresa",
       "billing": "Facturación centralizada"
     }
+  },
+  "dashboardPro": {
+    "title": "Dashboard Pro",
+    "upgradeTitle": "Conviértete en Pro",
+    "upgradeDesc": "Cambia tu rol a Profesional para acceder al dashboard y empezar a recibir jobs.",
+    "seePlans": "Ver planes Pro",
+    "summary": "Aquí tienes el resumen de tu actividad",
+    "viewJobs": "Ver jobs disponibles",
+    "completeProfile": "Completar mi perfil"
+  },
+  "subscription": {
+    "title": "Planes Solva",
+    "active": "Activo",
+    "performance": "Tu rendimiento este mes",
+    "monthly": "Mensual",
+    "annual": "Anual",
+    "popular": "MÁS POPULAR",
+    "trial": "Empezar 14 días gratis"
+  },
+  "reputation": {
+    "title": "Mi reputación",
+    "empty": "Sin valoraciones aún",
+    "emptyDesc": "Completa jobs para recibir tu primera reseña."
+  },
+  "guarantee": {
+    "title": "Garantía Solva",
+    "heroTitle": "Tu tranquilidad, garantizada",
+    "heroDesc": "Solva protege cada transacción de principio a fin para que puedas contratar con total confianza."
+  },
+  "invoices": {
+    "title": "Facturas",
+    "empty": "Sin facturas aún",
+    "emptyDesc": "Tus facturas aparecerán aquí una vez completes tu primer pago."
+  },
+  "settingsCountry": {
+    "title": "País y moneda",
+    "hint": "Selecciona tu país para ver precios en tu moneda local."
+  },
+  "report": {
+    "title": "Reportar problema",
+    "successDesc": "Nuestro equipo revisará tu reporte en menos de 24 horas. Gracias por ayudarnos a mejorar Solva.",
+    "category": "Categoría",
+    "description": "Descripción",
+    "placeholder": "Describe el problema con el mayor detalle posible...",
+    "submit": "Enviar reporte"
+  },
+  "help": {
+    "title": "Centro de ayuda",
+    "contactDesc": "Escríbenos y te respondemos en menos de 2 horas.",
+    "chat": "Chatear con soporte",
+    "faq": "Preguntas frecuentes"
+  },
+  "proContent": {
+    "title": "Tu perfil generado ✨",
+    "score": "Puntuación del perfil",
+    "scoreDesc": "Basada en completitud y optimización SEO",
+    "profileTitle": "Título del perfil",
+    "searchDesc": "Descripción en búsquedas",
+    "fullDesc": "Descripción completa del perfil",
+    "keywords": "Keywords SEO",
+    "bidTemplate": "Plantilla de respuesta a bids"
+  },
+  "bid": {
+    "title": "Hacer oferta",
+    "currency": "Moneda de tu perfil",
+    "price": "Tu precio",
+    "days": "Días estimados de entrega",
+    "message": "Mensaje al cliente",
+    "sent": "✅ Oferta enviada",
+    "sentDesc": "El cliente recibirá tu propuesta"
+  },
+  "review": {
+    "title": "Dejar reseña",
+    "subtitle": "Tu opinión es importante para la comunidad",
+    "score": "Puntuación *",
+    "addPhotos": "Agregar fotos",
+    "thanks": "¡Gracias por tu reseña!",
+    "thanksDesc": "Tu opinión ayuda a construir la comunidad de Solva"
+  },
+  "contract": {
+    "title": "Contrato de servicio",
+    "service": "Servicio",
+    "total": "Total",
+    "guarantee": "Garantía Solva incluida",
+    "legal": "Marco legal",
+    "paymentProtection": "Protección del pago",
+    "cancellation": "Política de cancelación",
+    "notFound": "Contrato no encontrado"
+  },
+  "dispute": {
+    "title": "Disputa",
+    "resolution": "Resolución de Solva",
+    "evidence": "Evidencias adjuntas",
+    "noMessages": "Aún no hay mensajes",
+    "reviewTime": "El equipo de Solva revisará la disputa en 48-72h hábiles.",
+    "warning": "Importante antes de continuar",
+    "warningDesc": "Abrir una disputa pausará el contrato y el pago quedará bloqueado hasta la resolución. Úsalo solo si no puedes llegar a un acuerdo directo."
   }
 }

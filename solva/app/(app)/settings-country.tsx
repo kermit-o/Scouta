@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
@@ -21,6 +22,7 @@ export default function CountryScreen() {
   const insets = useSafeAreaInsets()
   const { profile, refreshProfile } = useProfile()
   const { session } = useAuth()
+  const { t } = useTranslation()
   const [saving, setSaving] = useState(false)
   const [selected, setSelected] = useState(profile?.country || 'ES')
 
@@ -39,11 +41,11 @@ export default function CountryScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>País y moneda</Text>
+        <Text style={styles.title}>{t('settingsCountry.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>
-        <Text style={styles.hint}>Selecciona tu país para ver precios en tu moneda local.</Text>
+        <Text style={styles.hint}>{t('settingsCountry.hint')}</Text>
         <View style={styles.card}>
           {COUNTRIES.map((c, i) => (
             <TouchableOpacity

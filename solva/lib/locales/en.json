@@ -194,5 +194,102 @@
       "dashboard": "Company dashboard",
       "billing": "Centralized billing"
     }
+  },
+  "dashboardPro": {
+    "title": "Pro Dashboard",
+    "upgradeTitle": "Become a Pro",
+    "upgradeDesc": "Switch your role to Professional to access the dashboard and start receiving jobs.",
+    "seePlans": "See Pro plans",
+    "summary": "Here is your activity summary",
+    "viewJobs": "View available jobs",
+    "completeProfile": "Complete my profile"
+  },
+  "subscription": {
+    "title": "Solva Plans",
+    "active": "Active",
+    "performance": "Your performance this month",
+    "monthly": "Monthly",
+    "annual": "Annual",
+    "popular": "MOST POPULAR",
+    "trial": "Start 14-day free trial"
+  },
+  "reputation": {
+    "title": "My reputation",
+    "empty": "No reviews yet",
+    "emptyDesc": "Complete jobs to receive your first review."
+  },
+  "guarantee": {
+    "title": "Solva Guarantee",
+    "heroTitle": "Your peace of mind, guaranteed",
+    "heroDesc": "Solva protects every transaction from start to finish so you can hire with complete confidence."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "empty": "No invoices yet",
+    "emptyDesc": "Your invoices will appear here once you complete your first payment."
+  },
+  "settingsCountry": {
+    "title": "Country & currency",
+    "hint": "Select your country to see prices in your local currency."
+  },
+  "report": {
+    "title": "Report a problem",
+    "successDesc": "Our team will review your report within 24 hours. Thank you for helping us improve Solva.",
+    "category": "Category",
+    "description": "Description",
+    "placeholder": "Describe the problem in as much detail as possible...",
+    "submit": "Submit report"
+  },
+  "help": {
+    "title": "Help center",
+    "contactDesc": "Write to us and we will reply within 2 hours.",
+    "chat": "Chat with support",
+    "faq": "Frequently asked questions"
+  },
+  "proContent": {
+    "title": "Your generated profile ✨",
+    "score": "Profile score",
+    "scoreDesc": "Based on completeness and SEO optimization",
+    "profileTitle": "Profile title",
+    "searchDesc": "Search description",
+    "fullDesc": "Full profile description",
+    "keywords": "SEO keywords",
+    "bidTemplate": "Bid response template"
+  },
+  "bid": {
+    "title": "Make an offer",
+    "currency": "Your profile currency",
+    "price": "Your price",
+    "days": "Estimated delivery days",
+    "message": "Message to client",
+    "sent": "✅ Offer sent",
+    "sentDesc": "The client will receive your proposal"
+  },
+  "review": {
+    "title": "Leave a review",
+    "subtitle": "Your opinion matters to the community",
+    "score": "Score *",
+    "addPhotos": "Add photos",
+    "thanks": "Thank you for your review!",
+    "thanksDesc": "Your opinion helps build the Solva community"
+  },
+  "contract": {
+    "title": "Service contract",
+    "service": "Service",
+    "total": "Total",
+    "guarantee": "Solva Guarantee included",
+    "legal": "Legal framework",
+    "paymentProtection": "Payment protection",
+    "cancellation": "Cancellation policy",
+    "notFound": "Contract not found"
+  },
+  "dispute": {
+    "title": "Dispute",
+    "resolution": "Solva resolution",
+    "evidence": "Attached evidence",
+    "noMessages": "No messages yet",
+    "reviewTime": "The Solva team will review the dispute within 48-72 business hours.",
+    "warning": "Important before continuing",
+    "warningDesc": "Opening a dispute will pause the contract and payment will be blocked until resolved. Use only if you cannot reach a direct agreement."
   }
 }
