@@ -131,7 +131,11 @@
     "searchPlaceholder": "Jobs suchen...",
     "newTitlePlaceholder": "z.B. Hausreinigung 3 Zimmer",
     "newDescPlaceholder": "Beschreibe den Job im Detail: was du brauchst, wann, besondere Bedingungen...",
-    "newLocationPlaceholder": "z.B. Berlin, München..."
+    "newLocationPlaceholder": "z.B. Berlin, München...",
+    "statusOpen": "Offen",
+    "statusInProgress": "In Bearbeitung",
+    "statusCompleted": "Abgeschlossen",
+    "statusCancelled": "Abgebrochen"
   },
   "search": {
     "title": "Suche",
@@ -176,11 +180,11 @@
     "saveChanges": "Save changes",
     "profileUpdated": "✅ Profile updated successfully",
     "proProfile": "Professional profile",
-    "reviews": "Reviews",
+    "reviews": "Bewertungen",
     "noReviews": "No reviews yet",
     "jobs": "Jobs",
     "score": "Score",
-    "since": "Since",
+    "since": "Seit",
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
@@ -206,7 +210,11 @@
       "refunded": "Erstattet",
       "completed": "Abgeschlossen",
       "failed": "Fehlgeschlagen"
-    }
+    },
+    "statusPending": "Zahlung ausstehend",
+    "statusHeld": "Im Treuhand",
+    "statusReleased": "An Pro freigegeben",
+    "statusRefunded": "Erstattet"
   },
   "roles": {
     "client": "Client",
@@ -236,7 +244,11 @@
     "seePlans": "Pro-Pläne ansehen",
     "summary": "Hier ist deine Aktivitätsübersicht",
     "viewJobs": "Verfügbare Jobs ansehen",
-    "completeProfile": "Mein Profil vervollständigen"
+    "completeProfile": "Mein Profil vervollständigen",
+    "statBids": "Angebote gesendet",
+    "statContracts": "Aktive Verträge",
+    "statRating": "Durchschnittsbewertung",
+    "statReviews": "Erhaltene Bewertungen"
   },
   "subscription": {
     "title": "Solva-Pläne",
@@ -245,7 +257,10 @@
     "monthly": "Monatlich",
     "annual": "Jährlich",
     "popular": "AM BELIEBTESTEN",
-    "trial": "14 Tage kostenlos starten"
+    "trial": "14 Tage kostenlos starten",
+    "statBids": "Angebote gesendet",
+    "statContracts": "Aktive Verträge",
+    "statEarnings": "Einnahmen"
   },
   "reputation": {
     "title": "Meine Reputation",
@@ -309,7 +324,9 @@
     "addPhotos": "Fotos hinzufügen",
     "thanks": "Danke für deine Bewertung!",
     "thanksDesc": "Deine Meinung hilft, die Solva-Community aufzubauen",
-    "commentPlaceholder": "Beschreibe deine Erfahrung im Detail: Pünktlichkeit, Arbeitsqualität, Kommunikation..."
+    "commentPlaceholder": "Beschreibe deine Erfahrung im Detail: Pünktlichkeit, Arbeitsqualität, Kommunikation...",
+    "photosBefore": "Fotos VOR der Arbeit",
+    "photosAfter": "Fotos NACH der Arbeit"
   },
   "contract": {
     "title": "Servicevertrag",
@@ -319,7 +336,11 @@
     "legal": "Rechtsrahmen",
     "paymentProtection": "Zahlungsschutz",
     "cancellation": "Stornierungsrichtlinie",
-    "notFound": "Vertrag nicht gefunden"
+    "notFound": "Vertrag nicht gefunden",
+    "statusActive": "Aktiv",
+    "statusCompleted": "Abgeschlossen",
+    "statusCancelled": "Abgebrochen",
+    "statusDisputed": "Im Streit"
   },
   "dispute": {
     "title": "Streitfall",
@@ -330,7 +351,25 @@
     "warning": "Wichtig vor dem Fortfahren",
     "warningDesc": "Das Öffnen eines Streitfalls pausiert den Vertrag und die Zahlung wird bis zur Lösung blockiert. Nur verwenden, wenn du keine direkte Einigung erzielen kannst.",
     "descPlaceholder": "Erkläre im Detail was passiert ist, wann, und was du versucht hast um es zu lösen...",
-    "replyPlaceholder": "Schreibe deine Antwort..."
+    "replyPlaceholder": "Schreibe deine Antwort...",
+    "reasonNotDone": "Arbeit nicht erledigt",
+    "reasonPoorQuality": "Schlechte Qualität",
+    "reasonPayment": "Zahlung nicht freigegeben",
+    "reasonNoShow": "Nicht erschienen",
+    "reasonScope": "Umfangsänderung",
+    "reasonOther": "Anderer Grund",
+    "reasonNotDoneDesc": "Der Pro hat die vereinbarte Arbeit nicht erledigt",
+    "reasonPoorQualityDesc": "Die Arbeit entspricht nicht der Vereinbarung",
+    "reasonPaymentDesc": "Der Kunde gibt die Zahlung ohne Grund nicht frei",
+    "reasonNoShowDesc": "Der Pro erschien nicht zum vereinbarten Termin",
+    "reasonScopeDesc": "Es wird mehr verlangt als vereinbart",
+    "reasonOtherDesc": "Ein anderes Problem",
+    "statusOpen": "Offen",
+    "statusReview": "In Prüfung",
+    "statusResolvedClient": "Gelöst — Kunde",
+    "statusResolvedPro": "Gelöst — Pro",
+    "statusResolvedSplit": "Gelöst — Geteilt",
+    "statusClosed": "Geschlossen"
   },
   "security": {
     "title": "Sicherheit",
@@ -373,5 +412,19 @@
     "report": "Problem melden",
     "verified": "Verifiziert",
     "unverified": "Nicht verifiziert"
+  },
+  "notifications": {
+    "newJobs": "Neue verfügbare Jobs",
+    "bids": "Erhaltene Angebote",
+    "messages": "Neue Nachrichten",
+    "contracts": "Verträge & Zahlungen",
+    "reviews": "Neue Bewertungen",
+    "promotions": "Angebote & Aktionen",
+    "newJobsDesc": "Wenn ein neuer Job in deiner Nähe ist",
+    "bidsDesc": "Wenn jemand auf deinen Job bietet",
+    "messagesDesc": "Wenn du eine Nachricht erhältst",
+    "contractsDesc": "Updates zu aktiven Verträgen",
+    "reviewsDesc": "Wenn jemand eine Bewertung hinterlässt",
+    "promotionsDesc": "Rabatte und Neuigkeiten von Solva"
   }
 }

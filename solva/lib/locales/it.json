@@ -131,7 +131,11 @@
     "searchPlaceholder": "Cerca lavori...",
     "newTitlePlaceholder": "es: Pulizia casa 3 camere",
     "newDescPlaceholder": "Descrivi il lavoro in dettaglio: cosa ti serve, quando, condizioni speciali...",
-    "newLocationPlaceholder": "es: Roma, Milano..."
+    "newLocationPlaceholder": "es: Roma, Milano...",
+    "statusOpen": "Aperto",
+    "statusInProgress": "In corso",
+    "statusCompleted": "Completato",
+    "statusCancelled": "Annullato"
   },
   "search": {
     "title": "Cerca",
@@ -176,11 +180,11 @@
     "saveChanges": "Save changes",
     "profileUpdated": "✅ Profile updated successfully",
     "proProfile": "Professional profile",
-    "reviews": "Reviews",
+    "reviews": "Recensioni",
     "noReviews": "No reviews yet",
-    "jobs": "Jobs",
+    "jobs": "Lavori",
     "score": "Score",
-    "since": "Since",
+    "since": "Da",
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
@@ -206,7 +210,11 @@
       "refunded": "Rimborsato",
       "completed": "Completato",
       "failed": "Fallito"
-    }
+    },
+    "statusPending": "Pagamento in attesa",
+    "statusHeld": "In deposito",
+    "statusReleased": "Liberato al Pro",
+    "statusRefunded": "Rimborsato"
   },
   "roles": {
     "client": "Client",
@@ -236,7 +244,11 @@
     "seePlans": "Vedi piani Pro",
     "summary": "Ecco il riepilogo della tua attività",
     "viewJobs": "Vedi lavori disponibili",
-    "completeProfile": "Completa il mio profilo"
+    "completeProfile": "Completa il mio profilo",
+    "statBids": "Offerte inviate",
+    "statContracts": "Contratti attivi",
+    "statRating": "Valutazione media",
+    "statReviews": "Recensioni ricevute"
   },
   "subscription": {
     "title": "Piani Solva",
@@ -245,7 +257,10 @@
     "monthly": "Mensile",
     "annual": "Annuale",
     "popular": "PIÙ POPOLARE",
-    "trial": "Inizia 14 giorni gratis"
+    "trial": "Inizia 14 giorni gratis",
+    "statBids": "Offerte inviate",
+    "statContracts": "Contratti attivi",
+    "statEarnings": "Guadagni"
   },
   "reputation": {
     "title": "La mia reputazione",
@@ -309,7 +324,9 @@
     "addPhotos": "Aggiungi foto",
     "thanks": "Grazie per la tua recensione!",
     "thanksDesc": "La tua opinione aiuta a costruire la community Solva",
-    "commentPlaceholder": "Descrivi la tua esperienza in dettaglio: puntualità, qualità del lavoro, comunicazione..."
+    "commentPlaceholder": "Descrivi la tua esperienza in dettaglio: puntualità, qualità del lavoro, comunicazione...",
+    "photosBefore": "Foto PRIMA del lavoro",
+    "photosAfter": "Foto DOPO il lavoro"
   },
   "contract": {
     "title": "Contratto di servizio",
@@ -319,7 +336,11 @@
     "legal": "Quadro legale",
     "paymentProtection": "Protezione del pagamento",
     "cancellation": "Politica di cancellazione",
-    "notFound": "Contratto non trovato"
+    "notFound": "Contratto non trovato",
+    "statusActive": "Attivo",
+    "statusCompleted": "Completato",
+    "statusCancelled": "Annullato",
+    "statusDisputed": "In disputa"
   },
   "dispute": {
     "title": "Disputa",
@@ -330,7 +351,25 @@
     "warning": "Importante prima di continuare",
     "warningDesc": "Aprire una disputa metterà in pausa il contratto e il pagamento sarà bloccato fino alla risoluzione. Usarlo solo se non si riesce a raggiungere un accordo diretto.",
     "descPlaceholder": "Spiega in dettaglio cosa è successo, quando, e cosa hai provato per risolvere...",
-    "replyPlaceholder": "Scrivi la tua risposta..."
+    "replyPlaceholder": "Scrivi la tua risposta...",
+    "reasonNotDone": "Lavoro non eseguito",
+    "reasonPoorQuality": "Qualità scarsa",
+    "reasonPayment": "Pagamento non liberato",
+    "reasonNoShow": "Non si è presentato",
+    "reasonScope": "Cambio di portata",
+    "reasonOther": "Altro motivo",
+    "reasonNotDoneDesc": "Il Pro non ha fatto il lavoro concordato",
+    "reasonPoorQualityDesc": "Il lavoro non rispetta l'accordo",
+    "reasonPaymentDesc": "Il cliente non libera il pagamento senza motivo",
+    "reasonNoShowDesc": "Il Pro non si è presentato alla data concordata",
+    "reasonScopeDesc": "Si chiede più di quanto concordato",
+    "reasonOtherDesc": "Un altro tipo di problema",
+    "statusOpen": "Aperta",
+    "statusReview": "In esame",
+    "statusResolvedClient": "Risolta — Cliente",
+    "statusResolvedPro": "Risolta — Pro",
+    "statusResolvedSplit": "Risolta — Diviso",
+    "statusClosed": "Chiusa"
   },
   "security": {
     "title": "Sicurezza",
@@ -373,5 +412,19 @@
     "report": "Segnala un problema",
     "verified": "Verificato",
     "unverified": "Non verificato"
+  },
+  "notifications": {
+    "newJobs": "Nuovi lavori disponibili",
+    "bids": "Offerte ricevute",
+    "messages": "Nuovi messaggi",
+    "contracts": "Contratti e pagamenti",
+    "reviews": "Nuove valutazioni",
+    "promotions": "Offerte e promozioni",
+    "newJobsDesc": "Quando c'è un nuovo lavoro vicino a te",
+    "bidsDesc": "Quando qualcuno fa un'offerta sul tuo lavoro",
+    "messagesDesc": "Quando ricevi un messaggio",
+    "contractsDesc": "Aggiornamenti sui contratti attivi",
+    "reviewsDesc": "Quando qualcuno ti lascia una recensione",
+    "promotionsDesc": "Sconti e novità di Solva"
   }
 }

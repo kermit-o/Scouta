@@ -6,12 +6,12 @@ import { Ionicons } from '@expo/vector-icons'
 import { useState } from 'react'
 
 const SETTINGS = [
-  { key: 'new_jobs', label: 'Nuevos jobs disponibles', desc: 'Cuando hay un job nuevo cerca de ti', icon: '💼' },
-  { key: 'bids', label: 'Ofertas recibidas', desc: 'Cuando alguien oferta en tu job', icon: '📩' },
-  { key: 'messages', label: 'Mensajes nuevos', desc: 'Cuando recibes un mensaje', icon: '💬' },
-  { key: 'contracts', label: 'Contratos y pagos', desc: 'Actualizaciones de contratos activos', icon: '📄' },
-  { key: 'reviews', label: 'Nuevas valoraciones', desc: 'Cuando alguien te deja una reseña', icon: '⭐' },
-  { key: 'promotions', label: 'Ofertas y promociones', desc: 'Descuentos y novedades de Solva', icon: '🎁' },
+  { key: 'new_jobs', label: t('notifications.newJobs'), desc: t('notifications.newJobsDesc'), icon: '💼' },
+  { key: 'bids', label: t('notifications.bids'), desc: t('notifications.bidsDesc'), icon: '📩' },
+  { key: 'messages', label: t('notifications.messages'), desc: t('notifications.messagesDesc'), icon: '💬' },
+  { key: 'contracts', label: t('notifications.contracts'), desc: t('notifications.contractsDesc'), icon: '📄' },
+  { key: 'reviews', label: t('notifications.reviews'), desc: t('notifications.reviewsDesc'), icon: '⭐' },
+  { key: 'promotions', label: t('notifications.promotions'), desc: t('notifications.promotionsDesc'), icon: '🎁' },
 ]
 
 export default function NotificationsScreen() {

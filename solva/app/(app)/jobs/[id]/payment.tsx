@@ -8,10 +8,10 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const PAYMENT_STATUS = {
-  pending:  { label: 'Pendiente de pago', color: '#D97706', bg: '#FEF3C7', icon: 'time-outline' },
-  held:     { label: 'En escrow',         color: '#2563EB', bg: '#DBEAFE', icon: 'lock-closed' },
-  released: { label: 'Liberado al Pro',   color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
-  refunded: { label: 'Reembolsado',       color: '#DC2626', bg: '#FEE2E2', icon: 'arrow-undo' },
+  pending:  { label: t('payments.statusPending'), color: '#D97706', bg: '#FEF3C7', icon: 'time-outline' },
+  held:     { label: t('payments.statusHeld'),         color: '#2563EB', bg: '#DBEAFE', icon: 'lock-closed' },
+  released: { label: t('payments.statusReleased'),   color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
+  refunded: { label: t('payments.statusRefunded'),       color: '#DC2626', bg: '#FEE2E2', icon: 'arrow-undo' },
 }
 
 export default function PaymentScreen() {

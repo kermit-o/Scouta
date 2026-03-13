@@ -185,8 +185,8 @@ export default function ReviewScreen() {
 
         {/* Fotos */}
         {[
-          { type: 'before' as const, label: 'Fotos ANTES del trabajo', icon: 'camera-outline', color: '#7C3AED', bg: '#EDE9FE', photos: photosBefore },
-          { type: 'after' as const, label: 'Fotos DESPUÉS del trabajo', icon: 'checkmark-circle-outline', color: '#059669', bg: '#D1FAE5', photos: photosAfter },
+          { type: 'before' as const, label: t('review.photosBefore'), icon: 'camera-outline', color: '#7C3AED', bg: '#EDE9FE', photos: photosBefore },
+          { type: 'after' as const, label: t('review.photosAfter'), icon: 'checkmark-circle-outline', color: '#059669', bg: '#D1FAE5', photos: photosAfter },
         ].map(item => (
           <View key={item.type} style={s.card}>
             <View style={s.photoLabelRow}>

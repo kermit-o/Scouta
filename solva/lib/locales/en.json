@@ -131,7 +131,11 @@
     "searchPlaceholder": "Search jobs...",
     "newTitlePlaceholder": "e.g. Home cleaning 3 bedrooms",
     "newDescPlaceholder": "Describe the job in detail: what you need, when, special conditions...",
-    "newLocationPlaceholder": "e.g. London, Manchester..."
+    "newLocationPlaceholder": "e.g. London, Manchester...",
+    "statusOpen": "Open",
+    "statusInProgress": "In progress",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled"
   },
   "search": {
     "title": "Search",
@@ -206,7 +210,11 @@
       "refunded": "Refunded",
       "completed": "Completed",
       "failed": "Failed"
-    }
+    },
+    "statusPending": "Payment pending",
+    "statusHeld": "In escrow",
+    "statusReleased": "Released to Pro",
+    "statusRefunded": "Refunded"
   },
   "roles": {
     "client": "Client",
@@ -236,7 +244,11 @@
     "seePlans": "See Pro plans",
     "summary": "Here is your activity summary",
     "viewJobs": "View available jobs",
-    "completeProfile": "Complete my profile"
+    "completeProfile": "Complete my profile",
+    "statBids": "Offers sent",
+    "statContracts": "Active contracts",
+    "statRating": "Average rating",
+    "statReviews": "Reviews received"
   },
   "subscription": {
     "title": "Solva Plans",
@@ -245,7 +257,10 @@
     "monthly": "Monthly",
     "annual": "Annual",
     "popular": "MOST POPULAR",
-    "trial": "Start 14-day free trial"
+    "trial": "Start 14-day free trial",
+    "statBids": "Bids sent",
+    "statContracts": "Active contracts",
+    "statEarnings": "Earnings"
   },
   "reputation": {
     "title": "My reputation",
@@ -309,7 +324,9 @@
     "addPhotos": "Add photos",
     "thanks": "Thank you for your review!",
     "thanksDesc": "Your opinion helps build the Solva community",
-    "commentPlaceholder": "Describe your experience in detail: punctuality, quality of work, communication..."
+    "commentPlaceholder": "Describe your experience in detail: punctuality, quality of work, communication...",
+    "photosBefore": "Photos BEFORE the work",
+    "photosAfter": "Photos AFTER the work"
   },
   "contract": {
     "title": "Service contract",
@@ -319,7 +336,11 @@
     "legal": "Legal framework",
     "paymentProtection": "Payment protection",
     "cancellation": "Cancellation policy",
-    "notFound": "Contract not found"
+    "notFound": "Contract not found",
+    "statusActive": "Active",
+    "statusCompleted": "Completed",
+    "statusCancelled": "Cancelled",
+    "statusDisputed": "In dispute"
   },
   "dispute": {
     "title": "Dispute",
@@ -330,7 +351,25 @@
     "warning": "Important before continuing",
     "warningDesc": "Opening a dispute will pause the contract and payment will be blocked until resolved. Use only if you cannot reach a direct agreement.",
     "descPlaceholder": "Explain in detail what happened, when, and what you tried to resolve it...",
-    "replyPlaceholder": "Write your reply..."
+    "replyPlaceholder": "Write your reply...",
+    "reasonNotDone": "Work not done",
+    "reasonPoorQuality": "Poor quality",
+    "reasonPayment": "Payment not released",
+    "reasonNoShow": "No show",
+    "reasonScope": "Scope change",
+    "reasonOther": "Other reason",
+    "reasonNotDoneDesc": "The Pro did not do the agreed work",
+    "reasonPoorQualityDesc": "The work does not meet the agreement",
+    "reasonPaymentDesc": "The client does not release the payment without reason",
+    "reasonNoShowDesc": "The Pro did not show up on the agreed date",
+    "reasonScopeDesc": "More is requested than agreed",
+    "reasonOtherDesc": "Another type of problem",
+    "statusOpen": "Open",
+    "statusReview": "Under review",
+    "statusResolvedClient": "Resolved — Client",
+    "statusResolvedPro": "Resolved — Pro",
+    "statusResolvedSplit": "Resolved — Split",
+    "statusClosed": "Closed"
   },
   "security": {
     "title": "Security",
@@ -373,5 +412,19 @@
     "report": "Report a problem",
     "verified": "Verified",
     "unverified": "Unverified"
+  },
+  "notifications": {
+    "newJobs": "New available jobs",
+    "bids": "Received offers",
+    "messages": "New messages",
+    "contracts": "Contracts & payments",
+    "reviews": "New reviews",
+    "promotions": "Offers & promotions",
+    "newJobsDesc": "When there is a new job near you",
+    "bidsDesc": "When someone bids on your job",
+    "messagesDesc": "When you receive a message",
+    "contractsDesc": "Updates on active contracts",
+    "reviewsDesc": "When someone leaves you a review",
+    "promotionsDesc": "Discounts and news from Solva"
   }
 }

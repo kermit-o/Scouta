@@ -131,7 +131,11 @@
     "searchPlaceholder": "Buscar trabalhos...",
     "newTitlePlaceholder": "ex: Limpeza de casa 3 quartos",
     "newDescPlaceholder": "Descreva o trabalho em detalhes: o que você precisa, quando, condições especiais...",
-    "newLocationPlaceholder": "ex: Lisboa, Porto..."
+    "newLocationPlaceholder": "ex: Lisboa, Porto...",
+    "statusOpen": "Aberto",
+    "statusInProgress": "Em andamento",
+    "statusCompleted": "Concluído",
+    "statusCancelled": "Cancelado"
   },
   "search": {
     "title": "Pesquisar",
@@ -176,11 +180,11 @@
     "saveChanges": "Save changes",
     "profileUpdated": "✅ Profile updated successfully",
     "proProfile": "Professional profile",
-    "reviews": "Reviews",
+    "reviews": "Avaliações",
     "noReviews": "No reviews yet",
-    "jobs": "Jobs",
+    "jobs": "Trabalhos",
     "score": "Score",
-    "since": "Since",
+    "since": "Desde",
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
@@ -206,7 +210,11 @@
       "refunded": "Reembolsado",
       "completed": "Concluído",
       "failed": "Falhado"
-    }
+    },
+    "statusPending": "Pagamento pendente",
+    "statusHeld": "Em custódia",
+    "statusReleased": "Liberado ao Pro",
+    "statusRefunded": "Reembolsado"
   },
   "roles": {
     "client": "Client",
@@ -236,7 +244,11 @@
     "seePlans": "Ver planos Pro",
     "summary": "Aqui está o resumo da sua atividade",
     "viewJobs": "Ver trabalhos disponíveis",
-    "completeProfile": "Completar meu perfil"
+    "completeProfile": "Completar meu perfil",
+    "statBids": "Propostas enviadas",
+    "statContracts": "Contratos ativos",
+    "statRating": "Avaliação média",
+    "statReviews": "Avaliações recebidas"
   },
   "subscription": {
     "title": "Planos Solva",
@@ -245,7 +257,10 @@
     "monthly": "Mensal",
     "annual": "Anual",
     "popular": "MAIS POPULAR",
-    "trial": "Começar 14 dias grátis"
+    "trial": "Começar 14 dias grátis",
+    "statBids": "Propostas enviadas",
+    "statContracts": "Contratos ativos",
+    "statEarnings": "Ganhos"
   },
   "reputation": {
     "title": "Minha reputação",
@@ -309,7 +324,9 @@
     "addPhotos": "Adicionar fotos",
     "thanks": "Obrigado pela sua avaliação!",
     "thanksDesc": "Sua opinião ajuda a construir a comunidade Solva",
-    "commentPlaceholder": "Descreva sua experiência em detalhes: pontualidade, qualidade do trabalho, comunicação..."
+    "commentPlaceholder": "Descreva sua experiência em detalhes: pontualidade, qualidade do trabalho, comunicação...",
+    "photosBefore": "Fotos ANTES do trabalho",
+    "photosAfter": "Fotos DEPOIS do trabalho"
   },
   "contract": {
     "title": "Contrato de serviço",
@@ -319,7 +336,11 @@
     "legal": "Marco legal",
     "paymentProtection": "Proteção do pagamento",
     "cancellation": "Política de cancelamento",
-    "notFound": "Contrato não encontrado"
+    "notFound": "Contrato não encontrado",
+    "statusActive": "Ativo",
+    "statusCompleted": "Concluído",
+    "statusCancelled": "Cancelado",
+    "statusDisputed": "Em disputa"
   },
   "dispute": {
     "title": "Disputa",
@@ -330,7 +351,25 @@
     "warning": "Importante antes de continuar",
     "warningDesc": "Abrir uma disputa pausará o contrato e o pagamento ficará bloqueado até a resolução. Use apenas se não conseguir chegar a um acordo direto.",
     "descPlaceholder": "Explique em detalhes o que aconteceu, quando, e o que tentou para resolver...",
-    "replyPlaceholder": "Escreva sua resposta..."
+    "replyPlaceholder": "Escreva sua resposta...",
+    "reasonNotDone": "Trabalho não realizado",
+    "reasonPoorQuality": "Qualidade deficiente",
+    "reasonPayment": "Pagamento não liberado",
+    "reasonNoShow": "Não compareceu",
+    "reasonScope": "Mudança de escopo",
+    "reasonOther": "Outro motivo",
+    "reasonNotDoneDesc": "O Pro não fez o trabalho acordado",
+    "reasonPoorQualityDesc": "O trabalho não cumpre o acordo",
+    "reasonPaymentDesc": "O cliente não libera o pagamento sem motivo",
+    "reasonNoShowDesc": "O Pro não apareceu na data acordada",
+    "reasonScopeDesc": "Pede-se mais do que o acordado",
+    "reasonOtherDesc": "Outro tipo de problema",
+    "statusOpen": "Aberta",
+    "statusReview": "Em revisão",
+    "statusResolvedClient": "Resolvida — Cliente",
+    "statusResolvedPro": "Resolvida — Pro",
+    "statusResolvedSplit": "Resolvida — Dividido",
+    "statusClosed": "Fechada"
   },
   "security": {
     "title": "Segurança",
@@ -373,5 +412,19 @@
     "report": "Reportar problema",
     "verified": "Verificado",
     "unverified": "Sem verificar"
+  },
+  "notifications": {
+    "newJobs": "Novos trabalhos disponíveis",
+    "bids": "Propostas recebidas",
+    "messages": "Novas mensagens",
+    "contracts": "Contratos e pagamentos",
+    "reviews": "Novas avaliações",
+    "promotions": "Ofertas e promoções",
+    "newJobsDesc": "Quando há um novo trabalho perto de você",
+    "bidsDesc": "Quando alguém faz uma proposta no seu trabalho",
+    "messagesDesc": "Quando você recebe uma mensagem",
+    "contractsDesc": "Atualizações de contratos ativos",
+    "reviewsDesc": "Quando alguém te deixa uma avaliação",
+    "promotionsDesc": "Descontos e novidades da Solva"
   }
 }
