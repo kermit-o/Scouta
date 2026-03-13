@@ -211,7 +211,7 @@ export default function JobDetailScreen() {
             <Ionicons name="time-outline" size={20} color="#888" style={s.inputIcon} />
             <TextInput
               style={s.input}
-              placeholder="ej: 3"
+              placeholder={t("bid.daysPlaceholder")}
               value={bidDays}
               onChangeText={setBidDays}
               keyboardType="numeric"
@@ -222,7 +222,7 @@ export default function JobDetailScreen() {
           <Text style={s.inputLabel}>Mensaje al cliente</Text>
           <TextInput
             style={s.textarea}
-            placeholder="Describe tu experiencia, disponibilidad y cualquier detalle relevante..."
+            placeholder={t("bid.messagePlaceholder")}
             value={bidMessage}
             onChangeText={setBidMessage}
             multiline

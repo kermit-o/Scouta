@@ -157,7 +157,7 @@ export default function RegisterScreen() {
                 style={styles.input}
                 value={fullName}
                 onChangeText={setFullName}
-                placeholder="Tu nombre"
+                placeholder={t("profile.namePlaceholder")}
                 placeholderTextColor="#aaa"
               />
             </View>
@@ -183,7 +183,7 @@ export default function RegisterScreen() {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Mínimo 6 caracteres"
+                placeholder={t("auth.min6chars")}
                 placeholderTextColor="#aaa"
                 secureTextEntry={!showPassword}
               />

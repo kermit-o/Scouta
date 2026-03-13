@@ -249,7 +249,7 @@ export default function ProfileScreen() {
             style={styles.input}
             value={fullName}
             onChangeText={setFullName}
-            placeholder="Tu nombre"
+            placeholder={t("profile.namePlaceholder")}
             placeholderTextColor="#aaa"
           />
 

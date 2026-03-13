@@ -157,17 +157,17 @@ export default function OnboardingScreen() {
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>¿En qué te especializas?</Text>
               <TextInput style={styles.input} value={specialty} onChangeText={setSpecialty}
-                placeholder="Ej: baños y cocinas, instalaciones eléctricas..." />
+                placeholder={t("onboarding.specialtyPlaceholder")} />
             </View>
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Años de experiencia</Text>
               <TextInput style={styles.input} value={years} onChangeText={setYears}
-                placeholder="Ej: 5" keyboardType="numeric" />
+                placeholder={t("onboarding.experiencePlaceholder")} keyboardType="numeric" />
             </View>
             <View style={styles.formGroup}>
               <Text style={styles.formLabel}>Precio medio por trabajo ({profile?.currency ?? 'EUR'})</Text>
               <TextInput style={styles.input} value={avgPrice} onChangeText={setAvgPrice}
-                placeholder="Ej: 80" keyboardType="numeric" />
+                placeholder={t("onboarding.avgPricePlaceholder")} keyboardType="numeric" />
             </View>
           </>
         )}

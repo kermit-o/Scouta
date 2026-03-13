@@ -116,7 +116,7 @@ export default function NewBidScreen() {
               style={s.input}
               value={deliveryDays}
               onChangeText={setDeliveryDays}
-              placeholder="ej: 3"
+              placeholder={t("bid.daysPlaceholder")}
               keyboardType="numeric"
               placeholderTextColor="#bbb"
             />
@@ -130,7 +130,7 @@ export default function NewBidScreen() {
             style={s.textarea}
             value={message}
             onChangeText={setMessage}
-            placeholder="Preséntate y explica cómo resolverías este trabajo, tu experiencia y disponibilidad..."
+            placeholder={t("bid.messagePlaceholder")}
             multiline
             numberOfLines={6}
             maxLength={500}

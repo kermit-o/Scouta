@@ -34,7 +34,10 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "acceptTerms": "I accept the",
-    "and": "and the"
+    "and": "and the",
+    "min8chars": "Mindestens 8 Zeichen",
+    "repeatPassword": "Passwort wiederholen",
+    "min6chars": "Mindestens 6 Zeichen"
   },
   "onboarding": {
     "welcome": "Welcome",
@@ -68,7 +71,8 @@
     "uniqueValue": "Your unique value",
     "tips": "Tips to improve your profile",
     "startWorking": "Start working",
-    "begin": "Get started"
+    "begin": "Get started",
+    "avgPricePlaceholder": "z.B. 80"
   },
   "home": {
     "title": "Startseite",
@@ -127,7 +131,7 @@
   },
   "search": {
     "title": "Suche",
-    "placeholder": "Search professionals...",
+    "placeholder": "z.B. dringend Klempner für morgen...",
     "filters": "Filters",
     "noPros": "No professionals found",
     "noProsSub": "Try adjusting your search filters"
@@ -163,7 +167,8 @@
     "since": "Since",
     "verified": "Verified",
     "aboutMe": "About me",
-    "specialties": "Specialties"
+    "specialties": "Specialties",
+    "namePlaceholder": "Dein Name"
   },
   "payments": {
     "title": "Payments",
@@ -267,7 +272,9 @@
     "days": "Geschätzte Liefertage",
     "message": "Nachricht an den Kunden",
     "sent": "✅ Angebot gesendet",
-    "sentDesc": "Der Kunde erhält deinen Vorschlag"
+    "sentDesc": "Der Kunde erhält deinen Vorschlag",
+    "daysPlaceholder": "z.B. 3",
+    "messagePlaceholder": "Stell dich vor und erkläre wie du diesen Job lösen würdest, deine Erfahrung und Verfügbarkeit..."
   },
   "review": {
     "title": "Bewertung hinterlassen",
@@ -275,7 +282,8 @@
     "score": "Bewertung *",
     "addPhotos": "Fotos hinzufügen",
     "thanks": "Danke für deine Bewertung!",
-    "thanksDesc": "Deine Meinung hilft, die Solva-Community aufzubauen"
+    "thanksDesc": "Deine Meinung hilft, die Solva-Community aufzubauen",
+    "commentPlaceholder": "Beschreibe deine Erfahrung im Detail: Pünktlichkeit, Arbeitsqualität, Kommunikation..."
   },
   "contract": {
     "title": "Servicevertrag",
@@ -294,6 +302,8 @@
     "noMessages": "Noch keine Nachrichten",
     "reviewTime": "Das Solva-Team wird den Streitfall innerhalb von 48-72 Arbeitsstunden prüfen.",
     "warning": "Wichtig vor dem Fortfahren",
-    "warningDesc": "Das Öffnen eines Streitfalls pausiert den Vertrag und die Zahlung wird bis zur Lösung blockiert. Nur verwenden, wenn du keine direkte Einigung erzielen kannst."
+    "warningDesc": "Das Öffnen eines Streitfalls pausiert den Vertrag und die Zahlung wird bis zur Lösung blockiert. Nur verwenden, wenn du keine direkte Einigung erzielen kannst.",
+    "descPlaceholder": "Erkläre im Detail was passiert ist, wann, und was du versucht hast um es zu lösen...",
+    "replyPlaceholder": "Schreibe deine Antwort..."
   }
 }

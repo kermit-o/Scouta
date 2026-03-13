@@ -171,7 +171,7 @@ export default function ReviewScreen() {
             style={s.textarea}
             value={comment}
             onChangeText={setComment}
-            placeholder="Describe tu experiencia con detalle: puntualidad, calidad del trabajo, comunicación..."
+            placeholder={t("review.commentPlaceholder")}
             multiline
             numberOfLines={5}
             maxLength={500}

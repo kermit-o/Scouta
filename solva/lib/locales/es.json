@@ -34,7 +34,10 @@
     "terms": "Términos de Servicio",
     "privacy": "Política de Privacidad",
     "acceptTerms": "Acepto los",
-    "and": "y la"
+    "and": "y la",
+    "min8chars": "Mínimo 8 caracteres",
+    "repeatPassword": "Repite la contraseña",
+    "min6chars": "Mínimo 6 caracteres"
   },
   "onboarding": {
     "welcome": "¡Bienvenido",
@@ -68,7 +71,8 @@
     "uniqueValue": "Tu propuesta única",
     "tips": "Consejos para mejorar tu perfil",
     "startWorking": "Empezar a trabajar",
-    "begin": "Comenzar"
+    "begin": "Comenzar",
+    "avgPricePlaceholder": "Ej: 80"
   },
   "home": {
     "title": "Inicio",
@@ -127,7 +131,7 @@
   },
   "search": {
     "title": "Buscar",
-    "placeholder": "Buscar profesionales...",
+    "placeholder": "Ej: fontanero urgente para mañana...",
     "filters": "Filtros",
     "noPros": "No se encontraron profesionales",
     "noProsSub": "Intenta ajustar los filtros de búsqueda"
@@ -163,7 +167,8 @@
     "since": "Desde",
     "verified": "Verificado",
     "aboutMe": "Sobre mí",
-    "specialties": "Especialidades"
+    "specialties": "Especialidades",
+    "namePlaceholder": "Tu nombre"
   },
   "payments": {
     "title": "Pagos",
@@ -267,7 +272,9 @@
     "days": "Días estimados de entrega",
     "message": "Mensaje al cliente",
     "sent": "✅ Oferta enviada",
-    "sentDesc": "El cliente recibirá tu propuesta"
+    "sentDesc": "El cliente recibirá tu propuesta",
+    "daysPlaceholder": "ej: 3",
+    "messagePlaceholder": "Preséntate y explica cómo resolverías este trabajo, tu experiencia y disponibilidad..."
   },
   "review": {
     "title": "Dejar reseña",
@@ -275,7 +282,8 @@
     "score": "Puntuación *",
     "addPhotos": "Agregar fotos",
     "thanks": "¡Gracias por tu reseña!",
-    "thanksDesc": "Tu opinión ayuda a construir la comunidad de Solva"
+    "thanksDesc": "Tu opinión ayuda a construir la comunidad de Solva",
+    "commentPlaceholder": "Describe tu experiencia con detalle: puntualidad, calidad del trabajo, comunicación..."
   },
   "contract": {
     "title": "Contrato de servicio",
@@ -294,6 +302,8 @@
     "noMessages": "Aún no hay mensajes",
     "reviewTime": "El equipo de Solva revisará la disputa en 48-72h hábiles.",
     "warning": "Importante antes de continuar",
-    "warningDesc": "Abrir una disputa pausará el contrato y el pago quedará bloqueado hasta la resolución. Úsalo solo si no puedes llegar a un acuerdo directo."
+    "warningDesc": "Abrir una disputa pausará el contrato y el pago quedará bloqueado hasta la resolución. Úsalo solo si no puedes llegar a un acuerdo directo.",
+    "descPlaceholder": "Explica en detalle qué pasó, cuándo, y qué intentaste para resolverlo...",
+    "replyPlaceholder": "Escribe tu respuesta..."
   }
 }

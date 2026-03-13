@@ -34,7 +34,10 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "acceptTerms": "I accept the",
-    "and": "and the"
+    "and": "and the",
+    "min8chars": "Minimum 8 characters",
+    "repeatPassword": "Repeat password",
+    "min6chars": "Minimum 6 characters"
   },
   "onboarding": {
     "welcome": "Welcome",
@@ -68,7 +71,8 @@
     "uniqueValue": "Your unique value",
     "tips": "Tips to improve your profile",
     "startWorking": "Start working",
-    "begin": "Get started"
+    "begin": "Get started",
+    "avgPricePlaceholder": "e.g. 80"
   },
   "home": {
     "title": "Home",
@@ -127,7 +131,7 @@
   },
   "search": {
     "title": "Search",
-    "placeholder": "Search professionals...",
+    "placeholder": "e.g. urgent plumber for tomorrow...",
     "filters": "Filters",
     "noPros": "No professionals found",
     "noProsSub": "Try adjusting your search filters"
@@ -163,7 +167,8 @@
     "since": "Since",
     "verified": "Verified",
     "aboutMe": "About me",
-    "specialties": "Specialties"
+    "specialties": "Specialties",
+    "namePlaceholder": "Your name"
   },
   "payments": {
     "title": "Payments",
@@ -267,7 +272,9 @@
     "days": "Estimated delivery days",
     "message": "Message to client",
     "sent": "✅ Offer sent",
-    "sentDesc": "The client will receive your proposal"
+    "sentDesc": "The client will receive your proposal",
+    "daysPlaceholder": "e.g. 3",
+    "messagePlaceholder": "Introduce yourself and explain how you would solve this job, your experience and availability..."
   },
   "review": {
     "title": "Leave a review",
@@ -275,7 +282,8 @@
     "score": "Score *",
     "addPhotos": "Add photos",
     "thanks": "Thank you for your review!",
-    "thanksDesc": "Your opinion helps build the Solva community"
+    "thanksDesc": "Your opinion helps build the Solva community",
+    "commentPlaceholder": "Describe your experience in detail: punctuality, quality of work, communication..."
   },
   "contract": {
     "title": "Service contract",
@@ -294,6 +302,8 @@
     "noMessages": "No messages yet",
     "reviewTime": "The Solva team will review the dispute within 48-72 business hours.",
     "warning": "Important before continuing",
-    "warningDesc": "Opening a dispute will pause the contract and payment will be blocked until resolved. Use only if you cannot reach a direct agreement."
+    "warningDesc": "Opening a dispute will pause the contract and payment will be blocked until resolved. Use only if you cannot reach a direct agreement.",
+    "descPlaceholder": "Explain in detail what happened, when, and what you tried to resolve it...",
+    "replyPlaceholder": "Write your reply..."
   }
 }

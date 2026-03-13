@@ -120,7 +120,7 @@ export default function JobsScreen() {
           value={searchText}
           onChangeText={setSearchText}
           onSubmitEditing={fetchJobs}
-          placeholder="Buscar trabajos..."
+          placeholder={t("jobs.searchPlaceholder")}
           returnKeyType="search"
         />
         <TouchableOpacity
