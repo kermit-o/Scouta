@@ -10,6 +10,10 @@ import { useProfile } from '../../hooks/useProfile'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
+import { Modal } from 'react-native'
+import { LANGUAGES, changeLanguage } from '../../lib/i18n'
+import i18n from '../../lib/i18n'
 
 const FLAG: Record<string, string> = {
   ES: '🇪🇸', FR: '🇫🇷', MX: '🇲🇽', CO: '🇨🇴',
@@ -22,6 +26,7 @@ const ROLE_LABEL: Record<string, string> = {
 }
 
 export default function ProfileScreen() {
+  const { t } = useTranslation()
   const { session, signOut } = useAuth()
   const { profile, refreshProfile } = useProfile()
   const insets = useSafeAreaInsets()
@@ -43,6 +48,7 @@ export default function ProfileScreen() {
   }, [profile])
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [showLangModal, setShowLangModal] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
 
@@ -92,7 +98,7 @@ export default function ProfileScreen() {
     } else {
       await refreshProfile()
       setEditing(false)
-      setSuccessMsg('✅ Perfil actualizado correctamente')
+      setSuccessMsg(t('profile.profileUpdated'))
       setTimeout(() => setSuccessMsg(''), 3000)
     }
   }
@@ -123,8 +129,16 @@ export default function ProfileScreen() {
     },
     {
       icon: 'briefcase-outline' as const,
-      label: 'Mis trabajos',
+      label: t('profile.myJobs'),
       onPress: () => router.push('/(app)/jobs?filter=mine'),
+    },
+    {
+      icon: 'language-outline' as const,
+      label: t('profile.language'),
+      badge: LANGUAGES.find(l => l.code === i18n.language)?.flag + ' ' + LANGUAGES.find(l => l.code === i18n.language)?.label,
+      badgeColor: '#2563EB',
+      badgeBg: '#EEF4FF',
+      onPress: () => setShowLangModal(true),
     },
   ]
 
@@ -244,7 +258,7 @@ export default function ProfileScreen() {
             style={[styles.input, { height: 90, textAlignVertical: 'top' }]}
             value={bio}
             onChangeText={setBio}
-            placeholder="Cuéntanos sobre ti y tu experiencia..."
+            placeholder={t('profile.bioPlaceholder')}
             multiline
             maxLength={300}
           />
@@ -253,7 +267,7 @@ export default function ProfileScreen() {
             style={styles.input}
             value={skillsText}
             onChangeText={setSkillsText}
-            placeholder="Limpieza, Fontanería, Pintura..."
+            placeholder={t('profile.skillsPlaceholder')}
           />
           <Text style={styles.inputLabel}>Teléfono</Text>
           <TextInput
@@ -272,7 +286,7 @@ export default function ProfileScreen() {
           >
             {saving
               ? <ActivityIndicator color="#fff" />
-              : <Text style={styles.saveBtnText}>Guardar cambios</Text>
+              : <Text style={styles.saveBtnText}>{t('common.save')}</Text>
             }
           </TouchableOpacity>
         </View>
