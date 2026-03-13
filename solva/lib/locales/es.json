@@ -131,7 +131,11 @@
     "searchPlaceholder": "Buscar trabajos...",
     "newTitlePlaceholder": "ej: Limpieza de hogar 3 habitaciones",
     "newDescPlaceholder": "Describe el trabajo con detalle: qué necesitas, cuándo, condiciones especiales...",
-    "newLocationPlaceholder": "ej: Madrid, Barcelona..."
+    "newLocationPlaceholder": "ej: Madrid, Barcelona...",
+    "statusOpen": "Abierto",
+    "statusInProgress": "En progreso",
+    "statusCompleted": "Completado",
+    "statusCancelled": "Cancelado"
   },
   "search": {
     "title": "Buscar",
@@ -206,7 +210,11 @@
       "refunded": "Devuelto",
       "completed": "Completado",
       "failed": "Fallido"
-    }
+    },
+    "statusPending": "Pendiente de pago",
+    "statusHeld": "En escrow",
+    "statusReleased": "Liberado al Pro",
+    "statusRefunded": "Reembolsado"
   },
   "roles": {
     "client": "Cliente",
@@ -236,7 +244,11 @@
     "seePlans": "Ver planes Pro",
     "summary": "Aquí tienes el resumen de tu actividad",
     "viewJobs": "Ver jobs disponibles",
-    "completeProfile": "Completar mi perfil"
+    "completeProfile": "Completar mi perfil",
+    "statBids": "Ofertas enviadas",
+    "statContracts": "Contratos activos",
+    "statRating": "Valoración media",
+    "statReviews": "Reseñas recibidas"
   },
   "subscription": {
     "title": "Planes Solva",
@@ -245,7 +257,10 @@
     "monthly": "Mensual",
     "annual": "Anual",
     "popular": "MÁS POPULAR",
-    "trial": "Empezar 14 días gratis"
+    "trial": "Empezar 14 días gratis",
+    "statBids": "Bids enviados",
+    "statContracts": "Contratos activos",
+    "statEarnings": "Ingresos"
   },
   "reputation": {
     "title": "Mi reputación",
@@ -309,7 +324,9 @@
     "addPhotos": "Agregar fotos",
     "thanks": "¡Gracias por tu reseña!",
     "thanksDesc": "Tu opinión ayuda a construir la comunidad de Solva",
-    "commentPlaceholder": "Describe tu experiencia con detalle: puntualidad, calidad del trabajo, comunicación..."
+    "commentPlaceholder": "Describe tu experiencia con detalle: puntualidad, calidad del trabajo, comunicación...",
+    "photosBefore": "Fotos ANTES del trabajo",
+    "photosAfter": "Fotos DESPUÉS del trabajo"
   },
   "contract": {
     "title": "Contrato de servicio",
@@ -319,7 +336,11 @@
     "legal": "Marco legal",
     "paymentProtection": "Protección del pago",
     "cancellation": "Política de cancelación",
-    "notFound": "Contrato no encontrado"
+    "notFound": "Contrato no encontrado",
+    "statusActive": "Activo",
+    "statusCompleted": "Completado",
+    "statusCancelled": "Cancelado",
+    "statusDisputed": "En disputa"
   },
   "dispute": {
     "title": "Disputa",
@@ -330,7 +351,25 @@
     "warning": "Importante antes de continuar",
     "warningDesc": "Abrir una disputa pausará el contrato y el pago quedará bloqueado hasta la resolución. Úsalo solo si no puedes llegar a un acuerdo directo.",
     "descPlaceholder": "Explica en detalle qué pasó, cuándo, y qué intentaste para resolverlo...",
-    "replyPlaceholder": "Escribe tu respuesta..."
+    "replyPlaceholder": "Escribe tu respuesta...",
+    "reasonNotDone": "Trabajo no realizado",
+    "reasonPoorQuality": "Calidad deficiente",
+    "reasonPayment": "Pago no liberado",
+    "reasonNoShow": "No se presentó",
+    "reasonScope": "Cambio de alcance",
+    "reasonOther": "Otro motivo",
+    "reasonNotDoneDesc": "El Pro no hizo el trabajo acordado",
+    "reasonPoorQualityDesc": "El trabajo no cumple lo pactado",
+    "reasonPaymentDesc": "El cliente no libera el pago sin razón",
+    "reasonNoShowDesc": "El Pro no apareció en la fecha acordada",
+    "reasonScopeDesc": "Se pide más de lo acordado",
+    "reasonOtherDesc": "Otro tipo de problema",
+    "statusOpen": "Abierta",
+    "statusReview": "En revisión",
+    "statusResolvedClient": "Resuelta — Cliente",
+    "statusResolvedPro": "Resuelta — Pro",
+    "statusResolvedSplit": "Resuelta — Dividido",
+    "statusClosed": "Cerrada"
   },
   "security": {
     "title": "Seguridad",
@@ -373,5 +412,19 @@
     "report": "Reportar un problema",
     "verified": "Verificado",
     "unverified": "Sin verificar"
+  },
+  "notifications": {
+    "newJobs": "Nuevos jobs disponibles",
+    "bids": "Ofertas recibidas",
+    "messages": "Mensajes nuevos",
+    "contracts": "Contratos y pagos",
+    "reviews": "Nuevas valoraciones",
+    "promotions": "Ofertas y promociones",
+    "newJobsDesc": "Cuando hay un job nuevo cerca de ti",
+    "bidsDesc": "Cuando alguien oferta en tu job",
+    "messagesDesc": "Cuando recibes un mensaje",
+    "contractsDesc": "Actualizaciones de contratos activos",
+    "reviewsDesc": "Cuando alguien te deja una reseña",
+    "promotionsDesc": "Descuentos y novedades de Solva"
   }
 }

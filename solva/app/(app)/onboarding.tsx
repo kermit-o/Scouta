@@ -8,15 +8,15 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const CATEGORIES = [
-  { key: 'plumbing', label: 'Fontanería', icon: '🔧' },
-  { key: 'electrical', label: 'Electricidad', icon: '⚡' },
-  { key: 'cleaning', label: 'Limpieza', icon: '🧹' },
-  { key: 'carpentry', label: 'Carpintería', icon: '🪚' },
-  { key: 'painting', label: 'Pintura', icon: '🎨' },
-  { key: 'gardening', label: 'Jardinería', icon: '🌿' },
-  { key: 'moving', label: 'Mudanzas', icon: '📦' },
-  { key: 'tech', label: 'Tecnología', icon: '💻' },
-  { key: 'other', label: 'Otro', icon: '✨' },
+  { key: 'plumbing', labelKey: 'onboarding.categories.plumbing', icon: '🔧' },
+  { key: 'electrical', labelKey: 'onboarding.categories.electrical', icon: '⚡' },
+  { key: 'cleaning', labelKey: 'onboarding.categories.cleaning', icon: '🧹' },
+  { key: 'carpentry', labelKey: 'onboarding.categories.carpentry', icon: '🪚' },
+  { key: 'painting', labelKey: 'onboarding.categories.painting', icon: '🎨' },
+  { key: 'gardening', labelKey: 'onboarding.categories.gardening', icon: '🌿' },
+  { key: 'moving', labelKey: 'onboarding.categories.moving', icon: '📦' },
+  { key: 'tech', labelKey: 'onboarding.categories.tech', icon: '💻' },
+  { key: 'other', labelKey: 'onboarding.categories.other', icon: '✨' },
 ]
 
 export default function OnboardingScreen() {
@@ -141,7 +141,7 @@ export default function OnboardingScreen() {
                   activeOpacity={0.8}
                 >
                   <Text style={styles.chipIcon}>{cat.icon}</Text>
-                  <Text style={[styles.chipLabel, selected.includes(cat.key) && styles.chipLabelSelected]}>{cat.label}</Text>
+                  <Text style={[styles.chipLabel, selected.includes(cat.key) && styles.chipLabelSelected]}>{t(cat.labelKey)}</Text>
                   {selected.includes(cat.key) && (
                     <View style={styles.chipCheck}><Ionicons name="checkmark" size={10} color="#fff" /></View>
                   )}

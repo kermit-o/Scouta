@@ -131,7 +131,11 @@
     "searchPlaceholder": "Zoek jobs...",
     "newTitlePlaceholder": "bijv. Huisreiniging 3 slaapkamers",
     "newDescPlaceholder": "Beschrijf de klus in detail: wat je nodig hebt, wanneer, speciale voorwaarden...",
-    "newLocationPlaceholder": "bijv. Amsterdam, Rotterdam..."
+    "newLocationPlaceholder": "bijv. Amsterdam, Rotterdam...",
+    "statusOpen": "Open",
+    "statusInProgress": "In uitvoering",
+    "statusCompleted": "Voltooid",
+    "statusCancelled": "Geannuleerd"
   },
   "search": {
     "title": "Zoeken",
@@ -176,11 +180,11 @@
     "saveChanges": "Save changes",
     "profileUpdated": "✅ Profile updated successfully",
     "proProfile": "Professional profile",
-    "reviews": "Reviews",
+    "reviews": "Beoordelingen",
     "noReviews": "No reviews yet",
     "jobs": "Jobs",
     "score": "Score",
-    "since": "Since",
+    "since": "Sinds",
     "verified": "Verified",
     "aboutMe": "About me",
     "specialties": "Specialties",
@@ -206,7 +210,11 @@
       "refunded": "Terugbetaald",
       "completed": "Voltooid",
       "failed": "Mislukt"
-    }
+    },
+    "statusPending": "Betaling in afwachting",
+    "statusHeld": "In bewaring",
+    "statusReleased": "Vrijgegeven aan Pro",
+    "statusRefunded": "Terugbetaald"
   },
   "roles": {
     "client": "Client",
@@ -236,7 +244,11 @@
     "seePlans": "Pro-plannen bekijken",
     "summary": "Hier is je activiteitsoverzicht",
     "viewJobs": "Beschikbare jobs bekijken",
-    "completeProfile": "Mijn profiel voltooien"
+    "completeProfile": "Mijn profiel voltooien",
+    "statBids": "Verzonden biedingen",
+    "statContracts": "Actieve contracten",
+    "statRating": "Gemiddelde beoordeling",
+    "statReviews": "Ontvangen beoordelingen"
   },
   "subscription": {
     "title": "Solva-plannen",
@@ -245,7 +257,10 @@
     "monthly": "Maandelijks",
     "annual": "Jaarlijks",
     "popular": "MEEST POPULAIR",
-    "trial": "14 dagen gratis starten"
+    "trial": "14 dagen gratis starten",
+    "statBids": "Verzonden biedingen",
+    "statContracts": "Actieve contracten",
+    "statEarnings": "Inkomsten"
   },
   "reputation": {
     "title": "Mijn reputatie",
@@ -309,7 +324,9 @@
     "addPhotos": "Foto's toevoegen",
     "thanks": "Bedankt voor je beoordeling!",
     "thanksDesc": "Jouw mening helpt de Solva-community op te bouwen",
-    "commentPlaceholder": "Beschrijf je ervaring in detail: stiptheid, kwaliteit van het werk, communicatie..."
+    "commentPlaceholder": "Beschrijf je ervaring in detail: stiptheid, kwaliteit van het werk, communicatie...",
+    "photosBefore": "Foto's VOOR het werk",
+    "photosAfter": "Foto's NA het werk"
   },
   "contract": {
     "title": "Servicecontract",
@@ -319,7 +336,11 @@
     "legal": "Juridisch kader",
     "paymentProtection": "Betalingsbescherming",
     "cancellation": "Annuleringsbeleid",
-    "notFound": "Contract niet gevonden"
+    "notFound": "Contract niet gevonden",
+    "statusActive": "Actief",
+    "statusCompleted": "Voltooid",
+    "statusCancelled": "Geannuleerd",
+    "statusDisputed": "In geschil"
   },
   "dispute": {
     "title": "Geschil",
@@ -330,7 +351,25 @@
     "warning": "Belangrijk voor het doorgaan",
     "warningDesc": "Het openen van een geschil pauzeert het contract en de betaling wordt geblokkeerd tot de oplossing. Gebruik dit alleen als je geen directe overeenkomst kunt bereiken.",
     "descPlaceholder": "Leg in detail uit wat er is gebeurd, wanneer, en wat je hebt geprobeerd om het op te lossen...",
-    "replyPlaceholder": "Schrijf je antwoord..."
+    "replyPlaceholder": "Schrijf je antwoord...",
+    "reasonNotDone": "Werk niet gedaan",
+    "reasonPoorQuality": "Slechte kwaliteit",
+    "reasonPayment": "Betaling niet vrijgegeven",
+    "reasonNoShow": "Niet verschenen",
+    "reasonScope": "Scope wijziging",
+    "reasonOther": "Andere reden",
+    "reasonNotDoneDesc": "De Pro heeft het afgesproken werk niet gedaan",
+    "reasonPoorQualityDesc": "Het werk voldoet niet aan de afspraak",
+    "reasonPaymentDesc": "De klant geeft de betaling zonder reden niet vrij",
+    "reasonNoShowDesc": "De Pro verscheen niet op de afgesproken datum",
+    "reasonScopeDesc": "Er wordt meer gevraagd dan afgesproken",
+    "reasonOtherDesc": "Een ander type probleem",
+    "statusOpen": "Open",
+    "statusReview": "In beoordeling",
+    "statusResolvedClient": "Opgelost — Klant",
+    "statusResolvedPro": "Opgelost — Pro",
+    "statusResolvedSplit": "Opgelost — Gedeeld",
+    "statusClosed": "Gesloten"
   },
   "security": {
     "title": "Beveiliging",
@@ -373,5 +412,19 @@
     "report": "Probleem melden",
     "verified": "Geverifieerd",
     "unverified": "Niet geverifieerd"
+  },
+  "notifications": {
+    "newJobs": "Nieuwe beschikbare jobs",
+    "bids": "Ontvangen biedingen",
+    "messages": "Nieuwe berichten",
+    "contracts": "Contracten & betalingen",
+    "reviews": "Nieuwe beoordelingen",
+    "promotions": "Aanbiedingen & promoties",
+    "newJobsDesc": "Wanneer er een nieuwe job in de buurt is",
+    "bidsDesc": "Wanneer iemand biedt op jouw job",
+    "messagesDesc": "Wanneer je een bericht ontvangt",
+    "contractsDesc": "Updates over actieve contracten",
+    "reviewsDesc": "Wanneer iemand een beoordeling achterlaat",
+    "promotionsDesc": "Kortingen en nieuws van Solva"
   }
 }

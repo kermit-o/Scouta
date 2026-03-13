@@ -76,10 +76,10 @@ export default function DashboardProScreen() {
           </View>
           <View style={styles.statsGrid}>
             {[
-              { label: 'Ofertas enviadas', value: stats.bids, icon: '📩', color: '#2563EB' },
-              { label: 'Contratos activos', value: stats.contracts, icon: '📄', color: '#16A34A' },
-              { label: 'Valoración media', value: stats.rating || '—', icon: '⭐', color: '#F59E0B' },
-              { label: 'Reseñas recibidas', value: stats.reviews, icon: '💬', color: '#7C3AED' },
+              { label: t('dashboardPro.statBids'), value: stats.bids, icon: '📩', color: '#2563EB' },
+              { label: t('dashboardPro.statContracts'), value: stats.contracts, icon: '📄', color: '#16A34A' },
+              { label: t('dashboardPro.statRating'), value: stats.rating || '—', icon: '⭐', color: '#F59E0B' },
+              { label: t('dashboardPro.statReviews'), value: stats.reviews, icon: '💬', color: '#7C3AED' },
             ].map((s, i) => (
               <View key={i} style={styles.statCard}>
                 <Text style={styles.statIcon}>{s.icon}</Text>

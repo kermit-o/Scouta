@@ -131,7 +131,11 @@
     "searchPlaceholder": "Rechercher des travaux...",
     "newTitlePlaceholder": "ex: Nettoyage maison 3 chambres",
     "newDescPlaceholder": "Décrivez le travail en détail: ce dont vous avez besoin, quand, conditions spéciales...",
-    "newLocationPlaceholder": "ex: Paris, Lyon..."
+    "newLocationPlaceholder": "ex: Paris, Lyon...",
+    "statusOpen": "Ouvert",
+    "statusInProgress": "En cours",
+    "statusCompleted": "Terminé",
+    "statusCancelled": "Annulé"
   },
   "search": {
     "title": "Recherche",
@@ -206,7 +210,11 @@
       "refunded": "Remboursé",
       "completed": "Terminé",
       "failed": "Échoué"
-    }
+    },
+    "statusPending": "Paiement en attente",
+    "statusHeld": "En séquestre",
+    "statusReleased": "Libéré au Pro",
+    "statusRefunded": "Remboursé"
   },
   "roles": {
     "client": "Client",
@@ -236,7 +244,11 @@
     "seePlans": "Voir les plans Pro",
     "summary": "Voici le résumé de votre activité",
     "viewJobs": "Voir les missions disponibles",
-    "completeProfile": "Compléter mon profil"
+    "completeProfile": "Compléter mon profil",
+    "statBids": "Offres envoyées",
+    "statContracts": "Contrats actifs",
+    "statRating": "Note moyenne",
+    "statReviews": "Avis reçus"
   },
   "subscription": {
     "title": "Plans Solva",
@@ -245,7 +257,10 @@
     "monthly": "Mensuel",
     "annual": "Annuel",
     "popular": "LE PLUS POPULAIRE",
-    "trial": "Commencer 14 jours gratuits"
+    "trial": "Commencer 14 jours gratuits",
+    "statBids": "Offres envoyées",
+    "statContracts": "Contrats actifs",
+    "statEarnings": "Revenus"
   },
   "reputation": {
     "title": "Ma réputation",
@@ -309,7 +324,9 @@
     "addPhotos": "Ajouter des photos",
     "thanks": "Merci pour votre avis !",
     "thanksDesc": "Votre opinion aide à construire la communauté Solva",
-    "commentPlaceholder": "Décrivez votre expérience en détail: ponctualité, qualité du travail, communication..."
+    "commentPlaceholder": "Décrivez votre expérience en détail: ponctualité, qualité du travail, communication...",
+    "photosBefore": "Photos AVANT le travail",
+    "photosAfter": "Photos APRÈS le travail"
   },
   "contract": {
     "title": "Contrat de service",
@@ -319,7 +336,11 @@
     "legal": "Cadre juridique",
     "paymentProtection": "Protection du paiement",
     "cancellation": "Politique d'annulation",
-    "notFound": "Contrat introuvable"
+    "notFound": "Contrat introuvable",
+    "statusActive": "Actif",
+    "statusCompleted": "Terminé",
+    "statusCancelled": "Annulé",
+    "statusDisputed": "En litige"
   },
   "dispute": {
     "title": "Litige",
@@ -330,7 +351,25 @@
     "warning": "Important avant de continuer",
     "warningDesc": "Ouvrir un litige mettra le contrat en pause et le paiement sera bloqué jusqu'à la résolution. Utilisez-le uniquement si vous ne pouvez pas parvenir à un accord direct.",
     "descPlaceholder": "Expliquez en détail ce qui s'est passé, quand, et ce que vous avez essayé pour résoudre...",
-    "replyPlaceholder": "Écrivez votre réponse..."
+    "replyPlaceholder": "Écrivez votre réponse...",
+    "reasonNotDone": "Travail non effectué",
+    "reasonPoorQuality": "Mauvaise qualité",
+    "reasonPayment": "Paiement non libéré",
+    "reasonNoShow": "Absent",
+    "reasonScope": "Changement de portée",
+    "reasonOther": "Autre raison",
+    "reasonNotDoneDesc": "Le Pro n'a pas fait le travail convenu",
+    "reasonPoorQualityDesc": "Le travail ne respecte pas l'accord",
+    "reasonPaymentDesc": "Le client ne libère pas le paiement sans raison",
+    "reasonNoShowDesc": "Le Pro ne s'est pas présenté à la date convenue",
+    "reasonScopeDesc": "On demande plus que ce qui était convenu",
+    "reasonOtherDesc": "Un autre type de problème",
+    "statusOpen": "Ouverte",
+    "statusReview": "En examen",
+    "statusResolvedClient": "Résolue — Client",
+    "statusResolvedPro": "Résolue — Pro",
+    "statusResolvedSplit": "Résolue — Partagé",
+    "statusClosed": "Fermée"
   },
   "security": {
     "title": "Sécurité",
@@ -373,5 +412,19 @@
     "report": "Signaler un problème",
     "verified": "Vérifié",
     "unverified": "Non vérifié"
+  },
+  "notifications": {
+    "newJobs": "Nouveaux travaux disponibles",
+    "bids": "Offres reçues",
+    "messages": "Nouveaux messages",
+    "contracts": "Contrats et paiements",
+    "reviews": "Nouveaux avis",
+    "promotions": "Offres et promotions",
+    "newJobsDesc": "Quand il y a un nouveau travail près de chez vous",
+    "bidsDesc": "Quand quelqu'un fait une offre sur votre travail",
+    "messagesDesc": "Quand vous recevez un message",
+    "contractsDesc": "Mises à jour sur les contrats actifs",
+    "reviewsDesc": "Quand quelqu'un vous laisse un avis",
+    "promotionsDesc": "Réductions et nouveautés de Solva"
   }
 }

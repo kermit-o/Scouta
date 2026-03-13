@@ -8,10 +8,10 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: string }> = {
-  active:    { label: 'Activo',      color: '#2563EB', bg: '#DBEAFE', icon: 'flash' },
-  completed: { label: 'Completado',  color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
-  cancelled: { label: 'Cancelado',   color: '#DC2626', bg: '#FEE2E2', icon: 'close-circle' },
-  disputed:  { label: 'En disputa',  color: '#D97706', bg: '#FEF3C7', icon: 'warning' },
+  active:    { label: t('contract.statusActive'),      color: '#2563EB', bg: '#DBEAFE', icon: 'flash' },
+  completed: { label: t('contract.statusCompleted'),  color: '#059669', bg: '#D1FAE5', icon: 'checkmark-circle' },
+  cancelled: { label: t('contract.statusCancelled'),   color: '#DC2626', bg: '#FEE2E2', icon: 'close-circle' },
+  disputed:  { label: t('contract.statusDisputed'),  color: '#D97706', bg: '#FEF3C7', icon: 'warning' },
 }
 
 export default function ContractScreen() {

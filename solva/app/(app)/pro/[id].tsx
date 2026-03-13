@@ -110,10 +110,10 @@ export default function ProProfileScreen() {
         {/* Stats */}
         <View style={s.statsRow}>
           {[
-            { value: pro.total_reviews ?? 0, label: 'Reseñas', icon: 'star', color: '#F59E0B', bg: '#FFFBEB' },
-            { value: pro.total_jobs_done ?? 0, label: 'Trabajos', icon: 'briefcase', color: '#2563EB', bg: '#EEF4FF' },
-            { value: pro.score > 0 ? Number(pro.score).toFixed(1) : '-', label: 'Score', icon: 'trending-up', color: '#059669', bg: '#F0FDF9' },
-            { value: new Date(pro.created_at).getFullYear(), label: 'Desde', icon: 'calendar', color: '#7C3AED', bg: '#EDE9FE' },
+            { value: pro.total_reviews ?? 0, label: t('profile.reviews'), icon: 'star', color: '#F59E0B', bg: '#FFFBEB' },
+            { value: pro.total_jobs_done ?? 0, label: t('profile.jobs'), icon: 'briefcase', color: '#2563EB', bg: '#EEF4FF' },
+            { value: pro.score > 0 ? Number(pro.score).toFixed(1) : '-', label: t('profile.score'), icon: 'trending-up', color: '#059669', bg: '#F0FDF9' },
+            { value: new Date(pro.created_at).getFullYear(), label: t('profile.since'), icon: 'calendar', color: '#7C3AED', bg: '#EDE9FE' },
           ].map((stat, i) => (
             <View key={i} style={[s.statCard, { backgroundColor: stat.bg }]}>
               <Ionicons name={stat.icon as any} size={16} color={stat.color} />

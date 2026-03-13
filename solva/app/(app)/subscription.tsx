@@ -158,9 +158,9 @@ export default function SubscriptionScreen() {
             <Text style={s.statsTitle}>{t('subscription.performance')}</Text>
             <View style={s.statsRow}>
               {[
-                { value: analytics.bids_this_month, label: 'Bids enviados', color: '#2563EB' },
-                { value: analytics.jobs_active,     label: 'Contratos activos', color: '#059669' },
-                { value: `${analytics.earned_this_month}€`, label: 'Ingresos', color: '#D97706' },
+                { value: analytics.bids_this_month, label: t('subscription.statBids'), color: '#2563EB' },
+                { value: analytics.jobs_active,     label: t('subscription.statContracts'), color: '#059669' },
+                { value: `${analytics.earned_this_month}€`, label: t('subscription.statEarnings'), color: '#D97706' },
               ].map((stat, i) => (
                 <View key={i} style={s.statItem}>
                   <Text style={[s.statValue, { color: stat.color }]}>{stat.value}</Text>
