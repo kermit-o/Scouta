@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -10,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -29,7 +31,7 @@ export default function LoginScreen() {
       else if (msg.includes('too many') || msg.includes('rate limit'))
         setErrorMsg('Demasiados intentos. Espera unos minutos.')
       else if (msg.includes('user not found') || msg.includes('no user'))
-        setErrorMsg('No existe una cuenta con este email.')
+        setErrorMsg(t('auth.noAccount'))
       else
         setErrorMsg('Algo salió mal. Inténtalo de nuevo.')
     }
@@ -71,14 +73,14 @@ export default function LoginScreen() {
 
         {/* Form */}
         <View style={styles.form}>
-          <Text style={styles.label}>Correo electrónico</Text>
+          <Text style={styles.label}>{t('auth.email')}</Text>
           <View style={styles.inputRow}>
             <Ionicons name="mail-outline" size={18} color="#888" />
             <TextInput
               style={styles.input}
               value={email}
               onChangeText={setEmail}
-              placeholder="tu@email.com"
+              placeholder={t('auth.email')}
               placeholderTextColor="#aaa"
               autoCapitalize="none"
               keyboardType="email-address"
@@ -86,7 +88,7 @@ export default function LoginScreen() {
             />
           </View>
 
-          <Text style={styles.label}>Contraseña</Text>
+          <Text style={styles.label}>{t('auth.password')}</Text>
           <View style={styles.inputRow}>
             <Ionicons name="lock-closed-outline" size={18} color="#888" />
             <TextInput
@@ -103,7 +105,7 @@ export default function LoginScreen() {
           </View>
 
           <TouchableOpacity style={styles.forgotBtn}>
-            <Text style={styles.forgotText}>¿Olvidaste tu contraseña?</Text>
+            <Text style={styles.forgotText}>{t('auth.forgotPassword')}</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -115,7 +117,7 @@ export default function LoginScreen() {
             {loading
               ? <ActivityIndicator color="#fff" />
               : <>
-                  <Text style={styles.loginBtnText}>Iniciar sesión</Text>
+                  <Text style={styles.loginBtnText}>{t('auth.signIn')}</Text>
                   <Ionicons name="arrow-forward" size={18} color="#fff" />
                 </>
             }
@@ -148,7 +150,7 @@ export default function LoginScreen() {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text style={styles.footerText}>¿No tienes cuenta? </Text>
+          <Text style={styles.footerText}>{t('auth.noAccount')} </Text>
           <Link href="/(auth)/register" asChild>
             <TouchableOpacity>
               <Text style={styles.footerLink}>Regístrate</Text>

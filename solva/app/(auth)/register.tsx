@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
@@ -26,27 +27,27 @@ const COUNTRIES: { label: string; flag: string; value: SupportedCountry; currenc
 
 const ROLES: { label: string; icon: string; value: UserRole; desc: string; features: string[] }[] = [
   {
-    label: 'Busco servicios',
+    label: t('roles.seekServices'),
     icon: '👤',
     value: 'client',
-    desc: 'Publica trabajos y contrata profesionales verificados',
-    features: ['Publica trabajos gratis', 'Recibe ofertas de profesionales', 'Pago seguro con escrow'],
+    desc: t('roles.seekServicesSub'),
+    features: [t('roles.features.postFree'), t('roles.features.receiveOffers'), t('roles.features.securePay')],
   },
   {
-    label: 'Ofrezco servicios',
+    label: t('roles.offerServices'),
     icon: '🔧',
     value: 'pro',
     badge: 'PRO',
-    desc: 'Encuentra trabajos cerca de ti y genera ingresos',
-    features: ['Accede a trabajos cercanos', 'Cobra de forma segura', 'Construye tu reputación'],
+    desc: t('roles.offerServicesSub'),
+    features: [t('roles.features.accessJobs'), t('roles.features.getpaid'), t('roles.features.buildRep')],
   },
   {
-    label: 'Empresa',
+    label: t('roles.company'),
     icon: '🏢',
     value: 'company',
     badge: 'PRO',
-    desc: 'Gestiona un equipo o empresa en Solva',
-    features: ['Multi-usuario', 'Dashboard empresa', 'Facturación centralizada'],
+    desc: t('roles.companySub'),
+    features: [t('roles.features.multiUser'), t('roles.features.dashboard'), t('roles.features.billing')],
   },
 ]
 
@@ -65,6 +66,7 @@ const STRENGTH_LABEL = ['Muy débil', 'Débil', 'Buena', 'Fuerte']
 
 export default function RegisterScreen() {
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   const [step, setStep] = useState<1 | 2 | 3>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
@@ -145,7 +147,7 @@ export default function RegisterScreen() {
         {/* ── PASO 1: Datos personales ── */}
         {step === 1 && (
           <View style={styles.stepContent}>
-            <Text style={styles.stepTitle}>Crear cuenta</Text>
+            <Text style={styles.stepTitle}>{t('auth.register')}</Text>
             <Text style={styles.stepSub}>Únete a la comunidad Solva</Text>
 
             <Text style={styles.label}>Nombre completo</Text>
@@ -160,21 +162,21 @@ export default function RegisterScreen() {
               />
             </View>
 
-            <Text style={styles.label}>Correo electrónico</Text>
+            <Text style={styles.label}>{t('auth.email')}</Text>
             <View style={styles.inputRow}>
               <Ionicons name="mail-outline" size={18} color="#888" />
               <TextInput
                 style={styles.input}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="tu@email.com"
+                placeholder={t('auth.email')}
                 placeholderTextColor="#aaa"
                 autoCapitalize="none"
                 keyboardType="email-address"
               />
             </View>
 
-            <Text style={styles.label}>Contraseña</Text>
+            <Text style={styles.label}>{t('auth.password')}</Text>
             <View style={styles.inputRow}>
               <Ionicons name="lock-closed-outline" size={18} color="#888" />
               <TextInput
@@ -279,8 +281,8 @@ export default function RegisterScreen() {
             <View style={styles.stepIcon}>
               <Ionicons name="person-circle" size={28} color="#2563EB" />
             </View>
-            <Text style={styles.stepTitle}>¿Cómo usarás Solva?</Text>
-            <Text style={styles.stepSub}>Podrás cambiar esto más adelante</Text>
+            <Text style={styles.stepTitle}>{t('onboarding.howUse')}</Text>
+            <Text style={styles.stepSub}>{t('onboarding.changeAnytime')}</Text>
 
             {errorMsg ? (
               <View style={styles.errorBox}>
@@ -340,7 +342,7 @@ export default function RegisterScreen() {
                 {acceptTerms && <Ionicons name="checkmark" size={14} color="#fff" />}
               </View>
               <Text style={styles.termsText}>
-                Acepto los <Text style={styles.termsLink}>Términos de Servicio</Text> y la{' '}
+                {t('auth.acceptTerms')} <Text style={styles.termsLink}>{t('auth.terms')}</Text> {t('auth.and')}{' '}
                 <Text style={styles.termsLink}>Política de Privacidad</Text>
               </Text>
             </TouchableOpacity>
@@ -354,7 +356,7 @@ export default function RegisterScreen() {
               {loading
                 ? <ActivityIndicator color="#fff" />
                 : <>
-                    <Text style={styles.btnText}>Crear cuenta</Text>
+                    <Text style={styles.btnText}>{t('auth.register')}</Text>
                     <Ionicons name="arrow-forward" size={18} color="#fff" />
                   </>
               }
