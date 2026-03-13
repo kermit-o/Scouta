@@ -109,7 +109,7 @@ export default function NewBidScreen() {
 
         {/* Días */}
         <View style={s.card}>
-          <Text style={s.label}>{t('bid.days')} Text style={s.optional}>(opcional)</Text></Text>
+          <Text style={s.label}>{t('bid.days')} <Text style={s.optional}>({t('common.optional')})</Text></Text>
           <View style={s.inputRow}>
             <Ionicons name="time-outline" size={20} color="#888" />
             <TextInput
@@ -125,7 +125,7 @@ export default function NewBidScreen() {
 
         {/* Mensaje */}
         <View style={s.card}>
-          <Text style={s.label}>{t('bid.message')} Text style={s.required}>*</Text> <Text style={s.optional}>(mín. 20 caracteres)</Text></Text>
+          <Text style={s.label}>{t('bid.message')} <Text style={s.required}>*</Text> <Text style={s.optional}>({t('bid.minChars')})</Text></Text>
           <TextInput
             style={s.textarea}
             value={message}

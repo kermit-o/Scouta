@@ -16,7 +16,8 @@
     "apply": "Aplicar",
     "close": "Cerrar",
     "yes": "Sí",
-    "no": "No"
+    "no": "No",
+    "optional": "opcional"
   },
   "auth": {
     "login": "Iniciar sesión",
@@ -295,7 +296,8 @@
     "sent": "✅ Oferta enviada",
     "sentDesc": "El cliente recibirá tu propuesta",
     "daysPlaceholder": "ej: 3",
-    "messagePlaceholder": "Preséntate y explica cómo resolverías este trabajo, tu experiencia y disponibilidad..."
+    "messagePlaceholder": "Preséntate y explica cómo resolverías este trabajo, tu experiencia y disponibilidad...",
+    "minChars": "mín. 20 caracteres"
   },
   "review": {
     "title": "Dejar reseña",

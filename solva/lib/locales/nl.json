@@ -16,7 +16,8 @@
     "apply": "Apply",
     "close": "Close",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "optional": "optioneel"
   },
   "auth": {
     "login": "Inloggen",
@@ -295,7 +296,8 @@
     "sent": "✅ Bod verzonden",
     "sentDesc": "De klant ontvangt je voorstel",
     "daysPlaceholder": "bijv. 3",
-    "messagePlaceholder": "Stel jezelf voor en leg uit hoe je deze klus zou aanpakken, je ervaring en beschikbaarheid..."
+    "messagePlaceholder": "Stel jezelf voor en leg uit hoe je deze klus zou aanpakken, je ervaring en beschikbaarheid...",
+    "minChars": "min. 20 tekens"
   },
   "review": {
     "title": "Beoordeling achterlaten",

@@ -16,7 +16,8 @@
     "apply": "Apply",
     "close": "Close",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "optional": "optional"
   },
   "auth": {
     "login": "Log in",
@@ -295,7 +296,8 @@
     "sent": "✅ Offer sent",
     "sentDesc": "The client will receive your proposal",
     "daysPlaceholder": "e.g. 3",
-    "messagePlaceholder": "Introduce yourself and explain how you would solve this job, your experience and availability..."
+    "messagePlaceholder": "Introduce yourself and explain how you would solve this job, your experience and availability...",
+    "minChars": "min. 20 characters"
   },
   "review": {
     "title": "Leave a review",

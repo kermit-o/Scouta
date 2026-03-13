@@ -16,7 +16,8 @@
     "apply": "Apply",
     "close": "Close",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "optional": "optional"
   },
   "auth": {
     "login": "Anmelden",
@@ -295,7 +296,8 @@
     "sent": "✅ Angebot gesendet",
     "sentDesc": "Der Kunde erhält deinen Vorschlag",
     "daysPlaceholder": "z.B. 3",
-    "messagePlaceholder": "Stell dich vor und erkläre wie du diesen Job lösen würdest, deine Erfahrung und Verfügbarkeit..."
+    "messagePlaceholder": "Stell dich vor und erkläre wie du diesen Job lösen würdest, deine Erfahrung und Verfügbarkeit...",
+    "minChars": "mind. 20 Zeichen"
   },
   "review": {
     "title": "Bewertung hinterlassen",

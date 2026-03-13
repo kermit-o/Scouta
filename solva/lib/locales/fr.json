@@ -16,7 +16,8 @@
     "apply": "Appliquer",
     "close": "Fermer",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "optional": "optionnel"
   },
   "auth": {
     "login": "Se connecter",
@@ -295,7 +296,8 @@
     "sent": "✅ Offre envoyée",
     "sentDesc": "Le client recevra votre proposition",
     "daysPlaceholder": "ex: 3",
-    "messagePlaceholder": "Présentez-vous et expliquez comment vous résoudriez ce travail, votre expérience et disponibilité..."
+    "messagePlaceholder": "Présentez-vous et expliquez comment vous résoudriez ce travail, votre expérience et disponibilité...",
+    "minChars": "min. 20 caractères"
   },
   "review": {
     "title": "Laisser un avis",
