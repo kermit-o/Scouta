@@ -119,7 +119,7 @@ export default function HomeScreen() {
             <Ionicons name="add-circle-outline" size={22} color="#fff" />
           </View>
           <Text style={styles.actionTitlePrimary}>{t('jobs.postJob')}</Text>
-          <Text style={styles.actionSubPrimary}>Encuentra profesionales</Text>
+          <Text style={styles.actionSubPrimary}>{t('home.findPros')}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -131,7 +131,7 @@ export default function HomeScreen() {
             <Ionicons name="search-outline" size={22} color="#1a1a2e" />
           </View>
           <Text style={styles.actionTitleSecondary}>{t('search.title')}</Text>
-          <Text style={styles.actionSubSecondary}>Explora servicios</Text>
+          <Text style={styles.actionSubSecondary}>{t('home.exploreServices')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -178,13 +178,13 @@ export default function HomeScreen() {
           ) : recentJobs.map((job) => {
             const timeAgo = (() => {
               const diff = Math.floor((Date.now() - new Date(job.created_at).getTime()) / 60000)
-              if (diff < 60) return `Hace ${diff}m`
-              if (diff < 1440) return `Hace ${Math.floor(diff/60)}h`
-              return `Hace ${Math.floor(diff/1440)}d`
+              if (diff < 60) return `${diff}m`
+              if (diff < 1440) return `${Math.floor(diff/60)}h`
+              return `${Math.floor(diff/1440)}d`
             })()
             const budget = job.budget_min || job.budget_max
               ? `${job.budget_min ?? '?'}–${job.budget_max ?? '?'} ${job.currency ?? 'EUR'}`
-              : 'A negociar'
+              : t('jobs.negotiate')
             return (
               <TouchableOpacity
                 key={job.id}
