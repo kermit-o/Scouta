@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   ActivityIndicator, RefreshControl, TextInput
 } from 'react-native'
+import { useTranslation } from 'react-i18next'
 import { router, useLocalSearchParams } from 'expo-router'
 import { supabase, Job } from '../../lib/supabase'
 import { useProfile } from '../../hooks/useProfile'
@@ -20,6 +21,7 @@ const RADIUS_OPTIONS = [5, 10, 25, 50, 100]
 export default function JobsScreen() {
   const { profile } = useProfile()
   const { session } = useAuth()
+  const { t } = useTranslation()
   const { filter } = useLocalSearchParams<{ filter?: string }>()
   const [activeTab, setActiveTab] = useState<'all' | 'mine' | 'history'>(filter === 'mine' ? 'mine' : 'all')
   const [myJobs, setMyJobs] = useState<any[]>([])
@@ -105,7 +107,7 @@ export default function JobsScreen() {
           </TouchableOpacity>
           {profile?.role !== 'pro' && (
             <TouchableOpacity style={s.newButton} onPress={() => router.push('/(app)/jobs/new')}>
-              <Text style={s.newButtonText}>+ Publicar</Text>
+              <Text style={s.newButtonText}>{t('jobs.postJob')}</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -153,13 +155,13 @@ export default function JobsScreen() {
       {/* Tabs */}
       <View style={s.tabs}>
         <TouchableOpacity style={[s.tab, activeTab === 'all' && s.tabActive]} onPress={() => setActiveTab('all')}>
-          <Text style={[s.tabText, activeTab === 'all' && s.tabTextActive]}>Disponibles</Text>
+          <Text style={[s.tabText, activeTab === 'all' && s.tabTextActive]}>{t('jobs.available')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[s.tab, activeTab === 'mine' && s.tabActive]} onPress={() => setActiveTab('mine')}>
-          <Text style={[s.tabText, activeTab === 'mine' && s.tabTextActive]}>Mis trabajos</Text>
+          <Text style={[s.tabText, activeTab === 'mine' && s.tabTextActive]}>{t('jobs.myJobs')}</Text>
         </TouchableOpacity>
         <TouchableOpacity style={[s.tab, activeTab === 'history' && s.tabActive]} onPress={() => setActiveTab('history')}>
-          <Text style={[s.tabText, activeTab === 'history' && s.tabTextActive]}>Historial</Text>
+          <Text style={[s.tabText, activeTab === 'history' && s.tabTextActive]}>{t('jobs.history')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -169,10 +171,10 @@ export default function JobsScreen() {
           {myJobs.length === 0
             ? <View style={s.emptyState}>
                 <Text style={s.emptyStateIcon}>📋</Text>
-                <Text style={s.emptyStateTitle}>Sin trabajos aún</Text>
+                <Text style={s.emptyStateTitle}>{t('jobs.noMyJobs')}</Text>
                 <Text style={s.emptyStateSub}>Publica tu primer trabajo y recibe ofertas de profesionales</Text>
                 <TouchableOpacity style={s.emptyStateBtn} onPress={() => router.push('/(app)/jobs/new')}>
-                  <Text style={s.emptyStateBtnText}>+ Publicar trabajo</Text>
+                  <Text style={s.emptyStateBtnText}>{t('jobs.postJob')}</Text>
                 </TouchableOpacity>
               </View>
             : myJobs.map((job: any) => {
@@ -215,7 +217,7 @@ export default function JobsScreen() {
             ListEmptyComponent={
               <View style={s.empty}>
                 <Text style={s.emptyText}>
-                  {searchMode === 'nearby' ? 'No hay jobs en este radio' : 'No hay jobs disponibles'}
+                  {searchMode === 'nearby' ? t('jobs.noJobs') : t('jobs.noJobs')}
                 </Text>
                 <Text style={s.emptySub}>
                   {searchMode === 'nearby' ? 'Prueba aumentar el radio de busqueda' : 'Se el primero en publicar'}
