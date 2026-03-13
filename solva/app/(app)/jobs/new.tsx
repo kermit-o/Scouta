@@ -100,7 +100,7 @@ export default function NewJobScreen() {
             style={s.input}
             value={title}
             onChangeText={setTitle}
-            placeholder="ej: Limpieza de hogar 3 habitaciones"
+            placeholder={t("jobs.newTitlePlaceholder")}
             placeholderTextColor="#aaa"
             maxLength={80}
           />
@@ -112,7 +112,7 @@ export default function NewJobScreen() {
           style={s.textarea}
           value={description}
           onChangeText={setDesc}
-          placeholder="Describe el trabajo con detalle: qué necesitas, cuándo, condiciones especiales..."
+          placeholder={t("jobs.newDescPlaceholder")}
           placeholderTextColor="#aaa"
           multiline
           numberOfLines={5}
@@ -162,7 +162,7 @@ export default function NewJobScreen() {
                 style={s.input}
                 value={city}
                 onChangeText={setCity}
-                placeholder="ej: Madrid, Barcelona..."
+                placeholder={t("jobs.newLocationPlaceholder")}
                 placeholderTextColor="#aaa"
               />
             </View>

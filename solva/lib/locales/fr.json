@@ -34,7 +34,10 @@
     "terms": "Conditions d'utilisation",
     "privacy": "Politique de confidentialité",
     "acceptTerms": "J'accepte les",
-    "and": "et la"
+    "and": "et la",
+    "min8chars": "Minimum 8 caractères",
+    "repeatPassword": "Répétez le mot de passe",
+    "min6chars": "Minimum 6 caractères"
   },
   "onboarding": {
     "welcome": "Bienvenue",
@@ -68,7 +71,8 @@
     "uniqueValue": "Votre proposition unique",
     "tips": "Conseils pour améliorer votre profil",
     "startWorking": "Commencer à travailler",
-    "begin": "Commencer"
+    "begin": "Commencer",
+    "avgPricePlaceholder": "ex: 80"
   },
   "home": {
     "title": "Accueil",
@@ -127,7 +131,7 @@
   },
   "search": {
     "title": "Recherche",
-    "placeholder": "Rechercher des professionnels...",
+    "placeholder": "ex: plombier urgent pour demain...",
     "filters": "Filtres",
     "noPros": "Aucun professionnel trouvé",
     "noProsSub": "Essayez d'ajuster vos filtres"
@@ -163,7 +167,8 @@
     "since": "Depuis",
     "verified": "Vérifié",
     "aboutMe": "À propos",
-    "specialties": "Spécialités"
+    "specialties": "Spécialités",
+    "namePlaceholder": "Votre nom"
   },
   "payments": {
     "title": "Paiements",
@@ -267,7 +272,9 @@
     "days": "Jours de livraison estimés",
     "message": "Message au client",
     "sent": "✅ Offre envoyée",
-    "sentDesc": "Le client recevra votre proposition"
+    "sentDesc": "Le client recevra votre proposition",
+    "daysPlaceholder": "ex: 3",
+    "messagePlaceholder": "Présentez-vous et expliquez comment vous résoudriez ce travail, votre expérience et disponibilité..."
   },
   "review": {
     "title": "Laisser un avis",
@@ -275,7 +282,8 @@
     "score": "Note *",
     "addPhotos": "Ajouter des photos",
     "thanks": "Merci pour votre avis !",
-    "thanksDesc": "Votre opinion aide à construire la communauté Solva"
+    "thanksDesc": "Votre opinion aide à construire la communauté Solva",
+    "commentPlaceholder": "Décrivez votre expérience en détail: ponctualité, qualité du travail, communication..."
   },
   "contract": {
     "title": "Contrat de service",
@@ -294,6 +302,8 @@
     "noMessages": "Aucun message pour l'instant",
     "reviewTime": "L'équipe Solva examinera le litige dans 48-72h ouvrables.",
     "warning": "Important avant de continuer",
-    "warningDesc": "Ouvrir un litige mettra le contrat en pause et le paiement sera bloqué jusqu'à la résolution. Utilisez-le uniquement si vous ne pouvez pas parvenir à un accord direct."
+    "warningDesc": "Ouvrir un litige mettra le contrat en pause et le paiement sera bloqué jusqu'à la résolution. Utilisez-le uniquement si vous ne pouvez pas parvenir à un accord direct.",
+    "descPlaceholder": "Expliquez en détail ce qui s'est passé, quand, et ce que vous avez essayé pour résoudre...",
+    "replyPlaceholder": "Écrivez votre réponse..."
   }
 }

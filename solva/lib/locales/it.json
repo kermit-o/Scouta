@@ -34,7 +34,10 @@
     "terms": "Terms of Service",
     "privacy": "Privacy Policy",
     "acceptTerms": "I accept the",
-    "and": "and the"
+    "and": "and the",
+    "min8chars": "Minimo 8 caratteri",
+    "repeatPassword": "Ripeti la password",
+    "min6chars": "Minimo 6 caratteri"
   },
   "onboarding": {
     "welcome": "Welcome",
@@ -68,7 +71,8 @@
     "uniqueValue": "Your unique value",
     "tips": "Tips to improve your profile",
     "startWorking": "Start working",
-    "begin": "Get started"
+    "begin": "Get started",
+    "avgPricePlaceholder": "es: 80"
   },
   "home": {
     "title": "Home",
@@ -127,7 +131,7 @@
   },
   "search": {
     "title": "Cerca",
-    "placeholder": "Search professionals...",
+    "placeholder": "es: idraulico urgente per domani...",
     "filters": "Filters",
     "noPros": "No professionals found",
     "noProsSub": "Try adjusting your search filters"
@@ -163,7 +167,8 @@
     "since": "Since",
     "verified": "Verified",
     "aboutMe": "About me",
-    "specialties": "Specialties"
+    "specialties": "Specialties",
+    "namePlaceholder": "Il tuo nome"
   },
   "payments": {
     "title": "Payments",
@@ -267,7 +272,9 @@
     "days": "Giorni di consegna stimati",
     "message": "Messaggio al cliente",
     "sent": "✅ Offerta inviata",
-    "sentDesc": "Il cliente riceverà la tua proposta"
+    "sentDesc": "Il cliente riceverà la tua proposta",
+    "daysPlaceholder": "es: 3",
+    "messagePlaceholder": "Presentati e spiega come risolveresti questo lavoro, la tua esperienza e disponibilità..."
   },
   "review": {
     "title": "Lascia una recensione",
@@ -275,7 +282,8 @@
     "score": "Punteggio *",
     "addPhotos": "Aggiungi foto",
     "thanks": "Grazie per la tua recensione!",
-    "thanksDesc": "La tua opinione aiuta a costruire la community Solva"
+    "thanksDesc": "La tua opinione aiuta a costruire la community Solva",
+    "commentPlaceholder": "Descrivi la tua esperienza in dettaglio: puntualità, qualità del lavoro, comunicazione..."
   },
   "contract": {
     "title": "Contratto di servizio",
@@ -294,6 +302,8 @@
     "noMessages": "Ancora nessun messaggio",
     "reviewTime": "Il team Solva esaminerà la disputa entro 48-72 ore lavorative.",
     "warning": "Importante prima di continuare",
-    "warningDesc": "Aprire una disputa metterà in pausa il contratto e il pagamento sarà bloccato fino alla risoluzione. Usarlo solo se non si riesce a raggiungere un accordo diretto."
+    "warningDesc": "Aprire una disputa metterà in pausa il contratto e il pagamento sarà bloccato fino alla risoluzione. Usarlo solo se non si riesce a raggiungere un accordo diretto.",
+    "descPlaceholder": "Spiega in dettaglio cosa è successo, quando, e cosa hai provato per risolvere...",
+    "replyPlaceholder": "Scrivi la tua risposta..."
   }
 }

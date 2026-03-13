@@ -253,7 +253,7 @@ export default function DisputeScreen() {
                 style={s.textarea}
                 value={description}
                 onChangeText={setDescription}
-                placeholder="Explica en detalle qué pasó, cuándo, y qué intentaste para resolverlo..."
+                placeholder={t("dispute.descPlaceholder")}
                 multiline
                 numberOfLines={5}
                 maxLength={1000}
@@ -302,7 +302,7 @@ export default function DisputeScreen() {
               style={s.msgInput}
               value={msgText}
               onChangeText={setMsgText}
-              placeholder="Escribe tu respuesta..."
+              placeholder={t("dispute.replyPlaceholder")}
               multiline
               maxLength={500}
               placeholderTextColor="#bbb"

@@ -44,7 +44,7 @@ export default function SecurityScreen() {
           <Text style={styles.label}>Nueva contraseña</Text>
           <View style={styles.inputRow}>
             <Ionicons name="lock-closed-outline" size={18} color="#888" />
-            <TextInput style={styles.input} value={newPassword} onChangeText={setNewPassword} secureTextEntry={!showNew} placeholder="Mínimo 8 caracteres" placeholderTextColor="#aaa" />
+            <TextInput style={styles.input} value={newPassword} onChangeText={setNewPassword} secureTextEntry={!showNew} placeholder={t("auth.min8chars")} placeholderTextColor="#aaa" />
             <TouchableOpacity onPress={() => setShowNew(!showNew)}>
               <Ionicons name={showNew ? 'eye-off-outline' : 'eye-outline'} size={18} color="#888" />
             </TouchableOpacity>
@@ -52,7 +52,7 @@ export default function SecurityScreen() {
           <Text style={styles.label}>Confirmar contraseña</Text>
           <View style={styles.inputRow}>
             <Ionicons name="lock-closed-outline" size={18} color="#888" />
-            <TextInput style={styles.input} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirm} placeholder="Repite la contraseña" placeholderTextColor="#aaa" />
+            <TextInput style={styles.input} value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirm} placeholder={t("auth.repeatPassword")} placeholderTextColor="#aaa" />
             <TouchableOpacity onPress={() => setShowConfirm(!showConfirm)}>
               <Ionicons name={showConfirm ? 'eye-off-outline' : 'eye-outline'} size={18} color="#888" />
             </TouchableOpacity>

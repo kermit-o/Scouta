@@ -99,7 +99,7 @@ export default function SearchScreen() {
             style={styles.searchInput}
             value={query}
             onChangeText={setQuery}
-            placeholder="Ej: fontanero urgente para mañana..."
+            placeholder={t("search.placeholder")}
             placeholderTextColor="#aaa"
             onSubmitEditing={() => handleSearch()}
             returnKeyType="search"

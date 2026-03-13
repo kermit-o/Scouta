@@ -277,7 +277,7 @@ export default function ProContentScreen() {
             style={s.input}
             value={specialty}
             onChangeText={setSpecialty}
-            placeholder="ej: baños y cocinas, instalaciones eléctricas..."
+            placeholder={t("onboarding.specialtyPlaceholder")}
             placeholderTextColor="#aaa"
           />
         </View>
@@ -290,7 +290,7 @@ export default function ProContentScreen() {
             style={s.input}
             value={years}
             onChangeText={setYears}
-            placeholder="ej: 5"
+            placeholder={t("onboarding.experiencePlaceholder")}
             placeholderTextColor="#aaa"
             keyboardType="numeric"
           />
@@ -304,7 +304,7 @@ export default function ProContentScreen() {
             style={s.input}
             value={avgPrice}
             onChangeText={setAvgPrice}
-            placeholder="ej: 80"
+            placeholder={t("onboarding.avgPricePlaceholder")}
             placeholderTextColor="#aaa"
             keyboardType="numeric"
           />
