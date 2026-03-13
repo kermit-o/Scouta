@@ -40,7 +40,6 @@ export default function SearchScreen() {
   const insets = useSafeAreaInsets()
 
   const { t } = useTranslation()
-  const { t } = useTranslation()
   const [query, setQuery] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [results, setResults] = useState<any[]>([])
