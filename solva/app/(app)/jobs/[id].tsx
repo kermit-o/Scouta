@@ -18,12 +18,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   carpentry: '🪚 Carpintería', tech: '💻 Tecnología', design: '✏️ Diseño', other: '🔹 Otro'
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  open:        { label: t('jobs.statusOpen'),      color: '#059669', bg: '#D1FAE5' },
-  in_progress: { label: t('jobs.statusInProgress'),  color: '#2563EB', bg: '#DBEAFE' },
-  completed:   { label: t('jobs.statusCompleted'),   color: '#7C3AED', bg: '#EDE9FE' },
-  cancelled:   { label: t('jobs.statusCancelled'),    color: '#DC2626', bg: '#FEE2E2' },
-}
+
 
 type ViewMode = 'detail' | 'bid_form' | 'bid_detail'
 
@@ -34,6 +29,12 @@ export default function JobDetailScreen() {
   const insets = useSafeAreaInsets()
 
   const { t } = useTranslation()
+  const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+    open:        { label: t('jobs.statusOpen'),        color: '#059669', bg: '#D1FAE5' },
+    in_progress: { label: t('jobs.statusInProgress'),  color: '#2563EB', bg: '#DBEAFE' },
+    completed:   { label: t('jobs.statusCompleted'),   color: '#7C3AED', bg: '#EDE9FE' },
+    cancelled:   { label: t('jobs.statusCancelled'),   color: '#DC2626', bg: '#FEE2E2' },
+  }
   const [job, setJob] = useState<Job | null>(null)
   const [bids, setBids] = useState<Bid[]>([])
   const [myBid, setMyBid] = useState<Bid | null>(null)
