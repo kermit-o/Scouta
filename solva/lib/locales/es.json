@@ -347,5 +347,31 @@
     "backPhoto": "Foto trasera (opcional para pasaporte)",
     "selfie": "Selfie sosteniendo el documento *",
     "submit": "Enviar para verificación"
+  },
+  "drawer": {
+    "account": "MI CUENTA",
+    "verification": "VERIFICACIÓN",
+    "economic": "ECONÓMICO",
+    "business": "MI NEGOCIO",
+    "support": "SOPORTE",
+    "editProfile": "Editar perfil",
+    "notifications": "Notificaciones",
+    "countryAndCurrency": "País y moneda",
+    "security": "Seguridad",
+    "kyc": "Verificación KYC",
+    "reputation": "Mi reputación",
+    "subscription": "Mi suscripción",
+    "payments": "Mis pagos y cobros",
+    "invoices": "Facturas",
+    "guarantee": "Garantía Solva",
+    "dashboardPro": "Dashboard Pro",
+    "workZone": "Mi zona de trabajo",
+    "myServices": "Mis servicios",
+    "help": "Centro de ayuda",
+    "supportChat": "Chat con soporte",
+    "terms": "Términos y Privacidad",
+    "report": "Reportar un problema",
+    "verified": "Verificado",
+    "unverified": "Sin verificar"
   }
 }

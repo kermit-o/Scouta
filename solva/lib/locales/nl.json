@@ -347,5 +347,31 @@
     "backPhoto": "Achterkant (optioneel voor paspoort)",
     "selfie": "Selfie met document *",
     "submit": "Indienen voor verificatie"
+  },
+  "drawer": {
+    "account": "MIJN ACCOUNT",
+    "verification": "VERIFICATIE",
+    "economic": "FINANCIEEL",
+    "business": "MIJN BEDRIJF",
+    "support": "ONDERSTEUNING",
+    "editProfile": "Profiel bewerken",
+    "notifications": "Meldingen",
+    "countryAndCurrency": "Land en valuta",
+    "security": "Beveiliging",
+    "kyc": "KYC-verificatie",
+    "reputation": "Mijn reputatie",
+    "subscription": "Mijn abonnement",
+    "payments": "Betalingen en inkomsten",
+    "invoices": "Facturen",
+    "guarantee": "Solva-garantie",
+    "dashboardPro": "Pro-dashboard",
+    "workZone": "Mijn werkgebied",
+    "myServices": "Mijn diensten",
+    "help": "Helpcentrum",
+    "supportChat": "Chat met support",
+    "terms": "Voorwaarden & Privacy",
+    "report": "Probleem melden",
+    "verified": "Geverifieerd",
+    "unverified": "Niet geverifieerd"
   }
 }

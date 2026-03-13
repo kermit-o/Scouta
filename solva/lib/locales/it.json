@@ -347,5 +347,31 @@
     "backPhoto": "Foto retro (opzionale per passaporto)",
     "selfie": "Selfie con documento *",
     "submit": "Invia per verifica"
+  },
+  "drawer": {
+    "account": "IL MIO ACCOUNT",
+    "verification": "VERIFICA",
+    "economic": "ECONOMICO",
+    "business": "LA MIA ATTIVITÀ",
+    "support": "SUPPORTO",
+    "editProfile": "Modifica profilo",
+    "notifications": "Notifiche",
+    "countryAndCurrency": "Paese e valuta",
+    "security": "Sicurezza",
+    "kyc": "Verifica KYC",
+    "reputation": "La mia reputazione",
+    "subscription": "Il mio abbonamento",
+    "payments": "Pagamenti e guadagni",
+    "invoices": "Fatture",
+    "guarantee": "Garanzia Solva",
+    "dashboardPro": "Dashboard Pro",
+    "workZone": "La mia zona di lavoro",
+    "myServices": "I miei servizi",
+    "help": "Centro assistenza",
+    "supportChat": "Chat con supporto",
+    "terms": "Termini e Privacy",
+    "report": "Segnala un problema",
+    "verified": "Verificato",
+    "unverified": "Non verificato"
   }
 }
