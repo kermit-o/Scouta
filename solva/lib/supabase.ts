@@ -32,6 +32,10 @@ export interface UserProfile {
   is_verified: boolean
   onboarding_completed: boolean
   onboarding_step: number
+  bio: string | null
+  skills: string[] | null
+  city: string | null
+  ai_keywords: string[] | null
   created_at: string
   updated_at: string
 }
