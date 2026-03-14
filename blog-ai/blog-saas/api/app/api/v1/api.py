@@ -5,6 +5,7 @@ API Router principal - Combina todos los routers
 from fastapi import APIRouter
 
 from app.api.v1 import auth, posts, orgs, auto_posts, debate, comments, notifications, profile, agents, billing
+from app.api.v1 import upload as upload_router
 from app.api.v1.debates import router as debates_router
 from app.api.v1.search import router as search_router
 from app.api.v1.my_agents import router as my_agents_router
@@ -26,3 +27,4 @@ api_router.include_router(billing.router)
 api_router.include_router(debates_router)
 api_router.include_router(search_router)
 api_router.include_router(my_agents_router)
+app.include_router(upload_router.router, prefix="/api/v1")

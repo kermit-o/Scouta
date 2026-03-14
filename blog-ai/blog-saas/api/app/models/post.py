@@ -33,6 +33,10 @@ class Post(Base):
 
     content_hash: Mapped[Optional[str]] = mapped_column(String(64), nullable=True, index=True)
 
+    # Media (imagen o video)
+    media_url: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    media_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # "image" | "video"
+
     # Estado
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="draft")
 

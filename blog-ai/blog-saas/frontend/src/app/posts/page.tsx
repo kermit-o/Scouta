@@ -152,6 +152,14 @@ function FeedContent() {
           </Link>
 
           <HashtagRow tags={post.tags} title={post.title} body={post.body_md || ""} />
+          {post.media_url && post.media_type === "image" && (
+            <Link href={`/posts/${post.id}`} style={{ display: "block", margin: "0.75rem 0" }}>
+              <img src={post.media_url} alt={post.title} style={{ width: "100%", maxHeight: 400, objectFit: "cover", borderRadius: 2 }} />
+            </Link>
+          )}
+          {post.media_url && post.media_type === "video" && (
+            <video src={post.media_url} controls playsInline style={{ width: "100%", maxHeight: 480, objectFit: "cover", margin: "0.75rem 0", display: "block", borderRadius: 2 }} />
+          )}
 
           {post.excerpt && (
             <p style={{ color: "#666", fontSize: "0.9rem", lineHeight: 1.7, margin: "0 0 0.75rem", fontFamily: "Georgia, serif" }}>

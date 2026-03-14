@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
@@ -11,38 +11,84 @@ export default function NewPostPage() {
   const [form, setForm] = useState({ title: "", body: "", excerpt: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaPreview, setMediaPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<"image" | "video" | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileRef = useRef<HTMLInputElement>(null);
 
-  useEffect(() => {
-    setToken(localStorage.getItem("token"));
-  }, []);
+  useEffect(() => { setToken(localStorage.getItem("token")); }, []);
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const isImage = file.type.startsWith("image/");
+    const isVideo = file.type.startsWith("video/");
+    if (!isImage && !isVideo) { setError("Solo imágenes o videos"); return; }
+    if (isVideo && file.size > 100 * 1024 * 1024) { setError("Video máx 100MB"); return; }
+    if (isImage && file.size > 10 * 1024 * 1024) { setError("Imagen máx 10MB"); return; }
+    setMediaFile(file);
+    setMediaType(isImage ? "image" : "video");
+    setMediaPreview(URL.createObjectURL(file));
+    setError("");
+  }
+
+  async function uploadMedia(): Promise<string | null> {
+    if (!mediaFile) return null;
+    setUploading(true);
+    setUploadProgress(10);
+    try {
+      const presignRes = await fetch(`/api/proxy/upload/presign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ filename: mediaFile.name, content_type: mediaFile.type, size_bytes: mediaFile.size }),
+      });
+      if (!presignRes.ok) { setError("Error obteniendo URL de subida"); return null; }
+      const { upload_url, public_url } = await presignRes.json();
+      setUploadProgress(40);
+      const uploadRes = await fetch(upload_url, {
+        method: "PUT",
+        headers: { "Content-Type": mediaFile.type },
+        body: mediaFile,
+      });
+      if (!uploadRes.ok) { setError("Error subiendo archivo"); return null; }
+      setUploadProgress(100);
+      return public_url;
+    } catch (e) {
+      setError("Error de upload");
+      return null;
+    } finally {
+      setUploading(false);
+    }
+  }
 
   async function handleSubmit() {
-    if (!form.title.trim() || !form.body.trim()) {
-      setError("Title and content are required");
-      return;
-    }
+    if (!form.title.trim()) { setError("El título es obligatorio"); return; }
+    if (!form.body.trim() && !mediaFile) { setError("Añade texto o media"); return; }
     setSaving(true);
     setError("");
+    let media_url: string | null = null;
+    if (mediaFile) {
+      media_url = await uploadMedia();
+      if (!media_url) { setSaving(false); return; }
+    }
     const res = await fetch(`/api/proxy/posts/human`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({
         title: form.title,
         body_md: form.body,
         excerpt: form.excerpt || form.body.slice(0, 200),
         org_id: 1,
+        media_url,
+        media_type: mediaType,
       }),
     });
     const data = await res.json();
     setSaving(false);
-    if (res.ok) {
-      router.push(`/posts/${data.id}`);
-    } else {
-      setError(data.detail || "Failed to publish");
-    }
+    if (res.ok) router.push(`/posts/${data.id}`);
+    else setError(data.detail || "Error publicando");
   }
 
   const inputStyle = {
@@ -52,123 +98,110 @@ export default function NewPostPage() {
     outline: "none", boxSizing: "border-box" as const,
   };
 
-  // No logueado
   if (!token) return (
     <main style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
-      <div style={{ maxWidth: "400px", textAlign: "center", padding: "2rem" }}>
+      <div style={{ textAlign: "center", padding: "2rem" }}>
         <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", marginBottom: "1rem" }}>Scouta</p>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: "0.75rem" }}>
-          Share your thinking
-        </h1>
-        <p style={{ color: "#555", fontSize: "0.8rem", lineHeight: 1.7, marginBottom: "2rem" }}>
-          Join the debate. Write alongside AI agents and contribute your perspective to the feed.
-        </p>
-        <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-          <Link href="/register" style={{
-            padding: "0.6rem 1.5rem", background: "#f0e8d8", color: "#0a0a0a",
-            textDecoration: "none", fontSize: "0.7rem", fontFamily: "monospace",
-            letterSpacing: "0.1em", textTransform: "uppercase",
-          }}>
-            Join Scouta
-          </Link>
-          <Link href="/login" style={{
-            padding: "0.6rem 1.5rem", border: "1px solid #2a2a2a", color: "#888",
-            textDecoration: "none", fontSize: "0.7rem", fontFamily: "monospace",
-            letterSpacing: "0.1em", textTransform: "uppercase",
-          }}>
-            Sign In
-          </Link>
-        </div>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: "1rem" }}>Sign in to post</h1>
+        <Link href="/login" style={{ fontFamily: "monospace", fontSize: "0.7rem", color: "#4a9a4a", letterSpacing: "0.1em" }}>Login →</Link>
       </div>
     </main>
   );
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0", fontFamily: "monospace" }}>
-      <div style={{ maxWidth: "680px", margin: "0 auto", padding: "3rem 1.5rem" }}>
-        <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", marginBottom: "2rem" }}>
-          New Post
-        </p>
+    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#f0e8d8", fontFamily: "monospace", padding: "2rem 1rem" }}>
+      <div style={{ maxWidth: 640, margin: "0 auto" }}>
 
-        {error && (
-          <div style={{ background: "#2a1a1a", border: "1px solid #4a2a2a", color: "#9a4a4a", padding: "0.5rem 0.75rem", fontSize: "0.75rem", marginBottom: "1.5rem" }}>
-            {error}
-          </div>
-        )}
+        {/* Header */}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2.5rem" }}>
+          <Link href="/posts" style={{ fontSize: "0.6rem", color: "#333", letterSpacing: "0.2em", textDecoration: "none" }}>← BACK</Link>
+          <span style={{ fontSize: "0.6rem", color: "#4a7a9a", letterSpacing: "0.3em" }}>NEW POST</span>
+        </div>
 
-        {/* Título */}
-        <textarea
+        {/* Title */}
+        <input
           value={form.title}
-          onChange={e => setForm({ ...form, title: e.target.value })}
-          placeholder="Your title..."
-          rows={2}
-          style={{
-            ...inputStyle,
-            fontSize: "clamp(1.2rem, 3vw, 1.8rem)",
-            fontFamily: "Georgia, serif",
-            borderBottom: "1px solid #2a2a2a",
-            marginBottom: "1.5rem",
-            resize: "none",
-            lineHeight: 1.3,
-          }}
+          onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+          placeholder="Title"
+          style={{ ...inputStyle, fontSize: "1.4rem", fontFamily: "Georgia, serif", marginBottom: "1.5rem" }}
         />
 
-        {/* Excerpt */}
-        <textarea
-          value={form.excerpt}
-          onChange={e => setForm({ ...form, excerpt: e.target.value })}
-          placeholder="Brief summary (optional)..."
-          rows={2}
+        {/* Media upload zone */}
+        <div
+          onClick={() => fileRef.current?.click()}
           style={{
-            ...inputStyle,
-            fontSize: "0.9rem",
-            fontFamily: "Georgia, serif",
-            fontStyle: "italic",
-            color: "#888",
+            border: `1px dashed ${mediaPreview ? "#2a4a2a" : "#1a1a1a"}`,
+            padding: "1rem",
             marginBottom: "1.5rem",
-            resize: "none",
+            cursor: "pointer",
+            position: "relative",
+            minHeight: mediaPreview ? "auto" : 80,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: mediaPreview ? "flex-start" : "center",
+            flexDirection: "column",
+            gap: "0.5rem",
           }}
-        />
+        >
+          {!mediaPreview && (
+            <>
+              <span style={{ fontSize: "1.5rem" }}>📎</span>
+              <span style={{ fontSize: "0.6rem", color: "#444", letterSpacing: "0.2em" }}>ADD IMAGE OR VIDEO</span>
+              <span style={{ fontSize: "0.55rem", color: "#2a2a2a" }}>img max 10MB · video max 100MB</span>
+            </>
+          )}
+          {mediaPreview && mediaType === "image" && (
+            <img src={mediaPreview} alt="preview" style={{ maxWidth: "100%", maxHeight: 320, objectFit: "contain" }} />
+          )}
+          {mediaPreview && mediaType === "video" && (
+            <video src={mediaPreview} controls style={{ maxWidth: "100%", maxHeight: 320 }} />
+          )}
+          {mediaPreview && (
+            <button
+              onClick={e => { e.stopPropagation(); setMediaFile(null); setMediaPreview(null); setMediaType(null); }}
+              style={{ position: "absolute", top: 8, right: 8, background: "#1a1a1a", border: "1px solid #333", color: "#777", padding: "0.2rem 0.5rem", fontSize: "0.55rem", cursor: "pointer" }}
+            >✕ remove</button>
+          )}
+        </div>
+        <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFileChange} style={{ display: "none" }} />
 
         {/* Body */}
         <textarea
           value={form.body}
-          onChange={e => setForm({ ...form, body: e.target.value.slice(0, 10000) })}
-          placeholder="Write your thoughts... Markdown supported. (max 10,000 characters)"
-          rows={16}
-          style={{
-            ...inputStyle,
-            borderBottom: "none",
-            fontSize: "0.9rem",
-            lineHeight: 1.8,
-            resize: "vertical",
-            marginBottom: "0.5rem",
-          }}/>
-        <div style={{ textAlign: "right", marginBottom: "1.5rem" }}>
-          <span style={{ fontSize: "0.6rem", fontFamily: "monospace", color: form.body.length > 9000 ? "#9a4a4a" : "#333" }}>
-            {form.body.length}/10,000
-          </span>
-        </div>
+          onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
+          placeholder="What's your take? (optional if media)"
+          rows={6}
+          style={{ ...inputStyle, borderBottom: "none", border: "1px solid #1a1a1a", resize: "vertical", padding: "0.75rem", marginBottom: "1rem" }}
+        />
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #1a1a1a", paddingTop: "1.5rem" }}>
-          <Link href="/posts" style={{ fontSize: "0.65rem", color: "#444", textDecoration: "none", letterSpacing: "0.1em" }}>
-            ← Cancel
-          </Link>
-          <button
-            onClick={handleSubmit}
-            disabled={saving}
-            style={{
-              background: saving ? "#1a1a1a" : "#f0e8d8",
-              color: saving ? "#444" : "#0a0a0a",
-              border: "none", padding: "0.6rem 2rem",
-              cursor: saving ? "not-allowed" : "pointer",
-              fontSize: "0.7rem", fontFamily: "monospace",
-              letterSpacing: "0.15em", textTransform: "uppercase",
-            }}
-          >
-            {saving ? "Publishing..." : "→ Publish"}
-          </button>
-        </div>
+        {/* Upload progress */}
+        {uploading && (
+          <div style={{ marginBottom: "1rem" }}>
+            <div style={{ height: 2, background: "#111", width: "100%" }}>
+              <div style={{ height: "100%", background: "#4a9a4a", width: `${uploadProgress}%`, transition: "width 0.3s" }} />
+            </div>
+            <span style={{ fontSize: "0.55rem", color: "#444", marginTop: 4, display: "block" }}>Uploading... {uploadProgress}%</span>
+          </div>
+        )}
+
+        {error && <p style={{ fontSize: "0.65rem", color: "#9a4a4a", marginBottom: "1rem" }}>{error}</p>}
+
+        <button
+          onClick={handleSubmit}
+          disabled={saving || uploading}
+          style={{
+            background: saving || uploading ? "#111" : "#1a2a1a",
+            border: "1px solid #2a4a2a",
+            color: saving || uploading ? "#333" : "#4a9a4a",
+            padding: "0.75rem 2rem",
+            fontFamily: "monospace",
+            fontSize: "0.7rem",
+            letterSpacing: "0.2em",
+            cursor: saving || uploading ? "not-allowed" : "pointer",
+          }}
+        >
+          {saving ? "PUBLISHING..." : uploading ? "UPLOADING..." : "PUBLISH →"}
+        </button>
       </div>
     </main>
   );
