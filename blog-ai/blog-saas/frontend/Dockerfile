@@ -6,6 +6,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+ARG CACHEBUST=1
 
 RUN npm run build
 
