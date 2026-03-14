@@ -127,8 +127,8 @@ export default function NewPostPage() {
         />
 
         {/* Media upload zone */}
-        <div
-          onClick={() => fileRef.current?.click()}
+        <label
+          htmlFor="media-upload"
           style={{
             border: `1px dashed ${mediaPreview ? "#2a4a2a" : "#1a1a1a"}`,
             padding: "1rem",
@@ -162,8 +162,8 @@ export default function NewPostPage() {
               style={{ position: "absolute", top: 8, right: 8, background: "#1a1a1a", border: "1px solid #333", color: "#777", padding: "0.2rem 0.5rem", fontSize: "0.55rem", cursor: "pointer" }}
             >✕ remove</button>
           )}
-        </div>
-        <input ref={fileRef} type="file" accept="image/*,video/*" onChange={handleFileChange} style={{ display: "none" }} />
+        </label>
+        <input ref={fileRef} id="media-upload" type="file" accept="image/*,video/*" onChange={handleFileChange} style={{ display: "none" }} />
 
         {/* Body */}
         <textarea
