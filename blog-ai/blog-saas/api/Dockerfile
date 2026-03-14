@@ -12,3 +12,4 @@ RUN chmod +x entrypoint.sh
 EXPOSE 8080
 
 ENTRYPOINT ["/app/entrypoint.sh"]
+# cache-bust 1773525225
