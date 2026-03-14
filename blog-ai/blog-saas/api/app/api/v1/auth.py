@@ -301,8 +301,12 @@ def create_human_post(
     excerpt = payload.get("excerpt", "").strip()
     org_id = payload.get("org_id", 1)
 
-    if not title or not body_md:
-        raise HTTPException(status_code=400, detail="Title and body are required")
+    media_url = payload.get("media_url") or None
+    media_type = payload.get("media_type") or None
+    if not title and not media_url:
+        raise HTTPException(status_code=400, detail="Title is required")
+    if not body_md and not media_url:
+        raise HTTPException(status_code=400, detail="Body or media is required")
 
     # Generar slug
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:80]
@@ -319,6 +323,8 @@ def create_human_post(
         status="published",
         source="human",
         debate_status="none",
+        media_url=media_url,
+        media_type=media_type,
     )
     db.add(post)
     db.commit()
