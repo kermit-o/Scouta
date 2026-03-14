@@ -264,3 +264,63 @@ def send_notification_email(to_email: str, username: str, notif_type: str, actor
     except Exception as e:
         print(f"[email] notification error: {e}")
         return False
+
+
+def send_admin_notification(event_type: str, **kwargs) -> bool:
+    """Notifica al admin sobre nuevo usuario, post o comentario."""
+    try:
+        admin_email = os.getenv("ADMIN_EMAIL", "outman@scouta.co")
+        if not admin_email:
+            return False
+
+        if event_type == "new_user":
+            subject = f"[Scouta] Nuevo usuario: {kwargs.get('username','')}"
+            content = f"""
+            <p style="margin:0 0 8px;font-family:monospace;font-size:11px;letter-spacing:3px;color:#333;text-transform:uppercase;">Nuevo Registro</p>
+            <h1 style="margin:0 0 24px;font-size:28px;font-weight:400;color:#f0e8d8;">@{kwargs.get('username','')}</h1>
+            <p style="font-size:14px;color:#666;font-family:monospace;">{kwargs.get('email','')}</p>
+            <table cellpadding="0" cellspacing="0" style="margin:16px 0;">
+              <tr><td style="background:#111;border:1px solid #1a1a1a;">
+                <a href="{FRONTEND_URL}/admin" style="display:block;padding:10px 24px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#555;text-decoration:none;">Ver en Admin →</a>
+              </td></tr>
+            </table>"""
+
+        elif event_type == "new_post":
+            subject = f"[Scouta] Nuevo post: {kwargs.get('title','')[:50]}"
+            post_url = f"{FRONTEND_URL}/posts/{kwargs.get('post_id','')}"
+            content = f"""
+            <p style="margin:0 0 8px;font-family:monospace;font-size:11px;letter-spacing:3px;color:#333;text-transform:uppercase;">Nuevo Post</p>
+            <h1 style="margin:0 0 16px;font-size:24px;font-weight:400;color:#f0e8d8;">{kwargs.get('title','')[:80]}</h1>
+            <p style="font-size:14px;color:#666;font-family:monospace;">Por @{kwargs.get('username','')}</p>
+            <table cellpadding="0" cellspacing="0" style="margin:16px 0;">
+              <tr><td style="background:#111;border:1px solid #1a1a1a;">
+                <a href="{post_url}" style="display:block;padding:10px 24px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#555;text-decoration:none;">Ver Post →</a>
+              </td></tr>
+            </table>"""
+
+        elif event_type == "new_comment":
+            subject = f"[Scouta] Nuevo comentario de @{kwargs.get('username','')}"
+            post_url = f"{FRONTEND_URL}/posts/{kwargs.get('post_id','')}"
+            content = f"""
+            <p style="margin:0 0 8px;font-family:monospace;font-size:11px;letter-spacing:3px;color:#333;text-transform:uppercase;">Nuevo Comentario</p>
+            <h1 style="margin:0 0 16px;font-size:22px;font-weight:400;color:#f0e8d8;">@{kwargs.get('username','')}</h1>
+            <p style="font-size:14px;color:#666;font-family:monospace;font-style:italic;">"{str(kwargs.get('body',''))[:120]}"</p>
+            <p style="font-size:12px;color:#444;font-family:monospace;">En: {kwargs.get('post_title','')[:60]}</p>
+            <table cellpadding="0" cellspacing="0" style="margin:16px 0;">
+              <tr><td style="background:#111;border:1px solid #1a1a1a;">
+                <a href="{post_url}" style="display:block;padding:10px 24px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#555;text-decoration:none;">Ver →</a>
+              </td></tr>
+            </table>"""
+        else:
+            return False
+
+        resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": admin_email,
+            "subject": subject,
+            "html": _base_template(content, "Admin notification — Scouta")
+        })
+        return True
+    except Exception as e:
+        print(f"[email] admin notification error: {e}")
+        return False

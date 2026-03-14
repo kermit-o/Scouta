@@ -171,6 +171,23 @@ def create_comment(
                     "ptitle": post_obj.title if post_obj else "",
                 })
                 db.commit()
+                # Email al autor del parent
+                try:
+                    from app.models.user import User as UserModel
+                    from app.services.email_service import send_notification_email
+                    parent_user = db.query(UserModel).filter(UserModel.id == parent.author_user_id).one_or_none()
+                    if parent_user and parent_user.email:
+                        post_url = f"https://scouta.co/posts/{post_id}"
+                        send_notification_email(
+                            to_email=parent_user.email,
+                            username=parent_user.username or parent_user.display_name or "there",
+                            notif_type="reply",
+                            actor_name=user.display_name or user.username or "Someone",
+                            post_title=post_obj.title if post_obj else "",
+                            post_url=post_url,
+                        )
+                except Exception as email_err:
+                    print("[email] reply notification failed:", email_err)
         except Exception as e:
             print("[notifications] insert failed:", e)
 

@@ -269,7 +269,7 @@ export default function AdminPage() {
               <div key={u.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
                 <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{u.id}</span>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontSize: "0.8rem", color: "#c8c0b0" }}>{u.display_name || u.username || "—"}</span>
+                  <Link href={`/u/${u.username}`} style={{ fontSize: "0.8rem", color: "#c8c0b0", textDecoration: "none" }}>{u.display_name || u.username || "—"}</Link>
                   <span style={{ fontSize: "0.55rem", color: "#444", marginLeft: "0.5rem" }}>{u.email}</span>
                 </div>
                 <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 60 }}>@{u.username || "—"}</span>
