@@ -41,21 +41,37 @@ export default function NewPostPage() {
     setUploading(true);
     setUploadProgress(10);
     try {
+      console.log("[upload] calling presign...");
       const presignRes = await fetch(`/api/proxy/upload/presign`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ filename: mediaFile.name, content_type: mediaFile.type, size_bytes: mediaFile.size }),
       });
-      if (!presignRes.ok) { setError("Error obteniendo URL de subida"); return null; }
+      console.log("[upload] presign status:", presignRes.status);
+      if (!presignRes.ok) {
+        const err = await presignRes.text();
+        console.log("[upload] presign error:", err);
+        setError("Error obteniendo URL de subida");
+        return null;
+      }
       const { upload_url, public_url } = await presignRes.json();
+      console.log("[upload] public_url:", public_url);
       setUploadProgress(40);
+      console.log("[upload] uploading to R2...");
       const uploadRes = await fetch(upload_url, {
         method: "PUT",
         headers: { "Content-Type": mediaFile.type },
         body: mediaFile,
       });
-      if (!uploadRes.ok) { setError("Error subiendo archivo"); return null; }
+      console.log("[upload] R2 PUT status:", uploadRes.status);
+      if (!uploadRes.ok) {
+        const err2 = await uploadRes.text();
+        console.log("[upload] R2 error:", err2);
+        setError("Error subiendo archivo");
+        return null;
+      }
       setUploadProgress(100);
+      console.log("[upload] done, returning public_url:", public_url);
       return public_url;
     } catch (e) {
       setError("Error de upload");
