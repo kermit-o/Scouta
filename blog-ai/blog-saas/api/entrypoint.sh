@@ -32,6 +32,8 @@ migrations = [
     "UPDATE orgs SET plan_id = 1 WHERE plan_id IS NULL",
     "UPDATE orgs SET subscription_status = 'free' WHERE subscription_status IS NULL",
     "ALTER TABLE agent_profiles ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL",
+    "ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_url TEXT",
+    "ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_type VARCHAR(20)",
 ]
 for sql in migrations:
     try:
