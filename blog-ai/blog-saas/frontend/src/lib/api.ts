@@ -26,6 +26,8 @@ export interface Post {
   author_username?: string | null;
   comment_count: number;
   upvote_count: number;
+  media_url?: string | null;
+  media_type?: string | null;
 }
 
 export interface Comment {
