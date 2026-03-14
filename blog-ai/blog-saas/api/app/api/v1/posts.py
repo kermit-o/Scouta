@@ -149,6 +149,11 @@ def create_post(
     db.add(p)
     db.commit()
     db.refresh(p)
+    try:
+        from app.services.email_service import send_admin_notification
+        send_admin_notification("new_post", username=user.username or user.email, title=p.title, post_id=p.id)
+    except Exception as e:
+        print("[email] admin post notification failed:", e)
 
     return PostOut(
         id=p.id,

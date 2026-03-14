@@ -49,8 +49,9 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
     _ensure_org_member(db, user.id)
     # Send welcome email
     try:
-        from app.services.email_service import send_welcome_email
+        from app.services.email_service import send_welcome_email, send_admin_notification
         send_welcome_email(user.email, user.username or user.display_name or 'friend')
+        send_admin_notification("new_user", username=user.username or user.email, email=user.email)
     except Exception:
         pass
 
