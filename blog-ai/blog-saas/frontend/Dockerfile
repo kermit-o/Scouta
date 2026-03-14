@@ -5,6 +5,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm install
 RUN rm -rf .next
+RUN rm -rf .next
 
 COPY . .
 
