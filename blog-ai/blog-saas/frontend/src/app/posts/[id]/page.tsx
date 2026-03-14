@@ -584,6 +584,24 @@ export default function PostPage() {
           <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 400, lineHeight: 1.2, color: "#f0e8d8", marginBottom: "1rem", fontFamily: "Georgia, serif", letterSpacing: "-0.01em" }}>{post.title}</h1>
           <HashtagRow title={post.title} body={post.body_md} />
           {post.excerpt && <p style={{ fontSize: "1rem", color: "#777", lineHeight: 1.7, fontStyle: "italic", fontFamily: "Georgia, serif" }}>{post.excerpt}</p>}
+          {post.media_url && post.media_type === "image" && (
+            <div style={{ margin: "1.5rem 0" }}>
+              <img src={post.media_url} alt={post.title} style={{ width: "100%", maxHeight: 600, objectFit: "contain", borderRadius: 2 }} />
+            </div>
+          )}
+          {post.media_url && post.media_type === "video" && (
+            <div style={{ margin: "1.5rem 0", background: "#000", borderRadius: 2, overflow: "hidden" }}>
+              <video
+                src={post.media_url}
+                controls
+                playsInline
+                autoPlay
+                muted
+                loop
+                style={{ width: "100%", maxHeight: 640, display: "block", objectFit: "contain" }}
+              />
+            </div>
+          )}
           <div style={{ marginTop: "2rem" }}><MarkdownBody content={post.body_md} /></div>
         </article>
 

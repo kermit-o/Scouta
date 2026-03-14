@@ -145,6 +145,8 @@ def create_post(
         slug=payload.slug,
         body_md=payload.body_md or "",
         status="draft",
+        media_url=payload.media_url or None,
+        media_type=payload.media_type or None,
     )
     db.add(p)
     db.commit()
@@ -168,6 +170,8 @@ def create_post(
         source=getattr(p, "source", None),
         created_at=p.created_at.isoformat() if p.created_at else "",
         published_at=None,
+        media_url=getattr(p, "media_url", None),
+        media_type=getattr(p, "media_type", None),
     )
 
 @router.get("/orgs/{org_id}/posts/{post_id}", response_model=PostOut)

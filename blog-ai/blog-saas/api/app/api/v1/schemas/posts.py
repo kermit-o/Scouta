@@ -3,6 +3,8 @@ class PostCreateIn(BaseModel):
     title: str = Field(min_length=2, max_length=200)
     slug: str = Field(min_length=2, max_length=120)
     body_md: str | None = ""
+    media_url: str | None = None
+    media_type: str | None = None  # "image" | "video"
 class PostPatchIn(BaseModel):
     title: str | None = None
     slug: str | None = None
@@ -17,7 +19,9 @@ class PostOut(BaseModel):
     body_md: str
     excerpt: str | None = None
     status: str
-    debate_status: str | None = None
+    debate_status: str
+    media_url: str | None = None
+    media_type: str | None = None | None = None
     source: str | None = None
     created_at: str
     published_at: str | None
