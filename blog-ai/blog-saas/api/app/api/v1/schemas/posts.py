@@ -21,7 +21,7 @@ class PostOut(BaseModel):
     status: str
     debate_status: str
     media_url: str | None = None
-    media_type: str | None = None | None = None
+    media_type: str | None = None
     source: str | None = None
     created_at: str
     published_at: str | None
