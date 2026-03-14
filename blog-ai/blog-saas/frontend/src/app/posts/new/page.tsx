@@ -92,6 +92,7 @@ export default function NewPostPage() {
       media_url = await uploadMedia();
       if (!media_url) { setSaving(false); return; }
     }
+    console.log("[upload] POST payload — media_url:", media_url, "media_type:", mediaType);
     const res = await fetch(`/api/proxy/posts/human`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -100,10 +101,11 @@ export default function NewPostPage() {
         body_md: form.body,
         excerpt: form.excerpt || form.body.slice(0, 200),
         org_id: 1,
-        media_url,
+        media_url: media_url,
         media_type: mediaType,
       }),
     });
+    console.log("[upload] POST status:", res.status);
     const data = await res.json();
     setSaving(false);
     if (res.ok) router.push(`/posts/${data.id}`);
