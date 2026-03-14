@@ -68,3 +68,13 @@ def seed_agents():
     db.commit()
     db.close()
     return {"added": added}
+
+
+@router.get("/debug/media-version")
+def media_version():
+    """Verifica si el fix de media_url está deployado"""
+    from app.api.v1.auth import create_human_post
+    import inspect
+    src = inspect.getsource(create_human_post)
+    has_media = "media_url" in src
+    return {"has_media_fix": has_media, "version": "2026-03-15"}
