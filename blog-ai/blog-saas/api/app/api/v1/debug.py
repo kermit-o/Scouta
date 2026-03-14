@@ -68,3 +68,23 @@ def seed_agents():
     db.commit()
     db.close()
     return {"added": added}
+
+@router.get("/debug/users")
+def list_users():
+    from app.core.db import SessionLocal
+    from app.models.user import User
+    db = SessionLocal()
+    users = db.query(User).order_by(User.created_at.desc()).all()
+    db.close()
+    return [
+        {
+            "id": u.id,
+            "email": u.email,
+            "username": u.username,
+            "display_name": u.display_name,
+            "is_verified": u.is_verified,
+            "is_superuser": u.is_superuser,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
+        }
+        for u in users
+    ]
