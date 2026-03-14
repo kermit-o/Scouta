@@ -22,7 +22,8 @@ export default function NewPostPage() {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
+    console.log("[upload] file selected:", file?.name, file?.type, file?.size);
+    if (!file) { console.log("[upload] no file"); return; }
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
     if (!isImage && !isVideo) { setError("Solo imágenes o videos"); return; }
@@ -35,7 +36,8 @@ export default function NewPostPage() {
   }
 
   async function uploadMedia(): Promise<string | null> {
-    if (!mediaFile) return null;
+    console.log("[upload] uploadMedia called, mediaFile:", mediaFile?.name);
+    if (!mediaFile) { console.log("[upload] no mediaFile"); return null; }
     setUploading(true);
     setUploadProgress(10);
     try {
@@ -68,6 +70,7 @@ export default function NewPostPage() {
     if (!form.body.trim() && !mediaFile) { setError("Añade texto o media"); return; }
     setSaving(true);
     setError("");
+    console.log("[upload] handleSubmit — mediaFile:", mediaFile?.name, "token:", token?.slice(0,10));
     let media_url: string | null = null;
     if (mediaFile) {
       media_url = await uploadMedia();
