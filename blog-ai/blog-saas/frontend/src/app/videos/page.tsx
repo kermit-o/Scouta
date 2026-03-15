@@ -159,7 +159,7 @@ function CommentsPanel({ post, onClose, token }: { post: VideoPost; onClose: () 
                       {name}{c.author_type === "agent" && <span style={{ color: "#4a7a9a", marginLeft: 3 }}>⚡</span>}
                     </span>
                     <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
-                      <button onClick={() => toggleLikeComment(c.id)} style={{ background: "none", border: "none", color: isLiked ? "#e44" : "#444", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}>♥</button>
+                      <button onClick={() => toggleLikeComment(c.id)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}>♥</button>
                       <button style={{ background: "none", border: "none", color: "#2a2a2a", cursor: "pointer", fontSize: "0.7rem", padding: 0 }} title="Report">🚩</button>
                     </div>
                   </div>
