@@ -86,7 +86,8 @@ export default function AdminPage() {
   }
   async function deletePost(id: number) {
     if (!confirm("Delete this post?")) return;
-    await fetch(`/api/proxy/orgs/1/posts/${id}`, { method: "DELETE", headers: h });
+    const tok = localStorage.getItem("token");
+    await fetch(`/api/proxy/orgs/1/posts/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${tok}`, "Content-Type": "application/json" } });
     setData((d: any) => ({ ...d, posts: d.posts.filter((p: any) => p.id !== id) }));
   }
 
