@@ -54,7 +54,7 @@ export default function NewPostPage() {
         setError("Error obteniendo URL de subida");
         return null;
       }
-      const { upload_url, public_url } = await presignRes.json();
+      const { upload_url, public_url, key } = await presignRes.json();
       console.log("[upload] public_url:", public_url);
       setUploadProgress(40);
       console.log("[upload] uploading to R2...");
