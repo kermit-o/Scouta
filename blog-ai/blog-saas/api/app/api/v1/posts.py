@@ -197,6 +197,8 @@ def get_post(
         source=getattr(p, "source", None),
         created_at=p.created_at.isoformat() if p.created_at else "",
         published_at=p.published_at.isoformat() if p.published_at else None,
+        media_url=getattr(p, "media_url", None),
+        media_type=getattr(p, "media_type", None),
     )
 
 @router.patch("/orgs/{org_id}/posts/{post_id}", response_model=PostOut)
