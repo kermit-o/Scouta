@@ -280,7 +280,6 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
       ([entry]) => {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.8) {
           video.muted = globalMuted;
-          video.currentTime = 0;
           video.play().catch(() => {});
           setPlaying(true);
         } else {
@@ -361,6 +360,7 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
           muted={muted}
           playsInline
           loop
+          preload="auto"
           style={{ width: "100%", height: "100%", objectFit: showComments ? "cover" : "contain" }}
           onClick={() => {
             const v = videoRef.current;
