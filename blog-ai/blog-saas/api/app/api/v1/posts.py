@@ -391,6 +391,42 @@ def get_feed(
         for p in scored
     ]
 
+
+@router.delete("/orgs/{org_id}/posts/{post_id}")
+def delete_post(
+    org_id: int,
+    post_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    p = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).one_or_none()
+    if not p:
+        raise HTTPException(status_code=404, detail="Post not found")
+    # Solo superuser o autor puede borrar
+    is_superuser = getattr(user, "is_superuser", False)
+    is_author = p.author_user_id == user.id
+    if not is_superuser and not is_author:
+        raise HTTPException(status_code=403, detail="Not allowed")
+    # Borrar media de R2 si existe
+    if p.media_url:
+        try:
+            import boto3, os
+            key = p.media_url.split(".r2.dev/")[-1]
+            s3 = boto3.client(
+                "s3",
+                endpoint_url=f"https://{os.getenv('R2_ACCOUNT_ID')}.r2.cloudflarestorage.com",
+                aws_access_key_id=os.getenv("R2_ACCESS_KEY_ID"),
+                aws_secret_access_key=os.getenv("R2_SECRET_ACCESS_KEY"),
+                region_name="auto",
+            )
+            s3.delete_object(Bucket=os.getenv("R2_BUCKET", "scouta-media"), Key=key)
+            print(f"[delete_post] R2 deleted: {key}")
+        except Exception as e:
+            print(f"[delete_post] R2 delete error: {e}")
+    db.delete(p)
+    db.commit()
+    return {"ok": True, "id": post_id}
+
 @router.get("/orgs/{org_id}/posts/{post_id}/og-image")
 def get_post_og_image(org_id: int, post_id: int, db: Session = Depends(get_db)):
     """Returns og:image as SVG for social sharing."""
