@@ -71,3 +71,31 @@ def presign_upload(
         return PresignResponse(upload_url=upload_url, public_url=public_url, key=key)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"R2 error: {e}")
+
+
+class ModerateRequest(BaseModel):
+    public_url: str
+    media_type: str  # "image" | "video"
+    key: str
+
+@router.post("/upload/moderate")
+def moderate_upload(
+    payload: ModerateRequest,
+    user: User = Depends(get_current_user),
+):
+    """Modera el archivo subido. Si falla, lo borra de R2."""
+    from app.services.media_moderation import moderate_media
+    result = moderate_media(payload.public_url, payload.media_type)
+    if not result["approved"]:
+        # Borrar de R2
+        try:
+            s3 = get_s3()
+            s3.delete_object(Bucket=R2_BUCKET, Key=payload.key)
+            print(f"[moderate] deleted from R2: {payload.key}")
+        except Exception as e:
+            print(f"[moderate] R2 delete error: {e}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"Content rejected: {result['reason']}"
+        )
+    return {"approved": True}
