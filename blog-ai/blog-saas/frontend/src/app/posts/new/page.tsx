@@ -70,6 +70,19 @@ export default function NewPostPage() {
         setError("Error subiendo archivo");
         return null;
       }
+      setUploadProgress(80);
+      // Moderar contenido
+      console.log("[upload] moderating...");
+      const modRes = await fetch(`/api/proxy/upload/moderate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ public_url, media_type: mediaType, key }),
+      });
+      if (!modRes.ok) {
+        const modErr = await modRes.json();
+        setError(`Content rejected: ${modErr.detail || "inappropriate content"}`);
+        return null;
+      }
       setUploadProgress(100);
       console.log("[upload] done, returning public_url:", public_url);
       return public_url;
