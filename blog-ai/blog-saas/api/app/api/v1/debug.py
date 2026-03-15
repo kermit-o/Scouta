@@ -79,3 +79,28 @@ def media_version():
     has_media = "media_url" in src
     return {"has_media_fix": has_media, "version": "2026-03-15"}
 # force redeploy 1773534020
+
+@router.post("/debug/test-media-write")
+def test_media_write(db = __import__("fastapi", fromlist=["Depends"]).Depends(__import__("app.core.db", fromlist=["get_db"]).get_db)):
+    """Test escribir media_url directamente en DB"""
+    from sqlalchemy import text
+    # Ver columnas de posts
+    result = db.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='posts' AND column_name LIKE 'media%'"))
+    cols = [row[0] for row in result]
+    # Intentar update en post existente
+    try:
+        db.execute(text("UPDATE posts SET media_url='https://test.r2.dev/test.mp4', media_type='video' WHERE id=985"))
+        db.commit()
+        updated = True
+    except Exception as e:
+        updated = False
+        error = str(e)
+    # Verificar
+    result2 = db.execute(text("SELECT media_url, media_type FROM posts WHERE id=985"))
+    row = result2.fetchone()
+    return {
+        "media_columns_exist": cols,
+        "update_success": updated,
+        "post_985_media_url": row[0] if row else None,
+        "post_985_media_type": row[1] if row else None,
+    }
