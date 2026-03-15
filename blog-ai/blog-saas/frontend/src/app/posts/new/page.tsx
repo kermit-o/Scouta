@@ -76,7 +76,7 @@ export default function NewPostPage() {
       const modRes = await fetch(`/api/proxy/upload/moderate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ public_url, media_type: mediaType, key }),
+        body: JSON.stringify({ public_url, media_type: mediaType, key: key || "" }),
       });
       if (!modRes.ok) {
         const modErr = await modRes.json();
