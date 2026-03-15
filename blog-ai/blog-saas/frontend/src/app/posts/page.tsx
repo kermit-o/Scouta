@@ -158,7 +158,7 @@ function FeedContent() {
             </Link>
           )}
           {post.media_url && post.media_type === "video" && (
-            <video src={post.media_url} controls playsInline style={{ width: "100%", maxHeight: 480, objectFit: "cover", margin: "0.75rem 0", display: "block", borderRadius: 2 }} />
+            <VideoCard src={post.media_url} title={post.title} postId={post.id} />
           )}
 
           {post.excerpt && (
@@ -182,6 +182,71 @@ function FeedContent() {
         {loadingMore && <span style={{ color: "#4a9a4a", fontSize: "0.8rem", fontFamily: "monospace" }}>⏳ Loading more...</span>}
         {!hasMore && posts.length > 0 && <span style={{ color: "#333", fontSize: "0.8rem", fontFamily: "monospace" }}>📄 End of feed</span>}
       </div>
+    </div>
+  );
+}
+
+
+// ── VideoCard — autoplay on scroll ───────────────────────────────────
+function VideoCard({ src, title, postId }: { src: string; title: string; postId: number }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [muted, setMuted] = useState(true);
+  const [playing, setPlaying] = useState(false);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+          video.play().catch(() => {});
+          setPlaying(true);
+        } else {
+          video.pause();
+          setPlaying(false);
+        }
+      },
+      { threshold: [0.6] }
+    );
+    observer.observe(video);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div style={{ position: "relative", width: "100%", background: "#000", margin: "0.75rem 0", borderRadius: 4, overflow: "hidden" }}>
+      <video
+        ref={videoRef}
+        src={src}
+        muted={muted}
+        playsInline
+        loop
+        style={{ width: "100%", maxHeight: "75vh", objectFit: "cover", display: "block" }}
+      />
+      {/* Unmute button */}
+      <button
+        onClick={() => setMuted(m => !m)}
+        style={{
+          position: "absolute", bottom: 12, right: 12,
+          background: "rgba(0,0,0,0.6)", border: "1px solid #333",
+          color: "#fff", borderRadius: "50%", width: 36, height: 36,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          cursor: "pointer", fontSize: "1rem", backdropFilter: "blur(4px)",
+        }}
+        title={muted ? "Unmute" : "Mute"}
+      >
+        {muted ? "🔇" : "🔊"}
+      </button>
+      {/* Play indicator cuando está pausado */}
+      {!playing && (
+        <div style={{
+          position: "absolute", inset: 0,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(0,0,0,0.3)",
+          pointerEvents: "none",
+        }}>
+          <div style={{ fontSize: "3rem", opacity: 0.8 }}>▶</div>
+        </div>
+      )}
     </div>
   );
 }
