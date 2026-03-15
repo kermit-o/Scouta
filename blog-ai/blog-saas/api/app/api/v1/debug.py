@@ -104,3 +104,9 @@ def test_media_write(db = __import__("fastapi", fromlist=["Depends"]).Depends(__
         "post_985_media_url": row[0] if row else None,
         "post_985_media_type": row[1] if row else None,
     }
+
+@router.get("/debug/check-post-model")
+def check_post_model():
+    from app.models.post import Post
+    cols = [col.key for col in Post.__table__.columns]
+    return {"post_model_columns": cols, "has_media_url": "media_url" in cols}
