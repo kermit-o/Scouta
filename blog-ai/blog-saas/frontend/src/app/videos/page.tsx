@@ -260,22 +260,27 @@ function RepliesLoader({ postId, parentId, token, onReply }: { postId: number; p
 // ── TikTokCard ────────────────────────────────────────────────────────
 function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: boolean; token: string | null }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [muted, setMuted] = useState(true);
+  const [muted, setMuted] = useState(globalMuted);
   const [playing, setPlaying] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [liked, setLiked] = useState(false);
   const [saved, setSaved] = useState(false);
   const [likes, setLikes] = useState(post.upvote_count || 0);
 
+  // Sync muted with global
+  useEffect(() => { setMuted(globalMuted); }, [globalMuted]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
     if (isActive && !showComments) {
+      video.muted = globalMuted;
       video.play().catch(() => {});
       setPlaying(true);
     } else {
       video.pause();
-      if (!isActive) { video.currentTime = 0; setPlaying(false); }
+      video.currentTime = 0;
+      setPlaying(false);
     }
   }, [isActive, showComments]);
 
@@ -398,7 +403,7 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
 
           {/* Mute */}
           <button
-            onClick={() => setMuted(m => !m)}
+            onClick={() => { const next = !muted; setMuted(next); globalMuted = next; if (setGlobalMuted) setGlobalMuted(next); if (videoRef.current) videoRef.current.muted = next; }}
             style={{ background: "rgba(0,0,0,0.5)", border: "1px solid #333", borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", fontSize: "1rem", color: "#fff" }}
           >{muted ? "🔇" : "🔊"}</button>
         </div>
@@ -431,12 +436,18 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
   );
 }
 
+// ── Global muted state ──────────────────────────────────────────────────
+let globalMuted = true;
+let setGlobalMuted: (v: boolean) => void = () => {};
+
 // ── Main Page ─────────────────────────────────────────────────────────
 export default function VideosPage() {
   const [posts, setPosts] = useState<VideoPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState(0);
   const [token, setToken] = useState<string | null>(null);
+  const [gMuted, setGMuted] = useState(true);
+  useEffect(() => { setGlobalMuted = setGMuted; }, []);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
