@@ -6,6 +6,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+RUN echo 'bust-1773535916'
 
 RUN chmod +x entrypoint.sh
 
