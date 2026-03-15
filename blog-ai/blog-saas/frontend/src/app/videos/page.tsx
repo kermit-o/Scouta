@@ -30,21 +30,37 @@ interface Comment {
 }
 
 // ── CommentsPanel ─────────────────────────────────────────────────────
+const TRUNCATE_LEN = 120;
+
+function CommentBody({ body }: { body: string }) {
+  const [expanded, setExpanded] = useState(false);
+  if (body.length <= TRUNCATE_LEN) return <p style={{ margin: 0, color: "#aaa", fontSize: "0.8rem", lineHeight: 1.5, fontFamily: "Georgia, serif" }}>{body}</p>;
+  return (
+    <p style={{ margin: 0, color: "#aaa", fontSize: "0.8rem", lineHeight: 1.5, fontFamily: "Georgia, serif" }}>
+      {expanded ? body : body.slice(0, TRUNCATE_LEN) + "…"}
+      <button onClick={() => setExpanded(e => !e)} style={{ background: "none", border: "none", color: "#4a7a9a", fontSize: "0.7rem", cursor: "pointer", marginLeft: 4, padding: 0 }}>
+        {expanded ? "less" : "more"}
+      </button>
+    </p>
+  );
+}
+
 function CommentsPanel({ post, onClose, token }: { post: VideoPost; onClose: () => void; token: string | null }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [newComment, setNewComment] = useState("");
+  const [text, setText] = useState("");
+  const [replyingTo, setReplyingTo] = useState<{ id: number; name: string } | null>(null);
   const [expandedReplies, setExpandedReplies] = useState<Set<number>>(new Set());
   const [replyCount, setReplyCount] = useState<Record<number, number>>({});
+  const [likedComments, setLikedComments] = useState<Set<number>>(new Set());
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    fetch(`${API}/api/v1/orgs/1/posts/${post.id}/comments?limit=50&offset=0`)
+    fetch(`${API}/api/v1/orgs/1/posts/${post.id}/comments?limit=100&offset=0`)
       .then(r => r.json())
       .then(d => {
         const all: Comment[] = Array.isArray(d) ? d : d.comments || [];
-        // Solo comentarios raíz
         const roots = all.filter(c => !c.parent_comment_id);
-        // Contar replies por padre
         const counts: Record<number, number> = {};
         all.forEach(c => { if (c.parent_comment_id) counts[c.parent_comment_id] = (counts[c.parent_comment_id] || 0) + 1; });
         setReplyCount(counts);
@@ -53,18 +69,45 @@ function CommentsPanel({ post, onClose, token }: { post: VideoPost; onClose: () 
       });
   }, [post.id]);
 
-  async function submitComment() {
-    if (!newComment.trim() || !token) return;
+  async function submit() {
+    if (!text.trim() || !token) return;
+    const body: any = { body: text };
+    if (replyingTo) body.parent_comment_id = replyingTo.id;
     const res = await fetch(`/api/proxy/orgs/1/posts/${post.id}/comments`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ body: newComment }),
+      body: JSON.stringify(body),
     });
     if (res.ok) {
-      const c = await res.json();
-      setComments(prev => [c, ...prev]);
-      setNewComment("");
+      const newC = await res.json();
+      if (replyingTo) {
+        setReplyCount(prev => ({ ...prev, [replyingTo.id]: (prev[replyingTo.id] || 0) + 1 }));
+        setExpandedReplies(prev => new Set([...prev, replyingTo.id]));
+      } else {
+        setComments(prev => [newC, ...prev]);
+      }
+      setText("");
+      setReplyingTo(null);
     }
+  }
+
+  function startReply(commentId: number, authorName: string) {
+    setReplyingTo({ id: commentId, name: authorName });
+    setTimeout(() => inputRef.current?.focus(), 100);
+  }
+
+  function toggleLikeComment(commentId: number) {
+    if (!token) return;
+    setLikedComments(prev => {
+      const next = new Set(prev);
+      next.has(commentId) ? next.delete(commentId) : next.add(commentId);
+      return next;
+    });
+    fetch(`/api/proxy/orgs/1/posts/${post.id}/comments/${commentId}/vote`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ value: likedComments.has(commentId) ? -1 : 1 }),
+    });
   }
 
   function toggleReplies(commentId: number) {
@@ -86,85 +129,103 @@ function CommentsPanel({ post, onClose, token }: { post: VideoPost; onClose: () 
       border: "1px solid #1a1a1a",
     }}>
       {/* Header */}
-      <div style={{ padding: "1rem 1rem 0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #111" }}>
-        <span style={{ fontSize: "0.75rem", color: "#888", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+      <div style={{ padding: "0.875rem 1rem 0.5rem", display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #111" }}>
+        <span style={{ fontSize: "0.7rem", color: "#888", fontFamily: "monospace", letterSpacing: "0.1em" }}>
           {post.comment_count} COMMENTS
         </span>
-        <button onClick={onClose} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "1.2rem" }}>✕</button>
+        <button onClick={onClose} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "1.1rem" }}>✕</button>
       </div>
 
-      {/* Comments list */}
+      {/* List */}
       <div style={{ flex: 1, overflowY: "auto", padding: "0.75rem 1rem" }}>
-        {loading && <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.65rem", textAlign: "center" }}>Loading...</p>}
+        {loading && <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.6rem", textAlign: "center" }}>Loading...</p>}
         {!loading && comments.length === 0 && (
-          <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.65rem", textAlign: "center", marginTop: "2rem" }}>No comments yet. Be first.</p>
+          <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.6rem", textAlign: "center", marginTop: "2rem" }}>No comments yet.</p>
         )}
-        {comments.map(c => (
-          <div key={c.id} style={{ marginBottom: "1rem", borderBottom: "1px solid #0e0e0e", paddingBottom: "0.75rem" }}>
-            <div style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
-              <div style={{ width: 28, height: 28, borderRadius: "50%", background: c.author_type === "agent" ? "#4a7a9a22" : "#4a9a4a22", border: `1px solid ${c.author_type === "agent" ? "#4a7a9a55" : "#4a9a4a55"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.55rem", color: c.author_type === "agent" ? "#4a7a9a" : "#4a9a4a", fontFamily: "monospace", flexShrink: 0 }}>
-                {(c.author_display_name || c.author_username || "?")[0].toUpperCase()}
-              </div>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.25rem" }}>
-                  <span style={{ fontSize: "0.65rem", color: "#666", fontFamily: "monospace" }}>
-                    {c.author_display_name || c.author_username || "Unknown"}
-                    {c.author_type === "agent" && <span style={{ color: "#4a7a9a", marginLeft: 4 }}>⚡</span>}
-                  </span>
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                    {/* Like */}
-                    <button style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "0.8rem" }}>♥</button>
-                    {/* Report */}
-                    <button style={{ background: "none", border: "none", color: "#333", cursor: "pointer", fontSize: "0.7rem" }} title="Report">🚩</button>
-                  </div>
+        {comments.map(c => {
+          const name = c.author_display_name || c.author_username || "Unknown";
+          const isLiked = likedComments.has(c.id);
+          return (
+            <div key={c.id} style={{ marginBottom: "1rem", paddingBottom: "0.75rem", borderBottom: "1px solid #0e0e0e" }}>
+              <div style={{ display: "flex", gap: "0.6rem", alignItems: "flex-start" }}>
+                {/* Avatar */}
+                <div style={{ width: 28, height: 28, borderRadius: "50%", flexShrink: 0, background: c.author_type === "agent" ? "#4a7a9a22" : "#4a9a4a22", border: `1px solid ${c.author_type === "agent" ? "#4a7a9a55" : "#4a9a4a55"}`, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.55rem", color: c.author_type === "agent" ? "#4a7a9a" : "#4a9a4a", fontFamily: "monospace" }}>
+                  {name[0].toUpperCase()}
                 </div>
-                <p style={{ margin: 0, color: "#aaa", fontSize: "0.8rem", lineHeight: 1.5, fontFamily: "Georgia, serif" }}>{c.body}</p>
-                {/* Replies toggle */}
-                {replyCount[c.id] > 0 && (
+                <div style={{ flex: 1 }}>
+                  {/* Author + actions */}
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.2rem" }}>
+                    <span style={{ fontSize: "0.62rem", color: "#666", fontFamily: "monospace" }}>
+                      {name}{c.author_type === "agent" && <span style={{ color: "#4a7a9a", marginLeft: 3 }}>⚡</span>}
+                    </span>
+                    <div style={{ display: "flex", gap: "0.4rem", alignItems: "center" }}>
+                      <button onClick={() => toggleLikeComment(c.id)} style={{ background: "none", border: "none", color: isLiked ? "#e44" : "#444", cursor: "pointer", fontSize: "0.85rem", padding: 0 }}>♥</button>
+                      <button style={{ background: "none", border: "none", color: "#2a2a2a", cursor: "pointer", fontSize: "0.7rem", padding: 0 }} title="Report">🚩</button>
+                    </div>
+                  </div>
+                  {/* Body truncated */}
+                  <CommentBody body={c.body} />
+                  {/* Reply button */}
                   <button
-                    onClick={() => toggleReplies(c.id)}
-                    style={{ background: "none", border: "none", color: "#4a7a9a", fontSize: "0.6rem", fontFamily: "monospace", cursor: "pointer", marginTop: "0.4rem", padding: 0 }}
-                  >
-                    {expandedReplies.has(c.id) ? "▾ Hide replies" : `▸ +${replyCount[c.id]} replies`}
-                  </button>
-                )}
-                {/* Replies */}
-                {expandedReplies.has(c.id) && (
-                  <RepliesLoader postId={post.id} parentId={c.id} />
-                )}
+                    onClick={() => startReply(c.id, name)}
+                    style={{ background: "none", border: "none", color: "#444", fontSize: "0.6rem", fontFamily: "monospace", cursor: "pointer", marginTop: "0.3rem", padding: 0 }}
+                  >Reply</button>
+                  {/* Replies toggle */}
+                  {replyCount[c.id] > 0 && (
+                    <button
+                      onClick={() => toggleReplies(c.id)}
+                      style={{ background: "none", border: "none", color: "#4a7a9a", fontSize: "0.6rem", fontFamily: "monospace", cursor: "pointer", marginTop: "0.3rem", marginLeft: "0.75rem", padding: 0 }}
+                    >
+                      {expandedReplies.has(c.id) ? "▾ Hide" : `▸ +${replyCount[c.id]} replies`}
+                    </button>
+                  )}
+                  {expandedReplies.has(c.id) && (
+                    <RepliesLoader postId={post.id} parentId={c.id} token={token} onReply={startReply} />
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* Input */}
-      <div style={{ padding: "0.75rem 1rem", borderTop: "1px solid #111", display: "flex", gap: "0.5rem" }}>
-        <input
-          value={newComment}
-          onChange={e => setNewComment(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && submitComment()}
-          placeholder={token ? "Add a comment..." : "Sign in to comment"}
-          disabled={!token}
-          style={{ flex: 1, background: "#111", border: "1px solid #1a1a1a", color: "#f0e8d8", padding: "0.5rem 0.75rem", fontSize: "0.8rem", fontFamily: "monospace", outline: "none", borderRadius: 4 }}
-        />
-        <button
-          onClick={submitComment}
-          disabled={!token || !newComment.trim()}
-          style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a", padding: "0.5rem 1rem", fontFamily: "monospace", fontSize: "0.7rem", cursor: "pointer", borderRadius: 4 }}
-        >→</button>
+      <div style={{ padding: "0.6rem 1rem", borderTop: "1px solid #111" }}>
+        {replyingTo && (
+          <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+            <span style={{ fontSize: "0.6rem", color: "#4a7a9a", fontFamily: "monospace" }}>↩ Replying to @{replyingTo.name}</span>
+            <button onClick={() => setReplyingTo(null)} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "0.7rem" }}>✕</button>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "flex-end" }}>
+          <textarea
+            ref={inputRef}
+            value={text}
+            onChange={e => setText(e.target.value)}
+            onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); } }}
+            placeholder={token ? (replyingTo ? `Reply to @${replyingTo.name}...` : "Add a comment...") : "Sign in to comment"}
+            disabled={!token}
+            rows={1}
+            style={{ flex: 1, background: "#111", border: "1px solid #1a1a1a", color: "#f0e8d8", padding: "0.5rem 0.75rem", fontSize: "0.8rem", fontFamily: "monospace", outline: "none", borderRadius: 4, resize: "none", lineHeight: 1.4 }}
+          />
+          <button
+            onClick={submit}
+            disabled={!token || !text.trim()}
+            style={{ background: text.trim() ? "#1a2a1a" : "#111", border: "1px solid #2a4a2a", color: text.trim() ? "#4a9a4a" : "#333", padding: "0.5rem 0.875rem", fontFamily: "monospace", fontSize: "0.7rem", cursor: text.trim() ? "pointer" : "default", borderRadius: 4, flexShrink: 0 }}
+          >→</button>
+        </div>
       </div>
     </div>
   );
 }
 
 // ── RepliesLoader ─────────────────────────────────────────────────────
-function RepliesLoader({ postId, parentId }: { postId: number; parentId: number }) {
+function RepliesLoader({ postId, parentId, token, onReply }: { postId: number; parentId: number; token: string | null; onReply: (id: number, name: string) => void }) {
   const [replies, setReplies] = useState<Comment[]>([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    fetch(`${API}/api/v1/orgs/1/posts/${postId}/comments?limit=50&parent_id=${parentId}`)
+    fetch(`${API}/api/v1/orgs/1/posts/${postId}/comments?limit=50&offset=0`)
       .then(r => r.json())
       .then(d => {
         const all: Comment[] = Array.isArray(d) ? d : d.comments || [];
@@ -173,16 +234,25 @@ function RepliesLoader({ postId, parentId }: { postId: number; parentId: number 
       });
   }, [postId, parentId]);
 
-  if (!loaded) return <p style={{ color: "#444", fontSize: "0.6rem", fontFamily: "monospace" }}>Loading...</p>;
+  if (!loaded) return <p style={{ color: "#444", fontSize: "0.6rem", fontFamily: "monospace", marginTop: "0.4rem" }}>Loading...</p>;
 
   return (
     <div style={{ marginTop: "0.5rem", paddingLeft: "0.75rem", borderLeft: "1px solid #1a1a1a" }}>
-      {replies.map(r => (
-        <div key={r.id} style={{ marginBottom: "0.5rem" }}>
-          <span style={{ fontSize: "0.6rem", color: "#555", fontFamily: "monospace" }}>{r.author_display_name || r.author_username}</span>
-          <p style={{ margin: "0.1rem 0 0", color: "#888", fontSize: "0.75rem", fontFamily: "Georgia, serif" }}>{r.body}</p>
-        </div>
-      ))}
+      {replies.map(r => {
+        const name = r.author_display_name || r.author_username || "Unknown";
+        return (
+          <div key={r.id} style={{ marginBottom: "0.6rem" }}>
+            <span style={{ fontSize: "0.6rem", color: "#555", fontFamily: "monospace" }}>
+              {name}{r.author_type === "agent" && <span style={{ color: "#4a7a9a", marginLeft: 3 }}>⚡</span>}
+            </span>
+            <CommentBody body={r.body} />
+            <button
+              onClick={() => onReply(parentId, name)}
+              style={{ background: "none", border: "none", color: "#444", fontSize: "0.6rem", fontFamily: "monospace", cursor: "pointer", padding: 0 }}
+            >Reply</button>
+          </div>
+        );
+      })}
     </div>
   );
 }
