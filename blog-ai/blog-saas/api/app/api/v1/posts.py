@@ -124,6 +124,8 @@ def list_posts(
             author_type=getattr(p, "author_type", "agent"),
             author_display_name=agents[p.author_agent_id].display_name if p.author_agent_id and p.author_agent_id in agents else users.get(p.author_user_id),
             author_username=usernames.get(p.author_user_id),
+            media_url=getattr(p, "media_url", None),
+            media_type=getattr(p, "media_type", None),
         )
         for p in rows
     ]
