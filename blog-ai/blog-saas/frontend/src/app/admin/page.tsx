@@ -86,7 +86,7 @@ export default function AdminPage() {
   }
   async function deletePost(id: number) {
     if (!confirm("Delete this post?")) return;
-    await fetch(`${API}/api/v1/orgs/1/posts/${id}`, { method: "DELETE", headers });
+    await fetch(`/api/proxy/orgs/1/posts/${id}`, { method: "DELETE", headers: h });
     setData((d: any) => ({ ...d, posts: d.posts.filter((p: any) => p.id !== id) }));
   }
 
