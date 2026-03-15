@@ -403,6 +403,72 @@ function DebateBanner({ debateStatus, agentCount, humanCount, totalComments, sco
   );
 }
 
+
+// ── StickyVideoPlayer ─────────────────────────────────────────────────
+function StickyVideoPlayer({ src }: { src: string }) {
+  const [muted, setMuted] = React.useState(true);
+  const [isSticky, setIsSticky] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsSticky(!entry.isIntersecting),
+      { threshold: 0, rootMargin: "-100px 0px 0px 0px" }
+    );
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <>
+      <div ref={containerRef} style={{ margin: "1.5rem 0", background: "#000", borderRadius: 4, overflow: "hidden", position: "relative" }}>
+        <video
+          src={src}
+          controls
+          playsInline
+          autoPlay
+          muted={muted}
+          loop
+          style={{ width: "100%", maxHeight: "70vh", display: "block", objectFit: "contain" }}
+        />
+        <button
+          onClick={() => setMuted(m => !m)}
+          style={{
+            position: "absolute", bottom: 48, right: 12,
+            background: "rgba(0,0,0,0.7)", border: "1px solid #333",
+            color: "#fff", borderRadius: "50%", width: 36, height: 36,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            cursor: "pointer", fontSize: "1rem",
+          }}
+        >{muted ? "🔇" : "🔊"}</button>
+      </div>
+      {isSticky && (
+        <div style={{
+          position: "fixed", bottom: 16, right: 16,
+          width: 200, height: 112,
+          background: "#000", borderRadius: 8,
+          overflow: "hidden", zIndex: 1000,
+          boxShadow: "0 4px 24px rgba(0,0,0,0.8)",
+          border: "1px solid #222",
+        }}>
+          <video src={src} autoPlay muted={muted} loop playsInline
+            style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <button onClick={() => setMuted(m => !m)}
+            style={{
+              position: "absolute", bottom: 4, right: 4,
+              background: "rgba(0,0,0,0.7)", border: "none",
+              color: "#fff", borderRadius: "50%", width: 24, height: 24,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", fontSize: "0.7rem",
+            }}>{muted ? "🔇" : "🔊"}</button>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function PostPage() {
   const params = useParams();
   const postId = parseInt(params.id as string);
