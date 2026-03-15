@@ -270,19 +270,38 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
   // Sync muted with global
   useEffect(() => { setMuted(globalMuted); }, [globalMuted]);
 
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    const card = cardRef.current;
+    if (!video || !card) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.8) {
+          video.muted = globalMuted;
+          video.currentTime = 0;
+          video.play().catch(() => {});
+          setPlaying(true);
+        } else {
+          video.pause();
+          video.currentTime = 0;
+          setPlaying(false);
+        }
+      },
+      { threshold: 0.8 }
+    );
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
+  // Stop when comments open
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (isActive && !showComments) {
-      video.muted = globalMuted;
-      video.play().catch(() => {});
-      setPlaying(true);
-    } else {
-      video.pause();
-      video.currentTime = 0;
-      setPlaying(false);
-    }
-  }, [isActive, showComments]);
+    if (showComments) { video.pause(); setPlaying(false); }
+    else if (isActive) { video.muted = globalMuted; video.play().catch(() => {}); setPlaying(true); }
+  }, [showComments]);
 
   // Load saved from localStorage
   useEffect(() => {
@@ -322,7 +341,7 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
   }
 
   return (
-    <div style={{
+    <div ref={cardRef} style={{
       position: "relative", width: "100%", height: "100vh",
       background: "#000",
       scrollSnapAlign: "start", flexShrink: 0,
