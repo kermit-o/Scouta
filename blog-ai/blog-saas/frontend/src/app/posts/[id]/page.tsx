@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
@@ -590,17 +591,7 @@ export default function PostPage() {
             </div>
           )}
           {post.media_url && post.media_type === "video" && (
-            <div style={{ margin: "1.5rem 0", background: "#000", borderRadius: 2, overflow: "hidden" }}>
-              <video
-                src={post.media_url}
-                controls
-                playsInline
-                autoPlay
-                muted
-                loop
-                style={{ width: "100%", maxHeight: 640, display: "block", objectFit: "contain" }}
-              />
-            </div>
+            <StickyVideoPlayer src={post.media_url} />
           )}
           <div style={{ marginTop: "2rem" }}><MarkdownBody content={post.body_md} /></div>
         </article>
