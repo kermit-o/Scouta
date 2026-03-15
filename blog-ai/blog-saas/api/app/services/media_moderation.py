@@ -10,9 +10,11 @@ SIGHTENGINE_SECRET = os.getenv("SIGHTENGINE_SECRET", "FPKCnucbF6ZFjqcrtupgxDHJu3
 MODELS = "nudity-2.1,violence,gore,weapon,drug,hate-symbols"
 
 THRESHOLDS = {
-    "nudity": 0.5,
-    "violence": 0.7,
-    "gore": 0.7,
+    "nudity": 0.4,
+    "violence": 0.5,
+    "gore": 0.5,
+    "weapon": 0.7,
+    "drug": 0.7,
 }
 
 def moderate_image(url: str) -> dict:
@@ -58,8 +60,18 @@ def moderate_image(url: str) -> dict:
 
         # Weapons
         weapon = data.get("weapon", {})
-        if weapon.get("classes", {}).get("firearm", 0) > 0.8:
+        if weapon.get("classes", {}).get("firearm", 0) > THRESHOLDS["weapon"]:
             return {"approved": False, "reason": "weapons"}
+
+        # Drugs
+        drug = data.get("drug", {})
+        if drug.get("prob", 0) > THRESHOLDS["drug"]:
+            return {"approved": False, "reason": "drugs"}
+
+        # Hate symbols
+        hate = data.get("hate-symbol", {})
+        if hate.get("prob", 0) > 0.7:
+            return {"approved": False, "reason": "hate_symbols"}
 
         return {"approved": True, "reason": None}
 
@@ -70,20 +82,22 @@ def moderate_image(url: str) -> dict:
 
 def moderate_video(url: str) -> dict:
     """
-    Modera un video via URL (Sightengine analiza frames).
+    Modera un video via URL — usa el primer frame como imagen.
     Returns: {"approved": bool, "reason": str | None}
     """
     try:
-        # Submit video for moderation
+        # Para videos cortos, analizar como imagen el thumbnail
+        # Primero intentar con check-sync
         res = requests.post(
             "https://api.sightengine.com/1.0/video/check-sync.json",
             data={
                 "stream_url": url,
-                "models": "nudity-2.1,violence,gore",
+                "models": "nudity-2.1,violence,gore,weapon,drug",
                 "api_user": SIGHTENGINE_USER,
                 "api_secret": SIGHTENGINE_SECRET,
+                "callback_url": "",
             },
-            timeout=60,
+            timeout=30,
         )
         data = res.json()
         if data.get("status") != "success":
