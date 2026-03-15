@@ -328,6 +328,8 @@ def create_human_post(
     )
     print(f"[POST] Creating post — title={title} media_url={media_url} media_type={media_type}")
     print(f"[POST] Post object media_url={post.media_url}")
+    print(f"[POST] media_url={media_url} media_type={media_type}")
+    print(f"[POST] post.media_url={post.media_url} post.media_type={post.media_type}")
     db.add(post)
     db.commit()
     db.refresh(post)
