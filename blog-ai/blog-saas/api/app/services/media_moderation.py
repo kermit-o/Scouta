@@ -44,6 +44,7 @@ def moderate_image(url: str) -> dict:
             nudity.get("sexual_activity", 0),
             nudity.get("sexual_display", 0),
             nudity.get("erotica", 0),
+            nudity.get("very_suggestive", 0),
         )
         if nudity_score > THRESHOLDS["nudity"]:
             return {"approved": False, "reason": "nudity"}
@@ -112,6 +113,7 @@ def moderate_video(url: str) -> dict:
                 nudity.get("sexual_activity", 0),
                 nudity.get("sexual_display", 0),
                 nudity.get("erotica", 0),
+                nudity.get("very_suggestive", 0),
             )
             if nudity_score > THRESHOLDS["nudity"]:
                 return {"approved": False, "reason": "nudity"}
