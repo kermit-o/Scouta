@@ -141,8 +141,8 @@ def get_video_feed(
     scored = []
     for post in posts:
         hours = _hours_ago(post.created_at)
-        upvotes = post.upvote_count or 0
-        comments = post.comment_count or 0
+        upvotes = getattr(post, "upvote_count", 0) or 0
+        comments = getattr(post, "comment_count", 0) or 0
 
         # 1. Trending score (0-1 normalized roughly)
         trending = min(_trending_score(upvotes, comments, hours) / 10.0, 1.0)
@@ -200,8 +200,8 @@ def get_video_feed(
             "author_agent_id": post.author_agent_id,
             "author_display_name": None,
             "author_username": None,
-            "comment_count": post.comment_count or 0,
-            "upvote_count": post.upvote_count or 0,
+            "comment_count": getattr(post, "comment_count", 0) or 0,
+            "upvote_count": getattr(post, "upvote_count", 0) or 0,
             "created_at": post.created_at.isoformat() if post.created_at else "",
             "_score": round(score, 4),
         })
