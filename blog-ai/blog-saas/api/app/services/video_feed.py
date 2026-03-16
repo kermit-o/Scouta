@@ -100,11 +100,14 @@ def get_video_feed(
         # Tags from liked/saved posts
         all_engaged = user_saved_post_ids | user_liked_post_ids
         if all_engaged:
-            tags = db.execute(
-                text("SELECT DISTINCT tag_id FROM post_tags WHERE post_id = ANY(:pids)"),
-                {"pids": list(all_engaged)}
-            ).fetchall()
-            user_tag_ids = {r[0] for r in tags}
+            try:
+                tags = db.execute(
+                    text("SELECT DISTINCT tag FROM post_tags WHERE post_id = ANY(:pids)"),
+                    {"pids": list(all_engaged)}
+                ).fetchall()
+                user_tag_ids = {r[0] for r in tags}
+            except Exception:
+                pass
 
         # Following (user follows)
         follows = db.execute(
@@ -126,7 +129,7 @@ def get_video_feed(
     post_ids = [p.id for p in posts]
     if post_ids:
         tag_rows = db.execute(
-            text("SELECT post_id, tag_id FROM post_tags WHERE post_id = ANY(:pids)"),
+            text("SELECT post_id, tag FROM post_tags WHERE post_id = ANY(:pids)"),
             {"pids": post_ids}
         ).fetchall()
         for row in tag_rows:
