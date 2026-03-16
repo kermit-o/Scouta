@@ -91,7 +91,8 @@ def moderate_upload(
         try:
             s3 = get_s3()
             s3.delete_object(Bucket=R2_BUCKET, Key=payload.key)
-        except Exception as e:
+        except Exception:
+            pass
         raise HTTPException(
             status_code=400,
             detail=f"Content rejected: {result['reason']}"
