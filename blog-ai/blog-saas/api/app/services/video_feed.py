@@ -127,13 +127,15 @@ def get_video_feed(
     # ── Post tags ─────────────────────────────────────────────────────
     post_tag_map: dict[int, set[int]] = {}
     post_ids = [p.id for p in posts]
-    if post_ids:
+    try:
         tag_rows = db.execute(
             text("SELECT post_id, tag FROM post_tags WHERE post_id = ANY(:pids)"),
             {"pids": post_ids}
         ).fetchall()
         for row in tag_rows:
             post_tag_map.setdefault(row[0], set()).add(row[1])
+    except Exception:
+        pass
 
     # ── Score each post ───────────────────────────────────────────────
     scored = []
