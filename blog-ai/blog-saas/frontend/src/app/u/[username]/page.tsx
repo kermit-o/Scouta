@@ -36,6 +36,21 @@ export default function PublicProfilePage() {
       });
   }, [username]);
 
+  useEffect(() => {
+    if (!data) return;
+    setPostsLoading(true);
+    fetch(`${API}/api/v1/orgs/1/posts?limit=50&sort=recent`)
+      .then(r => r.json())
+      .then(d => {
+        const all = d.posts || d;
+        const userPosts = all.filter((p: any) =>
+          p.author_username === username || p.author_display_name === data.display_name
+        );
+        setPosts(userPosts);
+        setPostsLoading(false);
+      });
+  }, [data, username]);
+
   async function handleFollow() {
     if (!token) { window.location.href = `/login?next=/u/${username}`; return; }
     setFollowLoading(true);
@@ -120,29 +135,92 @@ export default function PublicProfilePage() {
           </div>
         </div>
 
-        {/* Recent comments */}
-        <div>
-          <h2 style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#555", marginBottom: "1.25rem" }}>
-            Recent Comments
-          </h2>
-          {data.recent_comments?.length === 0 ? (
-            <p style={{ fontSize: "0.8rem", color: "#333" }}>No comments yet.</p>
-          ) : (
-            data.recent_comments?.map((c: any) => (
+        {/* Tabs */}
+        <div style={{ display: "flex", borderBottom: "1px solid #141414", marginBottom: "1.5rem" }}>
+          {(["posts", "videos", "comments"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)} style={{
+              background: "none", border: "none", padding: "0.75rem 1.25rem",
+              fontSize: "0.65rem", letterSpacing: "0.15em", textTransform: "uppercase",
+              color: tab === t ? "#f0e8d8" : "#444", cursor: "pointer",
+              borderBottom: tab === t ? "1px solid #f0e8d8" : "1px solid transparent",
+              marginBottom: -1, fontFamily: "monospace",
+            }}>
+              {t === "posts" && `Posts · ${posts.filter(p => !p.media_url).length}`}
+              {t === "videos" && `Videos · ${posts.filter(p => p.media_type === "video").length}`}
+              {t === "comments" && `Comments · ${data.comment_count || 0}`}
+            </button>
+          ))}
+        </div>
+
+        {/* Posts tab */}
+        {tab === "posts" && (
+          <div>
+            {postsLoading && <p style={{ color: "#333", fontSize: "0.65rem", fontFamily: "monospace" }}>Loading...</p>}
+            {!postsLoading && posts.filter(p => !p.media_url).length === 0 && (
+              <p style={{ color: "#333", fontSize: "0.75rem", fontFamily: "monospace" }}>No posts yet.</p>
+            )}
+            {posts.filter(p => !p.media_url).map((p: any) => (
+              <Link key={p.id} href={`/posts/${p.id}`} style={{ textDecoration: "none", display: "block" }}>
+                <div style={{ padding: "1rem 0", borderBottom: "1px solid #0f0f0f" }}>
+                  <h3 style={{ margin: "0 0 0.3rem", fontSize: "0.95rem", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", lineHeight: 1.3 }}>
+                    {p.title}
+                  </h3>
+                  <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                    <span style={{ fontSize: "0.6rem", color: "#333", fontFamily: "monospace" }}>{timeAgo(p.created_at)}</span>
+                    <span style={{ fontSize: "0.6rem", color: "#333", fontFamily: "monospace" }}>💬 {p.comment_count}</span>
+                    <span style={{ fontSize: "0.6rem", color: "#333", fontFamily: "monospace" }}>↑ {p.upvote_count}</span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Videos tab — grid style Instagram */}
+        {tab === "videos" && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 2 }}>
+            {postsLoading && <p style={{ color: "#333", fontSize: "0.65rem", fontFamily: "monospace", gridColumn: "1/-1" }}>Loading...</p>}
+            {!postsLoading && posts.filter(p => p.media_type === "video").length === 0 && (
+              <p style={{ color: "#333", fontSize: "0.75rem", fontFamily: "monospace", gridColumn: "1/-1" }}>No videos yet.</p>
+            )}
+            {posts.filter(p => p.media_type === "video").map((p: any) => (
+              <Link key={p.id} href={`/posts/${p.id}`} style={{ textDecoration: "none", position: "relative", display: "block", aspectRatio: "1", overflow: "hidden", background: "#111" }}>
+                <video
+                  src={p.media_url}
+                  muted
+                  playsInline
+                  preload="metadata"
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+                <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "flex-end", padding: "0.4rem", background: "linear-gradient(transparent 50%, rgba(0,0,0,0.7))" }}>
+                  <span style={{ fontSize: "0.55rem", color: "#ccc", fontFamily: "monospace" }}>▶ {p.comment_count}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {/* Comments tab */}
+        {tab === "comments" && (
+          <div>
+            {data.recent_comments?.length === 0 && (
+              <p style={{ fontSize: "0.8rem", color: "#333", fontFamily: "monospace" }}>No comments yet.</p>
+            )}
+            {data.recent_comments?.map((c: any) => (
               <Link key={c.id} href={`/posts/${c.post_id}#comment-${c.id}`} style={{ textDecoration: "none", display: "block" }}>
                 <div style={{ padding: "0.875rem 0", borderBottom: "1px solid #0f0f0f" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.35rem" }}>
-                    <span style={{ fontSize: "0.6rem", color: "#4a9a4a", letterSpacing: "0.1em", textTransform: "uppercase" }}>comment</span>
-                    <span style={{ fontSize: "0.65rem", color: "#333" }}>{timeAgo(c.created_at)}</span>
+                    <span style={{ fontSize: "0.6rem", color: "#555", letterSpacing: "0.1em", textTransform: "uppercase", fontFamily: "monospace" }}>comment</span>
+                    <span style={{ fontSize: "0.65rem", color: "#333", fontFamily: "monospace" }}>{timeAgo(c.created_at)}</span>
                   </div>
                   <p style={{ fontSize: "0.875rem", color: "#888", margin: 0, lineHeight: 1.6, fontFamily: "Georgia, serif" }}>
-                    {c.body}...
+                    {c.body}
                   </p>
                 </div>
               </Link>
-            ))
-          )}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </main>
   );
