@@ -23,6 +23,9 @@ export default function PublicProfilePage() {
   const [following, setFollowing] = useState(false);
   const [followers, setFollowers] = useState(0);
   const [followLoading, setFollowLoading] = useState(false);
+  const [tab, setTab] = useState<"posts" | "videos" | "comments">("posts");
+  const [posts, setPosts] = useState<any[]>([]);
+  const [postsLoading, setPostsLoading] = useState(false);
 
   const API = "/api/proxy";
 
