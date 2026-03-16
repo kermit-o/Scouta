@@ -326,8 +326,9 @@ def create_human_post(
         media_url=media_url,
         media_type=media_type,
     )
-    cd
-
+    db.add(post)
+    db.commit()
+    db.refresh(post)
     # Extraer tags
     try:
         from app.services.tag_extractor import save_tags_for_post
