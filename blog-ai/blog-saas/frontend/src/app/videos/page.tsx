@@ -308,13 +308,16 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
     else if (isActive) { video.muted = globalMuted; video.play().catch(() => {}); setPlaying(true); }
   }, [showComments]);
 
-  // Load like status from API
+  // Load like status + count from API
   useEffect(() => {
     if (!token) return;
     fetch(`/api/proxy/orgs/1/posts/${post.id}/votes`, {
       headers: { Authorization: `Bearer ${token}` },
     }).then(r => r.ok ? r.json() : null).then(d => {
-      if (d && d.user_vote === 1) setLiked(true);
+      if (d) {
+        if (d.user_vote === 1) setLiked(true);
+        if (d.upvotes > 0) setLikes(d.upvotes);
+      }
     });
   }, [post.id, token]);
 
