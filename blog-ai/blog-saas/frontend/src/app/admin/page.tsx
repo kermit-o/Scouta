@@ -289,7 +289,9 @@ export default function AdminPage() {
                   {u.is_banned && <span style={{ fontSize: "0.55rem", color: "#9a4a4a", fontFamily: "monospace" }}>BANNED</span>}
                   {u.is_flagged && !u.is_banned && <span style={{ fontSize: "0.55rem", color: "#9a7a4a", fontFamily: "monospace" }}>⚑ FLAGGED</span>}
                   <span style={{ fontSize: "0.55rem", color: "#333" }}>{timeAgo(u.created_at)}</span>
-                  {/* Flag button */}
+                </div>
+                {/* Action buttons row */}
+                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.4rem", marginLeft: "2.5rem" }}>
                   <button
                     onClick={() => {
                       const reason = u.is_flagged ? "" : (prompt("Flag reason (optional):") || "suspicious");
@@ -299,9 +301,8 @@ export default function AdminPage() {
                         body: JSON.stringify({ action: u.is_flagged ? "unflag" : "flag", reason }),
                       }).then(() => setData((d: any) => ({ ...d, users: d.users.map((x: any) => x.id === u.id ? { ...x, is_flagged: !u.is_flagged } : x) })));
                     }}
-                    style={{ background: "none", border: `1px solid ${u.is_flagged ? "#3a2a1a" : "#2a2a1a"}`, color: u.is_flagged ? "#9a7a4a" : "#555", padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace" }}
+                    style={{ background: "none", border: `1px solid ${u.is_flagged ? "#3a2a1a" : "#222"}`, color: u.is_flagged ? "#9a7a4a" : "#444", padding: "0.2rem 0.6rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace" }}
                   >{u.is_flagged ? "Unflag" : "⚑ Flag"}</button>
-                  {/* Ban button */}
                   <button
                     onClick={() => {
                       const reason = u.is_banned ? "" : (prompt("Ban reason:") || "violation");
@@ -312,8 +313,20 @@ export default function AdminPage() {
                         body: JSON.stringify({ action: u.is_banned ? "unban" : "ban", reason }),
                       }).then(() => setData((d: any) => ({ ...d, users: d.users.map((x: any) => x.id === u.id ? { ...x, is_banned: !u.is_banned } : x) })));
                     }}
-                    style={{ background: "none", border: "1px solid #2a1a1a", color: u.is_banned ? "#555" : "#9a4a4a", padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace" }}
-                  >{u.is_banned ? "Unban" : "Ban"}</button>
+                    style={{ background: "none", border: "1px solid #2a1a1a", color: u.is_banned ? "#555" : "#9a4a4a", padding: "0.2rem 0.6rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace" }}
+                  >{u.is_banned ? "✓ Unban" : "✕ Ban"}</button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Send warning to ${u.display_name || u.username}?`)) {
+                        fetch(`/api/proxy/admin/users/${u.id}/ban`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+                          body: JSON.stringify({ action: "flag", reason: "warning issued" }),
+                        });
+                      }
+                    }}
+                    style={{ background: "none", border: "1px solid #1a1a2a", color: "#4a4a7a", padding: "0.2rem 0.6rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace" }}
+                  >⚠ Warn</button>
                 </div>
                 {/* Ban/flag reason */}
                 {(u.ban_reason || u.flag_reason) && (
