@@ -26,7 +26,7 @@ export default function AdminPage() {
     if (!isLoaded) return;
     const t = token || localStorage.getItem("token");
     const h = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
-    loadOverview(t);
+    loadOverview(t ?? undefined);
   })(); }, [isLoaded, token]);
 
   // Guard: si isLoaded pero token aun null, esperar un tick más
