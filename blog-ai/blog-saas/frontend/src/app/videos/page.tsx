@@ -506,16 +506,30 @@ export default function VideosPage() {
   }, []);
 
   useEffect(() => {
-    fetch(`${API}/api/v1/orgs/1/posts?limit=50&sort=recent`)
+    const uid = token ? JSON.parse(atob(token.split(".")[1])).sub : null;
+    const lang = navigator.language?.slice(0, 2) || "en";
+    const url = uid
+      ? `${API}/api/v1/videos/feed?user_id=${uid}&language=${lang}&limit=50`
+      : `${API}/api/v1/videos/feed?language=${lang}&limit=50`;
+    fetch(url)
       .then(r => r.json())
       .then(d => {
-        const all = d.posts || d;
-        const videos = all.filter((p: any) => p.media_type === "video" && p.media_url);
+        const videos = d.videos || [];
         setPosts(videos);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .catch(() => {
+        // fallback al endpoint general
+        fetch(`${API}/api/v1/orgs/1/posts?limit=50&sort=recent`)
+          .then(r => r.json())
+          .then(d => {
+            const all = d.posts || d;
+            setPosts(all.filter((p: any) => p.media_type === "video" && p.media_url));
+            setLoading(false);
+          })
+          .catch(() => setLoading(false));
+      });
+  }, [token]);
 
   useEffect(() => {
     const container = containerRef.current;
