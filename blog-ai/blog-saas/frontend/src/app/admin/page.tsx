@@ -263,7 +263,7 @@ export default function AdminPage() {
         {tab === "users" && !loading && (
           <div>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
-              <p style={{ fontSize: "0.6rem", color: "#4a9a4a", margin: 0 }}>{(data.users||[]).length} users — v3</p>
+              <p style={{ fontSize: "0.6rem", color: "#4a9a4a", margin: 0 }}>{(data.users||[]).length} users — v4 {new Date().getFullYear()}</p>
               <div style={{ display: "flex", gap: "0.5rem" }}>
                 <span style={{ fontSize: "0.55rem", color: "#9a4a4a", fontFamily: "monospace" }}>
                   {(data.users||[]).filter((u: any) => u.is_banned).length} banned
