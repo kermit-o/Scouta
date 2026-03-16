@@ -463,7 +463,12 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
           background: "linear-gradient(transparent, rgba(0,0,0,0.85))",
           zIndex: 5,
         }}>
-          <p style={{ margin: "0 0 0.3rem", color: "#888", fontSize: "0.65rem", fontFamily: "monospace" }}>@{authorName}</p>
+          <Link href={`/u/${post.author_username || authorName}`} style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.3rem" }}>
+            <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#6a8a6a22", border: "1px solid #6a8a6a55", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", color: "#6a8a6a", fontFamily: "monospace", fontWeight: 700, flexShrink: 0 }}>
+              {authorName[0].toUpperCase()}
+            </div>
+            <span style={{ color: "#ccc", fontSize: "0.65rem", fontFamily: "monospace" }}>@{authorName}</span>
+          </Link>
           <Link href={`/posts/${post.id}`} style={{ textDecoration: "none" }}>
             <h2 style={{ color: "#f0e8d8", fontSize: "clamp(0.85rem, 2vw, 1rem)", fontFamily: "Georgia, serif", fontWeight: 400, margin: 0, lineHeight: 1.3 }}>
               {post.title}
