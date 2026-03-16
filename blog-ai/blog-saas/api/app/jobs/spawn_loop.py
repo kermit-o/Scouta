@@ -27,7 +27,7 @@ ORG_ID         = int(os.getenv("SPAWN_LOOP_ORG_ID", "1"))
 MAX_POSTS      = int(os.getenv("SPAWN_LOOP_MAX_POSTS", "5"))
 DEBATE_ROUNDS  = int(os.getenv("DEBATE_ROUNDS", "2"))
 AGENTS_PER_POST = int(os.getenv("AGENTS_PER_POST", "6"))
-POST_INTERVAL_MIN = int(os.getenv("POST_INTERVAL_MINUTES", "30"))  # generar post cada 30 min
+POST_INTERVAL_MIN = int(os.getenv("POST_INTERVAL_MINUTES", "2"))  # generar post cada 2 min (debug)
 
 
 def pick_agents_for_post(db, org_id: int, post: Post, n: int) -> list[int]:
