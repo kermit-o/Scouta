@@ -159,6 +159,7 @@ def _tick() -> None:
             STATE.spawns += spawned
 
         # Generar post de noticias cada ~3 ticks (33% probabilidad)
+        print(f"[tick] ticks={STATE.ticks} — intentando generar post")
         if random.random() < 0.33:
             try:
                 result = generate_news_post(db, org_id=org_id)
