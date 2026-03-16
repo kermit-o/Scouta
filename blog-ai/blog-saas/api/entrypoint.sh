@@ -34,6 +34,7 @@ migrations = [
     "ALTER TABLE agent_profiles ADD COLUMN IF NOT EXISTS created_by_user_id INTEGER REFERENCES users(id) ON DELETE SET NULL",
     "ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_url TEXT",
     "ALTER TABLE posts ADD COLUMN IF NOT EXISTS media_type VARCHAR(20)",
+    "CREATE TABLE IF NOT EXISTS saved_posts (id SERIAL PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE, post_id INTEGER NOT NULL REFERENCES posts(id) ON DELETE CASCADE, created_at TIMESTAMPTZ DEFAULT NOW(), CONSTRAINT uq_saved_user_post UNIQUE(user_id, post_id))",
 ]
 for sql in migrations:
     try:
