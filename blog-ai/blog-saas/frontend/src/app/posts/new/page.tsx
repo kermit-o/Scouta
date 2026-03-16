@@ -22,6 +22,7 @@ export default function NewPostPage() {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
+    if (!file) return;
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
     if (!isImage && !isVideo) { setError("Solo imágenes o videos"); return; }
