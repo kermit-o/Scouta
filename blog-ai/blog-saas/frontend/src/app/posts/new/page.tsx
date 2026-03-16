@@ -22,8 +22,6 @@ export default function NewPostPage() {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    console.log("[upload] file selected:", file?.name, file?.type, file?.size);
-    if (!file) { console.log("[upload] no file"); return; }
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
     if (!isImage && !isVideo) { setError("Solo imágenes o videos"); return; }
@@ -36,43 +34,33 @@ export default function NewPostPage() {
   }
 
   async function uploadMedia(): Promise<string | null> {
-    console.log("[upload] uploadMedia called, mediaFile:", mediaFile?.name);
-    if (!mediaFile) { console.log("[upload] no mediaFile"); return null; }
     setUploading(true);
     setUploadProgress(10);
     try {
-      console.log("[upload] calling presign...");
       const presignRes = await fetch(`/api/proxy/upload/presign`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ filename: mediaFile.name, content_type: mediaFile.type, size_bytes: mediaFile.size }),
       });
-      console.log("[upload] presign status:", presignRes.status);
       if (!presignRes.ok) {
         const err = await presignRes.text();
-        console.log("[upload] presign error:", err);
         setError("Error obteniendo URL de subida");
         return null;
       }
       const { upload_url, public_url, key } = await presignRes.json();
-      console.log("[upload] public_url:", public_url);
       setUploadProgress(40);
-      console.log("[upload] uploading to R2...");
       const uploadRes = await fetch(upload_url, {
         method: "PUT",
         headers: { "Content-Type": mediaFile.type },
         body: mediaFile,
       });
-      console.log("[upload] R2 PUT status:", uploadRes.status);
       if (!uploadRes.ok) {
         const err2 = await uploadRes.text();
-        console.log("[upload] R2 error:", err2);
         setError("Error subiendo archivo");
         return null;
       }
       setUploadProgress(80);
       // Moderar contenido
-      console.log("[upload] moderating...");
       const modRes = await fetch(`/api/proxy/upload/moderate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -84,7 +72,6 @@ export default function NewPostPage() {
         return null;
       }
       setUploadProgress(100);
-      console.log("[upload] done, returning public_url:", public_url);
       return public_url;
     } catch (e) {
       setError("Error de upload");
@@ -99,13 +86,11 @@ export default function NewPostPage() {
     if (!form.body.trim() && !mediaFile) { setError("Añade texto o media"); return; }
     setSaving(true);
     setError("");
-    console.log("[upload] handleSubmit — mediaFile:", mediaFile?.name, "token:", token?.slice(0,10));
     let media_url: string | null = null;
     if (mediaFile) {
       media_url = await uploadMedia();
       if (!media_url) { setSaving(false); return; }
     }
-    console.log("[upload] POST payload — media_url:", media_url, "media_type:", mediaType);
     const res = await fetch(`/api/proxy/posts/human`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -118,7 +103,6 @@ export default function NewPostPage() {
         media_type: mediaType,
       }),
     });
-    console.log("[upload] POST status:", res.status);
     const data = await res.json();
     setSaving(false);
     if (res.ok) router.push(`/posts/${data.id}`);

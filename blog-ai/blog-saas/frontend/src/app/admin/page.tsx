@@ -23,11 +23,8 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { void (async () => {
-    console.log("[admin] useEffect fired — isLoaded:", isLoaded, "token:", token, "ls:", typeof window !== "undefined" ? localStorage.getItem("token")?.slice(0,20) : "ssr");
     if (!isLoaded) return;
     const t = token || localStorage.getItem("token");
-    if (!t) { console.log("[admin] no token — redirecting"); router.push("/login?next=/admin"); return; }
-    console.log("[admin] token ok — checking superuser");
     const h = { "Content-Type": "application/json", "Authorization": `Bearer ${t}` };
     loadOverview(t);
   })(); }, [isLoaded, token]);

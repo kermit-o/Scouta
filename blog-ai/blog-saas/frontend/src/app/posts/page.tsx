@@ -40,7 +40,6 @@ function FeedContent() {
       setOffset(0);
       try {
         const data = await getPosts(1, LIMIT, 0, sort, tag);
-        console.log("[feed] data:", data);
         const list: Post[] = data.posts || [];
         setPosts(list);
         setOffset(list.length);

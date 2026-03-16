@@ -327,7 +327,6 @@ def create_human_post(
         media_type=media_type,
     )
     cd
-    print(f"[POST] After commit — post.media_url={post.media_url}")
 
     # Extraer tags
     try:
