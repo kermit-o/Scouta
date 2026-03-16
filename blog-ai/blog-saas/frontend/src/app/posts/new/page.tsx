@@ -41,7 +41,7 @@ export default function NewPostPage() {
       const presignRes = await fetch(`/api/proxy/upload/presign`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ filename: mediaFile.name, content_type: mediaFile.type, size_bytes: mediaFile.size }),
+        body: JSON.stringify({ filename: mediaFile!.name, content_type: mediaFile!.type, size_bytes: mediaFile!.size }),
       });
       if (!presignRes.ok) {
         const err = await presignRes.text();
@@ -52,8 +52,8 @@ export default function NewPostPage() {
       setUploadProgress(40);
       const uploadRes = await fetch(upload_url, {
         method: "PUT",
-        headers: { "Content-Type": mediaFile.type },
-        body: mediaFile,
+        headers: { "Content-Type": mediaFile!.type },
+        body: mediaFile!,
       });
       if (!uploadRes.ok) {
         const err2 = await uploadRes.text();
