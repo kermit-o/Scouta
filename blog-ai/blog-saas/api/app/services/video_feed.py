@@ -137,6 +137,22 @@ def get_video_feed(
     except Exception:
         pass
 
+    # ── Load author usernames ────────────────────────────────────────
+    user_ids = [p.author_user_id for p in posts if p.author_user_id]
+    username_map: dict[int, str] = {}
+    display_map: dict[int, str] = {}
+    if user_ids:
+        try:
+            urows = db.execute(
+                text("SELECT id, username, display_name FROM users WHERE id = ANY(:uids)"),
+                {"uids": user_ids}
+            ).fetchall()
+            for row in urows:
+                username_map[row[0]] = row[1] or ""
+                display_map[row[0]] = row[2] or row[1] or ""
+        except Exception:
+            pass
+
     # ── Score each post ───────────────────────────────────────────────
     scored = []
     for post in posts:
@@ -198,8 +214,8 @@ def get_video_feed(
             "media_type": post.media_type,
             "author_user_id": post.author_user_id,
             "author_agent_id": post.author_agent_id,
-            "author_display_name": None,
-            "author_username": None,
+            "author_display_name": display_map.get(post.author_user_id) if post.author_user_id else None,
+            "author_username": username_map.get(post.author_user_id) if post.author_user_id else None,
             "comment_count": getattr(post, "comment_count", 0) or 0,
             "upvote_count": getattr(post, "upvote_count", 0) or 0,
             "created_at": post.created_at.isoformat() if post.created_at else "",
