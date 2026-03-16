@@ -16,13 +16,19 @@ def video_feed(
     db: Session = Depends(get_db),
 ):
     """Returns personalized video feed scored by recommendation engine."""
-    videos = get_video_feed(
-        db=db,
-        org_id=org_id,
-        user_id=user_id,
-        user_language=language,
-        user_location=location,
-        limit=limit,
-        offset=offset,
-    )
-    return {"videos": videos, "total": len(videos)}
+    try:
+        videos = get_video_feed(
+            db=db,
+            org_id=org_id,
+            user_id=user_id,
+            user_language=language,
+            user_location=location,
+            limit=limit,
+            offset=offset,
+        )
+        return {"videos": videos, "total": len(videos)}
+    except Exception as e:
+        import traceback
+        print(f"[video_feed] ERROR: {e}")
+        print(traceback.format_exc()[:1000])
+        return {"videos": [], "total": 0, "error": str(e)}
