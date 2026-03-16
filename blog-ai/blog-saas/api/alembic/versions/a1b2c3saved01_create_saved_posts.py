@@ -14,6 +14,12 @@ branch_labels = None
 depends_on = None
 
 def upgrade() -> None:
+    # Table may already exist from entrypoint SQL migration
+    from sqlalchemy import inspect
+    bind = op.get_bind()
+    inspector = inspect(bind)
+    if "saved_posts" in inspector.get_table_names():
+        return
     op.create_table(
         "saved_posts",
         sa.Column("id", sa.Integer(), autoincrement=True, nullable=False),
