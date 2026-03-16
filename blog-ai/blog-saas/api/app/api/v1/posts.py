@@ -304,15 +304,17 @@ def vote_post(
         print("[notifications] post_upvote insert failed:", e)
 
 
-    return {"action": action, "upvotes": ups, "downvotes": downs}
+    user_vote_val = value if action != "removed" else 0
+    return {"action": action, "upvotes": ups, "downvotes": downs, "user_vote": user_vote_val}
 
 
 @router.get("/orgs/{org_id}/posts/{post_id}/votes")
-def get_post_votes(org_id: int, post_id: int, db: Session = Depends(get_db)) -> dict:
+def get_post_votes(org_id: int, post_id: int, db: Session = Depends(get_db), current_user: User = Depends(__import__("app.core.deps", fromlist=["get_current_user"]).get_current_user)) -> dict:
     from sqlalchemy import text
     ups = db.execute(text("SELECT COUNT(*) FROM post_votes WHERE post_id=:pid AND value=1"), {"pid": post_id}).scalar()
     downs = db.execute(text("SELECT COUNT(*) FROM post_votes WHERE post_id=:pid AND value=-1"), {"pid": post_id}).scalar()
-    return {"upvotes": ups, "downvotes": downs}
+    user_vote = db.execute(text("SELECT value FROM post_votes WHERE post_id=:pid AND user_id=:uid"), {"pid": post_id, "uid": current_user.id}).scalar()
+    return {"upvotes": ups, "downvotes": downs, "user_vote": user_vote or 0}
 
 
 @router.get("/orgs/{org_id}/feed")
