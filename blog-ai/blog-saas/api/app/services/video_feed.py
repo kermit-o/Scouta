@@ -153,6 +153,39 @@ def get_video_feed(
         except Exception:
             pass
 
+    # ── Watch time scores ────────────────────────────────────────────
+    watch_scores: dict[int, float] = {}
+    try:
+        watch_rows = db.execute(
+            text("""
+                SELECT post_id, 
+                    COUNT(*) as views,
+                    AVG(watch_seconds) as avg_watch,
+                    SUM(CASE WHEN completed THEN 1 ELSE 0 END)::float / NULLIF(COUNT(*), 0) as completion_rate
+                FROM video_views
+                GROUP BY post_id
+            """)
+        ).fetchall()
+        for row in watch_rows:
+            # Score: completion_rate * 0.6 + normalized_views * 0.4
+            views = row[1] or 0
+            completion = float(row[3] or 0)
+            watch_scores[row[0]] = min(completion * 0.6 + min(views / 100.0, 1.0) * 0.4, 1.0)
+    except Exception:
+        pass
+
+    # ── User already watched ──────────────────────────────────────────
+    user_watched_ids: set[int] = set()
+    if user_id:
+        try:
+            watched = db.execute(
+                text("SELECT post_id FROM video_views WHERE user_id=:uid"),
+                {"uid": user_id}
+            ).fetchall()
+            user_watched_ids = {r[0] for r in watched}
+        except Exception:
+            pass
+
     # ── Score each post ───────────────────────────────────────────────
     scored = []
     for post in posts:
@@ -185,18 +218,26 @@ def get_video_feed(
         post_lang = _detect_language((post.title or "") + " " + (post.body_md or ""))
         language_score = 1.0 if post_lang == user_language else 0.0
 
+        # Watch time score
+        watch_score = watch_scores.get(post.id, 0.0)
+
         # ── Final weighted score ──────────────────────────────────────
         final_score = (
-            trending      * 0.30 +
-            tag_score     * 0.25 +
-            save_score    * 0.20 +
+            trending        * 0.25 +
+            tag_score       * 0.20 +
+            save_score      * 0.15 +
             following_score * 0.15 +
-            language_score  * 0.10
+            language_score  * 0.10 +
+            watch_score     * 0.15
         )
 
-        # Boost recently watched less (avoid repeats) — skip if already saved by this user
+        # Demote already watched videos
+        if post.id in user_watched_ids:
+            final_score *= 0.4
+
+        # Slight demote already saved
         if post.id in user_saved_post_ids:
-            final_score *= 0.7  # slight demote — already seen/saved
+            final_score *= 0.8
 
         scored.append((final_score, post))
 
