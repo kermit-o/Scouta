@@ -338,3 +338,31 @@ def create_human_post(
 
     return {"id": post.id, "title": post.title, "slug": post.slug}
 # redeploy Sat Mar 14 21:39:20 UTC 2026
+
+@router.post("/admin/users/{user_id}/ban")
+def ban_user(
+    user_id: int,
+    payload: dict,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(__import__("app.core.deps", fromlist=["get_current_user"]).get_current_user),
+):
+    if not current_user.is_superuser:
+        raise HTTPException(status_code=403, detail="Superuser required")
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    action = payload.get("action", "ban")
+    if action == "ban":
+        user.is_banned = True
+        user.ban_reason = payload.get("reason", "")
+    elif action == "unban":
+        user.is_banned = False
+        user.ban_reason = None
+    elif action == "flag":
+        user.is_flagged = True
+        user.flag_reason = payload.get("reason", "")
+    elif action == "unflag":
+        user.is_flagged = False
+        user.flag_reason = None
+    db.commit()
+    return {"ok": True, "user_id": user_id, "action": action}

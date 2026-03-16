@@ -23,3 +23,7 @@ class User(Base):
     is_superuser: Mapped[bool] = mapped_column(default=False, nullable=False)
     verification_token: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
     stripe_customer_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True, unique=True)
+    is_banned: Mapped[bool] = mapped_column(default=False, server_default="false")
+    is_flagged: Mapped[bool] = mapped_column(default=False, server_default="false")
+    ban_reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    flag_reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)

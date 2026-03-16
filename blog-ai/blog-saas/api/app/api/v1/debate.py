@@ -279,6 +279,10 @@ def list_admin_users(
             "username": u.username or "",
             "display_name": u.display_name or "",
             "is_verified": u.is_verified,
+                "is_banned": getattr(u, "is_banned", False),
+                "is_flagged": getattr(u, "is_flagged", False),
+                "ban_reason": getattr(u, "ban_reason", None),
+                "flag_reason": getattr(u, "flag_reason", None),
             "created_at": str(u.created_at),
         }
         for u in rows
