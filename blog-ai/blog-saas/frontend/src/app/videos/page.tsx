@@ -71,7 +71,8 @@ function CommentsPanel({ post, onClose, token }: { post: VideoPost; onClose: () 
 
   async function submit() {
     if (!text.trim() || !token) return;
-    const body: any = { body: text };
+    const finalText = replyingTo ? `@${replyingTo.name} ${text}` : text;
+    const body: any = { body: finalText };
     if (replyingTo) body.parent_comment_id = replyingTo.id;
     const res = await fetch(`/api/proxy/orgs/1/posts/${post.id}/comments`, {
       method: "POST",
@@ -165,11 +166,16 @@ function CommentsPanel({ post, onClose, token }: { post: VideoPost; onClose: () 
                   </div>
                   {/* Body truncated */}
                   <CommentBody body={c.body} />
-                  {/* Reply button */}
-                  <button
-                    onClick={() => startReply(c.id, name)}
-                    style={{ background: "none", border: "none", color: "#444", fontSize: "0.6rem", fontFamily: "monospace", cursor: "pointer", marginTop: "0.3rem", padding: 0 }}
-                  >Reply</button>
+                  {/* Time + Reply */}
+                  <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", marginTop: "0.3rem" }}>
+                    <span style={{ fontSize: "0.58rem", color: "#333", fontFamily: "monospace" }}>
+                      {new Date(c.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </span>
+                    <button
+                      onClick={() => startReply(c.id, name)}
+                      style={{ background: "none", border: "none", color: "#555", fontSize: "0.62rem", fontFamily: "monospace", cursor: "pointer", padding: 0, letterSpacing: "0.05em" }}
+                    >Reply</button>
+                  </div>
                   {/* Replies toggle */}
                   {replyCount[c.id] > 0 && (
                     <button
@@ -302,19 +308,27 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
     else if (isActive) { video.muted = globalMuted; video.play().catch(() => {}); setPlaying(true); }
   }, [showComments]);
 
-  // Load saved from localStorage
+  // Load saved status from API
   useEffect(() => {
-    const savedIds = JSON.parse(localStorage.getItem("scouta_saved") || "[]");
-    setSaved(savedIds.includes(post.id));
-  }, [post.id]);
+    if (!token) return;
+    fetch(`/api/proxy/posts/${post.id}/save`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then(r => r.ok ? r.json() : null).then(d => { if (d) setSaved(d.saved); });
+  }, [post.id, token]);
 
-  function toggleSave() {
-    const savedIds: number[] = JSON.parse(localStorage.getItem("scouta_saved") || "[]");
-    let next: number[];
-    if (saved) { next = savedIds.filter((id: number) => id !== post.id); }
-    else { next = [...savedIds, post.id]; }
-    localStorage.setItem("scouta_saved", JSON.stringify(next));
-    setSaved(!saved);
+  async function toggleSave() {
+    if (!token) return;
+    setSaved(s => !s); // optimistic
+    const res = await fetch(`/api/proxy/posts/${post.id}/save`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      const d = await res.json();
+      setSaved(d.saved);
+    } else {
+      setSaved(s => !s); // revert
+    }
   }
 
   async function toggleLike() {
