@@ -1,4 +1,5 @@
 FROM node:20-slim
+ARG CACHE_BUST=1773702689
 
 WORKDIR /app
 
