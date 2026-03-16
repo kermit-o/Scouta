@@ -277,6 +277,23 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
   useEffect(() => { setMuted(globalMuted); }, [globalMuted]);
 
   const cardRef = useRef<HTMLDivElement>(null);
+  const watchStartRef = useRef<number>(0);
+  const watchSecondsRef = useRef<number>(0);
+
+  function sendWatchTime(seconds: number, completed: boolean) {
+    if (seconds < 2) return; // ignore very short views
+    const uid = token ? (() => { try { return JSON.parse(atob(token.split(".")[1])).sub; } catch { return null; } })() : null;
+    const sessionId = sessionStorage.getItem("scouta_session") || (() => {
+      const id = Math.random().toString(36).slice(2);
+      sessionStorage.setItem("scouta_session", id);
+      return id;
+    })();
+    fetch(`${API}/api/v1/videos/${post.id}/view`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ user_id: uid ? parseInt(uid) : null, session_id: sessionId, watch_seconds: Math.round(seconds), completed }),
+    }).catch(() => {});
+  }
 
   useEffect(() => {
     const video = videoRef.current;
@@ -288,16 +305,34 @@ function TikTokCard({ post, isActive, token }: { post: VideoPost; isActive: bool
           video.muted = globalMuted;
           video.play().catch(() => {});
           setPlaying(true);
+          watchStartRef.current = Date.now();
         } else {
           video.pause();
           video.currentTime = 0;
           setPlaying(false);
+          // Send watch time when leaving
+          if (watchStartRef.current > 0) {
+            const elapsed = (Date.now() - watchStartRef.current) / 1000;
+            watchSecondsRef.current += elapsed;
+            const duration = video.duration || 30;
+            const completed = watchSecondsRef.current >= duration * 0.8;
+            sendWatchTime(watchSecondsRef.current, completed);
+            watchStartRef.current = 0;
+          }
         }
       },
       { threshold: 0.8 }
     );
     observer.observe(card);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      // Send remaining watch time on unmount
+      if (watchStartRef.current > 0) {
+        const elapsed = (Date.now() - watchStartRef.current) / 1000;
+        watchSecondsRef.current += elapsed;
+        sendWatchTime(watchSecondsRef.current, false);
+      }
+    };
   }, []);
 
   // Stop when comments open
