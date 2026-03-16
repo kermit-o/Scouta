@@ -262,19 +262,65 @@ export default function AdminPage() {
         {/* Users tab */}
         {tab === "users" && !loading && (
           <div>
-            <p style={{ fontSize: "0.6rem", color: "#444", marginBottom: "1rem" }}>{(data.users||[]).length} users</p>
-            {(data.users||[]).map((u: any) => (
-              <div key={u.id} style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.6rem 0", borderBottom: "1px solid #111" }}>
-                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{u.id}</span>
-                <div style={{ flex: 1 }}>
-                  <Link href={`/u/${u.username}`} style={{ fontSize: "0.8rem", color: "#c8c0b0", textDecoration: "none" }}>{u.display_name || u.username || "—"}</Link>
-                  <span style={{ fontSize: "0.55rem", color: "#444", marginLeft: "0.5rem" }}>{u.email}</span>
-                </div>
-                <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 60 }}>@{u.username || "—"}</span>
-                <span style={{ fontSize: "0.55rem", color: u.is_verified ? "#4a9a4a" : "#9a4a4a", minWidth: 50 }}>
-                  {u.is_verified ? "verified" : "unverified"}
+            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "1rem" }}>
+              <p style={{ fontSize: "0.6rem", color: "#444", margin: 0 }}>{(data.users||[]).length} users</p>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <span style={{ fontSize: "0.55rem", color: "#9a4a4a", fontFamily: "monospace" }}>
+                  {(data.users||[]).filter((u: any) => u.is_banned).length} banned
                 </span>
-                <span style={{ fontSize: "0.55rem", color: "#333" }}>{timeAgo(u.created_at)}</span>
+                <span style={{ fontSize: "0.55rem", color: "#9a7a4a", fontFamily: "monospace" }}>
+                  · {(data.users||[]).filter((u: any) => u.is_flagged).length} flagged
+                </span>
+              </div>
+            </div>
+            {(data.users||[]).map((u: any) => (
+              <div key={u.id} style={{ padding: "0.75rem 0", borderBottom: "1px solid #111", opacity: u.is_banned ? 0.5 : 1 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+                  <span style={{ fontSize: "0.55rem", color: "#333", minWidth: 30 }}>#{u.id}</span>
+                  <div style={{ flex: 1 }}>
+                    <Link href={`/u/${u.username}`} style={{ fontSize: "0.8rem", color: u.is_banned ? "#555" : "#c8c0b0", textDecoration: "none" }}>
+                      {u.display_name || u.username || "—"}
+                    </Link>
+                    <span style={{ fontSize: "0.55rem", color: "#444", marginLeft: "0.5rem" }}>{u.email}</span>
+                  </div>
+                  <span style={{ fontSize: "0.55rem", color: u.is_verified ? "#4a9a4a" : "#555", minWidth: 50 }}>
+                    {u.is_verified ? "✓ verified" : "unverified"}
+                  </span>
+                  {u.is_banned && <span style={{ fontSize: "0.55rem", color: "#9a4a4a", fontFamily: "monospace" }}>BANNED</span>}
+                  {u.is_flagged && !u.is_banned && <span style={{ fontSize: "0.55rem", color: "#9a7a4a", fontFamily: "monospace" }}>⚑ FLAGGED</span>}
+                  <span style={{ fontSize: "0.55rem", color: "#333" }}>{timeAgo(u.created_at)}</span>
+                  {/* Flag button */}
+                  <button
+                    onClick={() => {
+                      const reason = u.is_flagged ? "" : (prompt("Flag reason (optional):") || "suspicious");
+                      fetch(`/api/proxy/admin/users/${u.id}/ban`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+                        body: JSON.stringify({ action: u.is_flagged ? "unflag" : "flag", reason }),
+                      }).then(() => setData((d: any) => ({ ...d, users: d.users.map((x: any) => x.id === u.id ? { ...x, is_flagged: !u.is_flagged } : x) })));
+                    }}
+                    style={{ background: "none", border: `1px solid ${u.is_flagged ? "#3a2a1a" : "#2a2a1a"}`, color: u.is_flagged ? "#9a7a4a" : "#555", padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace" }}
+                  >{u.is_flagged ? "Unflag" : "⚑ Flag"}</button>
+                  {/* Ban button */}
+                  <button
+                    onClick={() => {
+                      const reason = u.is_banned ? "" : (prompt("Ban reason:") || "violation");
+                      if (!u.is_banned && !reason) return;
+                      fetch(`/api/proxy/admin/users/${u.id}/ban`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("token")}` },
+                        body: JSON.stringify({ action: u.is_banned ? "unban" : "ban", reason }),
+                      }).then(() => setData((d: any) => ({ ...d, users: d.users.map((x: any) => x.id === u.id ? { ...x, is_banned: !u.is_banned } : x) })));
+                    }}
+                    style={{ background: "none", border: "1px solid #2a1a1a", color: u.is_banned ? "#555" : "#9a4a4a", padding: "0.2rem 0.5rem", cursor: "pointer", fontSize: "0.55rem", fontFamily: "monospace" }}
+                  >{u.is_banned ? "Unban" : "Ban"}</button>
+                </div>
+                {/* Ban/flag reason */}
+                {(u.ban_reason || u.flag_reason) && (
+                  <p style={{ margin: "0.3rem 0 0 2.5rem", fontSize: "0.55rem", color: "#555", fontFamily: "monospace" }}>
+                    {u.is_banned ? `Ban: ${u.ban_reason}` : `Flag: ${u.flag_reason}`}
+                  </p>
+                )}
               </div>
             ))}
           </div>
