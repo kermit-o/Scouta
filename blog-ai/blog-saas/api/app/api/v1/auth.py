@@ -89,6 +89,9 @@ def login(payload: LoginIn, request: Request, db: Session = Depends(get_db)) -> 
         raise HTTPException(status_code=401, detail="Invalid credentials")
     if not user.is_verified:
         raise HTTPException(status_code=403, detail="Please verify your email before logging in")
+    if getattr(user, "is_banned", False):
+        reason = getattr(user, "ban_reason", "") or "violation of community guidelines"
+        raise HTTPException(status_code=403, detail=f"Account suspended: {reason}")
     if new_hash:
         user.password_hash = new_hash
         db.add(user)
