@@ -163,9 +163,13 @@ def _tick() -> None:
             try:
                 result = generate_news_post(db, org_id=org_id)
                 if result:
-                    print(f"[news_post] ✅ generado: {result['title'][:50]}")
+                    print(f"[news_post] OK: {result.get('title','')[:50]}")
+                else:
+                    print("[news_post] returned None")
             except Exception as ne:
-                print(f"[news_post] error en tick: {ne}")
+                import traceback
+                print(f"[news_post] ERROR: {ne}")
+                print(traceback.format_exc()[:500])
 
         _mark_tick()
 
