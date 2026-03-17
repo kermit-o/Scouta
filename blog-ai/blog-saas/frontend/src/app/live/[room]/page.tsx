@@ -39,6 +39,9 @@ export default function LiveRoomPage() {
   const [showInvite, setShowInvite] = useState(false);
   const [inviteUsername, setInviteUsername] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
+  const [joinRequested, setJoinRequested] = useState(false);
+  const [joinRequests, setJoinRequests] = useState<{username: string; display_name: string; user_id: number}[]>([]);
+  const [joinAccepted, setJoinAccepted] = useState(false);
 
   useEffect(() => {
     if (!preToken) {
@@ -67,6 +70,25 @@ export default function LiveRoomPage() {
     }, 10000);
     return () => clearInterval(iv);
   }, [room]);
+
+  async function requestJoin() {
+    if (!token) return;
+    setJoinRequested(true);
+    await fetch(`/api/proxy/live/${room}/request-join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    });
+  }
+
+  async function handleJoinResponse(username: string, accept: boolean) {
+    if (!token) return;
+    await fetch(`/api/proxy/live/${room}/accept-join`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ username, accept }),
+    });
+    setJoinRequests(prev => prev.filter(r => r.username !== username));
+  }
 
   async function sendInvite() {
     if (!token || !inviteUsername.trim()) return;
@@ -180,10 +202,40 @@ export default function LiveRoomPage() {
         />
 
         {/* Right action buttons */}
-        {!isHost && (
-          <div style={{ position: "absolute", right: 12, bottom: 80, display: "flex", flexDirection: "column", gap: "1rem" }}>
-            <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
-            <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
+        <div style={{ position: "absolute", right: 12, bottom: 80, display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
+          <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
+          {!isHost && token && !joinRequested && (
+            <button
+              onClick={requestJoin}
+              style={{ background: "rgba(74,122,154,0.7)", border: "1px solid #4a7a9a", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1rem" }}
+              title="Request to join live"
+            >🎙</button>
+          )}
+          {!isHost && joinRequested && (
+            <div style={{ background: "rgba(74,154,74,0.3)", border: "1px solid #4a9a4a", borderRadius: "50%", width: 44, height: 44, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.8rem" }}>⏳</div>
+          )}
+        </div>
+
+        {/* Host join request notifications */}
+        {isHost && joinRequests.length > 0 && (
+          <div style={{ position: "absolute", top: 60, right: 12, display: "flex", flexDirection: "column", gap: "0.5rem", zIndex: 50 }}>
+            {joinRequests.map(req => (
+              <div key={req.username} style={{ background: "rgba(8,8,8,0.95)", border: "1px solid #1a1a1a", padding: "0.75rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem", minWidth: 240 }}>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: "0.7rem", color: "#f0e8d8", fontFamily: "monospace" }}>🎙 <strong>{req.display_name}</strong></p>
+                  <p style={{ margin: "0.2rem 0 0", fontSize: "0.6rem", color: "#555", fontFamily: "monospace" }}>wants to join your live</p>
+                </div>
+                <button
+                  onClick={() => handleJoinResponse(req.username, true)}
+                  style={{ background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a", padding: "0.3rem 0.6rem", fontFamily: "monospace", fontSize: "0.6rem", cursor: "pointer" }}
+                >✓ Accept</button>
+                <button
+                  onClick={() => handleJoinResponse(req.username, false)}
+                  style={{ background: "none", border: "1px solid #2a1a1a", color: "#9a4a4a", padding: "0.3rem 0.6rem", fontFamily: "monospace", fontSize: "0.6rem", cursor: "pointer" }}
+                >✕</button>
+              </div>
+            ))}
           </div>
         )}
       </div>

@@ -42,6 +42,9 @@ export default function LiveChat({ roomName, token, user, isHost, onBlock, block
         setChat(prev => [...prev.slice(-199), msg]);
       } else if (msg.type === "stream_ended") {
         window.location.href = "/live?ended=1";
+      } else {
+        // Forward other messages to parent via custom event
+        window.dispatchEvent(new CustomEvent("live_ws_message", { detail: msg }));
       }
     };
     return () => ws.close();
