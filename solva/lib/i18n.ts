@@ -42,18 +42,21 @@ function getDeviceLanguage(): string {
   return supported.includes(locale) ? locale : 'en'
 }
 
+// Init síncrono para evitar hooks error
+i18n.use(initReactI18next).init({
+  resources: { en: { translation: en }, es: { translation: es }, fr: { translation: fr },
+               pt: { translation: pt }, nl: { translation: nl }, de: { translation: de },
+               it: { translation: it } },
+  lng: 'en',
+  fallbackLng: 'en',
+  interpolation: { escapeValue: false },
+})
+
 export async function initI18n() {
   const stored = await getStoredLanguage()
   const lng = stored ?? getDeviceLanguage()
 
-  await i18n.use(initReactI18next).init({
-    resources: { en: { translation: en }, es: { translation: es }, fr: { translation: fr },
-                 pt: { translation: pt }, nl: { translation: nl }, de: { translation: de },
-                 it: { translation: it } },
-    lng,
-    fallbackLng: 'en',
-    interpolation: { escapeValue: false },
-  })
+  await i18n.changeLanguage(lng)
 }
 
 export default i18n
