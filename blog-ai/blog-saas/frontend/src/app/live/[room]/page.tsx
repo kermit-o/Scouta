@@ -37,6 +37,9 @@ export default function LiveRoomPage() {
   const [ended, setEnded] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
   const [streamEnded, setStreamEnded] = useState(false);
+  const [showInvite, setShowInvite] = useState(false);
+  const [inviteUsername, setInviteUsername] = useState("");
+  const [inviteSent, setInviteSent] = useState(false);
 
   useEffect(() => {
     if (!preToken) {
@@ -65,6 +68,19 @@ export default function LiveRoomPage() {
     }, 10000);
     return () => clearInterval(iv);
   }, [room]);
+
+  async function sendInvite() {
+    if (!token || !inviteUsername.trim()) return;
+    const res = await fetch(`/api/proxy/live/${room}/invite`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ username: inviteUsername.trim() }),
+    });
+    if (res.ok) {
+      setInviteSent(true);
+      setTimeout(() => { setInviteSent(false); setShowInvite(false); setInviteUsername(""); }, 3000);
+    }
+  }
 
   async function endStream() {
     if (!token) return;
@@ -97,9 +113,15 @@ export default function LiveRoomPage() {
         <h2 style={{ fontSize: "0.9rem", fontWeight: 400, fontFamily: "Georgia, serif", color: "#f0e8d8", margin: 0, flex: 1 }}>{streamTitle || `Room: ${room}`}</h2>
         <span style={{ fontSize: "0.6rem", color: "#444", fontFamily: "monospace" }}>{viewerCount} viewers</span>
         {isHost && (
-          <button onClick={endStream} style={{ background: "none", border: "1px solid #e44", color: "#e44", padding: "0.25rem 0.75rem", fontFamily: "monospace", fontSize: "0.6rem", cursor: "pointer" }}>
-            ■ End
-          </button>
+          <>
+            <button
+              onClick={() => setShowInvite(s => !s)}
+              style={{ background: "none", border: "1px solid #4a7a9a", color: "#4a7a9a", padding: "0.25rem 0.75rem", fontFamily: "monospace", fontSize: "0.6rem", cursor: "pointer" }}
+            >+ Invite</button>
+            <button onClick={endStream} style={{ background: "none", border: "1px solid #e44", color: "#e44", padding: "0.25rem 0.75rem", fontFamily: "monospace", fontSize: "0.6rem", cursor: "pointer" }}>
+              ■ End
+            </button>
+          </>
         )}
       </div>
 
@@ -116,9 +138,35 @@ export default function LiveRoomPage() {
 
         {/* Stream ended overlay */}
         {streamEnded && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.85)", gap: "1rem" }}>
-            <p style={{ color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: "1.25rem" }}>Stream has ended</p>
-            <Link href="/live" style={{ color: "#4a7a9a", fontFamily: "monospace", fontSize: "0.7rem" }}>← Back to Live</Link>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", gap: "1rem", zIndex: 50 }}>
+            <div style={{ fontSize: "3rem" }}>📡</div>
+            <p style={{ color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: "1.25rem", margin: 0 }}>Stream has ended</p>
+            <p style={{ color: "#555", fontFamily: "monospace", fontSize: "0.65rem", margin: 0 }}>Thanks for watching</p>
+            <Link href="/live" style={{ color: "#4a7a9a", fontFamily: "monospace", fontSize: "0.7rem", marginTop: "0.5rem", border: "1px solid #4a7a9a", padding: "0.4rem 1rem" }}>← Back to Live</Link>
+          </div>
+        )}
+
+        {/* Invite modal */}
+        {showInvite && isHost && (
+          <div style={{ position: "absolute", top: 60, right: 12, background: "#0e0e0e", border: "1px solid #1a1a1a", padding: "1rem", zIndex: 40, width: 240 }}>
+            <p style={{ fontSize: "0.6rem", color: "#555", fontFamily: "monospace", margin: "0 0 0.75rem", letterSpacing: "0.1em" }}>INVITE TO LIVE</p>
+            {inviteSent ? (
+              <p style={{ color: "#4a9a4a", fontFamily: "monospace", fontSize: "0.7rem" }}>✅ Invite sent!</p>
+            ) : (
+              <>
+                <input
+                  value={inviteUsername}
+                  onChange={e => setInviteUsername(e.target.value)}
+                  onKeyDown={e => e.key === "Enter" && sendInvite()}
+                  placeholder="@username"
+                  style={{ width: "100%", background: "#111", border: "1px solid #222", color: "#f0e8d8", padding: "0.4rem 0.6rem", fontSize: "0.75rem", fontFamily: "monospace", outline: "none", marginBottom: "0.5rem", boxSizing: "border-box" }}
+                />
+                <div style={{ display: "flex", gap: "0.5rem" }}>
+                  <button onClick={sendInvite} style={{ flex: 1, background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a", padding: "0.4rem", fontFamily: "monospace", fontSize: "0.65rem", cursor: "pointer" }}>Send</button>
+                  <button onClick={() => setShowInvite(false)} style={{ background: "none", border: "1px solid #222", color: "#555", padding: "0.4rem", fontFamily: "monospace", fontSize: "0.65rem", cursor: "pointer" }}>✕</button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
