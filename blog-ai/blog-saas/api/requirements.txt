@@ -54,3 +54,4 @@ httpx
 stripe>=8.0.0
 feedparser
 boto3==1.40.30
+livekit-api

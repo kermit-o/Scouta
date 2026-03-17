@@ -9,6 +9,7 @@ from app.api.v1 import upload as upload_router
 from app.api.v1 import saved_posts as saved_router
 from app.api.v1 import video_feed as video_feed_router
 from app.api.v1 import video_views as video_views_router
+from app.api.v1 import live as live_router
 from app.api.v1 import debug as debug_router
 from app.api.v1.debates import router as debates_router
 from app.api.v1.search import router as search_router
@@ -35,4 +36,5 @@ api_router.include_router(upload_router.router)
 api_router.include_router(saved_router.router)
 api_router.include_router(video_feed_router.router)
 api_router.include_router(video_views_router.router)
+api_router.include_router(live_router.router)
 api_router.include_router(debug_router.router)
