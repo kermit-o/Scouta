@@ -65,7 +65,9 @@ export default function LiveRoomPage() {
       if (msg.type === 'join_request' && isHost) {
         setJoinRequests(prev => prev.find((r: any) => r.username === msg.username) ? prev : [...prev, { username: msg.username, display_name: msg.display_name, user_id: msg.user_id }]);
       } else if (msg.type === 'join_accepted' && msg.username === (user as any)?.username) {
-        window.location.href = `/live/${room}?token=${msg.token}&host=1`;
+        // Join as co-host
+        const newUrl = `/live/${msg.room_name || room}?token=${encodeURIComponent(msg.token)}&host=1`;
+        window.location.href = newUrl;
       } else if (msg.type === 'join_rejected' && msg.username === (user as any)?.username) {
         setJoinRequested(false);
         alert('Your request to join was declined.');

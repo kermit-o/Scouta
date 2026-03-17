@@ -13,16 +13,37 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
   const containerRef = useRef<HTMLDivElement>(null);
   const roomRef = useRef<Room | null>(null);
 
-  function attachVideoTrack(track: any) {
+  function attachVideoTrack(track: any, participantName?: string) {
     if (!containerRef.current) return;
+    // Check if track already attached
+    const existingId = `track-${track.sid || Math.random()}`;
+    if (containerRef.current.querySelector(`[data-track-id="${existingId}"]`)) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.setAttribute("data-track-id", existingId);
+    wrapper.style.cssText = "position:relative;flex:1;min-width:0;height:100%;";
+
     const el = track.attach() as HTMLVideoElement;
-    el.style.cssText = "width:100%;height:100%;object-fit:contain;background:#000;position:absolute;inset:0;";
+    el.style.cssText = "width:100%;height:100%;object-fit:contain;background:#000;";
     el.autoplay = true;
     el.playsInline = true;
     el.muted = isHost;
+
+    const label = document.createElement("div");
+    label.style.cssText = "position:absolute;bottom:8px;left:8px;font-size:0.6rem;color:#fff;font-family:monospace;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:2px;";
+    label.textContent = participantName || "";
+
+    wrapper.appendChild(el);
+    if (participantName) wrapper.appendChild(label);
+
+    // Remove placeholder
     const placeholder = containerRef.current.querySelector(".lk-placeholder");
     if (placeholder) placeholder.remove();
-    containerRef.current.appendChild(el);
+
+    containerRef.current.appendChild(wrapper);
+
+    // Update layout — flex row
+    containerRef.current.style.cssText = "width:100%;height:100%;background:#000;display:flex;flex-direction:row;";
   }
 
   useEffect(() => {
@@ -30,8 +51,8 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
     const room = new Room({ adaptiveStream: true, dynacast: true });
     roomRef.current = room;
 
-    room.on(RoomEvent.TrackSubscribed, (track: any) => {
-      if (track.kind === Track.Kind.Video) attachVideoTrack(track);
+    room.on(RoomEvent.TrackSubscribed, (track: any, pub: any, participant: any) => {
+      if (track.kind === Track.Kind.Video) attachVideoTrack(track, participant?.name || participant?.identity);
       else if (track.kind === Track.Kind.Audio && !isHost) {
         const el = track.attach();
         document.body.appendChild(el);
@@ -53,7 +74,7 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
         // Auto-subscribe
         setTimeout(() => {
           if (pub.track) {
-            if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track);
+            if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track, p.name || p.identity);
             else if (pub.kind === Track.Kind.Audio) {
               const el = pub.track.attach();
               document.body.appendChild(el);
@@ -77,7 +98,7 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
       if (isHost) {
         await room.localParticipant.enableCameraAndMicrophone();
         room.localParticipant.trackPublications.forEach((pub) => {
-          if (pub.track && pub.kind === Track.Kind.Video) attachVideoTrack(pub.track);
+          if (pub.track && pub.kind === Track.Kind.Video) attachVideoTrack(pub.track, room.localParticipant.name);
         });
         document.addEventListener("visibilitychange", () => {
           try {
@@ -90,7 +111,7 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
         room.remoteParticipants.forEach((p) => {
           p.trackPublications.forEach((pub) => {
             if (pub.isSubscribed && pub.track) {
-              if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track);
+              if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track, p.name || p.identity);
               else if (pub.kind === Track.Kind.Audio) { const el = pub.track.attach(); document.body.appendChild(el); }
             }
           });
