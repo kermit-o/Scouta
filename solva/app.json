@@ -59,7 +59,8 @@
       "startUrl": "/",
       "display": "standalone",
       "orientation": "portrait",
-      "preferRelatedApplications": false
+      "preferRelatedApplications": false,
+      "template": "./web/index.html"
     },
     "plugins": [
       "./plugins/withNoGoogleServices",
