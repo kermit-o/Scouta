@@ -389,20 +389,24 @@
     "statusClosed": "Fechada"
   },
   "security": {
-    "title": "Segurança",
-    "changePassword": "Alterar senha",
-    "newPassword": "Nova senha",
-    "confirmPassword": "Confirmar senha",
-    "updatePassword": "Atualizar senha",
-    "activeSessions": "Sessões ativas",
-    "closeAllSessions": "Fechar todas as sessões"
+    "title": "Security",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "changePassword": "Change password",
+    "passwordUpdated": "✅ Password updated successfully.",
+    "passwordMismatch": "Passwords do not match."
   },
   "kyc": {
-    "docType": "Tipo de documento",
-    "frontPhoto": "Foto frontal do documento *",
-    "backPhoto": "Foto traseira (opcional para passaporte)",
-    "selfie": "Selfie segurando o documento *",
-    "submit": "Enviar para verificação"
+    "title": "Identity Verification",
+    "uploadFront": "📷 Upload front photo",
+    "uploadBack": "📷 Upload back photo",
+    "uploadSelfie": "🤳 Upload selfie",
+    "uploading": "Uploading...",
+    "submit": "Submit verification",
+    "pending": "Pending review",
+    "verified": "Verified",
+    "rejected": "Rejected"
   },
   "drawer": {
     "account": "Conta",

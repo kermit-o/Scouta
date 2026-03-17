@@ -161,7 +161,7 @@ export default function KycScreen() {
           <TouchableOpacity style={s.uploadBtn} onPress={() => uploadDoc('front')} disabled={uploading === 'front'}>
             {frontUrl
               ? <Image source={{ uri: frontUrl }} style={s.docImage} />
-              : <Text style={s.uploadText}>{uploading === 'front' ? 'Subiendo...' : '📷 Subir foto frontal'}</Text>
+              : <Text style={s.uploadText}>{uploading === 'front' ? t('kyc.uploading') : t('kyc.uploadFront')}</Text>
             }
           </TouchableOpacity>
 
@@ -170,7 +170,7 @@ export default function KycScreen() {
           <TouchableOpacity style={s.uploadBtn} onPress={() => uploadDoc('back')} disabled={uploading === 'back'}>
             {backUrl
               ? <Image source={{ uri: backUrl }} style={s.docImage} />
-              : <Text style={s.uploadText}>{uploading === 'back' ? 'Subiendo...' : '📷 Subir foto trasera'}</Text>
+              : <Text style={s.uploadText}>{uploading === 'back' ? t('kyc.uploading') : t('kyc.uploadBack')}</Text>
             }
           </TouchableOpacity>
 
@@ -179,7 +179,7 @@ export default function KycScreen() {
           <TouchableOpacity style={[s.uploadBtn, s.selfieBtn]} onPress={() => uploadDoc('selfie')} disabled={uploading === 'selfie'}>
             {selfieUrl
               ? <Image source={{ uri: selfieUrl }} style={s.docImage} />
-              : <Text style={s.uploadText}>{uploading === 'selfie' ? 'Subiendo...' : '🤳 Subir selfie'}</Text>
+              : <Text style={s.uploadText}>{uploading === 'selfie' ? t('kyc.uploading') : t('kyc.uploadSelfie')}</Text>
             }
           </TouchableOpacity>
 

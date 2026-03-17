@@ -390,19 +390,23 @@
   },
   "security": {
     "title": "Seguridad",
-    "changePassword": "Cambiar contraseña",
+    "currentPassword": "Contraseña actual",
     "newPassword": "Nueva contraseña",
     "confirmPassword": "Confirmar contraseña",
-    "updatePassword": "Actualizar contraseña",
-    "activeSessions": "Sesiones activas",
-    "closeAllSessions": "Cerrar todas las sesiones"
+    "changePassword": "Cambiar contraseña",
+    "passwordUpdated": "✅ Contraseña actualizada correctamente.",
+    "passwordMismatch": "Las contraseñas no coinciden."
   },
   "kyc": {
-    "docType": "Tipo de documento",
-    "frontPhoto": "Foto frontal del documento *",
-    "backPhoto": "Foto trasera (opcional para pasaporte)",
-    "selfie": "Selfie sosteniendo el documento *",
-    "submit": "Enviar para verificación"
+    "title": "Verificación de identidad",
+    "uploadFront": "📷 Subir foto frontal",
+    "uploadBack": "📷 Subir foto trasera",
+    "uploadSelfie": "🤳 Subir selfie",
+    "uploading": "Subiendo...",
+    "submit": "Enviar verificación",
+    "pending": "Pendiente de revisión",
+    "verified": "Verificado",
+    "rejected": "Rechazado"
   },
   "drawer": {
     "account": "Cuenta",

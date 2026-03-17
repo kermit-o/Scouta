@@ -23,7 +23,7 @@ export default function SecurityScreen() {
     const { error } = await supabase.auth.updateUser({ password: newPassword })
     setLoading(false)
     if (error) setMsg({ text: 'Error al cambiar contraseña. Inténtalo de nuevo.', ok: false })
-    else { setMsg({ text: '✅ Contraseña actualizada correctamente.', ok: true }); setNewPassword(''); setConfirmPassword('') }
+    else { setMsg({ text: t('security.passwordUpdated'), ok: true }); setNewPassword(''); setConfirmPassword('') }
   }
 
   return (
