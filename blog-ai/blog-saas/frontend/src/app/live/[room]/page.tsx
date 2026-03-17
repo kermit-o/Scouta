@@ -4,12 +4,10 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import "@livekit/components-styles";
-import {
-  LiveKitRoom,
-  VideoConference,
-  RoomAudioRenderer,
-  ControlBar,
-} from "@livekit/components-react";
+import dynamic from "next/dynamic";
+const LiveKitRoom = dynamic(() => import("@livekit/components-react").then(m => ({ default: m.LiveKitRoom })), { ssr: false });
+const VideoConference = dynamic(() => import("@livekit/components-react").then(m => ({ default: m.VideoConference })), { ssr: false });
+const RoomAudioRenderer = dynamic(() => import("@livekit/components-react").then(m => ({ default: m.RoomAudioRenderer })), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
 const LIVEKIT_URL = "wss://scouta-pi70lg8z.livekit.cloud";
@@ -158,7 +156,7 @@ export default function LiveRoomPage() {
             serverUrl={LIVEKIT_URL}
             connect={true}
             onDisconnected={() => { if (!isHost) window.location.href = "/live"; }}
-            style={{ height: "100%", background: "#000" }}
+            style={{ height: "100%", background: "#000", position: "relative" }}
           >
             <VideoConference />
             <RoomAudioRenderer />
