@@ -403,7 +403,12 @@
     "support": "Support",
     "help": "Help",
     "report": "Report",
-    "logout": "Log out"
+    "logout": "Log out",
+    "economic": "Economic",
+    "payments": "Payments",
+    "invoices": "Invoices",
+    "supportChat": "Support chat",
+    "terms": "Terms & conditions"
   },
   "notifications": {
     "newJobs": "New available jobs",

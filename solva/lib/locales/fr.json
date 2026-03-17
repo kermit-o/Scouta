@@ -403,7 +403,12 @@
     "support": "Support",
     "help": "Aide",
     "report": "Signaler",
-    "logout": "Se déconnecter"
+    "logout": "Se déconnecter",
+    "economic": "Économique",
+    "payments": "Paiements",
+    "invoices": "Factures",
+    "supportChat": "Chat support",
+    "terms": "Conditions générales"
   },
   "notifications": {
     "newJobs": "Nouveaux travaux disponibles",

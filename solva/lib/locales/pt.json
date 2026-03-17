@@ -403,7 +403,12 @@
     "support": "Suporte",
     "help": "Ajuda",
     "report": "Reportar",
-    "logout": "Sair"
+    "logout": "Sair",
+    "economic": "Económico",
+    "payments": "Pagamentos",
+    "invoices": "Faturas",
+    "supportChat": "Chat de suporte",
+    "terms": "Termos e condições"
   },
   "notifications": {
     "newJobs": "Novos trabalhos disponíveis",

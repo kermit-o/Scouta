@@ -403,7 +403,12 @@
     "support": "Supporto",
     "help": "Aiuto",
     "report": "Segnala",
-    "logout": "Esci"
+    "logout": "Esci",
+    "economic": "Economico",
+    "payments": "Pagamenti",
+    "invoices": "Fatture",
+    "supportChat": "Chat supporto",
+    "terms": "Termini e condizioni"
   },
   "notifications": {
     "newJobs": "Nuovi lavori disponibili",

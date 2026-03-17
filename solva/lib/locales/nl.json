@@ -403,7 +403,12 @@
     "support": "Ondersteuning",
     "help": "Help",
     "report": "Rapporteren",
-    "logout": "Uitloggen"
+    "logout": "Uitloggen",
+    "economic": "Economisch",
+    "payments": "Betalingen",
+    "invoices": "Facturen",
+    "supportChat": "Support chat",
+    "terms": "Algemene voorwaarden"
   },
   "notifications": {
     "newJobs": "Nieuwe beschikbare jobs",
