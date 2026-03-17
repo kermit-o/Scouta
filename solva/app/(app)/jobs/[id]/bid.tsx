@@ -180,7 +180,7 @@ export default function NewBidScreen() {
             ? <ActivityIndicator color="#fff" />
             : <>
                 <Ionicons name="send-outline" size={20} color="#fff" />
-                <Text style={s.footerBtnText}>Enviar oferta</Text>
+                <Text style={s.footerBtnText}>{t('bid.submit')}</Text>
               </>
           }
         </TouchableOpacity>

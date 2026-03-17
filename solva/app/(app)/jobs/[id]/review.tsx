@@ -12,7 +12,6 @@ import { useAuth } from '../../../../lib/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const RATING_LABELS = ['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente']
 const RATING_COLORS = ['', '#DC2626', '#F59E0B', '#D97706', '#2563EB', '#059669']
 
 function StarRating({ rating, onRate }: { rating: number; onRate: (r: number) => void }) {
@@ -166,7 +165,7 @@ export default function ReviewScreen() {
 
         {/* Comentario */}
         <View style={s.card}>
-          <Text style={s.label}>Comentario * <Text style={s.labelSub}>(mínimo 20 caracteres)</Text></Text>
+          <Text style={s.label}>{t('review.comment')} * <Text style={s.labelSub}>{t('review.commentMin')}</Text></Text>
           <TextInput
             style={s.textarea}
             value={comment}
