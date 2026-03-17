@@ -24,14 +24,14 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost }: Props)
     function handleTrackSubscribed(track: RemoteTrack, pub: RemoteTrackPublication, participant: RemoteParticipant) {
       if (!containerRef.current) return;
       if (track.kind === Track.Kind.Video) {
-        const el = track.attach();
+        const el = track.attach() as HTMLVideoElement;
         el.style.width = "100%";
         el.style.height = "100%";
         el.style.objectFit = "contain";
         el.autoplay = true;
-        el.playsInline = true;
-        containerRef.current.innerHTML = "";
-        containerRef.current.appendChild(el);
+        (el as HTMLVideoElement).playsInline = true;
+        containerRef.current!.innerHTML = "";
+        containerRef.current!.appendChild(el);
       } else if (track.kind === Track.Kind.Audio) {
         const el = track.attach();
         document.body.appendChild(el);
@@ -55,7 +55,7 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost }: Props)
           el.style.height = "100%";
           el.style.objectFit = "contain";
           el.autoplay = true;
-          el.playsInline = true;
+          (el as HTMLVideoElement).playsInline = true;
           el.muted = true;
           containerRef.current.innerHTML = "";
           containerRef.current.appendChild(el);
