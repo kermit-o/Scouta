@@ -76,6 +76,12 @@ def start_live(
     if not title:
         raise HTTPException(status_code=400, detail="Title required")
 
+    # Terminar cualquier live anterior del mismo usuario
+    db.execute(text(
+        "UPDATE live_streams SET status='ended', ended_at=NOW() WHERE host_user_id=:uid AND status='live'"
+    ), {"uid": user.id})
+    db.commit()
+
     room_name = _gen_room_name()
 
     # Save to DB
@@ -145,10 +151,31 @@ def end_live(
 ):
     """End a live stream."""
     db.execute(text(
-        "UPDATE live_streams SET status='ended', ended_at=NOW() WHERE room_name=:room AND host_user_id=:uid"
-    ), {"room": room_name, "uid": user.id})
+        "UPDATE live_streams SET status='ended', ended_at=NOW() WHERE room_name=:room"
+    ), {"room": room_name})
     db.commit()
+    # Clean up WebSocket connections
+    if room_name in _room_connections:
+        del _room_connections[room_name]
     return {"ok": True}
+
+
+@router.get("/live/{room_name}/join-anon")
+def join_live_anon(room_name: str, db: Session = Depends(get_db)):
+    """Join a live stream as anonymous viewer."""
+    stream = db.execute(
+        text("SELECT id, title, status FROM live_streams WHERE room_name=:room"),
+        {"room": room_name}
+    ).first()
+    if not stream or stream.status != "live":
+        raise HTTPException(status_code=404, detail="Stream not found or ended")
+
+    import random, string
+    anon_name = "viewer_" + "".join(random.choices(string.ascii_lowercase, k=6))
+    token = _create_livekit_token(room_name, anon_name, can_publish=False)
+    db.execute(text("UPDATE live_streams SET viewer_count = viewer_count + 1 WHERE room_name=:room"), {"room": room_name})
+    db.commit()
+    return {"token": token, "livekit_url": LIVEKIT_URL, "title": stream.title}
 
 
 @router.get("/live/active")

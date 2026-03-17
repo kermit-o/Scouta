@@ -44,9 +44,22 @@ export default function LiveRoomPage() {
       fetch(`/api/proxy/live/${room}/join`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
       }).then(r => r.json()).then(d => {
-        if (d.token) { setLivekitToken(d.token); setStreamTitle(d.title); }
-      });
+        if (d.token) {
+          setLivekitToken(d.token);
+          setStreamTitle(d.title || "");
+        } else if (d.detail) {
+          // Stream ended or not found
+          window.location.href = "/live";
+        }
+      }).catch(() => window.location.href = "/live");
+    } else if (!preToken && !token) {
+      // Anonymous viewer — get token without auth
+      fetch(`${API}/api/v1/live/${room}/join-anon`)
+        .then(r => r.json())
+        .then(d => { if (d.token) { setLivekitToken(d.token); setStreamTitle(d.title || ""); } })
+        .catch(() => {});
     }
   }, [room, token, preToken]);
 
@@ -143,6 +156,8 @@ export default function LiveRoomPage() {
             audio={isHost}
             token={livekitToken}
             serverUrl={LIVEKIT_URL}
+            connect={true}
+            onDisconnected={() => { if (!isHost) window.location.href = "/live"; }}
             style={{ height: "100%", background: "#000" }}
           >
             <VideoConference />
