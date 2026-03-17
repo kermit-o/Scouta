@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com",
               "frame-src https://challenges.cloudflare.com https://accounts.google.com",
-              "connect-src 'self' wss://scouta-pi70lg8z.livekit.cloud https://scouta-pi70lg8z.livekit.cloud wss://*.livekit.cloud https://*.livekit.cloud https://scouta-production.up.railway.app https://challenges.cloudflare.com https://cloudflareinsights.com https://*.r2.cloudflarestorage.com https://pub-fa5f65f875ac451bb5ddc548aebb08a7.r2.dev",
+              "connect-src 'self' wss://scouta-pi70lg8z.livekit.cloud https://scouta-pi70lg8z.livekit.cloud wss://*.livekit.cloud https://*.livekit.cloud https://scouta-production.up.railway.app wss://scouta-production.up.railway.app https://challenges.cloudflare.com https://cloudflareinsights.com https://*.r2.cloudflarestorage.com https://pub-fa5f65f875ac451bb5ddc548aebb08a7.r2.dev",
               "img-src 'self' data: https: blob:",
               "worker-src blob:",
               "media-src 'self' https://*.livekit.cloud blob: https://pub-fa5f65f875ac451bb5ddc548aebb08a7.r2.dev https://*.r2.dev",
