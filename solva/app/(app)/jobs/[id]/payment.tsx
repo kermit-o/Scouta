@@ -115,6 +115,7 @@ export default function PaymentScreen() {
   const payStatus = payment ? (PAYMENT_STATUS[payment.status as keyof typeof PAYMENT_STATUS] ?? PAYMENT_STATUS.pending) : null
 
   return (
+    <>
     <View style={[s.screen, { paddingTop: insets.top }]}>
       <View style={s.header}>
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
@@ -289,8 +290,8 @@ export default function PaymentScreen() {
           </View>
         </View>
       </Modal>
-    </View>
   )
+    </>
 }
 
 function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
