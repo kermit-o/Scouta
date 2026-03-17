@@ -42,6 +42,7 @@ export default function LiveRoomPage() {
   const [joinRequested, setJoinRequested] = useState(false);
   const [joinRequests, setJoinRequests] = useState<{username: string; display_name: string; user_id: number}[]>([]);
   const [joinAccepted, setJoinAccepted] = useState(false);
+  const isCoHost = !isHost && searchParams.get('token') !== null && searchParams.get('host') === '1';
 
   useEffect(() => {
     if (!preToken) {
@@ -71,6 +72,11 @@ export default function LiveRoomPage() {
       } else if (msg.type === 'join_rejected' && msg.username === (user as any)?.username) {
         setJoinRequested(false);
         alert('Your request to join was declined.');
+      } else if (msg.type === 'kicked' && msg.username === (user as any)?.username) {
+        alert('You have been removed from the live.');
+        window.location.href = `/live/${room}`;
+      } else if (msg.type === 'cohost_left') {
+        // Co-host left — handled by LiveKit track unsubscribed
       }
     };
     window.addEventListener('live_ws_message', handler);
@@ -107,6 +113,24 @@ export default function LiveRoomPage() {
       body: JSON.stringify({ username, accept }),
     });
     setJoinRequests(prev => prev.filter(r => r.username !== username));
+  }
+
+  async function leaveCoHost() {
+    if (!token) return;
+    await fetch(`/api/proxy/live/${room}/leave`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    window.location.href = `/live/${room}`;
+  }
+
+  async function kickCoHost(username: string) {
+    if (!token) return;
+    await fetch(`/api/proxy/live/${room}/kick`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ username }),
+    });
   }
 
   async function sendInvite() {
@@ -162,6 +186,11 @@ export default function LiveRoomPage() {
               ■ End
             </button>
           </>
+        )}
+        {isCoHost && (
+          <button onClick={leaveCoHost} style={{ background: "none", border: "1px solid #9a7a4a", color: "#9a7a4a", padding: "0.25rem 0.75rem", fontFamily: "monospace", fontSize: "0.6rem", cursor: "pointer" }}>
+            ↩ Leave
+          </button>
         )}
       </div>
 
