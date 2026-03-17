@@ -7,8 +7,6 @@ import { useAuth } from '../../../../lib/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-
-
 export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { session } = useAuth()
@@ -55,7 +53,6 @@ export default function PaymentScreen() {
       if (fnData.provider === 'mercadopago') { setErrorMsg(t('payment.mercadopago')); setProcessing(false); return }
       const stripe = await (window as any).Stripe?.(process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY)
       if (!stripe) {
-        // Modo test sin Stripe
         await supabase.from('payments').insert({
           contract_id: contract.id, client_id: contract.client_id, pro_id: contract.pro_id,
           amount: contract.amount, platform_fee: fnData.platform_fee, pro_amount: fnData.pro_amount,
@@ -77,7 +74,7 @@ export default function PaymentScreen() {
     if (!stripeInstance || !clientSecret || !contract || !paymentData) return
     setProcessing(true)
     try {
-      const { error, paymentIntent } = await stripeInstance.confirmCardPayment(clientSecret, {
+      const { error } = await stripeInstance.confirmCardPayment(clientSecret, {
         payment_method: { card: cardElement }
       })
       if (error) throw new Error(error.message)
@@ -116,159 +113,173 @@ export default function PaymentScreen() {
 
   return (
     <>
-    <View style={[s.screen, { paddingTop: insets.top }]}>
-      <View style={s.header}>
-        <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>{t('payment.escrow')}</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
-
-        {/* Amount hero */}
-        <View style={s.heroCard}>
-          <View style={s.heroIcon}>
-            <Ionicons name="shield-checkmark" size={32} color="#2563EB" />
-          </View>
-          <Text style={s.heroLabel}>{t('payment.contractTotal')}</Text>
-          <Text style={s.heroAmount}>{contract.amount} <Text style={s.heroCurrency}>{contract.currency}</Text></Text>
-
-          {payStatus && (
-            <View style={[s.statusBadge, { backgroundColor: payStatus.bg }]}>
-              <Ionicons name={payStatus.icon as any} size={14} color={payStatus.color} />
-              <Text style={[s.statusText, { color: payStatus.color }]}>{payStatus.label}</Text>
-            </View>
-          )}
+      <View style={[s.screen, { paddingTop: insets.top }]}>
+        <View style={s.header}>
+          <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
+            <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
+          </TouchableOpacity>
+          <Text style={s.headerTitle}>{t('payment.escrow')}</Text>
+          <View style={{ width: 40 }} />
         </View>
 
-        {/* Breakdown */}
-        <View style={s.breakdownCard}>
-          <Text style={s.breakdownTitle}>{t('payment.breakdown')}</Text>
-          <View style={s.breakdownRow}>
-            <View style={s.breakdownLeft}>
-              <Ionicons name="briefcase-outline" size={16} color="#666" />
-              <Text style={s.breakdownLabel}>{t('payment.service')}</Text>
-            </View>
-            <Text style={s.breakdownValue}>{contract.amount} {contract.currency}</Text>
-          </View>
-          <View style={s.breakdownRow}>
-            <View style={s.breakdownLeft}>
-              <Ionicons name="storefront-outline" size={16} color="#666" />
-              <Text style={s.breakdownLabel}>{t('payment.commission')}</Text>
-            </View>
-            <Text style={s.breakdownValue}>-{platformFee.toFixed(2)} {contract.currency}</Text>
-          </View>
-          <View style={s.divider} />
-          <View style={s.breakdownRow}>
-            <View style={s.breakdownLeft}>
-              <Ionicons name="person-outline" size={16} color="#059669" />
-              <Text style={[s.breakdownLabel, { color: '#059669', fontWeight: '700' }]}>{t('payment.proReceives')}</Text>
-            </View>
-            <Text style={[s.breakdownValue, { color: '#059669', fontSize: 17 }]}>{proAmount.toFixed(2)} {contract.currency}</Text>
-          </View>
-          <View style={s.breakdownMeta}>
-            <Ionicons name="location-outline" size={13} color="#aaa" />
-            <Text style={s.breakdownMetaText}>{contract.country}</Text>
-          </View>
-        </View>
+        <ScrollView style={s.scroll} contentContainerStyle={s.content} showsVerticalScrollIndicator={false}>
 
-        {/* Cómo funciona el escrow */}
-        {!payment && (
-          <View style={s.howCard}>
-            <Text style={s.howTitle}>{t('payment.howWorks')}</Text>
-            {[
-              { icon: 'lock-closed-outline', color: '#2563EB', text: t('payment.step1') },
-              { icon: 'construct-outline', color: '#D97706', text: t('payment.step2') },
-              { icon: 'checkmark-circle-outline', color: '#059669', text: t('payment.step3') },
-            ].map((step, i) => (
-              <View key={i} style={s.howStep}>
-                <View style={[s.howStepNum, { backgroundColor: step.color + '18' }]}>
-                  <Text style={[s.howStepNumText, { color: step.color }]}>{i + 1}</Text>
-                </View>
-                <Ionicons name={step.icon as any} size={18} color={step.color} />
-                <Text style={s.howStepText}>{step.text}</Text>
-              </View>
-            ))}
-          </View>
-        )}
-
-        {/* Estado: en escrow */}
-        {payment?.status === 'held' && (
-          <View style={s.heldCard}>
-            <View style={s.heldTop}>
-              <Ionicons name="lock-closed" size={24} color="#2563EB" />
-              <View style={{ flex: 1 }}>
-                <Text style={s.heldTitle}>{t('payment.heldTitle')}</Text>
-                <Text style={s.heldDesc}>{t('payment.heldDesc')}</Text>
-              </View>
+          {/* Amount hero */}
+          <View style={s.heroCard}>
+            <View style={s.heroIcon}>
+              <Ionicons name="shield-checkmark" size={32} color="#2563EB" />
             </View>
-            {payment.held_at && (
-              <Text style={s.heldDate}>Retenido el {new Date(payment.held_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
+            <Text style={s.heroLabel}>{t('payment.contractTotal')}</Text>
+            <Text style={s.heroAmount}>{contract.amount} <Text style={s.heroCurrency}>{contract.currency}</Text></Text>
+            {payStatus && (
+              <View style={[s.statusBadge, { backgroundColor: payStatus.bg }]}>
+                <Ionicons name={payStatus.icon as any} size={14} color={payStatus.color} />
+                <Text style={[s.statusText, { color: payStatus.color }]}>{payStatus.label}</Text>
+              </View>
             )}
           </View>
-        )}
 
-        {/* Estado: liberado */}
-        {payment?.status === 'released' && (
-          <View style={s.releasedCard}>
-            <Ionicons name="checkmark-circle" size={48} color="#059669" />
-            <Text style={s.releasedTitle}>{t('payment.completedTitle')}</Text>
-            <Text style={s.releasedSub}>El profesional recibió {payment.pro_amount} {payment.currency}</Text>
-            <TouchableOpacity style={s.reviewHint} onPress={() => router.push(`/(app)/jobs/${id}/review`)}>
-              <Ionicons name="star-outline" size={16} color="#D97706" />
-              <Text style={s.reviewHintText}>{t('payment.leaveReview')}</Text>
-              <Ionicons name="chevron-forward" size={14} color="#D97706" />
+          {/* Mensajes de error / éxito */}
+          {errorMsg ? (
+            <View style={s.errorBox}>
+              <Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
+              <Text style={s.errorText}>{errorMsg}</Text>
+            </View>
+          ) : null}
+          {successMsg ? (
+            <View style={s.successBox}>
+              <Ionicons name="checkmark-circle-outline" size={16} color="#059669" />
+              <Text style={s.successText}>{successMsg}</Text>
+            </View>
+          ) : null}
+
+          {/* Breakdown */}
+          <View style={s.breakdownCard}>
+            <Text style={s.breakdownTitle}>{t('payment.breakdown')}</Text>
+            <View style={s.breakdownRow}>
+              <View style={s.breakdownLeft}>
+                <Ionicons name="briefcase-outline" size={16} color="#666" />
+                <Text style={s.breakdownLabel}>{t('payment.service')}</Text>
+              </View>
+              <Text style={s.breakdownValue}>{contract.amount} {contract.currency}</Text>
+            </View>
+            <View style={s.breakdownRow}>
+              <View style={s.breakdownLeft}>
+                <Ionicons name="storefront-outline" size={16} color="#666" />
+                <Text style={s.breakdownLabel}>{t('payment.commission')}</Text>
+              </View>
+              <Text style={s.breakdownValue}>-{platformFee.toFixed(2)} {contract.currency}</Text>
+            </View>
+            <View style={s.divider} />
+            <View style={s.breakdownRow}>
+              <View style={s.breakdownLeft}>
+                <Ionicons name="person-outline" size={16} color="#059669" />
+                <Text style={[s.breakdownLabel, { color: '#059669', fontWeight: '700' }]}>{t('payment.proReceives')}</Text>
+              </View>
+              <Text style={[s.breakdownValue, { color: '#059669', fontSize: 17 }]}>{proAmount.toFixed(2)} {contract.currency}</Text>
+            </View>
+            <View style={s.breakdownMeta}>
+              <Ionicons name="location-outline" size={13} color="#aaa" />
+              <Text style={s.breakdownMetaText}>{contract.country}</Text>
+            </View>
+          </View>
+
+          {/* Cómo funciona el escrow */}
+          {!payment && (
+            <View style={s.howCard}>
+              <Text style={s.howTitle}>{t('payment.howWorks')}</Text>
+              {[
+                { icon: 'lock-closed-outline', color: '#2563EB', text: t('payment.step1') },
+                { icon: 'construct-outline', color: '#D97706', text: t('payment.step2') },
+                { icon: 'checkmark-circle-outline', color: '#059669', text: t('payment.step3') },
+              ].map((step, i) => (
+                <View key={i} style={s.howStep}>
+                  <View style={[s.howStepNum, { backgroundColor: step.color + '18' }]}>
+                    <Text style={[s.howStepNumText, { color: step.color }]}>{i + 1}</Text>
+                  </View>
+                  <Ionicons name={step.icon as any} size={18} color={step.color} />
+                  <Text style={s.howStepText}>{step.text}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+
+          {/* Estado: en escrow */}
+          {payment?.status === 'held' && (
+            <View style={s.heldCard}>
+              <View style={s.heldTop}>
+                <Ionicons name="lock-closed" size={24} color="#2563EB" />
+                <View style={{ flex: 1 }}>
+                  <Text style={s.heldTitle}>{t('payment.heldTitle')}</Text>
+                  <Text style={s.heldDesc}>{t('payment.heldDesc')}</Text>
+                </View>
+              </View>
+              {payment.held_at && (
+                <Text style={s.heldDate}>Retenido el {new Date(payment.held_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
+              )}
+            </View>
+          )}
+
+          {/* Estado: liberado */}
+          {payment?.status === 'released' && (
+            <View style={s.releasedCard}>
+              <Ionicons name="checkmark-circle" size={48} color="#059669" />
+              <Text style={s.releasedTitle}>{t('payment.completedTitle')}</Text>
+              <Text style={s.releasedSub}>El profesional recibió {payment.pro_amount} {payment.currency}</Text>
+              <TouchableOpacity style={s.reviewHint} onPress={() => router.push(`/(app)/jobs/${id}/review`)}>
+                <Ionicons name="star-outline" size={16} color="#D97706" />
+                <Text style={s.reviewHintText}>{t('payment.leaveReview')}</Text>
+                <Ionicons name="chevron-forward" size={14} color="#D97706" />
+              </TouchableOpacity>
+            </View>
+          )}
+
+        </ScrollView>
+
+        {/* Footer CTA — pagar */}
+        {!payment && isClient && (
+          <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
+            <View style={s.escrowNote}>
+              <Ionicons name="shield-outline" size={14} color="#2563EB" />
+              <Text style={s.escrowNoteText}>{t('payment.safeNote')}</Text>
+            </View>
+            <TouchableOpacity
+              style={[s.footerBtn, processing && s.footerBtnDisabled]}
+              onPress={initiatePay}
+              disabled={processing}
+              activeOpacity={0.85}
+            >
+              {processing
+                ? <ActivityIndicator color="#fff" />
+                : <>
+                    <Ionicons name="card-outline" size={20} color="#fff" />
+                    <Text style={s.footerBtnText}>{t('payment.payNow')} {contract.amount} {contract.currency}</Text>
+                  </>
+              }
             </TouchableOpacity>
           </View>
         )}
 
-      </ScrollView>
-
-      {/* Footer CTA */}
-      {!payment && isClient && (
-        <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
-          <View style={s.escrowNote}>
-            <Ionicons name="shield-outline" size={14} color="#2563EB" />
-            <Text style={s.escrowNoteText}>{t('payment.safeNote')}</Text>
+        {/* Footer CTA — liberar */}
+        {payment?.status === 'held' && isClient && (
+          <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
+            <TouchableOpacity
+              style={[s.footerBtnGreen, releasing && s.footerBtnDisabled]}
+              onPress={handleRelease}
+              disabled={releasing}
+              activeOpacity={0.85}
+            >
+              {releasing
+                ? <ActivityIndicator color="#fff" />
+                : <>
+                    <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
+                    <Text style={s.footerBtnText}>{t('payment.releasePayment')}</Text>
+                  </>
+              }
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity
-            style={[s.footerBtn, processing && s.footerBtnDisabled]}
-            onPress={initiatePay}
-            disabled={processing}
-            activeOpacity={0.85}
-          >
-            {processing
-              ? <ActivityIndicator color="#fff" />
-              : <>
-                  <Ionicons name="card-outline" size={20} color="#fff" />
-                  <Text style={s.footerBtnText}>{t('payment.payNow')} {contract.amount} {contract.currency}</Text>
-                </>
-            }
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {payment?.status === 'held' && isClient && (
-        <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
-          <TouchableOpacity
-            style={[s.footerBtnGreen, releasing && s.footerBtnDisabled]}
-            onPress={handleRelease}
-            disabled={releasing}
-            activeOpacity={0.85}
-          >
-            {releasing
-              ? <ActivityIndicator color="#fff" />
-              : <>
-                  <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-                  <Text style={s.footerBtnText}>{t('payment.releasePayment')}</Text>
-                </>
-            }
-          </TouchableOpacity>
-        </View>
-      )}
-    </View>
+        )}
+      </View>
 
       {/* Stripe Card Modal */}
       <Modal visible={showCardModal} transparent animationType="slide" onRequestClose={() => setShowCardModal(false)}>
@@ -290,8 +301,8 @@ export default function PaymentScreen() {
           </View>
         </View>
       </Modal>
-  )
     </>
+  )
 }
 
 function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
@@ -303,8 +314,10 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
     const elements = stripeInstance.elements()
     const card = elements.create('card', {
       style: {
-        base: { fontSize: '16px', color: '#1a1a2e', fontFamily: 'system-ui, sans-serif',
-                '::placeholder': { color: '#9CA3AF' } },
+        base: {
+          fontSize: '16px', color: '#1a1a2e', fontFamily: 'system-ui, sans-serif',
+          '::placeholder': { color: '#9CA3AF' }
+        },
         invalid: { color: '#EF4444' }
       }
     })
@@ -322,13 +335,11 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
       <View style={{
         backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1,
         borderColor: '#E5E7EB', padding: 14, marginBottom: 20,
-        // @ts-ignore
-        ...(typeof document !== 'undefined' ? {} : {})
       }}>
         {/* @ts-ignore */}
         <div id="stripe-card-element" style={{ minHeight: 20 }} />
       </View>
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Ionicons name="lock-closed-outline" size={14} color="#059669" />
           <Text style={{ fontSize: 12, color: '#059669', fontWeight: '600' }}>
@@ -337,8 +348,10 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
         </View>
       </View>
       <TouchableOpacity
-        style={{ backgroundColor: '#2563EB', borderRadius: 14, height: 52,
-                 alignItems: 'center', justifyContent: 'center', opacity: processing ? 0.6 : 1 }}
+        style={{
+          backgroundColor: '#2563EB', borderRadius: 14, height: 52,
+          alignItems: 'center', justifyContent: 'center', opacity: processing ? 0.6 : 1,
+        }}
         onPress={() => onConfirm(cardRef.current)}
         disabled={processing}
       >
@@ -351,6 +364,7 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
       </TouchableOpacity>
     </View>
   )
+}
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F6F7FB' },
@@ -390,6 +404,18 @@ const s = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 6, borderRadius: 20, marginTop: 4,
   },
   statusText: { fontSize: 13, fontWeight: '700' },
+  errorBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#FEE2E2', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#FECACA',
+  },
+  errorText: { flex: 1, fontSize: 13, color: '#DC2626', fontWeight: '600' },
+  successBox: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#D1FAE5', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#6EE7B7',
+  },
+  successText: { flex: 1, fontSize: 13, color: '#059669', fontWeight: '600' },
   breakdownCard: {
     backgroundColor: '#fff', borderRadius: 20, padding: 20, gap: 12,
     borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
