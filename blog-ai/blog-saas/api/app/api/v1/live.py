@@ -62,6 +62,8 @@ def _create_livekit_token(room_name: str, participant_name: str, can_publish: bo
 
 # ── WebSocket connections per room ────────────────────────────────────
 _room_connections: dict[str, list[WebSocket]] = {}
+# ── Pending join requests per room ────────────────────────────────────
+_join_requests: dict[str, list[dict]] = {}
 
 
 @router.post("/live/start")
@@ -236,6 +238,13 @@ async def request_join(
         "user_id": user.id,
         "room_name": room_name,
     })
+    # Store request for polling
+    if room_name not in _join_requests:
+        _join_requests[room_name] = []
+    # Avoid duplicates
+    existing = [r for r in _join_requests[room_name] if r["username"] != user.username]
+    _join_requests[room_name] = existing + [{"username": user.username, "display_name": user.display_name or user.username, "user_id": user.id}]
+
     for ws in list(_room_connections.get(room_name, [])):
         try:
             await ws.send_text(request_msg)
@@ -261,6 +270,8 @@ async def accept_join(
             "type": "join_rejected",
             "username": username,
         })
+        if room_name in _join_requests:
+            _join_requests[room_name] = [r for r in _join_requests[room_name] if r["username"] != username]
         for ws in list(_room_connections.get(room_name, [])):
             try:
                 await ws.send_text(reject_msg)
@@ -283,12 +294,25 @@ async def accept_join(
         "livekit_url": LIVEKIT_URL,
         "room_name": room_name,
     })
+    if room_name in _join_requests:
+        _join_requests[room_name] = [r for r in _join_requests[room_name] if r["username"] != username]
     for ws in list(_room_connections.get(room_name, [])):
         try:
             await ws.send_text(accept_msg)
         except Exception:
             pass
     return {"ok": True, "accepted": True, "token": token, "livekit_url": LIVEKIT_URL}
+
+
+@router.get("/live/{room_name}/join-requests")
+def get_join_requests(
+    room_name: str,
+    user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Host polls for pending join requests."""
+    requests = _join_requests.get(room_name, [])
+    return {"requests": requests}
 
 
 @router.get("/live/active")
