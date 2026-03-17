@@ -304,6 +304,47 @@ async def accept_join(
     return {"ok": True, "accepted": True, "token": token, "livekit_url": LIVEKIT_URL}
 
 
+@router.post("/live/{room_name}/kick")
+async def kick_from_live(
+    room_name: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Host kicks a co-host from the live."""
+    username = payload.get("username")
+    kick_msg = json.dumps({"type": "kicked", "username": username})
+    for ws in list(_room_connections.get(room_name, [])):
+        try:
+            await ws.send_text(kick_msg)
+        except Exception:
+            pass
+    return {"ok": True, "kicked": username}
+
+
+@router.post("/live/{room_name}/leave")
+async def leave_live(
+    room_name: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Co-host leaves the live (back to viewer)."""
+    leave_msg = json.dumps({
+        "type": "cohost_left",
+        "username": user.username,
+        "display_name": user.display_name or user.username,
+    })
+    for ws in list(_room_connections.get(room_name, [])):
+        try:
+            await ws.send_text(leave_msg)
+        except Exception:
+            pass
+    # Update viewer count
+    db.execute(text("UPDATE live_streams SET viewer_count = GREATEST(viewer_count - 1, 0) WHERE room_name=:room"), {"room": room_name})
+    db.commit()
+    return {"ok": True}
+
+
 @router.get("/live/{room_name}/join-requests")
 def get_join_requests(
     room_name: str,
