@@ -58,6 +58,23 @@ export default function LiveRoomPage() {
     }
   }, [room, token, preToken]);
 
+  // Handle join requests via LiveChat WebSocket
+  useEffect(() => {
+    const handler = (e: any) => {
+      const msg = e.detail;
+      if (msg.type === 'join_request' && isHost) {
+        setJoinRequests(prev => prev.find((r: any) => r.username === msg.username) ? prev : [...prev, { username: msg.username, display_name: msg.display_name, user_id: msg.user_id }]);
+      } else if (msg.type === 'join_accepted' && msg.username === (user as any)?.username) {
+        window.location.href = `/live/${room}?token=${msg.token}&host=1`;
+      } else if (msg.type === 'join_rejected' && msg.username === (user as any)?.username) {
+        setJoinRequested(false);
+        alert('Your request to join was declined.');
+      }
+    };
+    window.addEventListener('live_ws_message', handler);
+    return () => window.removeEventListener('live_ws_message', handler);
+  }, [isHost, room, user]);
+
   // Poll viewer count
   useEffect(() => {
     const iv = setInterval(() => {
