@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import LiveChat from "./LiveChat";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
 const LIVEKIT_URL = "wss://scouta-pi70lg8z.livekit.cloud";
@@ -105,6 +106,8 @@ export default function LiveRoomPage() {
   const [streamTitle, setStreamTitle] = useState("");
   const [viewerCount, setViewerCount] = useState(0);
   const [ended, setEnded] = useState(false);
+  const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
+  const [streamEnded, setStreamEnded] = useState(false);
 
   useEffect(() => {
     if (!preToken) {
@@ -172,20 +175,41 @@ export default function LiveRoomPage() {
       </div>
 
       {/* Main */}
-      <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        {/* Video area */}
-        <div style={{ flex: 1, background: "#000", position: "relative" }}>
-          {livekitToken && (
-            <LivePlayer
-              token={livekitToken}
-              serverUrl={LIVEKIT_URL}
-              isHost={isHost}
-            />
-          )}
-        </div>
+      <div style={{ flex: 1, position: "relative", overflow: "hidden", background: "#000" }}>
+        {/* Video full screen */}
+        {livekitToken && !streamEnded && (
+          <LivePlayer
+            token={livekitToken}
+            serverUrl={LIVEKIT_URL}
+            isHost={isHost}
+          />
+        )}
 
-        {/* Chat */}
-        <LiveChat roomName={room as string} token={token} user={user} />
+        {/* Stream ended overlay */}
+        {streamEnded && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.85)", gap: "1rem" }}>
+            <p style={{ color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: "1.25rem" }}>Stream has ended</p>
+            <Link href="/live" style={{ color: "#4a7a9a", fontFamily: "monospace", fontSize: "0.7rem" }}>← Back to Live</Link>
+          </div>
+        )}
+
+        {/* Chat overlay — TikTok style */}
+        <LiveChat
+          roomName={room as string}
+          token={token}
+          user={user}
+          isHost={isHost}
+          blockedUsers={blockedUsers}
+          onBlock={(username) => setBlockedUsers(prev => new Set([...prev, username]))}
+        />
+
+        {/* Right action buttons */}
+        {!isHost && (
+          <div style={{ position: "absolute", right: 12, bottom: 80, display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
+            <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -154,9 +154,23 @@ def end_live(
         "UPDATE live_streams SET status='ended', ended_at=NOW() WHERE room_name=:room"
     ), {"room": room_name})
     db.commit()
-    # Clean up WebSocket connections
+    # Broadcast stream ended to all viewers
     if room_name in _room_connections:
-        del _room_connections[room_name]
+        import asyncio
+        ended_msg = json.dumps({"type": "stream_ended", "message": "Stream has ended"})
+        async def _broadcast_ended():
+            for ws in list(_room_connections.get(room_name, [])):
+                try:
+                    await ws.send_text(ended_msg)
+                except Exception:
+                    pass
+            if room_name in _room_connections:
+                del _room_connections[room_name]
+        try:
+            loop = asyncio.get_event_loop()
+            loop.create_task(_broadcast_ended())
+        except Exception:
+            del _room_connections[room_name]
     return {"ok": True}
 
 
@@ -176,6 +190,29 @@ def join_live_anon(room_name: str, db: Session = Depends(get_db)):
     db.execute(text("UPDATE live_streams SET viewer_count = viewer_count + 1 WHERE room_name=:room"), {"room": room_name})
     db.commit()
     return {"token": token, "livekit_url": LIVEKIT_URL, "title": stream.title}
+
+
+@router.post("/live/{room_name}/block")
+def block_from_live(
+    room_name: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Host blocks a user from the live chat."""
+    username = payload.get("username")
+    if not username:
+        raise HTTPException(status_code=400, detail="username required")
+    # Broadcast block to room — viewer will be disconnected
+    if room_name in _room_connections:
+        block_msg = json.dumps({"type": "blocked", "username": username})
+        # Store blocked users per room (in memory)
+        if not hasattr(_room_connections, "_blocked"):
+            _room_connections["_blocked"] = {}
+        _room_connections["_blocked"][room_name] = _room_connections.get("_blocked_" + room_name, set())
+        _room_connections["_blocked_" + room_name] = _room_connections.get("_blocked_" + room_name, set())
+        _room_connections["_blocked_" + room_name].add(username)
+    return {"ok": True, "blocked": username}
 
 
 @router.get("/live/active")
