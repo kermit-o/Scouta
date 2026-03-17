@@ -37,6 +37,7 @@ export default function DrawerMenu({ open, onClose }: Props) {
   const translateX = useRef(new Animated.Value(-DRAWER_WIDTH)).current
   const opacity = useRef(new Animated.Value(0)).current
 
+  const { t } = useTranslation()
   useEffect(() => {
     if (open) {
       Animated.parallel([
@@ -51,14 +52,13 @@ export default function DrawerMenu({ open, onClose }: Props) {
     }
   }, [open])
 
-  if (!open && (translateX as any)._value <= -DRAWER_WIDTH) return null
+
 
   const role = profile?.role || 'client'
   const isVerified = profile?.is_verified
   const kycStatus = isVerified ? 'Verificado' : 'Pendiente'
   const kycColor = isVerified ? '#16A34A' : '#F59E0B'
 
-  const { t } = useTranslation()
   const SECTIONS: Section[] = [
     {
       title: t('drawer.account'),
@@ -111,6 +111,7 @@ export default function DrawerMenu({ open, onClose }: Props) {
 
   const initials = profile?.full_name?.[0]?.toUpperCase() || '?'
 
+  if (!open && (translateX as any)._value <= -DRAWER_WIDTH) return null
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Backdrop */}
