@@ -6,6 +6,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import LiveChat from "./LiveChat";
 const LivePlayer = dynamic(() => import("./LivePlayer"), { ssr: false });
+const LivePlayer = dynamic(() => import("./LivePlayer"), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
 const LIVEKIT_URL = "wss://scouta-pi70lg8z.livekit.cloud";
