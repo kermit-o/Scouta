@@ -38,6 +38,31 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
       }
     });
 
+    // When a new participant joins with tracks already published
+    room.on(RoomEvent.ParticipantConnected, (participant: any) => {
+      participant.trackPublications.forEach((pub: any) => {
+        if (pub.track && pub.isSubscribed) {
+          if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track);
+        }
+      });
+    });
+
+    // When a track is published (before subscribed)
+    room.on(RoomEvent.TrackPublished, (pub: any, participant: any) => {
+      if (!isHost) {
+        // Auto-subscribe
+        setTimeout(() => {
+          if (pub.track) {
+            if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track);
+            else if (pub.kind === Track.Kind.Audio) {
+              const el = pub.track.attach();
+              document.body.appendChild(el);
+            }
+          }
+        }, 500);
+      }
+    });
+
     room.on(RoomEvent.TrackUnsubscribed, (track: any) => { track.detach(); });
 
     room.on(RoomEvent.DataReceived, (payload: Uint8Array) => {
