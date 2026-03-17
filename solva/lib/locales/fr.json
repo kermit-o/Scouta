@@ -430,5 +430,29 @@
     "contractsDesc": "Mises à jour sur les contrats actifs",
     "reviewsDesc": "Quand quelqu'un vous laisse un avis",
     "promotionsDesc": "Réductions et nouveautés de Solva"
+  },
+  "payment": {
+    "escrow": "Paiement en séquestre",
+    "contractTotal": "Total du contrat",
+    "breakdown": "Détail du paiement",
+    "service": "Service",
+    "commission": "Commission Solva (10%)",
+    "proReceives": "Le Pro reçoit",
+    "howWorks": "Comment fonctionne le séquestre ?",
+    "step1": "Vous payez maintenant — l'argent est retenu en sécurité",
+    "step2": "Le professionnel effectue le travail convenu",
+    "step3": "Vous confirmez la livraison et le paiement est libéré",
+    "heldTitle": "Paiement retenu en sécurité",
+    "heldDesc": "L'argent est protégé. Libérez-le quand le travail est terminé.",
+    "heldOn": "Retenu le",
+    "completedTitle": "Paiement terminé",
+    "completedSub": "Le professionnel a reçu",
+    "leaveReview": "Laisser un avis",
+    "safeNote": "Paiement 100% sécurisé — libéré uniquement à votre confirmation",
+    "payNow": "Payer maintenant",
+    "releasePayment": "Libérer le paiement",
+    "notFound": "Contrat introuvable",
+    "mercadopago": "Paiement MercadoPago bientôt disponible.",
+    "released": "✅ Paiement libéré. Le professionnel a reçu son paiement."
   }
 }

@@ -430,5 +430,29 @@
     "contractsDesc": "Updates over actieve contracten",
     "reviewsDesc": "Wanneer iemand een beoordeling achterlaat",
     "promotionsDesc": "Kortingen en nieuws van Solva"
+  },
+  "payment": {
+    "escrow": "Escrow payment",
+    "contractTotal": "Contract total",
+    "breakdown": "Payment breakdown",
+    "service": "Service",
+    "commission": "Solva commission (10%)",
+    "proReceives": "Pro receives",
+    "howWorks": "How does escrow work?",
+    "step1": "You pay now — the money is held securely",
+    "step2": "The professional does the agreed work",
+    "step3": "You confirm delivery and payment is released to the Pro",
+    "heldTitle": "Payment held securely",
+    "heldDesc": "The money is protected. Release it when the work is done and verified.",
+    "heldOn": "Held on",
+    "completedTitle": "Payment completed",
+    "completedSub": "The professional received",
+    "leaveReview": "Leave a review",
+    "safeNote": "100% secure payment — only released when you confirm",
+    "payNow": "Pay now",
+    "releasePayment": "Release payment",
+    "notFound": "Contract not found",
+    "mercadopago": "MercadoPago payment coming soon.",
+    "released": "✅ Payment released. The professional has received their payment."
   }
 }

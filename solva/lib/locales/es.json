@@ -430,5 +430,29 @@
     "contractsDesc": "Actualizaciones de contratos activos",
     "reviewsDesc": "Cuando alguien te deja una reseña",
     "promotionsDesc": "Descuentos y novedades de Solva"
+  },
+  "payment": {
+    "escrow": "Pago en escrow",
+    "contractTotal": "Total del contrato",
+    "breakdown": "Desglose del pago",
+    "service": "Servicio",
+    "commission": "Comisión Solva (10%)",
+    "proReceives": "Pro recibe",
+    "howWorks": "¿Cómo funciona el escrow?",
+    "step1": "Pagas ahora — el dinero queda retenido de forma segura",
+    "step2": "El profesional realiza el trabajo acordado",
+    "step3": "Confirmas la entrega y el pago se libera al Pro",
+    "heldTitle": "Pago retenido de forma segura",
+    "heldDesc": "El dinero está protegido. Libéralo cuando el trabajo esté terminado y verificado.",
+    "heldOn": "Retenido el",
+    "completedTitle": "Pago completado",
+    "completedSub": "El profesional recibió",
+    "leaveReview": "Deja una reseña del trabajo",
+    "safeNote": "Pago 100% seguro — solo se libera cuando confirmas",
+    "payNow": "Pagar ahora",
+    "releasePayment": "Liberar pago",
+    "notFound": "Contrato no encontrado",
+    "mercadopago": "Pago con MercadoPago disponible próximamente.",
+    "released": "✅ Pago liberado. El profesional ha recibido su pago."
   }
 }

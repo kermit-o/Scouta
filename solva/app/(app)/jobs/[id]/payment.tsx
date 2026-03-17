@@ -48,7 +48,7 @@ export default function PaymentScreen() {
         body: { contract_id: contract.id, amount: contract.amount, currency: contract.currency, country: contract.country, client_id: contract.client_id, pro_id: contract.pro_id }
       })
       if (fnError) throw new Error(fnError.message)
-      if (fnData.provider === 'mercadopago') { setErrorMsg('Pago con MercadoPago disponible próximamente.'); setProcessing(false); return }
+      if (fnData.provider === 'mercadopago') { setErrorMsg(t('payment.mercadopago')); setProcessing(false); return }
       const stripe = await (window as any).Stripe?.(process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY)
       if (!stripe) {
         await supabase.from('payments').insert({
@@ -82,7 +82,7 @@ export default function PaymentScreen() {
     })
     setReleasing(false)
     if (error) { setErrorMsg(error.message); return }
-    setSuccessMsg('✅ Pago liberado. El profesional ha recibido su pago.')
+    setSuccessMsg(t('payment.released'))
     setTimeout(() => router.replace('/(app)/jobs'), 1500)
   }
 
@@ -100,7 +100,7 @@ export default function PaymentScreen() {
         <TouchableOpacity style={s.backBtn} onPress={() => router.back()}>
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Pago en escrow</Text>
+        <Text style={s.headerTitle}>{t('payment.escrow')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -111,7 +111,7 @@ export default function PaymentScreen() {
           <View style={s.heroIcon}>
             <Ionicons name="shield-checkmark" size={32} color="#2563EB" />
           </View>
-          <Text style={s.heroLabel}>Total del contrato</Text>
+          <Text style={s.heroLabel}>{t('payment.contractTotal')}</Text>
           <Text style={s.heroAmount}>{contract.amount} <Text style={s.heroCurrency}>{contract.currency}</Text></Text>
 
           {payStatus && (
@@ -124,18 +124,18 @@ export default function PaymentScreen() {
 
         {/* Breakdown */}
         <View style={s.breakdownCard}>
-          <Text style={s.breakdownTitle}>Desglose del pago</Text>
+          <Text style={s.breakdownTitle}>{t('payment.breakdown')}</Text>
           <View style={s.breakdownRow}>
             <View style={s.breakdownLeft}>
               <Ionicons name="briefcase-outline" size={16} color="#666" />
-              <Text style={s.breakdownLabel}>Servicio</Text>
+              <Text style={s.breakdownLabel}>{t('payment.service')}</Text>
             </View>
             <Text style={s.breakdownValue}>{contract.amount} {contract.currency}</Text>
           </View>
           <View style={s.breakdownRow}>
             <View style={s.breakdownLeft}>
               <Ionicons name="storefront-outline" size={16} color="#666" />
-              <Text style={s.breakdownLabel}>Comisión Solva (10%)</Text>
+              <Text style={s.breakdownLabel}>{t('payment.commission')}</Text>
             </View>
             <Text style={s.breakdownValue}>-{platformFee.toFixed(2)} {contract.currency}</Text>
           </View>
@@ -143,7 +143,7 @@ export default function PaymentScreen() {
           <View style={s.breakdownRow}>
             <View style={s.breakdownLeft}>
               <Ionicons name="person-outline" size={16} color="#059669" />
-              <Text style={[s.breakdownLabel, { color: '#059669', fontWeight: '700' }]}>Pro recibe</Text>
+              <Text style={[s.breakdownLabel, { color: '#059669', fontWeight: '700' }]}>{t('payment.proReceives')}</Text>
             </View>
             <Text style={[s.breakdownValue, { color: '#059669', fontSize: 17 }]}>{proAmount.toFixed(2)} {contract.currency}</Text>
           </View>
@@ -156,11 +156,11 @@ export default function PaymentScreen() {
         {/* Cómo funciona el escrow */}
         {!payment && (
           <View style={s.howCard}>
-            <Text style={s.howTitle}>¿Cómo funciona el escrow?</Text>
+            <Text style={s.howTitle}>{t('payment.howWorks')}</Text>
             {[
-              { icon: 'lock-closed-outline', color: '#2563EB', text: 'Pagas ahora — el dinero queda retenido de forma segura' },
-              { icon: 'construct-outline', color: '#D97706', text: 'El profesional realiza el trabajo acordado' },
-              { icon: 'checkmark-circle-outline', color: '#059669', text: 'Confirmas la entrega y el pago se libera al Pro' },
+              { icon: 'lock-closed-outline', color: '#2563EB', text: t('payment.step1') },
+              { icon: 'construct-outline', color: '#D97706', text: t('payment.step2') },
+              { icon: 'checkmark-circle-outline', color: '#059669', text: t('payment.step3') },
             ].map((step, i) => (
               <View key={i} style={s.howStep}>
                 <View style={[s.howStepNum, { backgroundColor: step.color + '18' }]}>
@@ -179,8 +179,8 @@ export default function PaymentScreen() {
             <View style={s.heldTop}>
               <Ionicons name="lock-closed" size={24} color="#2563EB" />
               <View style={{ flex: 1 }}>
-                <Text style={s.heldTitle}>Pago retenido de forma segura</Text>
-                <Text style={s.heldDesc}>El dinero está protegido. Libéralo cuando el trabajo esté terminado y verificado.</Text>
+                <Text style={s.heldTitle}>{t('payment.heldTitle')}</Text>
+                <Text style={s.heldDesc}>{t('payment.heldDesc')}</Text>
               </View>
             </View>
             {payment.held_at && (
@@ -193,11 +193,11 @@ export default function PaymentScreen() {
         {payment?.status === 'released' && (
           <View style={s.releasedCard}>
             <Ionicons name="checkmark-circle" size={48} color="#059669" />
-            <Text style={s.releasedTitle}>Pago completado</Text>
+            <Text style={s.releasedTitle}>{t('payment.completedTitle')}</Text>
             <Text style={s.releasedSub}>El profesional recibió {payment.pro_amount} {payment.currency}</Text>
             <TouchableOpacity style={s.reviewHint} onPress={() => router.push(`/(app)/jobs/${id}/review`)}>
               <Ionicons name="star-outline" size={16} color="#D97706" />
-              <Text style={s.reviewHintText}>Deja una reseña del trabajo</Text>
+              <Text style={s.reviewHintText}>{t('payment.leaveReview')}</Text>
               <Ionicons name="chevron-forward" size={14} color="#D97706" />
             </TouchableOpacity>
           </View>
@@ -210,7 +210,7 @@ export default function PaymentScreen() {
         <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
           <View style={s.escrowNote}>
             <Ionicons name="shield-outline" size={14} color="#2563EB" />
-            <Text style={s.escrowNoteText}>Pago 100% seguro — solo se libera cuando confirmas</Text>
+            <Text style={s.escrowNoteText}>{t('payment.safeNote')}</Text>
           </View>
           <TouchableOpacity
             style={[s.footerBtn, processing && s.footerBtnDisabled]}
@@ -222,7 +222,7 @@ export default function PaymentScreen() {
               ? <ActivityIndicator color="#fff" />
               : <>
                   <Ionicons name="card-outline" size={20} color="#fff" />
-                  <Text style={s.footerBtnText}>Pagar {contract.amount} {contract.currency}</Text>
+                  <Text style={s.footerBtnText}>{t('payment.payNow')} {contract.amount} {contract.currency}</Text>
                 </>
             }
           </TouchableOpacity>
@@ -241,7 +241,7 @@ export default function PaymentScreen() {
               ? <ActivityIndicator color="#fff" />
               : <>
                   <Ionicons name="checkmark-circle-outline" size={20} color="#fff" />
-                  <Text style={s.footerBtnText}>Confirmar entrega y liberar pago</Text>
+                  <Text style={s.footerBtnText}>{t('payment.releasePayment')}</Text>
                 </>
             }
           </TouchableOpacity>
