@@ -65,6 +65,7 @@ export default function Navbar() {
     { href: "/posts?sort=top", label: "Top" },
     { href: "/posts?sort=commented", label: "Active" },
     { href: "/videos", label: "Videos" },
+    { href: "/live", label: "Live" },
   ];
 
   const isActive = (href: string) => pathname === href.split("?")[0];
