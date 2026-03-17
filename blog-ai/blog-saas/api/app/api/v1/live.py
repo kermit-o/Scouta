@@ -215,6 +215,106 @@ def block_from_live(
     return {"ok": True, "blocked": username}
 
 
+@router.post("/live/{room_name}/request-join")
+def request_join(
+    room_name: str,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Viewer requests to join as co-host."""
+    stream = db.execute(
+        text("SELECT id, title FROM live_streams WHERE room_name=:room AND status='live'"),
+        {"room": room_name}
+    ).first()
+    if not stream:
+        raise HTTPException(status_code=404, detail="Stream not found")
+
+    # Broadcast join request to host via WebSocket
+    request_msg = json.dumps({
+        "type": "join_request",
+        "username": user.username,
+        "display_name": user.display_name or user.username,
+        "user_id": user.id,
+        "room_name": room_name,
+    })
+    import asyncio
+    async def _broadcast():
+        for ws in list(_room_connections.get(room_name, [])):
+            try:
+                await ws.send_text(request_msg)
+            except Exception:
+                pass
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            asyncio.ensure_future(_broadcast())
+    except Exception:
+        pass
+    return {"ok": True, "message": "Request sent to host"}
+
+
+@router.post("/live/{room_name}/accept-join")
+def accept_join(
+    room_name: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Host accepts a join request — returns publisher token for the requester."""
+    username = payload.get("username")
+    accept = payload.get("accept", True)
+
+    if not accept:
+        # Broadcast rejection
+        reject_msg = json.dumps({
+            "type": "join_rejected",
+            "username": username,
+        })
+        import asyncio
+        async def _broadcast_reject():
+            for ws in list(_room_connections.get(room_name, [])):
+                try:
+                    await ws.send_text(reject_msg)
+                except Exception:
+                    pass
+        try:
+            loop = asyncio.get_event_loop()
+            asyncio.ensure_future(_broadcast_reject())
+        except Exception:
+            pass
+        return {"ok": True, "accepted": False}
+
+    # Generate publisher token for the invitee
+    invitee = db.query(User).filter(User.username == username).first()
+    if not invitee:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    token = _create_livekit_token(room_name, invitee.display_name or invitee.username, can_publish=True)
+
+    # Broadcast accepted with token
+    accept_msg = json.dumps({
+        "type": "join_accepted",
+        "username": username,
+        "token": token,
+        "livekit_url": LIVEKIT_URL,
+        "room_name": room_name,
+    })
+    import asyncio
+    async def _broadcast_accept():
+        for ws in list(_room_connections.get(room_name, [])):
+            try:
+                await ws.send_text(accept_msg)
+            except Exception:
+                pass
+    try:
+        loop = asyncio.get_event_loop()
+        asyncio.ensure_future(_broadcast_accept())
+    except Exception:
+        pass
+
+    return {"ok": True, "accepted": True, "token": token, "livekit_url": LIVEKIT_URL}
+
+
 @router.get("/live/active")
 def list_active_streams(db: Session = Depends(get_db)):
     """List all active live streams."""
