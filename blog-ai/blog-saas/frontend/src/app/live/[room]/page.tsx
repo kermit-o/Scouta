@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -175,17 +175,20 @@ export default function LiveRoomPage() {
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
         {/* Video area */}
         <div style={{ flex: 1, background: "#000", position: "relative" }}>
-          <LiveKitRoom
-            video={isHost}
-            audio={isHost}
-            token={livekitToken}
-            serverUrl={LIVEKIT_URL}
-            connect={true}
-            style={{ height: "100%", width: "100%" }}
-          >
-            <TrackPlayer />
-            <RoomAudioRenderer />
-          </LiveKitRoom>
+          {livekitToken && (
+            <LiveKitRoom
+              key={livekitToken}
+              video={isHost}
+              audio={isHost}
+              token={livekitToken}
+              serverUrl={LIVEKIT_URL}
+              connect={true}
+              style={{ height: "100%", width: "100%" }}
+            >
+              <TrackPlayer isHost={isHost} />
+              <RoomAudioRenderer />
+            </LiveKitRoom>
+          )}
         </div>
 
         {/* Chat */}
