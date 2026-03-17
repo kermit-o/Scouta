@@ -74,7 +74,7 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
         // Auto-subscribe
         setTimeout(() => {
           if (pub.track) {
-            if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track, p.name || p.identity);
+            if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track);
             else if (pub.kind === Track.Kind.Audio) {
               const el = pub.track.attach();
               document.body.appendChild(el);
@@ -111,7 +111,7 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
         room.remoteParticipants.forEach((p) => {
           p.trackPublications.forEach((pub) => {
             if (pub.isSubscribed && pub.track) {
-              if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track, p.name || p.identity);
+              if (pub.kind === Track.Kind.Video) attachVideoTrack(pub.track);
               else if (pub.kind === Track.Kind.Audio) { const el = pub.track.attach(); document.body.appendChild(el); }
             }
           });
