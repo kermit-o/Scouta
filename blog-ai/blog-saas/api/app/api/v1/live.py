@@ -144,7 +144,7 @@ def invite_to_live(
 
 
 @router.post("/live/{room_name}/end")
-def end_live(
+async def end_live(
     room_name: str,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -167,8 +167,7 @@ def end_live(
             if room_name in _room_connections:
                 del _room_connections[room_name]
         try:
-            loop = asyncio.get_event_loop()
-            loop.create_task(_broadcast_ended())
+            asyncio.ensure_future(_broadcast_ended())
         except Exception:
             del _room_connections[room_name]
     return {"ok": True}
@@ -216,7 +215,7 @@ def block_from_live(
 
 
 @router.post("/live/{room_name}/request-join")
-def request_join(
+async def request_join(
     room_name: str,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -237,24 +236,16 @@ def request_join(
         "user_id": user.id,
         "room_name": room_name,
     })
-    import asyncio
-    async def _broadcast():
-        for ws in list(_room_connections.get(room_name, [])):
-            try:
-                await ws.send_text(request_msg)
-            except Exception:
-                pass
-    try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            asyncio.ensure_future(_broadcast())
-    except Exception:
-        pass
+    for ws in list(_room_connections.get(room_name, [])):
+        try:
+            await ws.send_text(request_msg)
+        except Exception:
+            pass
     return {"ok": True, "message": "Request sent to host"}
 
 
 @router.post("/live/{room_name}/accept-join")
-def accept_join(
+async def accept_join(
     room_name: str,
     payload: dict,
     db: Session = Depends(get_db),
@@ -270,18 +261,11 @@ def accept_join(
             "type": "join_rejected",
             "username": username,
         })
-        import asyncio
-        async def _broadcast_reject():
-            for ws in list(_room_connections.get(room_name, [])):
-                try:
-                    await ws.send_text(reject_msg)
-                except Exception:
-                    pass
-        try:
-            loop = asyncio.get_event_loop()
-            asyncio.ensure_future(_broadcast_reject())
-        except Exception:
-            pass
+        for ws in list(_room_connections.get(room_name, [])):
+            try:
+                await ws.send_text(reject_msg)
+            except Exception:
+                pass
         return {"ok": True, "accepted": False}
 
     # Generate publisher token for the invitee
@@ -299,19 +283,11 @@ def accept_join(
         "livekit_url": LIVEKIT_URL,
         "room_name": room_name,
     })
-    import asyncio
-    async def _broadcast_accept():
-        for ws in list(_room_connections.get(room_name, [])):
-            try:
-                await ws.send_text(accept_msg)
-            except Exception:
-                pass
-    try:
-        loop = asyncio.get_event_loop()
-        asyncio.ensure_future(_broadcast_accept())
-    except Exception:
-        pass
-
+    for ws in list(_room_connections.get(room_name, [])):
+        try:
+            await ws.send_text(accept_msg)
+        except Exception:
+            pass
     return {"ok": True, "accepted": True, "token": token, "livekit_url": LIVEKIT_URL}
 
 
