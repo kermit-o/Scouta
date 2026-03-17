@@ -28,23 +28,7 @@ const PRICES: Record<string, { pro: string; company: string }> = {
   CL: { pro: '$12.990/mes',company: '$34.990/mes' },
 }
 
-const PRO_FEATURES = [
-  { icon: 'flash',              color: '#2563EB', text: 'Bids ilimitados (Free: solo 3)' },
-  { icon: 'trending-down',      color: '#059669', text: 'Comisión 5% (Free: 10%)' },
-  { icon: 'sparkles',           color: '#7C3AED', text: 'IA genera tu descripción y SEO' },
-  { icon: 'bar-chart',          color: '#D97706', text: 'Estadísticas y tasa de conversión' },
-  { icon: 'images',             color: '#2563EB', text: 'Portfolio 20 fotos (Free: 3)' },
-  { icon: 'ribbon',             color: '#059669', text: 'Badge Pro + posición preferente' },
-  { icon: 'chatbubble-ellipses',color: '#7C3AED', text: '5 respuestas rápidas guardadas' },
-  { icon: 'headset',            color: '#D97706', text: 'Soporte prioritario' },
-]
 
-const COMPANY_EXTRAS = [
-  { icon: 'people',       color: '#7C3AED', text: 'Equipo de hasta 5 miembros' },
-  { icon: 'document-text',color: '#059669', text: 'Facturación automática PDF' },
-  { icon: 'layers',       color: '#2563EB', text: 'IA: catálogo completo de servicios' },
-  { icon: 'person',       color: '#D97706', text: 'Account manager dedicado' },
-]
 
 export default function SubscriptionScreen() {
   const { session } = useAuth()
@@ -52,6 +36,22 @@ export default function SubscriptionScreen() {
   const { subscription, loading, isPro, isTrialing, isBusiness, trialDaysLeft, startTrial } = useSubscription()
   const insets = useSafeAreaInsets()
   const { t } = useTranslation()
+  const PRO_FEATURES = [
+    { icon: 'flash',              color: '#2563EB', text: t('subscription.features.unlimitedBids') },
+    { icon: 'trending-down',      color: '#059669', text: t('subscription.features.commission') },
+    { icon: 'sparkles',           color: '#7C3AED', text: t('subscription.features.ai') },
+    { icon: 'bar-chart',          color: '#D97706', text: t('subscription.features.stats') },
+    { icon: 'images',             color: '#2563EB', text: t('subscription.features.portfolio') },
+    { icon: 'ribbon',             color: '#059669', text: t('subscription.features.badge') },
+    { icon: 'chatbubble-ellipses',color: '#7C3AED', text: t('subscription.features.replies') },
+    { icon: 'headset',            color: '#D97706', text: t('subscription.features.support') },
+  ]
+  const COMPANY_EXTRAS = [
+    { icon: 'people',       color: '#7C3AED', text: t('subscription.companyExtras.team') },
+    { icon: 'document-text',color: '#059669', text: t('subscription.companyExtras.billing') },
+    { icon: 'layers',       color: '#2563EB', text: t('subscription.companyExtras.catalog') },
+    { icon: 'person',       color: '#D97706', text: t('subscription.companyExtras.manager') },
+  ]
   const [analytics, setAnalytics] = useState<ProAnalytics | null>(null)
   const [upgrading, setUpgrading] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState('')

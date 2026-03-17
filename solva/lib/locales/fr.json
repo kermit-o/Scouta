@@ -251,16 +251,33 @@
     "statReviews": "Avis reçus"
   },
   "subscription": {
-    "title": "Plans Solva",
-    "active": "Actif",
-    "performance": "Vos performances ce mois",
+    "title": "Abonnement",
+    "free": "Gratuit",
+    "pro": "Pro",
+    "company": "Entreprise",
     "monthly": "Mensuel",
     "annual": "Annuel",
-    "popular": "LE PLUS POPULAIRE",
-    "trial": "Commencer 14 jours gratuits",
-    "statBids": "Offres envoyées",
-    "statContracts": "Contrats actifs",
-    "statEarnings": "Revenus"
+    "save": "Économisez 20%",
+    "upgrade": "Commencer l'essai de 14 jours",
+    "current": "Plan actuel",
+    "trialActive": "🎉 Essai actif",
+    "trialDays": "jours restants",
+    "features": {
+      "unlimitedBids": "Offres illimitées (Gratuit: 3 seulement)",
+      "commission": "Commission 5% (Gratuit: 10%)",
+      "ai": "L'IA génère votre description et SEO",
+      "stats": "Statistiques et taux de conversion",
+      "portfolio": "Portfolio 20 photos (Gratuit: 3)",
+      "badge": "Badge Pro + position préférée",
+      "replies": "5 réponses rapides sauvegardées",
+      "support": "Support prioritaire"
+    },
+    "companyExtras": {
+      "team": "Équipe jusqu'à 5 membres",
+      "billing": "Facturation automatique PDF",
+      "catalog": "IA: catalogue complet de services",
+      "manager": "Account manager dédié"
+    }
   },
   "reputation": {
     "title": "Ma réputation",
