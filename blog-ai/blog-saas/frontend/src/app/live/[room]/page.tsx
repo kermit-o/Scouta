@@ -176,18 +176,11 @@ export default function LiveRoomPage() {
         {/* Video area */}
         <div style={{ flex: 1, background: "#000", position: "relative" }}>
           {livekitToken && (
-            <LiveKitRoom
-              key={livekitToken}
-              video={isHost}
-              audio={isHost}
+            <LivePlayer
               token={livekitToken}
               serverUrl={LIVEKIT_URL}
-              connect={true}
-              style={{ height: "100%", width: "100%" }}
-            >
-              <TrackPlayer isHost={isHost} />
-              <RoomAudioRenderer />
-            </LiveKitRoom>
+              isHost={isHost}
+            />
           )}
         </div>
 
