@@ -10,8 +10,8 @@ const LIVEKIT_URL = "wss://scouta-pi70lg8z.livekit.cloud";
 
 // Dynamic imports — no SSR
 const LiveKitRoom = dynamic(() => import("@livekit/components-react").then(m => ({ default: m.LiveKitRoom })), { ssr: false });
-const VideoConference = dynamic(() => import("@livekit/components-react").then(m => ({ default: m.VideoConference })), { ssr: false });
 const RoomAudioRenderer = dynamic(() => import("@livekit/components-react").then(m => ({ default: m.RoomAudioRenderer })), { ssr: false });
+const TrackPlayer = dynamic(() => import("./TrackPlayer"), { ssr: false });
 
 interface ChatMessage {
   username?: string;
@@ -183,7 +183,7 @@ export default function LiveRoomPage() {
             connect={true}
             style={{ height: "100%", width: "100%" }}
           >
-            <VideoConference />
+            <TrackPlayer />
             <RoomAudioRenderer />
           </LiveKitRoom>
         </div>
