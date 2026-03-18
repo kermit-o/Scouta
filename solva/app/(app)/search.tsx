@@ -154,26 +154,6 @@ export default function SearchScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Tabs Jobs / Pros */}
-      {searched && (
-        <View style={styles.tabsRow}>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'jobs' && styles.tabActive]}
-            onPress={() => setActiveTab('jobs')}
-          >
-            <Ionicons name="briefcase-outline" size={15} color={activeTab === 'jobs' ? '#2563EB' : '#888'} />
-            <Text style={[styles.tabText, activeTab === 'jobs' && styles.tabTextActive]}>Jobs ({filteredResults.length})</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, activeTab === 'pros' && styles.tabActive]}
-            onPress={() => setActiveTab('pros')}
-          >
-            <Ionicons name="people-outline" size={15} color={activeTab === 'pros' ? '#2563EB' : '#888'} />
-            <Text style={[styles.tabText, activeTab === 'pros' && styles.tabTextActive]}>Pros ({pros.length})</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
       {/* Categories scroll */}
       <ScrollView
         horizontal
@@ -195,6 +175,26 @@ export default function SearchScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Tabs Jobs / Pros */}
+      {searched && (
+        <View style={styles.tabsRow}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'jobs' && styles.tabActive]}
+            onPress={() => setActiveTab('jobs')}
+          >
+            <Ionicons name="briefcase-outline" size={15} color={activeTab === 'jobs' ? '#2563EB' : '#888'} />
+            <Text style={[styles.tabText, activeTab === 'jobs' && styles.tabTextActive]}>Jobs ({filteredResults.length})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'pros' && styles.tabActive]}
+            onPress={() => setActiveTab('pros')}
+          >
+            <Ionicons name="people-outline" size={15} color={activeTab === 'pros' ? '#2563EB' : '#888'} />
+            <Text style={[styles.tabText, activeTab === 'pros' && styles.tabTextActive]}>Pros ({pros.length})</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Estado inicial — ejemplos */}
       {!searched && (
