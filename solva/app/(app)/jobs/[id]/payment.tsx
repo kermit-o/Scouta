@@ -51,18 +51,18 @@ export default function PaymentScreen() {
       })
       if (fnError) throw new Error(fnError.message)
       if (fnData.provider === 'mercadopago') { setErrorMsg(t('payment.mercadopago')); setProcessing(false); return }
-      const stripe = await (window as any).Stripe?.(process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY)
-      if (!stripe) {
-        await supabase.from('payments').insert({
-          contract_id: contract.id, client_id: contract.client_id, pro_id: contract.pro_id,
-          amount: contract.amount, platform_fee: fnData.platform_fee, pro_amount: fnData.pro_amount,
-          currency: contract.currency, country: contract.country, provider: 'stripe',
-          provider_payment_id: fnData.payment_intent_id, status: 'held', held_at: new Date().toISOString(),
+      // Inyectar Stripe.js dinámicamente
+      if (typeof (window as any).Stripe === 'undefined') {
+        await new Promise<void>((resolve, reject) => {
+          const s = document.createElement('script')
+          s.src = 'https://js.stripe.com/v3/'
+          s.onload = () => resolve()
+          s.onerror = () => reject(new Error('No se pudo cargar Stripe'))
+          document.head.appendChild(s)
         })
-        setSuccessMsg('✅ Pago retenido en escrow correctamente (modo test).')
-        fetchData(); setProcessing(false); return
       }
-      setStripeInstance(stripe)
+      const stripe = (window as any).Stripe?.('pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka')
+      if (!stripe) throw new Error('Stripe no disponible.')
       setClientSecret(fnData.client_secret)
       setPaymentData(fnData)
       setProcessing(false)
