@@ -1,4 +1,3 @@
-import '../global.css'
 import { useEffect, useRef } from 'react'
 import { Stack, router } from 'expo-router'
 import 'react-native-url-polyfill/auto'
