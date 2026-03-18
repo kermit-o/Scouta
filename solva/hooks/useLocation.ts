@@ -18,27 +18,47 @@ export function useLocation(autoUpdate = false) {
     setLoading(true)
     setError(null)
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync()
-      if (status !== 'granted') {
-        setError('Permiso de ubicacion denegado')
+      let result: Coords | null = null
+
+      // Web: usar Geolocation API nativa del browser
+      if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+        result = await new Promise<Coords | null>((resolve) => {
+          navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+            () => resolve(null),
+            { enableHighAccuracy: false, timeout: 8000 }
+          )
+        })
+      } else {
+        // Native: usar expo-location
+        const { status } = await Location.requestForegroundPermissionsAsync()
+        if (status !== 'granted') {
+          setError('Permiso de ubicación denegado')
+          setLoading(false)
+          return null
+        }
+        const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+        result = { latitude: loc.coords.latitude, longitude: loc.coords.longitude }
+      }
+
+      if (!result) {
+        setError('No se pudo obtener la ubicación')
         setLoading(false)
         return null
       }
 
-      const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
-      const c = { latitude: loc.coords.latitude, longitude: loc.coords.longitude }
-      setCoords(c)
+      setCoords(result)
 
-      // Actualiza ubicacion del usuario en DB
+      // Actualizar ubicación del usuario en DB
       if (session?.user.id) {
         await supabase.from('users').update({
-          latitude: c.latitude,
-          longitude: c.longitude,
+          latitude: result.latitude,
+          longitude: result.longitude,
         }).eq('id', session.user.id)
       }
 
       setLoading(false)
-      return c
+      return result
     } catch (err: any) {
       setError(err.message)
       setLoading(false)
