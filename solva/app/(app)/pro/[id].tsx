@@ -54,6 +54,23 @@ export default function ProProfileScreen() {
 
   const isOwnProfile = session?.user.id === id
 
+  async function handleContact() {
+    // Buscar si hay contrato activo entre los dos
+    const { data: contract } = await supabase
+      .from('contracts')
+      .select('job_id')
+      .or(`client_id.eq.${session!.user.id},pro_id.eq.${session!.user.id}`)
+      .eq(session!.user.id === pro?.id ? 'client_id' : 'pro_id', id)
+      .in('status', ['active'])
+      .single()
+    if (contract) {
+      router.push(`/(app)/jobs/${contract.job_id}/chat`)
+    } else {
+      // No hay contrato — ir a publicar job (el pro será el objetivo)
+      router.push('/(app)/jobs/new')
+    }
+  }
+
   return (
     <View style={[s.screen, { paddingTop: insets.top }]}>
       <View style={s.header}>
@@ -125,10 +142,16 @@ export default function ProProfileScreen() {
 
         {/* CTA */}
         {!isOwnProfile && session && (
-          <TouchableOpacity style={s.ctaBtn} onPress={() => router.push('/(app)/jobs')} activeOpacity={0.85}>
-            <Ionicons name="briefcase-outline" size={20} color="#fff" />
-            <Text style={s.ctaBtnText}>Ver jobs disponibles</Text>
-          </TouchableOpacity>
+          <View style={s.ctaRow}>
+            <TouchableOpacity style={s.ctaBtn} onPress={() => router.push(`/(app)/jobs/new`)} activeOpacity={0.85}>
+              <Ionicons name="briefcase-outline" size={18} color="#fff" />
+              <Text style={s.ctaBtnText}>Publicar trabajo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={s.ctaBtnSecondary} onPress={handleContact} activeOpacity={0.85}>
+              <Ionicons name="chatbubble-outline" size={18} color="#2563EB" />
+              <Text style={s.ctaBtnSecondaryText}>Contactar</Text>
+            </TouchableOpacity>
+          </View>
         )}
         {isOwnProfile && (
           <TouchableOpacity style={s.editBtn} onPress={() => router.push('/(app)/profile')} activeOpacity={0.85}>
@@ -275,12 +298,19 @@ const s = StyleSheet.create({
   statValue: { fontSize: 18, fontWeight: '800' },
   statLabel: { fontSize: 10, color: '#888', fontWeight: '600' },
   ctaBtn: {
-    backgroundColor: '#2563EB', borderRadius: 16, height: 56,
+    flex: 1, backgroundColor: '#2563EB', borderRadius: 16, height: 56,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
     shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.3, shadowRadius: 14, elevation: 6,
   },
-  ctaBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  ctaBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  ctaRow: { flexDirection: 'row', gap: 10 },
+  ctaBtnSecondary: {
+    flex: 1, borderRadius: 16, height: 56,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    borderWidth: 1.5, borderColor: '#DBEAFE', backgroundColor: '#EEF4FF',
+  },
+  ctaBtnSecondaryText: { fontSize: 15, fontWeight: '700', color: '#2563EB' },
   editBtn: {
     borderRadius: 16, height: 52,
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,

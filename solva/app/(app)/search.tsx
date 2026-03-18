@@ -54,6 +54,8 @@ export default function SearchScreen() {
   const [parsed, setParsed] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
+  const [activeTab, setActiveTab] = useState<'jobs' | 'pros'>('jobs')
+  const [pros, setPros] = useState<any[]>([])
 
   async function handleSearch(q?: string) {
     const searchQuery = q ?? query
@@ -86,6 +88,16 @@ export default function SearchScreen() {
       setResults(enriched)
       setParsed(data.parsed)
     }
+    // Búsqueda de pros por nombre/especialidad
+    const { data: prosData } = await supabase
+      .from('pro_profiles')
+      .select('id, full_name, avatar_url, bio, skills, score, total_reviews, total_jobs_done, country, is_verified')
+      .or(`full_name.ilike.%${searchQuery}%,bio.ilike.%${searchQuery}%,skills.cs.{${searchQuery}}`)
+      .gt('total_jobs_done', -1)
+      .order('score', { ascending: false })
+      .limit(20)
+    setPros(prosData ?? [])
+
     setLoading(false)
   }
 
@@ -141,6 +153,26 @@ export default function SearchScreen() {
           }
         </TouchableOpacity>
       </View>
+
+      {/* Tabs Jobs / Pros */}
+      {searched && (
+        <View style={styles.tabsRow}>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'jobs' && styles.tabActive]}
+            onPress={() => setActiveTab('jobs')}
+          >
+            <Ionicons name="briefcase-outline" size={15} color={activeTab === 'jobs' ? '#2563EB' : '#888'} />
+            <Text style={[styles.tabText, activeTab === 'jobs' && styles.tabTextActive]}>Jobs ({filteredResults.length})</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tab, activeTab === 'pros' && styles.tabActive]}
+            onPress={() => setActiveTab('pros')}
+          >
+            <Ionicons name="people-outline" size={15} color={activeTab === 'pros' ? '#2563EB' : '#888'} />
+            <Text style={[styles.tabText, activeTab === 'pros' && styles.tabTextActive]}>Pros ({pros.length})</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Categories scroll */}
       <ScrollView
@@ -200,8 +232,62 @@ export default function SearchScreen() {
         </ScrollView>
       )}
 
-      {/* Resultados */}
-      {searched && (
+      {/* Lista de Pros */}
+      {searched && activeTab === 'pros' && (
+        <FlatList
+          data={pros}
+          keyExtractor={item => item.id}
+          contentContainerStyle={pros.length === 0 ? styles.emptyContainer : styles.list}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.empty}>
+              <Ionicons name="people-outline" size={48} color="#ddd" />
+              <Text style={styles.emptyTitle}>Sin profesionales</Text>
+              <Text style={styles.emptySub}>Prueba con otro nombre o especialidad</Text>
+            </View>
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.proCard}
+              onPress={() => router.push(`/(app)/pro/${item.id}`)}
+              activeOpacity={0.85}
+            >
+              <View style={styles.proAvatar}>
+                <Text style={styles.proAvatarText}>{(item.full_name ?? '?')[0].toUpperCase()}</Text>
+                {item.is_verified && (
+                  <View style={styles.verifiedBadge}>
+                    <Ionicons name="checkmark-circle" size={14} color="#2563EB" />
+                  </View>
+                )}
+              </View>
+              <View style={styles.proInfo}>
+                <Text style={styles.proName}>{item.full_name}</Text>
+                {item.bio && <Text style={styles.proBio} numberOfLines={1}>{item.bio}</Text>}
+                <View style={styles.proMeta}>
+                  {item.score > 0 && (
+                    <View style={styles.proRating}>
+                      <Ionicons name="star" size={11} color="#F59E0B" />
+                      <Text style={styles.proRatingText}>{Number(item.score).toFixed(1)}</Text>
+                    </View>
+                  )}
+                  {item.total_jobs_done > 0 && (
+                    <Text style={styles.proJobs}>{item.total_jobs_done} trabajos</Text>
+                  )}
+                  {item.skills?.slice(0, 2).map((sk: string, i: number) => (
+                    <View key={i} style={styles.skillChip}>
+                      <Text style={styles.skillChipText}>{sk}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#ccc" />
+            </TouchableOpacity>
+          )}
+        />
+      )}
+
+      {/* Resultados Jobs */}
+      {searched && activeTab === 'jobs' && (
         <FlatList
           data={filteredResults}
           keyExtractor={item => item.id}
