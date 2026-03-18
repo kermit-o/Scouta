@@ -281,13 +281,15 @@ export default function JobDetailScreen() {
               </Text>
             </View>
             <View style={{ flex: 1 }}>
-              <View style={s.proNameRow}>
-                <Text style={s.proName}>{selectedBid.users?.full_name ?? 'Profesional'}</Text>
-                {selectedBid.users?.is_verified && (
-                  <Ionicons name="checkmark-circle" size={18} color="#2563EB" />
-                )}
-              </View>
-              <Text style={s.proProfession}>Profesional verificado</Text>
+              <TouchableOpacity onPress={() => router.push(`/(app)/pro/${selectedBid.pro_id}`)}>
+                <View style={s.proNameRow}>
+                  <Text style={[s.proName, { textDecorationLine: 'underline' }]}>{selectedBid.users?.full_name ?? 'Profesional'}</Text>
+                  {selectedBid.users?.is_verified && (
+                    <Ionicons name="checkmark-circle" size={18} color="#2563EB" />
+                  )}
+                </View>
+              </TouchableOpacity>
+              <Text style={s.proProfession}>Ver perfil completo →</Text>
             </View>
             <TouchableOpacity
               style={s.msgBtn}
