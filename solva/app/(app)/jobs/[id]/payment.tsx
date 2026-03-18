@@ -298,11 +298,12 @@ export default function PaymentScreen() {
 
 function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
   const cardRef = useRef<any>(null)
+  const domRef = useRef<any>(null)
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    if (!stripeInstance || mounted) return
-    const timer = setTimeout(() => {
+  const mountCard = (node: any) => {
+    if (!node || !stripeInstance || mounted) return
+    domRef.current = node
     const elements = stripeInstance.elements()
     const card = elements.create('card', {
       style: {
@@ -313,12 +314,14 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
         invalid: { color: '#EF4444' }
       }
     })
-    card.mount('#stripe-card-element')
+    card.mount(node)
     cardRef.current = card
     setMounted(true)
-    }, 100)
-    return () => { clearTimeout(timer); if (cardRef.current) cardRef.current.destroy() }
-  }, [stripeInstance])
+  }
+
+  useEffect(() => {
+    return () => { if (cardRef.current) cardRef.current.destroy() }
+  }, [])
 
   return (
     <View>
@@ -330,7 +333,7 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
         borderColor: '#E5E7EB', padding: 14, marginBottom: 20,
       }}>
         {/* @ts-ignore */}
-        <div id="stripe-card-element" style={{ minHeight: 20 }} />
+        <div ref={mountCard} style={{ minHeight: 24 }} />
       </View>
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
