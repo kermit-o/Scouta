@@ -26,6 +26,18 @@ const TEMPLATES: Record<string, (data: any) => { subject: string; html: string }
         <a href="https://www.getsolva.co" style="display:inline-block;margin-top:16px;background:#059669;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">Ver contrato →</a>
       </div>`,
   }),
+  review_request: (d) => ({
+    subject: `⭐ ¿Cómo fue el trabajo? Deja tu reseña — "${d.jobTitle}"`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px">
+        <h1 style="color:#F59E0B">¿Cómo fue la experiencia?</h1>
+        <p>Hola <b>${d.userName}</b>,</p>
+        <p>El trabajo <b>"${d.jobTitle}"</b> ha sido completado. Tu opinión es muy importante para la comunidad de Solva.</p>
+        <p>Solo te tomará 1 minuto — puntúa la experiencia y ayuda a otros usuarios.</p>
+        <a href="https://www.getsolva.co/(app)/jobs/${d.jobId}/review" style="display:inline-block;margin-top:16px;background:#F59E0B;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">Dejar reseña ⭐</a>
+        <p style="color:#aaa;font-size:12px;margin-top:24px">Este enlace es válido durante 7 días.</p>
+      </div>`,
+  }),
   payment_released: (d) => ({
     subject: `💰 Pago liberado — ${d.amount} ${d.currency}`,
     html: `

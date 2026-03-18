@@ -74,6 +74,30 @@ Deno.serve(async (req) => {
         })
       }
     } catch (_) {}
+    // Emails de reseña — cliente y pro
+    try {
+      const { data: fullContract } = await supabase
+        .from('contracts')
+        .select('job_id, client_id, pro_id, jobs(title)')
+        .eq('id', contract_id)
+        .single()
+      if (fullContract) {
+        const jobTitle = fullContract.jobs?.title ?? 'Trabajo'
+        const jobId = fullContract.job_id
+        const [{ data: clientProfile }, { data: proProfile2 }] = await Promise.all([
+          supabase.from('users').select('email, full_name').eq('id', fullContract.client_id).single(),
+          supabase.from('users').select('email, full_name').eq('id', fullContract.pro_id).single(),
+        ])
+        const sendReview = (email: string, name: string) =>
+          fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}` },
+            body: JSON.stringify({ to: email, template: 'review_request', data: { userName: name, jobTitle, jobId } })
+          })
+        if (clientProfile?.email) await sendReview(clientProfile.email, clientProfile.full_name ?? 'Cliente')
+        if (proProfile2?.email) await sendReview(proProfile2.email, proProfile2.full_name ?? 'Profesional')
+      }
+    } catch (_) {}
     return new Response(JSON.stringify({ success: true }), {
       headers: { ...CORS, 'Content-Type': 'application/json' }
     })
