@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { loadStripe } from '@stripe/stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -7,6 +8,8 @@ import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../lib/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+
+const stripePromise = loadStripe('pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka')
 
 export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -52,8 +55,7 @@ export default function PaymentScreen() {
       })
       if (fnError) throw new Error(fnError.message)
       if (fnData.provider === 'mercadopago') { setErrorMsg(t('payment.mercadopago')); setProcessing(false); return }
-      const stripe = await loadStripe('pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka')
-      if (!stripe) throw new Error('No se pudo inicializar el sistema de pago. Inténtalo de nuevo.')
+      // stripe se carga via Elements provider
       setClientSecret(fnData.client_secret)
       setPaymentData(fnData)
       setProcessing(false)
@@ -277,18 +279,24 @@ export default function PaymentScreen() {
         <View style={s.modalOverlay}>
           <View style={s.modalSheet}>
             <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>{t('payment.cardDetails') ?? 'Card details'}</Text>
+              <Text style={s.modalTitle}>{t('payment.cardDetails') ?? 'Datos de la tarjeta'}</Text>
               <TouchableOpacity onPress={() => setShowCardModal(false)}>
                 <Ionicons name="close" size={24} color="#1a1a2e" />
               </TouchableOpacity>
             </View>
             <Text style={s.modalAmount}>{contract?.amount} {contract?.currency}</Text>
-            <StripeCardForm
-              stripeInstance={stripeInstance}
-              onConfirm={handleConfirmPay}
-              processing={processing}
-              t={t}
-            />
+            <Elements stripe={stripePromise}>
+              <StripeCardForm
+                clientSecret={clientSecret}
+                paymentData={paymentData}
+                contract={contract}
+                onSuccess={() => { setShowCardModal(false); fetchData() }}
+                onError={(msg: string) => setErrorMsg(msg)}
+                processing={processing}
+                setProcessing={setProcessing}
+                t={t}
+              />
+            </Elements>
           </View>
         </View>
       </Modal>
@@ -296,71 +304,70 @@ export default function PaymentScreen() {
   )
 }
 
-function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
-  const cardRef = useRef<any>(null)
-  const domRef = useRef<any>(null)
-  const [mounted, setMounted] = useState(false)
+function StripeCardForm({ clientSecret, paymentData, contract, onSuccess, onError, processing, setProcessing, t }: any) {
+  const stripe = useStripe()
+  const elements = useElements()
 
-  const mountCard = (node: any) => {
-    if (!node || !stripeInstance || mounted) return
-    domRef.current = node
-    const elements = stripeInstance.elements()
-    const card = elements.create('card', {
-      style: {
-        base: {
-          fontSize: '16px', color: '#1a1a2e', fontFamily: 'system-ui, sans-serif',
-          '::placeholder': { color: '#9CA3AF' }
-        },
-        invalid: { color: '#EF4444' }
-      }
-    })
-    card.mount(node)
-    cardRef.current = card
-    setMounted(true)
+  async function handleSubmit() {
+    if (!stripe || !elements) { onError('Stripe no está listo. Espera un momento.'); return }
+    const card = elements.getElement(CardElement)
+    if (!card) { onError('No se encontró el campo de tarjeta.'); return }
+    setProcessing(true)
+    try {
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: { card }
+      })
+      if (error) throw new Error(error.message)
+      await supabase.from('payments').insert({
+        contract_id: contract.id, client_id: contract.client_id, pro_id: contract.pro_id,
+        amount: contract.amount, platform_fee: paymentData.platform_fee, pro_amount: paymentData.pro_amount,
+        currency: contract.currency, country: contract.country, provider: 'stripe',
+        provider_payment_id: paymentData.payment_intent_id, status: 'held', held_at: new Date().toISOString(),
+      })
+      onSuccess()
+    } catch (err: any) { onError(err.message) }
+    finally { setProcessing(false) }
   }
-
-  useEffect(() => {
-    return () => { if (cardRef.current) cardRef.current.destroy() }
-  }, [])
 
   return (
     <View>
       <Text style={{ fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 8 }}>
-        {t('payment.cardNumber') ?? 'Card number'}
+        {t('payment.cardNumber') ?? 'Número de tarjeta'}
       </Text>
       <View style={{
         backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1,
         borderColor: '#E5E7EB', padding: 14, marginBottom: 20,
       }}>
-        {/* @ts-ignore */}
-        <div ref={mountCard} style={{ minHeight: 24 }} />
+        <CardElement options={{
+          style: {
+            base: { fontSize: '16px', color: '#1a1a2e', fontFamily: 'system-ui, sans-serif', '::placeholder': { color: '#9CA3AF' } },
+            invalid: { color: '#EF4444' }
+          },
+          hidePostalCode: true,
+        }} />
       </View>
-      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Ionicons name="lock-closed-outline" size={14} color="#059669" />
-          <Text style={{ fontSize: 12, color: '#059669', fontWeight: '600' }}>
-            {t('payment.securedByStripe') ?? 'Secured by Stripe'}
-          </Text>
-        </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
+        <Ionicons name="lock-closed-outline" size={14} color="#059669" />
+        <Text style={{ fontSize: 12, color: '#059669', fontWeight: '600' }}>
+          {t('payment.securedByStripe') ?? 'Pago seguro con Stripe'}
+        </Text>
       </View>
       <TouchableOpacity
-        style={{
-          backgroundColor: '#2563EB', borderRadius: 14, height: 52,
-          alignItems: 'center', justifyContent: 'center', opacity: processing ? 0.6 : 1,
-        }}
-        onPress={() => onConfirm(cardRef.current)}
-        disabled={processing}
+        style={{ backgroundColor: '#2563EB', borderRadius: 14, height: 52, alignItems: 'center', justifyContent: 'center', opacity: (processing || !stripe) ? 0.6 : 1 }}
+        onPress={handleSubmit}
+        disabled={processing || !stripe}
       >
         {processing
           ? <ActivityIndicator color="#fff" />
           : <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>
-              {t('payment.confirmPay') ?? 'Confirm payment'}
+              {t('payment.confirmPay') ?? 'Confirmar pago'}
             </Text>
         }
       </TouchableOpacity>
     </View>
   )
 }
+
 
 const s = StyleSheet.create({
   screen: { flex: 1, backgroundColor: '#F6F7FB' },
