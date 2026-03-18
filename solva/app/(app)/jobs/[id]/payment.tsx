@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { loadStripe } from '@stripe/stripe-js'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -51,18 +52,8 @@ export default function PaymentScreen() {
       })
       if (fnError) throw new Error(fnError.message)
       if (fnData.provider === 'mercadopago') { setErrorMsg(t('payment.mercadopago')); setProcessing(false); return }
-      // Inyectar Stripe.js dinámicamente
-      if (typeof (window as any).Stripe === 'undefined') {
-        await new Promise<void>((resolve, reject) => {
-          const s = document.createElement('script')
-          s.src = 'https://js.stripe.com/v3/'
-          s.onload = () => resolve()
-          s.onerror = () => reject(new Error('No se pudo cargar Stripe'))
-          document.head.appendChild(s)
-        })
-      }
-      const stripe = (window as any).Stripe?.('pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka')
-      if (!stripe) throw new Error('Stripe no disponible.')
+      const stripe = await loadStripe('pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka')
+      if (!stripe) throw new Error('No se pudo inicializar el sistema de pago. Inténtalo de nuevo.')
       setClientSecret(fnData.client_secret)
       setPaymentData(fnData)
       setProcessing(false)
