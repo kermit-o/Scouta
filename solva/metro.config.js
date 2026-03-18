@@ -1,11 +1,6 @@
 const { getDefaultConfig } = require('expo/metro-config')
+const { withNativeWind } = require('nativewind/metro')
 
 const config = getDefaultConfig(__dirname)
 
-// Excluye módulos nativos de Stripe en web
-const { resolver } = config
-const originalBlockList = resolver.blockList || []
-
-config.resolver.resolverMainFields = ['react-native', 'browser', 'main']
-
-module.exports = config
+module.exports = withNativeWind(config, { input: './global.css' })
