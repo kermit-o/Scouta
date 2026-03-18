@@ -34,6 +34,14 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false)
   const flatListRef = useRef<FlatList>(null)
 
+  async function markAsRead(contractId: string) {
+    await supabase.from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('contract_id', contractId)
+      .neq('sender_id', session!.user.id)
+      .is('read_at', null)
+  }
+
   async function loadData() {
     const { data: c } = await supabase
       .from('contracts')
@@ -48,6 +56,7 @@ export default function ChatScreen() {
     const { data: msgs } = await supabase
       .from('messages').select('*').eq('contract_id', c.id).order('created_at', { ascending: true })
     if (msgs) setMessages(msgs as Message[])
+    if (c?.id) markAsRead(c.id)
     setLoading(false)
   }
 
@@ -56,10 +65,20 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!contract?.id) return
     const channel = supabase.channel(`chat:${contract.id}`)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `contract_id=eq.${contract.id}` },
+        (payload) => {
+          setMessages(prev => prev.map(m => m.id === payload.new.id ? { ...m, read_at: payload.new.read_at } : m))
+        }
+      )
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `contract_id=eq.${contract.id}` },
         (payload) => {
-          setMessages(prev => [...prev, payload.new as Message])
+          const newMsg = payload.new as Message
+          setMessages(prev => [...prev, newMsg])
           setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100)
+          // Marcar como leído si el mensaje es del otro
+          if (newMsg.sender_id !== session!.user.id) {
+            supabase.from('messages').update({ read_at: new Date().toISOString() }).eq('id', newMsg.id)
+          }
         }
       ).subscribe()
     return () => { supabase.removeChannel(channel) }
@@ -184,7 +203,14 @@ export default function ChatScreen() {
               )}
               <View style={[s.bubble, isMine ? s.bubbleMine : s.bubbleOther]}>
                 <Text style={[s.bubbleText, isMine && s.bubbleTextMine]}>{msg.content}</Text>
-                <Text style={[s.timeText, isMine && s.timeTextMine]}>{formatTime(msg.created_at)}</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, justifyContent: 'flex-end' }}>
+                  <Text style={[s.timeText, isMine && s.timeTextMine]}>{formatTime(msg.created_at)}</Text>
+                  {isMine && (
+                    <Text style={{ fontSize: 11, color: msg.read_at ? '#60A5FA' : 'rgba(255,255,255,0.5)', marginTop: 1 }}>
+                      {msg.read_at ? '✓✓' : '✓'}
+                    </Text>
+                  )}
+                </View>
               </View>
             </View>
           )
