@@ -464,6 +464,10 @@
     "releasePayment": "Release payment",
     "notFound": "Contract not found",
     "mercadopago": "MercadoPago payment coming soon.",
-    "released": "✅ Payment released. The professional has received their payment."
+    "released": "✅ Payment released. The professional has received their payment.",
+    "cardDetails": "Kaartgegevens",
+    "cardNumber": "Kaartnummer",
+    "securedByStripe": "Beveiligd door Stripe",
+    "confirmPay": "Betaling bevestigen"
   }
 }

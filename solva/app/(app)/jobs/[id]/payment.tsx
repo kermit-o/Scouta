@@ -302,6 +302,7 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
 
   useEffect(() => {
     if (!stripeInstance || mounted) return
+    const timer = setTimeout(() => {
     const elements = stripeInstance.elements()
     const card = elements.create('card', {
       style: {
@@ -315,7 +316,8 @@ function StripeCardForm({ stripeInstance, onConfirm, processing, t }: any) {
     card.mount('#stripe-card-element')
     cardRef.current = card
     setMounted(true)
-    return () => card.destroy()
+    }, 100)
+    return () => { clearTimeout(timer); if (cardRef.current) cardRef.current.destroy() }
   }, [stripeInstance])
 
   return (

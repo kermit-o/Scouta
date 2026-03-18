@@ -464,6 +464,10 @@
     "releasePayment": "Liberar pago",
     "notFound": "Contrato no encontrado",
     "mercadopago": "Pago con MercadoPago disponible próximamente.",
-    "released": "✅ Pago liberado. El profesional ha recibido su pago."
+    "released": "✅ Pago liberado. El profesional ha recibido su pago.",
+    "cardDetails": "Datos de la tarjeta",
+    "cardNumber": "Número de tarjeta",
+    "securedByStripe": "Pago seguro con Stripe",
+    "confirmPay": "Confirmar pago"
   }
 }
