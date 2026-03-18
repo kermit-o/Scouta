@@ -28,6 +28,14 @@ const EXAMPLES = [
   'Electricista para instalar enchufes en oficina',
 ]
 
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLon = (lon2 - lon1) * Math.PI / 180
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLon/2)**2
+  return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 10) / 10
+}
+
 const CATEGORY_ICON: Record<string, string> = {
   cleaning: '🧹', plumbing: '🔧', electrical: '⚡',
   painting: '🎨', moving: '📦', gardening: '🌿',
@@ -67,7 +75,15 @@ export default function SearchScreen() {
     })
 
     if (!error && data) {
-      setResults(data.jobs ?? [])
+      const jobs = data.jobs ?? []
+      // Calcular distancia en cliente si tenemos coords y el job tiene lat/lng
+      const enriched = jobs.map((j: any) => {
+        if (location && j.latitude && j.longitude && j.distance_km == null) {
+          return { ...j, distance_km: haversineKm(location.latitude, location.longitude, j.latitude, j.longitude) }
+        }
+        return j
+      })
+      setResults(enriched)
       setParsed(data.parsed)
     }
     setLoading(false)
