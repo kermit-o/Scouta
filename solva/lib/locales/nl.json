@@ -339,7 +339,15 @@
       "3": "Average",
       "4": "Good",
       "5": "Excellent"
-    }
+    },
+    "thanks": "Bedankt voor uw beoordeling!",
+    "thanksDesc": "Uw mening helpt de Solva-gemeenschap te verbeteren.",
+    "subtitle": "Uw mening helpt anderen betere beslissingen te nemen.",
+    "score": "Score",
+    "photosBefore": "Foto's voor het werk",
+    "photosAfter": "Foto's na het werk",
+    "addPhotos": "Foto's toevoegen",
+    "commentPlaceholder": "Beschrijf uw ervaring met de professional..."
   },
   "contract": {
     "title": "Contract",

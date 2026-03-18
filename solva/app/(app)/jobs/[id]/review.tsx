@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
-  View, Text, StyleSheet, TouchableOpacity, TextInput,
+  View, Text, StyleSheet, TouchableOpacity, TextInput, Alert,
   ActivityIndicator, ScrollView, Image
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const RATING_COLORS = ['', '#DC2626', '#F59E0B', '#D97706', '#2563EB', '#059669']
+const RATING_LABELS = ['', 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente']
 
 function StarRating({ rating, onRate }: { rating: number; onRate: (r: number) => void }) {
   return (
@@ -47,6 +48,7 @@ export default function ReviewScreen() {
   const [verifyResult, setVerifyResult] = useState<any>(null)
   const [contract, setContract] = useState<any>(null)
   const [loaded, setLoaded] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
 
   async function loadContract() {
     if (loaded) return
@@ -235,6 +237,11 @@ export default function ReviewScreen() {
         )}
       </ScrollView>
 
+      {errorMsg && (
+        <View style={{ marginHorizontal: 20, marginBottom: 8, backgroundColor: '#FEE2E2', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#FECACA' }}>
+          <Text style={{ fontSize: 13, color: '#DC2626', fontWeight: '600' }}>{errorMsg}</Text>
+        </View>
+      )}
       <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity
           style={[s.footerBtn, !canSubmit && s.footerBtnDisabled]}

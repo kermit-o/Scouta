@@ -339,7 +339,15 @@
       "3": "Regular",
       "4": "Bueno",
       "5": "Excelente"
-    }
+    },
+    "thanks": "¡Gracias por tu reseña!",
+    "thanksDesc": "Tu opinión ayuda a mejorar la comunidad de Solva.",
+    "subtitle": "Tu opinión ayuda a otros usuarios a tomar mejores decisiones.",
+    "score": "Puntuación",
+    "photosBefore": "Fotos antes del trabajo",
+    "photosAfter": "Fotos después del trabajo",
+    "addPhotos": "Añadir fotos",
+    "commentPlaceholder": "Describe tu experiencia con el profesional..."
   },
   "contract": {
     "title": "Contrato",
