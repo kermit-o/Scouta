@@ -40,6 +40,18 @@ export default function NewJobScreen() {
   const [loading, setLoading]       = useState(false)
   const [errorMsg, setErrorMsg]     = useState('')
 
+  async function geocodeCity(cityName: string, country: string): Promise<{ lat: number; lng: number } | null> {
+    try {
+      const q = encodeURIComponent(`${cityName}, ${country}`)
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${q}&format=json&limit=1`, {
+        headers: { 'User-Agent': 'Solva/1.0 (getsolva.co)' }
+      })
+      const data = await res.json()
+      if (data?.length > 0) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }
+    } catch (_) {}
+    return null
+  }
+
   async function handlePublish() {
     setErrorMsg('')
     if (!title.trim())       { setErrorMsg('El título es obligatorio.'); return }
@@ -48,6 +60,11 @@ export default function NewJobScreen() {
     if (!isRemote && !city.trim()) { setErrorMsg('Indica la ciudad o marca como remoto.'); return }
 
     setLoading(true)
+    // Geocoding de la ciudad
+    let geoData: { lat: number; lng: number } | null = null
+    if (!isRemote && city.trim()) {
+      geoData = await geocodeCity(city.trim(), profile?.country ?? 'ES')
+    }
     const { data, error } = await supabase.from('jobs').insert({
       client_id:   session!.user.id,
       title:       title.trim(),
@@ -60,6 +77,9 @@ export default function NewJobScreen() {
       country:     profile?.country  ?? 'ES',
       is_remote:   isRemote,
       status:      'open',
+      latitude:    geoData?.lat ?? null,
+      longitude:   geoData?.lng ?? null,
+      location:    geoData ? `SRID=4326;POINT(${geoData.lng} ${geoData.lat})` : null,
     }).select().single()
     setLoading(false)
 
