@@ -499,6 +499,18 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 10 },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: '#333' },
   emptySub: { fontSize: 14, color: '#aaa', textAlign: 'center', paddingHorizontal: 24 },
+  tabsRow: {
+    flexDirection: 'row', marginHorizontal: 24, marginBottom: 10, marginTop: 4,
+    backgroundColor: '#fff', borderRadius: 14, padding: 4,
+    borderWidth: 1, borderColor: '#E5E7EB',
+  },
+  tab: {
+    flex: 1, flexDirection: 'row', alignItems: 'center',
+    justifyContent: 'center', gap: 6, paddingVertical: 9, borderRadius: 11,
+  },
+  tabActive: { backgroundColor: '#EEF4FF' },
+  tabText: { fontSize: 13, fontWeight: '600', color: '#888' },
+  tabTextActive: { color: '#2563EB' },
   emptyBtn: {
     marginTop: 8, backgroundColor: '#2563EB', borderRadius: 14,
     paddingHorizontal: 24, paddingVertical: 12,
