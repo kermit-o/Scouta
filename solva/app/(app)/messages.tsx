@@ -19,6 +19,15 @@ export default function MessagesScreen() {
   const [search, setSearch] = useState('')
 
   useEffect(() => {
+    // Realtime: actualizar lista cuando llega nuevo mensaje
+    const channel = supabase.channel('messages-list')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' },
+        () => load()
+      ).subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [])
+
+  useEffect(() => {
     async function load() {
       const { data } = await supabase
         .from('contracts')
@@ -26,17 +35,31 @@ export default function MessagesScreen() {
           id, status, amount, currency, job_id, created_at,
           jobs(title),
           client:client_id(id, full_name),
-          pro:pro_id(id, full_name)
+          pro:pro_id(id, full_name),
+          messages(id, content, sender_id, created_at, read_at)
         `)
         .or(`client_id.eq.${session!.user.id},pro_id.eq.${session!.user.id}`)
         .in('status', ['active', 'completed'])
         .order('created_at', { ascending: false })
 
-      if (data) setContracts(data)
+      if (data) {
+        // Ordenar por último mensaje
+        const enriched = data.map((c: any) => {
+          const msgs = c.messages ?? []
+          const last = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+          const unread = msgs.filter((m: any) => m.sender_id !== session!.user.id && !m.read_at).length
+          return { ...c, lastMessage: last, unreadCount: unread }
+        }).sort((a: any, b: any) => {
+          const aTime = a.lastMessage?.created_at ?? a.created_at
+          const bTime = b.lastMessage?.created_at ?? b.created_at
+          return new Date(bTime).getTime() - new Date(aTime).getTime()
+        })
+        setContracts(enriched)
+      }
       setLoading(false)
     }
     load()
-  }, [])
+  }, [session])
 
   if (loading) return (
     <View style={styles.center}>
@@ -102,7 +125,7 @@ export default function MessagesScreen() {
           const otherName = isClient ? item.pro?.full_name : item.client?.full_name
           const initial = (otherName ?? '?')[0].toUpperCase()
           const isActive = item.status === 'active'
-          const timeAgo = formatTime(item.created_at)
+          const timeAgo = formatTime(item.lastMessage?.created_at ?? item.created_at)
 
           return (
             <TouchableOpacity
@@ -116,6 +139,11 @@ export default function MessagesScreen() {
                   <Text style={styles.avatarText}>{initial}</Text>
                 </View>
                 {isActive && <View style={styles.activeDot} />}
+                {item.unreadCount > 0 && (
+                  <View style={styles.unreadBadge}>
+                    <Text style={styles.unreadText}>{item.unreadCount}</Text>
+                  </View>
+                )}
               </View>
 
               {/* Info */}
@@ -127,6 +155,11 @@ export default function MessagesScreen() {
                 <Text style={styles.jobTitle} numberOfLines={1}>
                   {item.jobs?.title ?? 'Trabajo'}
                 </Text>
+                {item.lastMessage && (
+                  <Text style={styles.lastMsg} numberOfLines={1}>
+                    {item.lastMessage.sender_id === session!.user.id ? 'Tú: ' : ''}{item.lastMessage.content}
+                  </Text>
+                )}
                 <View style={styles.infoBottom}>
                   <Text style={styles.amount}>
                     {item.amount} {item.currency}
@@ -224,4 +257,12 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingTop: 80, gap: 10 },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: '#333' },
   emptySub: { fontSize: 14, color: '#aaa', textAlign: 'center', paddingHorizontal: 32 },
+  lastMsg: { fontSize: 12, color: '#aaa', marginTop: 1 },
+  unreadBadge: {
+    position: 'absolute', top: -4, right: -4,
+    minWidth: 18, height: 18, borderRadius: 9,
+    backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: '#F6F7FB', paddingHorizontal: 3,
+  },
+  unreadText: { fontSize: 10, fontWeight: '800', color: '#fff' },
 })
