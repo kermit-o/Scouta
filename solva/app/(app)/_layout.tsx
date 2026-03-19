@@ -7,13 +7,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
 import { DrawerProvider, useDrawer } from '../../lib/DrawerContext'
 import DrawerMenu from '../../components/DrawerMenu'
-import Svg, { Path, Circle } from 'react-native-svg'
+import { Ionicons } from '@expo/vector-icons'
 
-const HomeIcon    = ({ color }: { color: string }) => (<Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Path d="M3 9.5L12 3L21 9.5V20C21 20.55 20.55 21 20 21H15V15H9V21H4C3.45 21 3 20.55 3 20V9.5Z" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/></Svg>)
-const SearchIcon  = ({ color }: { color: string }) => (<Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Circle cx="11" cy="11" r="7" stroke={color} strokeWidth="1.8"/><Path d="M16.5 16.5L21 21" stroke={color} strokeWidth="1.8" strokeLinecap="round"/></Svg>)
-const JobsIcon    = ({ color }: { color: string }) => (<Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Path d="M2 7C2 5.9 2.9 5 4 5H20C21.1 5 22 5.9 22 7V19C22 20.1 21.1 21 20 21H4C2.9 21 2 20.1 2 19V7Z" stroke={color} strokeWidth="1.8"/><Path d="M16 5V4C16 2.9 15.1 2 14 2H10C8.9 2 8 2.9 8 4V5" stroke={color} strokeWidth="1.8" strokeLinecap="round"/><Path d="M2 11H22" stroke={color} strokeWidth="1.8"/></Svg>)
-const MsgIcon     = ({ color }: { color: string }) => (<Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Path d="M21 15C21 16.1 20.1 17 19 17H7L3 21V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V15Z" stroke={color} strokeWidth="1.8" strokeLinejoin="round"/></Svg>)
-const ProfileIcon = ({ color }: { color: string }) => (<Svg width="24" height="24" viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="8" r="4" stroke={color} strokeWidth="1.8"/><Path d="M4 20C4 17 7.6 14 12 14C16.4 14 20 17 20 20" stroke={color} strokeWidth="1.8" strokeLinecap="round"/></Svg>)
+const HomeIcon    = ({ color }: { color: string }) => <Ionicons name="home-outline" size={24} color={color} />
+const SearchIcon  = ({ color }: { color: string }) => <Ionicons name="search-outline" size={24} color={color} />
+const JobsIcon    = ({ color }: { color: string }) => <Ionicons name="briefcase-outline" size={24} color={color} />
+const MsgIcon     = ({ color }: { color: string }) => <Ionicons name="chatbubble-outline" size={24} color={color} />
+const ProfileIcon = ({ color }: { color: string }) => <Ionicons name="person-outline" size={24} color={color} />
 
 function AppLayoutInner() {
   const { session } = useAuth()
