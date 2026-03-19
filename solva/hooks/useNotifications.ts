@@ -2,6 +2,17 @@ import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
+import * as Notifications from 'expo-notifications'
+
+if (Platform.OS !== 'web') {
+  Notifications.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+    }),
+  })
+}
 
 export function useNotifications() {
   const { session } = useAuth()
@@ -13,7 +24,6 @@ export function useNotifications() {
   async function registerPushToken(userId: string) {
     if (Platform.OS === 'web') return
     try {
-      const Notifications = await import('expo-notifications')
       const { status: existing } = await Notifications.getPermissionsAsync()
       let finalStatus = existing
       if (existing !== 'granted') {
