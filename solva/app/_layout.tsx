@@ -57,11 +57,9 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <I18nextProvider i18n={i18n}>
-        <AuthProvider>
-          <RootLayoutNav />
-        </AuthProvider>
-      </I18nextProvider>
+      <AuthProvider>
+        <RootLayoutNav />
+      </AuthProvider>
     </SafeAreaProvider>
   )
 }
