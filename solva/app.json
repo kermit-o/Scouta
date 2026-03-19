@@ -62,7 +62,6 @@
     },
     "plugins": [
       "./plugins/withNoGoogleServices",
-      "expo-router",
       "expo-secure-store",
       "expo-localization",
       "expo-font",
@@ -94,7 +93,18 @@
           "cameraPermission": "Solva necesita la camara para fotos de trabajos."
         }
       ],
-      "./plugins/withNoJitpack"
+      "./plugins/withNoJitpack",
+      [
+        "expo-router",
+        {
+          "asyncRoutes": {
+            "default": "lazy",
+            "android": "lazy",
+            "ios": "lazy",
+            "web": "lazy"
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
