@@ -43,7 +43,6 @@ function RootLayoutNav() {
 }
 
 export default function RootLayout() {
-  SplashScreen.preventAutoHideAsync()
   const [fontsLoaded] = Font.useFonts({
     ...Ionicons.font,
   })
