@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "postinstall": "patch-package",
-    "build:web": "expo export --platform web --clear"
+    "build:web": "expo export --platform web --clear --dev"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
