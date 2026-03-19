@@ -12,6 +12,7 @@ import { notifyUser } from '../../../../hooks/useNotifications'
 import { useSubscription } from '../../../../hooks/useSubscription'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { PaywallModal } from '../../../../components/PaywallModal'
 
 export default function NewBidScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
