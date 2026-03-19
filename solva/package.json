@@ -8,7 +8,7 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "postinstall": "patch-package && node scripts/fix-expo-router.js",
-    "build:web": "rm -rf dist && expo export --platform web"
+    "build:web": "expo export --platform web --clear"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
