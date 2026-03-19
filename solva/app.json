@@ -47,7 +47,6 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "single",
       "favicon": "./assets/favicon.png",
       "name": "Solva",
       "shortName": "Solva",
