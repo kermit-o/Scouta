@@ -97,12 +97,7 @@
       [
         "expo-router",
         {
-          "asyncRoutes": {
-            "default": "lazy",
-            "android": "lazy",
-            "ios": "lazy",
-            "web": "lazy"
-          }
+          "asyncRoutes": "production"
         }
       ]
     ],
