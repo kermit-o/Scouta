@@ -8,7 +8,6 @@ import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../lib/AuthContext'
 import { useProfile } from '../hooks/useProfile'
-import Svg, { Path, Circle } from 'react-native-svg'
 
 const { width } = Dimensions.get('window')
 const DRAWER_WIDTH = Math.min(320, width * 0.82)
