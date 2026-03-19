@@ -12,3 +12,4 @@ node_modules/
 .expo/
 *.log
 supabase/.temp/
+dist/
