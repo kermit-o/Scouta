@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { loadStripe } from '@stripe/stripe-js'
-// @stripe/react-stripe-js loaded dynamically below
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { useEffect, useRef, useState } from 'react'
 import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
@@ -10,8 +10,6 @@ import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const stripePromise = loadStripe('pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka')
-// Dynamic imports for web-only Stripe components
-const { Elements, CardElement, useStripe, useElements } = require('@stripe/react-stripe-js')
 
 export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
