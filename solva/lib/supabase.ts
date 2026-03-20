@@ -15,7 +15,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 })
 
 // Tipos del perfil de usuario
-export type UserRole = 'client' | 'pro' | 'company'
+export type UserRole = 'client' | 'pro' | 'company' | 'admin'
 export type SupportedCountry = 'ES' | 'FR' | 'BE' | 'NL' | 'DE' | 'PT' | 'IT' | 'GB' | 'MX' | 'CO' | 'AR' | 'BR' | 'CL'
 export type SupportedCurrency = 'EUR' | 'GBP' | 'MXN' | 'COP' | 'ARS' | 'BRL' | 'CLP'
 export type SupportedLanguage = 'es' | 'es-ES' | 'pt-BR'
