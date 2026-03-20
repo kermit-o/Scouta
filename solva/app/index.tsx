@@ -1,4 +1,4 @@
-// landing placeholderimport React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions, Animated } from 'react-native'
 import { router } from 'expo-router'
 import { useAuth } from '../lib/AuthContext'
