@@ -6,6 +6,8 @@ import {
 } from 'react-native'
 import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
+import { Platform } from 'react-native'
+import { Platform } from 'react-native'
 import { supabase, KycDocType, KycVerification } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
@@ -55,25 +57,41 @@ export default function KycScreen() {
 
   useEffect(() => { loadKyc() }, [])
 
-  async function uploadDoc(type: 'front' | 'back' | 'selfie') {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
-    if (status !== 'granted') return
-
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      quality: 0.8,
+  async function pickImageWeb(): Promise<{blob: Blob, ext: string} | null> {
+    return new Promise((resolve) => {
+      const input = document.createElement('input')
+      input.type = 'file'
+      input.accept = 'image/*'
+      input.onchange = async (e: any) => {
+        const file = e.target.files[0]
+        if (!file) { resolve(null); return }
+        resolve({ blob: file, ext: file.name.split('.').pop() || 'jpg' })
+      }
+      input.click()
     })
-    if (result.canceled || !result.assets[0]) return
+  }
 
+  async function uploadDoc(type: 'front' | 'back' | 'selfie') {
+    let blob: Blob, ext = 'jpg'
+    if (Platform.OS === 'web') {
+      const result = await pickImageWeb()
+      if (!result) return
+      blob = result.blob; ext = result.ext
+    } else {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()
+      if (status !== 'granted') return
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true, quality: 0.8,
+      })
+      if (result.canceled || !result.assets[0]) return
+      const asset = result.assets[0]
+      ext = asset.uri.split('.').pop() || 'jpg'
+      const response = await fetch(asset.uri)
+      blob = await response.blob()
+    }
     setUploading(type)
-    const asset = result.assets[0]
-    const ext = asset.uri.split('.').pop() || 'jpg'
     const fileName = `${session!.user.id}/${type}_${Date.now()}.${ext}`
-
-    const response = await fetch(asset.uri)
-    const blob = await response.blob()
-
     const { error } = await supabase.storage
       .from('kyc-docs')
       .upload(fileName, blob, { upsert: true, contentType: `image/${ext}` })
