@@ -434,7 +434,11 @@
     "payments": "Zahlungen",
     "invoices": "Rechnungen",
     "supportChat": "Support-Chat",
-    "terms": "Allgemeine Geschäftsbedingungen"
+    "terms": "Allgemeine Geschäftsbedingungen",
+    "dashboardPro": "Pro Dashboard",
+    "workZone": "Arbeitsbereich",
+    "myServices": "Meine Dienste",
+    "business": "Geschäft"
   },
   "notifications": {
     "newJobs": "Neue verfügbare Jobs",

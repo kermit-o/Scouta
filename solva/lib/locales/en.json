@@ -434,7 +434,11 @@
     "payments": "Payments",
     "invoices": "Invoices",
     "supportChat": "Support chat",
-    "terms": "Terms & conditions"
+    "terms": "Terms & conditions",
+    "dashboardPro": "Pro Dashboard",
+    "workZone": "Work zone",
+    "myServices": "My services",
+    "business": "Business"
   },
   "notifications": {
     "newJobs": "New available jobs",

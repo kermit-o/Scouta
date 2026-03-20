@@ -434,7 +434,11 @@
     "payments": "Betalingen",
     "invoices": "Facturen",
     "supportChat": "Support chat",
-    "terms": "Algemene voorwaarden"
+    "terms": "Algemene voorwaarden",
+    "dashboardPro": "Pro Dashboard",
+    "workZone": "Werkzone",
+    "myServices": "Mijn diensten",
+    "business": "Bedrijf"
   },
   "notifications": {
     "newJobs": "Nieuwe beschikbare jobs",
