@@ -7,7 +7,6 @@ import {
 import { router } from 'expo-router'
 import * as ImagePicker from 'expo-image-picker'
 import { Platform } from 'react-native'
-import { Platform } from 'react-native'
 import { supabase, KycDocType, KycVerification } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
