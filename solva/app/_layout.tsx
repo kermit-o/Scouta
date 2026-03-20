@@ -49,3 +49,4 @@ export default function RootLayout() {
     </SafeAreaProvider>
   )
 }
+// stripe-live-1773973475
