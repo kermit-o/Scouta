@@ -20,12 +20,13 @@ function RootLayoutNav() {
     if (currentId === prevSessionId.current) return
     prevSessionId.current = currentId
     if (!currentId) {
-      router.replace('/(auth)/login')
+      router.replace('/')
     }
   }, [session?.user?.id, loading])
   if (loading) return null
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(app)" />
       <Stack.Screen name="auth/callback" options={{ headerShown: false }} />
