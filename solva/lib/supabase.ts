@@ -32,6 +32,8 @@ export interface UserProfile {
   language: SupportedLanguage
   is_verified: boolean
   onboarding_completed: boolean
+  stripe_account_id: string | null
+  stripe_onboarding_completed: boolean
   onboarding_step: number
   bio: string | null
   skills: string[] | null

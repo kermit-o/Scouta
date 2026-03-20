@@ -103,6 +103,70 @@ export default function ProfileScreen() {
     }
   }
 
+  // Detectar retorno de Stripe onboarding
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('stripe') === 'success') {
+        // Marcar onboarding como completado
+        supabase.from('users')
+          .update({ stripe_onboarding_completed: true })
+          .eq('id', session!.user.id)
+          .then(() => {
+            refreshProfile()
+            setSuccessMsg('✅ Cuenta de cobro activada correctamente')
+            setTimeout(() => setSuccessMsg(''), 4000)
+          })
+        // Limpiar URL
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+  }, [])
+
+
+  // Detectar retorno de Stripe onboarding
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('stripe') === 'success') {
+        supabase.from('users')
+          .update({ stripe_onboarding_completed: true })
+          .eq('id', session!.user.id)
+          .then(() => {
+            refreshProfile()
+            setSuccessMsg('✅ Cuenta de cobro activada correctamente')
+            setTimeout(() => setSuccessMsg(''), 4000)
+          })
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+  }, [])
+
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('stripe') === 'success') {
+        supabase.from('users').update({ stripe_onboarding_completed: true }).eq('id', session!.user.id).then(() => { refreshProfile(); })
+        setSuccessMsg('Cuenta de cobro activada')
+        setTimeout(() => setSuccessMsg(''), 4000)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+  }, [])
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('stripe') === 'success') {
+        supabase.from('users').update({ stripe_onboarding_completed: true }).eq('id', session!.user.id).then(() => { refreshProfile() })
+        setSuccessMsg('Cuenta de cobro activada')
+        setTimeout(() => setSuccessMsg(''), 4000)
+        window.history.replaceState({}, '', window.location.pathname)
+      }
+    }
+  }, [])
+  
   const initials = (fullName || profile?.full_name || '?')[0].toUpperCase()
 
   const menuItems = [
@@ -114,6 +178,14 @@ export default function ProfileScreen() {
       badgeBg: profile?.is_verified ? '#D1FAE5' : '#FEF3C7',
       onPress: () => router.push('/(app)/kyc'),
     },
+    ...(profile?.role === 'pro' || profile?.role === 'company' ? [{
+      icon: 'card-outline' as const,
+      label: profile?.stripe_onboarding_completed ? '✅ Cuenta de cobro activa' : '💳 Activar cuenta de cobro',
+      badge: profile?.stripe_onboarding_completed ? 'Activo' : 'Requerido',
+      badgeColor: profile?.stripe_onboarding_completed ? '#10B981' : '#DC2626',
+      badgeBg: profile?.stripe_onboarding_completed ? '#D1FAE5' : '#FEE2E2',
+      onPress: handleStripeConnect,
+    }] : []),
     {
       icon: 'star-outline' as const,
       label: t('profile.subscription'),
