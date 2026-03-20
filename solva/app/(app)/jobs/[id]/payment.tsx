@@ -9,7 +9,7 @@ import { useAuth } from '../../../../lib/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
-const stripePromise = loadStripe('pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka')
+const stripePromise = loadStripe(process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? 'pk_live_51RuUjn5CZiSWsN34qyJyjh5HQMHPS')
 
 export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
