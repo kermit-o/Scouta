@@ -34,7 +34,7 @@ export default function PrivacyScreen() {
           ['12. Reclamaciones', 'Si considera que el tratamiento de sus datos vulnera la normativa, puede presentar reclamación ante la Autoridad de Protección de Datos de Bélgica (APD): www.autoriteprotectiondonnees.be | Rue de la Presse 35, 1000 Bruselas. También puede dirigirse a la autoridad de protección de datos de su país de residencia.'],
           ['13. Cambios en esta Política', 'Podemos actualizar esta Política de Privacidad. Le notificaremos los cambios significativos por email con al menos 30 días de antelación. La fecha de última actualización aparece al pie de este documento.'],
           ['14. Contacto', 'Para cualquier consulta sobre privacidad y protección de datos: privacy@getsolva.co | Solva SRL, Bruselas, Bélgica.']
-        ]].map(([title, body], i) => (
+        ].map(([title, body], i) => (
           <View key={i} style={s.section}>
             <Text style={s.sectionTitle}>{title}</Text>
             <Text style={s.sectionBody}>{body}</Text>
