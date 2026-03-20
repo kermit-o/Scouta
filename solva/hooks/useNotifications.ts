@@ -31,7 +31,7 @@ export function useNotifications() {
         finalStatus = status
       }
       if (finalStatus !== 'granted') return
-      const token = (await Notifications.getExpoPushTokenAsync()).data
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId: 'ac3cc394-f2cd-402d-a38e-c1eacdc8674b' })).data
       await supabase.from('push_tokens').upsert({
         user_id: userId, token, platform: 'expo',
       }, { onConflict: 'user_id,token' })
