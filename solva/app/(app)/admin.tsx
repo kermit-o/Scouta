@@ -43,7 +43,7 @@ export default function AdminScreen() {
         .limit(50),
       supabase
         .from('disputes')
-        .select('id, status, reason, description, created_at, contract_id, opener_id, accused_id, contracts(amount, currency, jobs(title))')
+        .select('id, status, reason, description, created_at, contract_id, opened_by, contracts(amount, currency, jobs(title))')
         .order('created_at', { ascending: false })
         .limit(50),
       supabase
@@ -214,7 +214,7 @@ export default function AdminScreen() {
               <Text style={s.cardName}>{item.contracts?.jobs?.title ?? 'Sin título'}</Text>
               <Text style={s.cardSub}>{item.contracts?.amount} {item.contracts?.currency} · {item.status?.toUpperCase()}</Text>
               <Text style={s.cardSub}>
-                Abrió: {item.opener_id?.slice(0,8)} · Acusado: {item.accused_id?.slice(0,8)}
+                Abrió por: {item.opened_by?.slice(0,8) ?? '—'}
               </Text>
               {item.description && (
                 <Text style={s.cardDesc} numberOfLines={3}>{item.description}</Text>
