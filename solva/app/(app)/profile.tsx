@@ -167,6 +167,16 @@ export default function ProfileScreen() {
     }
   }, [])
   
+  async function handleStripeConnect() {
+    try {
+      const { data, error } = await supabase.functions.invoke("create-stripe-account")
+      if (error || !data?.url) throw new Error(error?.message ?? "Error al conectar con Stripe")
+      if (typeof window !== "undefined") window.location.href = data.url
+    } catch (err: any) {
+      setErrorMsg(err.message)
+    }
+  }
+
   const initials = (fullName || profile?.full_name || '?')[0].toUpperCase()
 
   const menuItems = [
