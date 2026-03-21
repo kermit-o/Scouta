@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, ActivityIndicator, ScrollView,
-  TouchableOpacity, Dimensions
+  TouchableOpacity, Dimensions, TextInput, FlatList
 } from 'react-native'
 import { useAuth } from '../../lib/AuthContext'
 import { useNotifications } from '../../hooks/useNotifications'
@@ -12,8 +12,20 @@ import { useDrawer } from '../../lib/DrawerContext'
 import { supabase } from '../../lib/supabase'
 import { useSubscription } from '../../hooks/useSubscription'
 import { useTranslation } from 'react-i18next'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const { width } = Dimensions.get('window')
+
+const CATEGORIES = [
+  { icon: '🧹', label: 'Limpieza', key: 'cleaning' },
+  { icon: '🔧', label: 'Fontanería', key: 'plumbing' },
+  { icon: '⚡', label: 'Electricidad', key: 'electrical' },
+  { icon: '🎨', label: 'Pintura', key: 'painting' },
+  { icon: '🌿', label: 'Jardinería', key: 'gardening' },
+  { icon: '📦', label: 'Mudanzas', key: 'moving' },
+  { icon: '🪚', label: 'Carpintería', key: 'carpentry' },
+  { icon: '❄️', label: 'Climatización', key: 'hvac' },
+]
 
 const FLAG: Record<string, string> = {
   ES: '🇪🇸', FR: '🇫🇷', MX: '🇲🇽', CO: '🇨🇴',
@@ -22,338 +34,400 @@ const FLAG: Record<string, string> = {
 }
 
 export default function HomeScreen() {
-  const { signOut } = useAuth()
   const { t } = useTranslation()
+  const insets = useSafeAreaInsets()
   useNotifications()
   const { profile, loading } = useProfile()
   const { openDrawer } = useDrawer()
-  const { isTrialing, trialDaysLeft, isPro } = useSubscription()
+  const { isTrialing, trialDaysLeft } = useSubscription()
   const [recentJobs, setRecentJobs] = useState<any[]>([])
-  const [activeJobs, setActiveJobs] = useState<any[]>([])
+  const [activeContracts, setActiveContracts] = useState<any[]>([])
+  const [pendingBids, setPendingBids] = useState<any[]>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [monthEarnings, setMonthEarnings] = useState(0)
 
-  useEffect(() => {
-    supabase
-      .from('jobs')
-      .select('id, title, category, city, budget_min, budget_max, currency, created_at, status')
-      .eq('status', 'open')
-      .order('created_at', { ascending: false })
-      .limit(3)
-      .then(({ data }) => { if (data) setRecentJobs(data) })
-
-  }, [])
+  const isPro = profile?.role === 'pro' || profile?.role === 'company'
+  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario'
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? '☀️ Buenos días' : hour < 20 ? '👋 Buenas tardes' : '🌙 Buenas noches'
 
   useEffect(() => {
     if (!profile?.id) return
-    supabase
-      .from('contracts')
-      .select('id, job_id, status, amount, currency, jobs(id, title, category)')
-      .eq('client_id', profile.id)
-      .eq('status', 'active')
-      .limit(5)
-      .then(({ data, error }) => {
-        if (data) setActiveJobs(data)
-      })
-  }, [profile?.id])
+    if (isPro) loadProData()
+    else loadClientData()
+  }, [profile?.id, isPro, selectedCategory])
+
+  async function loadClientData() {
+    const [jobsRes, contractsRes] = await Promise.all([
+      supabase.from('jobs')
+        .select('id, title, category, city, budget_min, budget_max, currency, created_at, status')
+        .eq('client_id', profile!.id)
+        .order('created_at', { ascending: false })
+        .limit(5),
+      supabase.from('contracts')
+        .select('id, job_id, status, amount, currency, jobs(id, title, category)')
+        .eq('client_id', profile!.id)
+        .eq('status', 'active')
+        .limit(3),
+    ])
+    if (jobsRes.data) setRecentJobs(jobsRes.data)
+    if (contractsRes.data) setActiveContracts(contractsRes.data)
+  }
+
+  async function loadProData() {
+    const now = new Date()
+    const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+    let query = supabase.from('jobs')
+      .select('id, title, category, city, budget_min, budget_max, currency, created_at, status')
+      .eq('status', 'open')
+      .order('created_at', { ascending: false })
+      .limit(10)
+    if (selectedCategory) query = query.eq('category', selectedCategory)
+    const [jobsRes, bidsRes, earningsRes] = await Promise.all([
+      query,
+      supabase.from('bids')
+        .select('id, job_id, amount, currency, status, jobs(title, city)')
+        .eq('pro_id', profile!.id)
+        .eq('status', 'pending')
+        .limit(3),
+      supabase.from('payments')
+        .select('pro_amount')
+        .eq('pro_id', profile!.id)
+        .eq('status', 'released')
+        .gte('created_at', firstOfMonth),
+    ])
+    if (jobsRes.data) setRecentJobs(jobsRes.data)
+    if (bidsRes.data) setPendingBids(bidsRes.data)
+    if (earningsRes.data) setMonthEarnings(earningsRes.data.reduce((s, p) => s + (p.pro_amount || 0), 0))
+  }
 
   if (loading) return (
-    <View style={styles.center}>
+    <View style={s.center}>
       <ActivityIndicator size="large" color="#2563EB" />
     </View>
   )
 
-  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario'
-  const hour = new Date().getHours()
-  const greeting = hour < 12 ? t('home.goodMorning') ?? 'Good morning' : hour < 20 ? t('home.goodAfternoon') ?? 'Good afternoon' : t('home.goodEvening') ?? 'Good evening'
-
   return (
-    <ScrollView
-      style={styles.scroll}
-      contentContainerStyle={styles.container}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Header */}
-      <View style={styles.header}>
+    <View style={[s.screen, { paddingTop: insets.top }]}>
+      {/* Navbar */}
+      <View style={s.navbar}>
         <View>
-          <Text style={styles.greeting}>{greeting}</Text>
-          <Text style={styles.name}>{t('home.hello') ?? 'Hello'}, {firstName} 👋</Text>
+          <Text style={s.greeting}>{greeting}</Text>
+          <Text style={s.navName}>{firstName} {FLAG[profile?.country ?? 'ES']}</Text>
         </View>
-        <TouchableOpacity style={styles.notifBtn} onPress={openDrawer}>
-          <Ionicons name="menu-outline" size={26} color="#1a1a2e" />
-        </TouchableOpacity>
-      </View>
-
-      {/* Trial Banner */}
-      {isTrialing && trialDaysLeft !== null && trialDaysLeft <= 7 && (
-        <TouchableOpacity
-          style={styles.trialBanner}
-          onPress={() => router.push('/(app)/subscription')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.trialBannerEmoji}>⚡</Text>
-          <Text style={styles.trialBannerText}>
-            {trialDaysLeft === 0
-              ? 'Tu trial Pro expira hoy — activa tu plan'
-              : `${trialDaysLeft} días de Pro gratis restantes`}
-          </Text>
-          <Text style={styles.trialBannerCta}>{t('home.activate')}</Text>
-        </TouchableOpacity>
-      )}
-
-      {/* KYC Banner */}
-      {!profile?.is_verified && (
-        <TouchableOpacity style={styles.kycBanner} onPress={() => router.push('/(app)/kyc')}>
-          <Ionicons name="shield-checkmark-outline" size={16} color="#2563EB" />
-          <Text style={styles.kycText}>{t('home.verifyIdentity') ?? 'Verify your identity'}</Text>
-          <Ionicons name="chevron-forward" size={16} color="#2563EB" />
-        </TouchableOpacity>
-      )}
-
-      {/* Quick Actions */}
-      <View style={styles.actionsRow}>
-        <TouchableOpacity
-          style={[styles.actionCard, styles.actionCardPrimary]}
-          onPress={() => router.push('/(app)/jobs/new')}
-          activeOpacity={0.85}
-        >
-          <View style={styles.actionIconPrimary}>
-            <Ionicons name="add-circle-outline" size={22} color="#fff" />
-          </View>
-          <Text style={styles.actionTitlePrimary}>{t('jobs.postJob')}</Text>
-          <Text style={styles.actionSubPrimary}>{t('home.findPros')}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.actionCard, styles.actionCardSecondary]}
-          onPress={() => router.push('/(app)/search')}
-          activeOpacity={0.85}
-        >
-          <View style={styles.actionIconSecondary}>
-            <Ionicons name="search-outline" size={22} color="#1a1a2e" />
-          </View>
-          <Text style={styles.actionTitleSecondary}>{t('search.title')}</Text>
-          <Text style={styles.actionSubSecondary}>{t('home.exploreServices')}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Jobs Cercanos */}
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          {activeJobs.length > 0 && (
-            <>
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>{t('home.activeJobs')}</Text>
-              </View>
-              {activeJobs.map((contract: any) => (
-                <TouchableOpacity
-                  key={contract.id}
-                  style={styles.activeJobCard}
-                  onPress={() => router.push(`/(app)/jobs/${contract.job_id}/contract`)}
-                  activeOpacity={0.85}
-                >
-                  <View style={styles.activeJobLeft}>
-                    <Text style={styles.activeJobTitle}>{contract.jobs?.title ?? 'Trabajo'}</Text>
-                    <Text style={styles.activeJobSub}>{t('home.viewContract')}</Text>
-                  </View>
-                  <Text style={styles.activeJobAmount}>{contract.amount} {contract.currency}</Text>
-                </TouchableOpacity>
-              ))}
-            </>
+        <View style={s.navRight}>
+          {isPro && monthEarnings > 0 && (
+            <View style={s.earningsBadge}>
+              <Text style={s.earningsBadgeText}>{monthEarnings.toFixed(0)}€ mes</Text>
+            </View>
           )}
-
-          <Text style={styles.sectionTitle}>{t('home.availableJobs') ?? 'Available Jobs'}</Text>
-          <TouchableOpacity onPress={() => router.push('/(app)/jobs')}>
-            <Text style={styles.sectionLink}>{t('home.viewAll')}</Text>
+          <TouchableOpacity style={s.avatarBtn} onPress={openDrawer}>
+            <Text style={s.avatarText}>{firstName[0]?.toUpperCase()}</Text>
           </TouchableOpacity>
         </View>
-
-        <View style={styles.jobsList}>
-          {recentJobs.length === 0 ? (
-            <View style={styles.emptyJobs}>
-              <Ionicons name="briefcase-outline" size={32} color="#ddd" />
-              <Text style={styles.emptyJobsText}>{t('home.noJobs')}</Text>
-              <TouchableOpacity onPress={() => router.push('/(app)/jobs/new')}>
-                <Text style={styles.emptyJobsLink}>¡Sé el primero en publicar!</Text>
-              </TouchableOpacity>
-            </View>
-          ) : recentJobs.map((job) => {
-            const timeAgo = (() => {
-              const diff = Math.floor((Date.now() - new Date(job.created_at).getTime()) / 60000)
-              if (diff < 60) return `${diff}m`
-              if (diff < 1440) return `${Math.floor(diff/60)}h`
-              return `${Math.floor(diff/1440)}d`
-            })()
-            const budget = job.budget_min || job.budget_max
-              ? `${job.budget_min ?? '?'}–${job.budget_max ?? '?'} ${job.currency ?? 'EUR'}`
-              : t('jobs.negotiate')
-            return (
-              <TouchableOpacity
-                key={job.id}
-                style={styles.jobCard}
-                onPress={() => router.push(`/(app)/jobs/${job.id}`)}
-                activeOpacity={0.85}
-              >
-                <View style={styles.jobTop}>
-                  <View style={styles.jobLeft}>
-                    <View style={styles.categoryBadge}>
-                      <Text style={styles.categoryText}>{(job.category ?? 'other').toUpperCase()}</Text>
-                    </View>
-                    <Text style={styles.jobTitle} numberOfLines={1}>{job.title}</Text>
-                    <View style={styles.jobMeta}>
-                      {job.city && (
-                        <View style={styles.metaItem}>
-                          <Ionicons name="location-outline" size={13} color="#888" />
-                          <Text style={styles.metaText}>{job.city}</Text>
-                        </View>
-                      )}
-                    </View>
-                  </View>
-                  <View style={styles.jobRight}>
-                    <Text style={styles.jobPrice}>{budget}</Text>
-                    <Text style={styles.jobTime}>{timeAgo}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )
-          })}
-        </View>
       </View>
 
-      {/* Stats del perfil */}
-      {profile && (
-        <View style={styles.statsCard}>
-          <Text style={styles.statsTitle}>{t('home.yourProfile') ?? 'Your profile'}</Text>
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{FLAG[profile.country ?? 'ES']} {profile.country}</Text>
-              <Text style={styles.statLabel}>{t('profile.country')}</Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
+
+        {/* Trial Banner */}
+        {isTrialing && (
+          <TouchableOpacity style={s.trialBanner} onPress={() => router.push('/(app)/subscription')}>
+            <Ionicons name="star" size={14} color="#92400E" />
+            <Text style={s.trialText}>{trialDaysLeft === 0 ? 'Tu trial expira hoy' : `${trialDaysLeft} días Pro gratis`}</Text>
+            <Text style={s.trialCta}>Activar →</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* KYC Banner */}
+        {!profile?.is_verified && (
+          <TouchableOpacity style={s.kycBanner} onPress={() => router.push('/(app)/kyc')}>
+            <Ionicons name="shield-checkmark-outline" size={16} color="#2563EB" />
+            <Text style={s.kycText}>Verifica tu identidad para más funciones</Text>
+            <Ionicons name="chevron-forward" size={16} color="#2563EB" />
+          </TouchableOpacity>
+        )}
+
+        {/* ═══ VISTA CLIENTE ═══ */}
+        {!isPro && (
+          <>
+            {/* Search */}
+            <View style={s.searchBox}>
+              <Ionicons name="search-outline" size={18} color="#888" />
+              <TextInput
+                style={s.searchInput}
+                placeholder="¿Qué servicio necesitas?"
+                placeholderTextColor="#aaa"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onSubmitEditing={() => router.push(`/(app)/search?q=${searchQuery}`)}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Ionicons name="close-circle" size={18} color="#aaa" />
+                </TouchableOpacity>
+              )}
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{profile.currency ?? 'EUR'}</Text>
-              <Text style={styles.statLabel}>{t('profile.currency')}</Text>
+
+            {/* Categorías */}
+            <Text style={s.sectionTitle}>¿Qué necesitas?</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
+              {CATEGORIES.map((cat, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={s.catChip}
+                  onPress={() => router.push(`/(app)/search?category=${cat.key}`)}
+                >
+                  <Text style={s.catChipIcon}>{cat.icon}</Text>
+                  <Text style={s.catChipLabel}>{cat.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* CTA Publicar */}
+            <TouchableOpacity style={s.ctaCard} onPress={() => router.push('/(app)/jobs/new')}>
+              <View style={s.ctaLeft}>
+                <Text style={s.ctaTitle}>Publica un trabajo</Text>
+                <Text style={s.ctaSub}>Recibe ofertas de pros verificados en minutos</Text>
+              </View>
+              <View style={s.ctaIcon}>
+                <Ionicons name="add-circle" size={32} color="#fff" />
+              </View>
+            </TouchableOpacity>
+
+            {/* Contratos activos */}
+            {activeContracts.length > 0 && (
+              <>
+                <Text style={s.sectionTitle}>Trabajos en curso</Text>
+                {activeContracts.map((c: any) => (
+                  <TouchableOpacity key={c.id} style={s.contractCard} onPress={() => router.push(`/(app)/jobs/${c.job_id}/contract`)}>
+                    <View style={s.contractDot} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.contractTitle}>{c.jobs?.title ?? 'Trabajo'}</Text>
+                      <Text style={s.contractSub}>En curso · {c.amount} {c.currency}</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color="#2563EB" />
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
+
+            {/* Mis jobs */}
+            <View style={s.sectionRow}>
+              <Text style={s.sectionTitle}>Mis trabajos</Text>
+              <TouchableOpacity onPress={() => router.push('/(app)/jobs?filter=mine')}>
+                <Text style={s.sectionLink}>Ver todos →</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{profile.is_verified ? '✅' : '⏳'}</Text>
-              <Text style={styles.statLabel}>KYC</Text>
+            {recentJobs.length === 0 ? (
+              <View style={s.emptyCard}>
+                <Text style={s.emptyEmoji}>📋</Text>
+                <Text style={s.emptyText}>Aún no tienes trabajos publicados</Text>
+                <TouchableOpacity style={s.emptyBtn} onPress={() => router.push('/(app)/jobs/new')}>
+                  <Text style={s.emptyBtnText}>Publicar ahora</Text>
+                </TouchableOpacity>
+              </View>
+            ) : recentJobs.map((job: any) => (
+              <TouchableOpacity key={job.id} style={s.jobCard} onPress={() => router.push(`/(app)/jobs/${job.id}`)}>
+                <View style={s.jobLeft}>
+                  <View style={[s.jobStatus, { backgroundColor: job.status === 'open' ? '#D1FAE5' : '#F3F4F6' }]}>
+                    <Text style={[s.jobStatusText, { color: job.status === 'open' ? '#065F46' : '#888' }]}>
+                      {job.status === 'open' ? 'Abierto' : job.status}
+                    </Text>
+                  </View>
+                  <Text style={s.jobTitle} numberOfLines={1}>{job.title}</Text>
+                  <Text style={s.jobMeta}>{job.city ?? '—'}</Text>
+                </View>
+                <Text style={s.jobBudget}>{job.budget_min}–{job.budget_max} {job.currency}</Text>
+              </TouchableOpacity>
+            ))}
+          </>
+        )}
+
+        {/* ═══ VISTA PRO ═══ */}
+        {isPro && (
+          <>
+            {/* Stats rápidas */}
+            <View style={s.proStatsRow}>
+              <TouchableOpacity style={s.proStatCard} onPress={() => router.push('/(app)/dashboard-pro')}>
+                <Text style={s.proStatValue}>{monthEarnings.toFixed(0)}€</Text>
+                <Text style={s.proStatLabel}>Ganado este mes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.proStatCard, { backgroundColor: '#F0FDF4' }]} onPress={() => router.push('/(app)/jobs')}>
+                <Text style={[s.proStatValue, { color: '#16A34A' }]}>{recentJobs.length}</Text>
+                <Text style={s.proStatLabel}>Jobs disponibles</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.proStatCard, { backgroundColor: '#FEF3C7' }]} onPress={() => router.push('/(app)/jobs?filter=bids')}>
+                <Text style={[s.proStatValue, { color: '#D97706' }]}>{pendingBids.length}</Text>
+                <Text style={s.proStatLabel}>Ofertas enviadas</Text>
+              </TouchableOpacity>
             </View>
-          </View>
-        </View>
-      )}
-    </ScrollView>
+
+            {/* Filtros categoría */}
+            <Text style={s.sectionTitle}>Trabajos cerca de ti</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
+              <TouchableOpacity
+                style={[s.filterChip, !selectedCategory && s.filterChipActive]}
+                onPress={() => setSelectedCategory(null)}
+              >
+                <Text style={[s.filterChipText, !selectedCategory && s.filterChipTextActive]}>Todos</Text>
+              </TouchableOpacity>
+              {CATEGORIES.map((cat, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[s.filterChip, selectedCategory === cat.key && s.filterChipActive]}
+                  onPress={() => setSelectedCategory(selectedCategory === cat.key ? null : cat.key)}
+                >
+                  <Text style={s.filterChipIcon}>{cat.icon}</Text>
+                  <Text style={[s.filterChipText, selectedCategory === cat.key && s.filterChipTextActive]}>{cat.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
+            {/* Feed de jobs */}
+            {recentJobs.length === 0 ? (
+              <View style={s.emptyCard}>
+                <Text style={s.emptyEmoji}>🔍</Text>
+                <Text style={s.emptyText}>No hay trabajos disponibles ahora</Text>
+              </View>
+            ) : recentJobs.map((job: any) => (
+              <TouchableOpacity key={job.id} style={s.proJobCard} onPress={() => router.push(`/(app)/jobs/${job.id}`)}>
+                <View style={s.proJobTop}>
+                  <View style={s.proJobCatBadge}>
+                    <Text style={s.proJobCatText}>{CATEGORIES.find(c => c.key === job.category)?.icon ?? '🔧'} {job.category}</Text>
+                  </View>
+                  <Text style={s.proJobBudget}>{job.budget_min}–{job.budget_max} {job.currency}</Text>
+                </View>
+                <Text style={s.proJobTitle}>{job.title}</Text>
+                <View style={s.proJobBottom}>
+                  <Ionicons name="location-outline" size={13} color="#888" />
+                  <Text style={s.proJobCity}>{job.city ?? '—'}</Text>
+                  <Text style={s.proJobTime}> · {(() => { const diff = Math.floor((Date.now() - new Date(job.created_at).getTime()) / 60000); return diff < 60 ? `${diff}m` : diff < 1440 ? `${Math.floor(diff/60)}h` : `${Math.floor(diff/1440)}d` })()}</Text>
+                </View>
+                <TouchableOpacity style={s.bidBtn} onPress={() => router.push(`/(app)/jobs/${job.id}/bid`)}>
+                  <Text style={s.bidBtnText}>Enviar oferta →</Text>
+                </TouchableOpacity>
+              </TouchableOpacity>
+            ))}
+
+            {/* Ofertas pendientes */}
+            {pendingBids.length > 0 && (
+              <>
+                <Text style={s.sectionTitle}>Mis ofertas pendientes</Text>
+                {pendingBids.map((bid: any) => (
+                  <TouchableOpacity key={bid.id} style={s.bidCard} onPress={() => router.push(`/(app)/jobs/${bid.job_id}`)}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.bidTitle} numberOfLines={1}>{bid.jobs?.title ?? 'Trabajo'}</Text>
+                      <Text style={s.bidSub}>{bid.jobs?.city ?? '—'} · Pendiente</Text>
+                    </View>
+                    <Text style={s.bidAmount}>{bid.amount} {bid.currency}</Text>
+                  </TouchableOpacity>
+                ))}
+              </>
+            )}
+          </>
+        )}
+
+      </ScrollView>
+    </View>
   )
 }
 
-const styles = StyleSheet.create({
-  scroll: { flex: 1, backgroundColor: '#F6F7FB' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F6F7FB' },
-  container: { paddingHorizontal: 24, paddingTop: 64, paddingBottom: 40 },
+const s = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: '#F6F7FB' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  content: { padding: 16, gap: 12, paddingBottom: 40 },
 
-  // Header
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
-  greeting: { fontSize: 13, fontWeight: '600', color: '#888', letterSpacing: 0.3 },
-  name: { fontSize: 24, fontWeight: '700', color: '#1a1a2e', marginTop: 2 },
-  notifBtn: {
-    width: 42, height: 42, borderRadius: 14,
-    backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06, shadowRadius: 8, elevation: 3,
-  },
+  // Navbar
+  navbar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 14, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.06)' },
+  greeting: { fontSize: 12, color: '#888', fontWeight: '500' },
+  navName: { fontSize: 18, fontWeight: '800', color: '#1a1a2e', letterSpacing: -0.3 },
+  navRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  earningsBadge: { backgroundColor: '#D1FAE5', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 },
+  earningsBadgeText: { fontSize: 12, fontWeight: '700', color: '#065F46' },
+  avatarBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center' },
+  avatarText: { fontSize: 16, fontWeight: '800', color: '#fff' },
 
-  // KYC Banner
-  kycBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#EEF4FF', borderRadius: 14, padding: 14,
-    marginBottom: 20, borderWidth: 1, borderColor: '#DBEAFE',
-  },
+  // Banners
+  trialBanner: { backgroundColor: '#FEF3C7', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  trialText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#92400E' },
+  trialCta: { fontSize: 13, fontWeight: '700', color: '#D97706' },
+  kycBanner: { backgroundColor: '#EFF6FF', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10, flexDirection: 'row', alignItems: 'center', gap: 8 },
   kycText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#2563EB' },
 
-  // Quick Actions
-  actionsRow: { flexDirection: 'row', gap: 12, marginBottom: 28 },
-  actionCard: {
-    flex: 1, borderRadius: 20, padding: 20,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08, shadowRadius: 12, elevation: 4,
-  },
-  actionCardPrimary: { backgroundColor: '#2563EB' },
-  actionCardSecondary: {
-    backgroundColor: '#fff',
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)',
-  },
-  actionIconPrimary: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-  },
-  actionIconSecondary: {
-    width: 40, height: 40, borderRadius: 12,
-    backgroundColor: '#F6F7FB',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
-  },
-  actionTitlePrimary: { fontSize: 14, fontWeight: '700', color: '#fff' },
-  actionSubPrimary: { fontSize: 12, color: 'rgba(255,255,255,0.7)', marginTop: 2 },
-  actionTitleSecondary: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
-  actionSubSecondary: { fontSize: 12, color: '#888', marginTop: 2 },
+  // Search
+  searchBox: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 16, paddingVertical: 4, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  searchInput: { flex: 1, paddingVertical: 14, fontSize: 15, color: '#1a1a2e' },
+
+  // Categories
+  catScroll: { marginHorizontal: -16, paddingHorizontal: 16 },
+  catChip: { alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', gap: 4 },
+  catChipIcon: { fontSize: 22 },
+  catChipLabel: { fontSize: 11, fontWeight: '600', color: '#555' },
+
+  // CTA Card cliente
+  ctaCard: { backgroundColor: '#2563EB', borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  ctaLeft: { flex: 1 },
+  ctaTitle: { fontSize: 18, fontWeight: '800', color: '#fff', marginBottom: 4 },
+  ctaSub: { fontSize: 13, color: 'rgba(255,255,255,0.75)' },
+  ctaIcon: { width: 52, height: 52, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.15)', alignItems: 'center', justifyContent: 'center' },
 
   // Section
-  section: { marginBottom: 24 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
-  activeJobCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16, padding: 16,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    marginBottom: 10, borderWidth: 1, borderColor: '#E5E7EB',
-    borderLeftWidth: 4, borderLeftColor: '#2563EB',
-  },
-  activeJobLeft: { flex: 1 },
-  activeJobTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 2 },
-  activeJobSub: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
-  activeJobAmount: { fontSize: 16, fontWeight: '800', color: '#2563EB' },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: '#1a1a2e' },
+  sectionTitle: { fontSize: 17, fontWeight: '800', color: '#1a1a2e', letterSpacing: -0.3 },
+  sectionRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sectionLink: { fontSize: 13, fontWeight: '600', color: '#2563EB' },
 
-  // Job Cards
-  jobsList: { gap: 10 },
-  jobCard: {
-    backgroundColor: '#fff', borderRadius: 18, padding: 16,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
-  },
-  jobTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  jobLeft: { flex: 1, minWidth: 0 },
-  jobRight: { alignItems: 'flex-end' },
-  categoryBadge: {
-    backgroundColor: '#EEF4FF', borderRadius: 6,
-    paddingHorizontal: 8, paddingVertical: 3,
-    alignSelf: 'flex-start', marginBottom: 6,
-  },
-  categoryText: { fontSize: 10, fontWeight: '700', color: '#2563EB', letterSpacing: 0.5 },
-  jobTitle: { fontSize: 14, fontWeight: '600', color: '#1a1a2e', marginBottom: 8 },
-  jobMeta: { flexDirection: 'row', gap: 12 },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  metaText: { fontSize: 12, color: '#888' },
-  jobPrice: { fontSize: 18, fontWeight: '800', color: '#1a1a2e' },
-  jobTime: { fontSize: 11, color: '#aaa', marginTop: 2 },
+  // Contract cards
+  contractCard: { backgroundColor: '#fff', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },
+  contractDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: '#10B981' },
+  contractTitle: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
+  contractSub: { fontSize: 12, color: '#888', marginTop: 2 },
 
-  // Stats Card
-  statsCard: {
-    backgroundColor: '#fff', borderRadius: 20, padding: 20,
-    borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04, shadowRadius: 8, elevation: 2,
-  },
-  statsTitle: { fontSize: 15, fontWeight: '700', color: '#1a1a2e', marginBottom: 16 },
-  statsRow: { flexDirection: 'row', alignItems: 'center' },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 16, fontWeight: '700', color: '#1a1a2e' },
-  statLabel: { fontSize: 11, color: '#888', marginTop: 4 },
-  statDivider: { width: 1, height: 36, backgroundColor: '#F0F0F0' },
-  trialBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#1a1a2e', borderRadius: 14, padding: 14, marginBottom: 16 },
-  trialBannerEmoji: { fontSize: 16 },
-  trialBannerText: { flex: 1, fontSize: 13, fontWeight: '600', color: '#fff' },
-  trialBannerCta: { fontSize: 13, fontWeight: '700', color: '#60A5FA' },
-  emptyJobs: { alignItems: 'center', paddingVertical: 28, gap: 8 },
-  emptyJobsText: { fontSize: 14, color: '#aaa' },
-  emptyJobsLink: { fontSize: 14, fontWeight: '700', color: '#2563EB' },
+  // Job cards cliente
+  jobCard: { backgroundColor: '#fff', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },
+  jobLeft: { flex: 1, gap: 4 },
+  jobStatus: { alignSelf: 'flex-start', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2 },
+  jobStatusText: { fontSize: 11, fontWeight: '700' },
+  jobTitle: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
+  jobMeta: { fontSize: 12, color: '#888' },
+  jobBudget: { fontSize: 14, fontWeight: '800', color: '#2563EB' },
+
+  // Empty
+  emptyCard: { backgroundColor: '#fff', borderRadius: 16, padding: 28, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.05)' },
+  emptyEmoji: { fontSize: 36 },
+  emptyText: { fontSize: 14, color: '#888', textAlign: 'center' },
+  emptyBtn: { backgroundColor: '#2563EB', borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10, marginTop: 4 },
+  emptyBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
+
+  // Pro stats
+  proStatsRow: { flexDirection: 'row', gap: 10 },
+  proStatCard: { flex: 1, backgroundColor: '#EFF6FF', borderRadius: 16, padding: 14, alignItems: 'center', gap: 4 },
+  proStatValue: { fontSize: 22, fontWeight: '900', color: '#2563EB' },
+  proStatLabel: { fontSize: 11, color: '#6B7280', textAlign: 'center' },
+
+  // Pro filters
+  filterChip: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8, marginRight: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
+  filterChipActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  filterChipIcon: { fontSize: 14 },
+  filterChipText: { fontSize: 13, fontWeight: '600', color: '#555' },
+  filterChipTextActive: { color: '#fff' },
+
+  // Pro job cards
+  proJobCard: { backgroundColor: '#fff', borderRadius: 18, padding: 16, gap: 8, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  proJobTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  proJobCatBadge: { backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  proJobCatText: { fontSize: 12, fontWeight: '600', color: '#555' },
+  proJobBudget: { fontSize: 15, fontWeight: '800', color: '#2563EB' },
+  proJobTitle: { fontSize: 16, fontWeight: '700', color: '#1a1a2e' },
+  proJobBottom: { flexDirection: 'row', alignItems: 'center' },
+  proJobCity: { fontSize: 12, color: '#888' },
+  proJobTime: { fontSize: 12, color: '#aaa' },
+  bidBtn: { backgroundColor: '#EFF6FF', borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  bidBtnText: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
+
+  // Bid cards
+  bidCard: { backgroundColor: '#fff', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', borderLeftWidth: 3, borderLeftColor: '#F59E0B' },
+  bidTitle: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
+  bidSub: { fontSize: 12, color: '#888', marginTop: 2 },
+  bidAmount: { fontSize: 15, fontWeight: '800', color: '#2563EB' },
 })
