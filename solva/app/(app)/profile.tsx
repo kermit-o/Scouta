@@ -188,6 +188,14 @@ export default function ProfileScreen() {
       badgeBg: profile?.is_verified ? '#D1FAE5' : '#FEF3C7',
       onPress: () => router.push('/(app)/kyc'),
     },
+    ...(profile?.role === 'admin' ? [{
+      icon: 'shield-half-outline' as const,
+      label: 'Panel Admin',
+      badge: 'Admin',
+      badgeColor: '#DC2626',
+      badgeBg: '#FEE2E2',
+      onPress: () => router.push('/(app)/admin'),
+    }] : []),
     {
       icon: 'gift-outline' as const,
       label: 'Programa de referidos',
