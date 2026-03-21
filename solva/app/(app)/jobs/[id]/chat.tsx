@@ -5,6 +5,7 @@ import {
   TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
+import { notifyUser } from '../../../../hooks/useNotifications'
 import { supabase, Message } from '../../../../lib/supabase'
 import { useAuth } from '../../../../lib/AuthContext'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'

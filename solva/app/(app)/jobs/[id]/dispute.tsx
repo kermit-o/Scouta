@@ -115,7 +115,14 @@ export default function DisputeScreen() {
     }).select().single()
     if (error) { setErrorMsg(error.message); setSaving(false); return }
     await supabase.from('contracts').update({ status: 'disputed' }).eq('id', contract.id)
-    await notifyUser(againstId, '⚠️ Disputa abierta', 'Se ha abierto una disputa en uno de tus contratos.', { job_id: id as string })
+    await notifyUser(againstId, '⚠️ Disputa abierta', 'Se ha abierto una disputa en uno de tus contratos.', { job_id: String(id) })
+    // Email al afectado
+    try {
+      const { data: againstProfile } = await supabase.from('users').select('email, full_name').eq('id', againstId).single()
+      if (againstProfile?.email) {
+        await supabase.functions.invoke('send-email', { body: { to: againstProfile.email, template: 'dispute_opened', data: { userName: againstProfile.full_name ?? 'Usuario', jobTitle: 'tu contrato' } } })
+      }
+    } catch (_) {}
     setSaving(false)
     setDispute(newDispute as Dispute)
     loadData()

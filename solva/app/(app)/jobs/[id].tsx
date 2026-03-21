@@ -5,6 +5,7 @@ import {
   ActivityIndicator, TextInput
 } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
+import { notifyUser } from '../../../hooks/useNotifications'
 import { supabase, Job, Bid } from '../../../lib/supabase'
 import { useAuth } from '../../../lib/AuthContext'
 import { useProfile } from '../../../hooks/useProfile'
@@ -92,6 +93,7 @@ export default function JobDetailScreen() {
       setMsgError('Bid aceptado pero error al crear contrato: ' + error.message)
     } else {
       setMsgSuccess('✅ Contrato creado según las leyes de ' + job!.country)
+      try { await notifyUser(bid.pro_id, '✅ Oferta aceptada', 'Tu oferta fue aceptada. El contrato está listo.', { job_id: String(id) }) } catch (_) {}
       // Email al pro — bid aceptado
       try {
         const { data: proProfile } = await supabase.from('users').select('email, full_name').eq('id', bid.pro_id).single()
