@@ -46,6 +46,26 @@ export default function HomeScreen() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [monthEarnings, setMonthEarnings] = useState(0)
+  const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
+
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        pos => setUserLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+        () => {}
+      )
+    }
+  }, [])
+
+  function getDistanceKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+    const R = 6371
+    const dLat = (lat2 - lat1) * Math.PI / 180
+    const dLng = (lng2 - lng1) * Math.PI / 180
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2)
+    return Math.round(R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 10) / 10
+  }
 
   const isPro = profile?.role === 'pro' || profile?.role === 'company'
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario'
@@ -314,6 +334,9 @@ export default function HomeScreen() {
                 <View style={s.proJobBottom}>
                   <Ionicons name="location-outline" size={13} color="#888" />
                   <Text style={s.proJobCity}>{job.city ?? '—'}</Text>
+                  {userLocation && job.latitude && job.longitude && (
+                    <Text style={s.proJobDist}> · {getDistanceKm(userLocation.lat, userLocation.lng, job.latitude, job.longitude)} km</Text>
+                  )}
                   <Text style={s.proJobTime}> · {(() => { const diff = Math.floor((Date.now() - new Date(job.created_at).getTime()) / 60000); return diff < 60 ? `${diff}m` : diff < 1440 ? `${Math.floor(diff/60)}h` : `${Math.floor(diff/1440)}d` })()}</Text>
                 </View>
                 <TouchableOpacity style={s.bidBtn} onPress={() => router.push(`/(app)/jobs/${job.id}/bid`)}>
@@ -434,6 +457,7 @@ const s = StyleSheet.create({
   proJobBottom: { flexDirection: 'row', alignItems: 'center' },
   proJobCity: { fontSize: 12, color: '#888' },
   proJobTime: { fontSize: 12, color: '#aaa' },
+  proJobDist: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
   bidBtn: { backgroundColor: '#EFF6FF', borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
   bidBtnText: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
 
