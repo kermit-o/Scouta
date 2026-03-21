@@ -73,6 +73,7 @@ export default function RegisterScreen() {
   const [country, setCountry] = useState<SupportedCountry>('ES')
   const [role, setRole] = useState<UserRole>('client')
   const [acceptTerms, setAcceptTerms] = useState(false)
+  const [referralCode, setReferralCode] = useState('')
   const [loading, setLoading] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
 
@@ -116,6 +117,29 @@ export default function RegisterScreen() {
       return
     }
 
+    // Procesar código de referido
+    if (referralCode.trim() && data.user) {
+      try {
+        const code = referralCode.trim().toUpperCase()
+        const { data: referrer } = await supabase
+          .from('users')
+          .select('id')
+          .eq('referral_code', code)
+          .single()
+        if (referrer) {
+          await supabase.from('referrals').insert({
+            referrer_id: referrer.id,
+            referred_id: data.user.id,
+            status: 'pending',
+          })
+          await supabase.from('users')
+            .update({ referred_by: code })
+            .eq('id', data.user.id)
+        }
+      } catch (err) {
+        console.log('Referral error:', err)
+      }
+    }
     // Registro exitoso con sesión directa
     router.replace('/(app)/onboarding')
   }
@@ -346,6 +370,17 @@ export default function RegisterScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
+            <Text style={styles.label}>Codigo de referido (opcional)</Text>
+            <View style={styles.inputWrap}>
+              <TextInput
+                style={styles.input}
+                value={referralCode}
+                onChangeText={v => setReferralCode(v.toUpperCase())}
+                placeholder="Ej: A1B2C3D4"
+                autoCapitalize="characters"
+                maxLength={8}
+              />
+            </View>
               style={[styles.btn, (!acceptTerms || loading) && styles.btnDisabled]}
               onPress={handleRegister}
               disabled={!acceptTerms || loading}
