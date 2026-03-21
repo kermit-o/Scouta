@@ -6,3 +6,4 @@ main
 ": post upvote*
 test_qwen_client.py
 blog-ai/blog-saas/main
+node_modules/
