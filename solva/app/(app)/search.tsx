@@ -4,7 +4,7 @@ import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   FlatList, ActivityIndicator, ScrollView
 } from 'react-native'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useProfile } from '../../hooks/useProfile'
 import { useLocation } from '../../hooks/useLocation'
@@ -43,6 +43,7 @@ const CATEGORY_ICON: Record<string, string> = {
 }
 
 export default function SearchScreen() {
+  const params = useLocalSearchParams()
   const { profile } = useProfile()
   const { coords, requestLocation } = useLocation()
   const insets = useSafeAreaInsets()
@@ -54,7 +55,7 @@ export default function SearchScreen() {
   const [parsed, setParsed] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [searched, setSearched] = useState(false)
-  const [activeTab, setActiveTab] = useState<'jobs' | 'pros'>('jobs')
+  const [activeTab, setActiveTab] = useState<'jobs' | 'pros'>(params.tab === 'pros' ? 'pros' : 'jobs')
   const [pros, setPros] = useState<any[]>([])
 
   async function handleSearch(q?: string) {
