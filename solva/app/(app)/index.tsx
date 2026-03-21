@@ -61,7 +61,7 @@ export default function HomeScreen() {
   async function loadClientData() {
     const [jobsRes, contractsRes] = await Promise.all([
       supabase.from('jobs')
-        .select('id, title, category, city, budget_min, budget_max, currency, created_at, status')
+        .select('id, title, category, city, budget_min, budget_max, currency, created_at, status, client:client_id(id, full_name, avatar_url, country)')
         .eq('client_id', profile!.id)
         .order('created_at', { ascending: false })
         .limit(5),
@@ -299,6 +299,18 @@ export default function HomeScreen() {
                   <Text style={s.proJobBudget}>{job.budget_min}–{job.budget_max} {job.currency}</Text>
                 </View>
                 <Text style={s.proJobTitle}>{job.title}</Text>
+                <View style={s.clientRow}>
+                  <View style={s.clientAvatar}>
+                    <Text style={s.clientAvatarText}>{(job.client?.full_name ?? '?')[0].toUpperCase()}</Text>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.clientName}>{job.client?.full_name ?? 'Cliente'}</Text>
+                  </View>
+                  <View style={s.clientRating}>
+                    <Ionicons name="star" size={11} color="#F59E0B" />
+                    <Text style={s.clientRatingText}>Nuevo</Text>
+                  </View>
+                </View>
                 <View style={s.proJobBottom}>
                   <Ionicons name="location-outline" size={13} color="#888" />
                   <Text style={s.proJobCity}>{job.city ?? '—'}</Text>
@@ -426,6 +438,12 @@ const s = StyleSheet.create({
   bidBtnText: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
 
   // Bid cards
+  clientRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  clientAvatar: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center' },
+  clientAvatarText: { fontSize: 12, fontWeight: '800', color: '#2563EB' },
+  clientName: { fontSize: 12, fontWeight: '600', color: '#555' },
+  clientRating: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: '#FEF3C7', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 },
+  clientRatingText: { fontSize: 11, fontWeight: '600', color: '#92400E' },
   bidCard: { backgroundColor: '#fff', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', borderLeftWidth: 3, borderLeftColor: '#F59E0B' },
   bidTitle: { fontSize: 14, fontWeight: '700', color: '#1a1a2e' },
   bidSub: { fontSize: 12, color: '#888', marginTop: 2 },
