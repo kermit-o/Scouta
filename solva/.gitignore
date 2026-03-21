@@ -15,3 +15,5 @@ supabase/.temp/
 dist/
 ExcelBypass/
 expo
+.env.production
+.env*
