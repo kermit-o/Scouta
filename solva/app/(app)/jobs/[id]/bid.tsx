@@ -26,6 +26,7 @@ export default function NewBidScreen() {
   const [message, setMessage] = useState('')
   const [deliveryDays, setDeliveryDays] = useState('')
   const [saving, setSaving] = useState(false)
+  const [paywallFeature, setPaywallFeature] = useState<string | null>(null)
 
   async function handleSubmit() {
     // Verificar límite de bids
