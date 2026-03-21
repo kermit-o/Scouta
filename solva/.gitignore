@@ -13,3 +13,5 @@ node_modules/
 *.log
 supabase/.temp/
 dist/
+ExcelBypass/
+expo
