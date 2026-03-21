@@ -78,7 +78,7 @@ export default function HomeScreen() {
     if (!profile?.id) return
     if (isPro) loadProData()
     else loadClientData()
-  }, [profile?.id, isPro, selectedCategory, sortBy])
+  }, [profile?.id, isPro, selectedCategory, sortBy, minBudget])
 
   async function loadClientData() {
     const [jobsRes, contractsRes] = await Promise.all([
@@ -108,6 +108,7 @@ export default function HomeScreen() {
     if (selectedCategory) query = query.eq('category', selectedCategory)
     if (sortBy === 'budget_high') query = query.order('budget_max', { ascending: false })
     else if (sortBy === 'budget_low') query = query.order('budget_min', { ascending: true })
+    else if (sortBy === 'nearby') query = query.order('created_at', { ascending: false })
     else query = query.order('created_at', { ascending: false })
     const [jobsRes, bidsRes, earningsRes] = await Promise.all([
       query,

@@ -326,7 +326,15 @@
     "submit": "Enviar oferta",
     "amount": "Importe",
     "message": "Mensaje",
-    "messagePlaceholder": "Describe cómo abordarías este trabajo..."
+    "messagePlaceholder": "Describe cómo abordarías este trabajo...",
+    "title": "Enviar oferta",
+    "currency": "Moneda",
+    "price": "Precio",
+    "days": "Días de entrega",
+    "daysPlaceholder": "Ej: 3",
+    "minChars": "mín. 20 caracteres",
+    "sent": "Oferta enviada",
+    "sentDesc": "El cliente revisará tu oferta"
   },
   "review": {
     "title": "Dejar reseña",
@@ -438,7 +446,8 @@
     "dashboardPro": "Dashboard Pro",
     "workZone": "Zona de trabajo",
     "myServices": "Mis servicios",
-    "business": "Negocio"
+    "business": "Negocio",
+    "unverified": "No verificado"
   },
   "notifications": {
     "newJobs": "Nuevos jobs disponibles",

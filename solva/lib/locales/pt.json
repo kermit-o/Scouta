@@ -323,10 +323,18 @@
     "bidTemplate": "Modelo de resposta a propostas"
   },
   "bid": {
-    "submit": "Submit bid",
+    "submit": "Enviar oferta",
     "amount": "Amount",
-    "message": "Message",
-    "messagePlaceholder": "Describe how you would approach this job..."
+    "message": "Mensaje",
+    "messagePlaceholder": "Describe how you would approach this job...",
+    "title": "Enviar oferta",
+    "currency": "Moneda",
+    "price": "Precio",
+    "days": "Días de entrega",
+    "daysPlaceholder": "Ej: 3",
+    "minChars": "mín. 20 caracteres",
+    "sent": "Oferta enviada",
+    "sentDesc": "El cliente revisará tu oferta"
   },
   "review": {
     "title": "Leave a review",
@@ -438,7 +446,8 @@
     "dashboardPro": "Dashboard Pro",
     "workZone": "Zona de trabalho",
     "myServices": "Meus serviços",
-    "business": "Negócio"
+    "business": "Negócio",
+    "unverified": "Não verificado"
   },
   "notifications": {
     "newJobs": "Novos trabalhos disponíveis",
