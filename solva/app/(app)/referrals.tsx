@@ -41,7 +41,7 @@ export default function ReferralsScreen() {
         await Share.share({ message, url: `https://getsolva.co?ref=${code}` })
       }
     } catch (err) {
-      console.log(err)
+      // silent
     }
   }
 

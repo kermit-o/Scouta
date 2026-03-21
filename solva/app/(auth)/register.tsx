@@ -138,7 +138,7 @@ export default function RegisterScreen() {
             .eq('id', data.user.id)
         }
       } catch (err) {
-        console.log('Referral error:', err)
+        // silent
       }
     }
     // Registro exitoso con sesión directa

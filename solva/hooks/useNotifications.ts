@@ -36,7 +36,7 @@ export function useNotifications() {
         user_id: userId, token, platform: 'expo',
       }, { onConflict: 'user_id,token' })
     } catch (err) {
-      console.log('Push token error:', err)
+      // silent
     }
   }
 }
