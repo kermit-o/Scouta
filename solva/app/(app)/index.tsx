@@ -45,6 +45,8 @@ export default function HomeScreen() {
   const [pendingBids, setPendingBids] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<'recent' | 'budget_high' | 'budget_low' | 'nearby'>('recent')
+  const [minBudget, setMinBudget] = useState<number>(0)
   const [monthEarnings, setMonthEarnings] = useState(0)
   const [userLocation, setUserLocation] = useState<{lat: number, lng: number} | null>(null)
 
@@ -76,7 +78,7 @@ export default function HomeScreen() {
     if (!profile?.id) return
     if (isPro) loadProData()
     else loadClientData()
-  }, [profile?.id, isPro, selectedCategory])
+  }, [profile?.id, isPro, selectedCategory, sortBy])
 
   async function loadClientData() {
     const [jobsRes, contractsRes] = await Promise.all([
@@ -91,7 +93,7 @@ export default function HomeScreen() {
         .eq('status', 'active')
         .limit(3),
     ])
-    if (jobsRes.data) setRecentJobs(jobsRes.data)
+    if (jobsRes.data) setRecentJobs(minBudget > 0 ? jobsRes.data.filter((j: any) => (j.budget_max ?? 0) >= minBudget) : jobsRes.data)
     if (contractsRes.data) setActiveContracts(contractsRes.data)
   }
 
@@ -104,6 +106,9 @@ export default function HomeScreen() {
       .order('created_at', { ascending: false })
       .limit(10)
     if (selectedCategory) query = query.eq('category', selectedCategory)
+    if (sortBy === 'budget_high') query = query.order('budget_max', { ascending: false })
+    else if (sortBy === 'budget_low') query = query.order('budget_min', { ascending: true })
+    else query = query.order('created_at', { ascending: false })
     const [jobsRes, bidsRes, earningsRes] = await Promise.all([
       query,
       supabase.from('bids')
@@ -117,7 +122,7 @@ export default function HomeScreen() {
         .eq('status', 'released')
         .gte('created_at', firstOfMonth),
     ])
-    if (jobsRes.data) setRecentJobs(jobsRes.data)
+    if (jobsRes.data) setRecentJobs(minBudget > 0 ? jobsRes.data.filter((j: any) => (j.budget_max ?? 0) >= minBudget) : jobsRes.data)
     if (bidsRes.data) setPendingBids(bidsRes.data)
     if (earningsRes.data) setMonthEarnings(earningsRes.data.reduce((s, p) => s + (p.pro_amount || 0), 0))
   }
@@ -304,6 +309,40 @@ export default function HomeScreen() {
               ))}
             </ScrollView>
 
+            {/* Filtros de ordenación */}
+            <View style={s.sortRow}>
+              {[
+                { key: 'recent', label: '🕐 Recientes' },
+                { key: 'budget_high', label: '💰 Mayor precio' },
+                { key: 'budget_low', label: '📉 Menor precio' },
+                { key: 'nearby', label: '📍 Cercanos' },
+              ].map((opt: any) => (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[s.sortChip, sortBy === opt.key && s.sortChipActive]}
+                  onPress={() => setSortBy(opt.key)}
+                >
+                  <Text style={[s.sortChipText, sortBy === opt.key && s.sortChipTextActive]}>{opt.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Filtro presupuesto mínimo */}
+            <View style={s.budgetFilterRow}>
+              <Text style={s.budgetFilterLabel}>Presupuesto mínimo:</Text>
+              {[0, 50, 100, 200, 500].map(val => (
+                <TouchableOpacity
+                  key={val}
+                  style={[s.budgetChip, minBudget === val && s.budgetChipActive]}
+                  onPress={() => setMinBudget(val)}
+                >
+                  <Text style={[s.budgetChipText, minBudget === val && s.budgetChipTextActive]}>
+                    {val === 0 ? 'Todos' : val + '€+'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             {/* Feed de jobs */}
             {recentJobs.length === 0 ? (
               <View style={s.emptyCard}>
@@ -458,6 +497,17 @@ const s = StyleSheet.create({
   proJobCity: { fontSize: 12, color: '#888' },
   proJobTime: { fontSize: 12, color: '#aaa' },
   proJobDist: { fontSize: 12, color: '#2563EB', fontWeight: '600' },
+  sortRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  sortChip: { backgroundColor: '#fff', borderRadius: 20, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
+  sortChipActive: { backgroundColor: '#1a1a2e', borderColor: '#1a1a2e' },
+  sortChipText: { fontSize: 12, fontWeight: '600', color: '#555' },
+  sortChipTextActive: { color: '#fff' },
+  budgetFilterRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' },
+  budgetFilterLabel: { fontSize: 12, fontWeight: '600', color: '#888' },
+  budgetChip: { backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: 'rgba(0,0,0,0.08)' },
+  budgetChipActive: { backgroundColor: '#2563EB', borderColor: '#2563EB' },
+  budgetChipText: { fontSize: 12, fontWeight: '600', color: '#555' },
+  budgetChipTextActive: { color: '#fff' },
   bidBtn: { backgroundColor: '#EFF6FF', borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
   bidBtnText: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
 
