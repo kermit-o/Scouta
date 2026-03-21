@@ -154,6 +154,7 @@ export default function OnboardingScreen() {
         </View>
       )}
       {step > 0 && (
+        <>
         <View style={styles.iconBox}>
           <Text style={styles.iconEmoji}>{step === 1 ? '👋' : '🤖'}</Text>
         </View>
@@ -228,8 +229,9 @@ export default function OnboardingScreen() {
             <Text style={{ color: '#888', textAlign: 'center' }}>Saltar por ahora</Text>
           </TouchableOpacity>
         )}
-      </ScrollView>
+        </>
       )}
+      </ScrollView>
     </View>
   )
 }
