@@ -188,6 +188,14 @@ export default function ProfileScreen() {
       badgeBg: profile?.is_verified ? '#D1FAE5' : '#FEF3C7',
       onPress: () => router.push('/(app)/kyc'),
     },
+    {
+      icon: 'gift-outline' as const,
+      label: 'Programa de referidos',
+      badge: 'Gana dinero',
+      badgeColor: '#7C3AED',
+      badgeBg: '#F3E8FF',
+      onPress: () => router.push('/(app)/referrals'),
+    },
     ...(profile?.role === 'pro' || profile?.role === 'company' ? [{
       icon: 'card-outline' as const,
       label: profile?.stripe_onboarding_completed ? '✅ Cuenta de cobro activa' : '💳 Activar cuenta de cobro',
