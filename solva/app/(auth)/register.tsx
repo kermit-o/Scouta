@@ -66,6 +66,7 @@ export default function RegisterScreen() {
     features: [t('roles.features.multiUser'), t('roles.features.dashboard'), t('roles.features.billing')],
   },
 ]
+  const [step, setStep] = useState<1 | 2 | 3>(1)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -321,7 +322,7 @@ export default function RegisterScreen() {
               <TouchableOpacity
                 key={r.value}
                 style={[styles.roleCard, role === r.value && styles.roleCardSelected]}
-                onPress={() => setRole(r.value)}
+                onPress={() => setRole(r.value as UserRole)}
                 activeOpacity={0.85}
               >
                 <View style={styles.roleTop}>
@@ -369,18 +370,20 @@ export default function RegisterScreen() {
               </Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
             <Text style={styles.label}>Codigo de referido (opcional)</Text>
-            <View style={styles.inputWrap}>
+            <View style={styles.inputRow}>
               <TextInput
                 style={styles.input}
                 value={referralCode}
                 onChangeText={v => setReferralCode(v.toUpperCase())}
                 placeholder="Ej: A1B2C3D4"
+                placeholderTextColor="#aaa"
                 autoCapitalize="characters"
                 maxLength={8}
               />
             </View>
+
+            <TouchableOpacity
               style={[styles.btn, (!acceptTerms || loading) && styles.btnDisabled]}
               onPress={handleRegister}
               disabled={!acceptTerms || loading}
