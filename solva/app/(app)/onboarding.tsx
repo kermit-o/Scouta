@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput } from 'react-native'
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, TextInput, Dimensions } from 'react-native'
 import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
@@ -23,7 +23,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets()
   const { session, profile } = useAuth()
   const { t } = useTranslation()
-  const [step, setStep] = useState(1)
+  const [step, setStep] = useState(0)
   const [selected, setSelected] = useState<string[]>([])
   const [specialty, setSpecialty] = useState('')
   const [years, setYears] = useState('')
@@ -33,6 +33,7 @@ export default function OnboardingScreen() {
 
   const isPro = profile?.role === 'pro' || profile?.role === 'company'
 
+  function handleStep0() { setStep(1) }
   async function handleStep1() {
     if (!isPro || selected.length === 0) {
       // Cliente o sin selección → terminar
@@ -117,9 +118,42 @@ export default function OnboardingScreen() {
     )
   }
 
+
+  const WELCOME_SLIDES = [
+    { emoji: '🎉', title: 'Bienvenido a Solva', desc: 'La plataforma que conecta clientes con profesionales verificados para servicios del hogar.' },
+    { emoji: '🔍', title: 'Encuentra profesionales', desc: 'Publica un trabajo, recibe ofertas y elige al mejor profesional de tu zona.' },
+    { emoji: '🔒', title: 'Pago 100% seguro', desc: 'Tu dinero queda protegido hasta que confirmes que el trabajo está bien hecho.' },
+    { emoji: '⭐', title: 'Calidad garantizada', desc: 'Todos los profesionales están verificados y valorados por la comunidad.' },
+  ]
+  const [slideIndex, setSlideIndex] = useState(0)
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top + 24 }]}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
+      {step === 0 && (
+        <View style={styles.welcomeWrap}>
+          <View style={styles.slideBox}>
+            <Text style={styles.slideEmoji}>{WELCOME_SLIDES[slideIndex].emoji}</Text>
+            <Text style={styles.slideTitle}>{WELCOME_SLIDES[slideIndex].title}</Text>
+            <Text style={styles.slideDesc}>{WELCOME_SLIDES[slideIndex].desc}</Text>
+          </View>
+          <View style={styles.dots}>
+            {WELCOME_SLIDES.map((_, i) => (
+              <View key={i} style={[styles.dot, i === slideIndex && styles.dotActive]} />
+            ))}
+          </View>
+          <TouchableOpacity style={styles.slideBtn} onPress={() => {
+            if (slideIndex < WELCOME_SLIDES.length - 1) { setSlideIndex(slideIndex + 1) }
+            else { handleStep0() }
+          }}>
+            <Text style={styles.slideBtnText}>{slideIndex < WELCOME_SLIDES.length - 1 ? 'Siguiente' : 'Empezar'}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleStep0} style={{ marginTop: 12 }}>
+            <Text style={styles.skipText}>Saltar</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {step > 0 && (
         <View style={styles.iconBox}>
           <Text style={styles.iconEmoji}>{step === 1 ? '👋' : '🤖'}</Text>
         </View>
@@ -195,6 +229,7 @@ export default function OnboardingScreen() {
           </TouchableOpacity>
         )}
       </ScrollView>
+      )}
     </View>
   )
 }
@@ -204,6 +239,18 @@ const styles = StyleSheet.create({
   container: { paddingHorizontal: 24, paddingBottom: 40, alignItems: 'center' },
   iconBox: { width: 80, height: 80, borderRadius: 28, backgroundColor: '#EEF4FF', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
   iconEmoji: { fontSize: 36 },
+  welcomeWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
+  slideBox: { alignItems: 'center', paddingHorizontal: 20, marginBottom: 32 },
+  slideEmoji: { fontSize: 72, marginBottom: 24 },
+  slideTitle: { fontSize: 26, fontWeight: '900', color: '#1a1a2e', textAlign: 'center', marginBottom: 12, letterSpacing: -0.5 },
+  slideDesc: { fontSize: 16, color: '#666', textAlign: 'center', lineHeight: 24 },
+  dots: { flexDirection: 'row', gap: 8, marginBottom: 32 },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E5E7EB' },
+  dotActive: { width: 24, backgroundColor: '#2563EB' },
+  slideBtn: { backgroundColor: '#2563EB', borderRadius: 16, paddingVertical: 16, paddingHorizontal: 48, width: '100%', alignItems: 'center' },
+  slideBtnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  skipText: { fontSize: 14, color: '#9CA3AF', textDecorationLine: 'underline' },
+
   aiIcon: { fontSize: 48, marginBottom: 16, textAlign: 'center' },
   title: { fontSize: 28, fontWeight: '800', color: '#1a1a2e', textAlign: 'center', marginBottom: 8 },
   sub: { fontSize: 15, color: '#666', textAlign: 'center', lineHeight: 22, marginBottom: 32, paddingHorizontal: 16 },
