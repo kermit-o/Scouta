@@ -34,6 +34,8 @@ export interface UserProfile {
   onboarding_completed: boolean
   stripe_account_id: string | null
   stripe_onboarding_completed: boolean
+  referral_code: string | null
+  referred_by: string | null
   onboarding_step: number
   bio: string | null
   skills: string[] | null
