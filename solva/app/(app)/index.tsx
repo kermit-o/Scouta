@@ -221,6 +221,26 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
+            {/* Encuentra un Pro */}
+            <View style={s.sectionRow}>
+              <Text style={s.sectionTitle}>Encuentra un profesional</Text>
+              <TouchableOpacity onPress={() => router.push('/(app)/search?tab=pros')}>
+                <Text style={s.sectionLink}>Ver todos →</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
+              {CATEGORIES.map((cat, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={s.proSearchChip}
+                  onPress={() => router.push(`/(app)/search?tab=pros&category=${cat.key}`)}
+                >
+                  <Text style={s.catChipIcon}>{cat.icon}</Text>
+                  <Text style={s.catChipLabel}>{cat.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+
             {/* Contratos activos */}
             {activeContracts.length > 0 && (
               <>
@@ -439,6 +459,7 @@ const s = StyleSheet.create({
   catChip: { alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', gap: 4 },
   catChipIcon: { fontSize: 22 },
   catChipLabel: { fontSize: 11, fontWeight: '600', color: '#555' },
+  proSearchChip: { alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, borderWidth: 1, borderColor: '#BBF7D0', gap: 4 },
 
   // CTA Card cliente
   ctaCard: { backgroundColor: '#2563EB', borderRadius: 20, padding: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
