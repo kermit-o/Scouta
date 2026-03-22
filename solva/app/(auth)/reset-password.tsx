@@ -17,6 +17,8 @@ export default function ResetPasswordScreen() {
   useEffect(() => {
     if (typeof window === 'undefined') return
     const hash = window.location.hash
+    console.log('HASH:', hash)
+    console.log('HREF:', window.location.href)
     if (hash.includes('error=access_denied') || hash.includes('otp_expired')) {
       setMsg('expired')
       return
