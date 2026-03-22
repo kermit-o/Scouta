@@ -1,8 +1,9 @@
+// v2
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView
+  ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView
 } from 'react-native'
 import { Link, router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
