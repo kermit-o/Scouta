@@ -16,6 +16,24 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [resetModal, setResetModal] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
+  const [resetMsg, setResetMsg] = useState('')
+
+  async function handleReset() {
+    if (!resetEmail.trim()) return
+    setResetLoading(true)
+    setResetMsg('')
+    try {
+      const res = await supabase.functions.invoke('reset-password', { body: { email: resetEmail.trim().toLowerCase() } })
+      if (res.error) throw res.error
+      setResetMsg('✅ Email enviado. Revisa tu bandeja de entrada.')
+    } catch (err: any) {
+      setResetMsg('❌ ' + (err.message ?? 'Error al enviar email'))
+    }
+    setResetLoading(false)
+  }
 
   async function handleLogin() {
     if (!email || !password) { setErrorMsg('Completa todos los campos'); return }
@@ -104,7 +122,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.forgotBtn}>
+          <TouchableOpacity style={styles.forgotBtn} onPress={() => { setResetEmail(''); setResetMsg(''); setResetModal(true) }}>
             <Text style={styles.forgotText}>{t('auth.forgotPassword')}</Text>
           </TouchableOpacity>
 
@@ -158,6 +176,35 @@ export default function LoginScreen() {
           </Link>
         </View>
       </ScrollView>
+    {/* Modal Reset Password */}
+    <Modal visible={resetModal} transparent animationType="slide" onRequestClose={() => setResetModal(false)}>
+      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setResetModal(false)}>
+        <TouchableOpacity style={styles.modalBox} activeOpacity={1}>
+          <Text style={styles.modalTitle}>¿Olvidaste tu contraseña?</Text>
+          <Text style={styles.modalSub}>Te enviaremos un link para restablecerla en tu idioma.</Text>
+          <TextInput
+            style={styles.modalInput}
+            value={resetEmail}
+            onChangeText={setResetEmail}
+            placeholder="tu@email.com"
+            placeholderTextColor="#aaa"
+            autoCapitalize="none"
+            keyboardType="email-address"
+          />
+          {resetMsg ? <Text style={[styles.modalMsg, { color: resetMsg.startsWith('✅') ? '#059669' : '#DC2626' }]}>{resetMsg}</Text> : null}
+          <TouchableOpacity
+            style={[styles.modalBtn, (!resetEmail.trim() || resetLoading) && styles.loginBtnDisabled]}
+            onPress={handleReset}
+            disabled={!resetEmail.trim() || resetLoading}
+          >
+            {resetLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.modalBtnText}>Enviar link →</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity style={{ marginTop: 12 }} onPress={() => setResetModal(false)}>
+            <Text style={{ color: '#888', textAlign: 'center', fontSize: 14 }}>Cancelar</Text>
+          </TouchableOpacity>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
     </KeyboardAvoidingView>
   )
 }
@@ -189,6 +236,14 @@ const styles = StyleSheet.create({
   },
   input: { flex: 1, paddingVertical: 16, fontSize: 15, color: '#1a1a2e' },
 
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalBox: { backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 28, gap: 12 },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: '#1a1a2e' },
+  modalSub: { fontSize: 14, color: '#888', lineHeight: 20 },
+  modalInput: { backgroundColor: '#F3F4F6', borderRadius: 14, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, color: '#1a1a2e', borderWidth: 1, borderColor: '#E5E7EB' },
+  modalMsg: { fontSize: 13, fontWeight: '600' },
+  modalBtn: { backgroundColor: '#2563EB', borderRadius: 14, paddingVertical: 15, alignItems: 'center' },
+  modalBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
   forgotBtn: { alignSelf: 'flex-end', marginTop: 4 },
   forgotText: { fontSize: 13, fontWeight: '600', color: '#2563EB' },
 
