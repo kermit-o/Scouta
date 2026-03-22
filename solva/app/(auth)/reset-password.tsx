@@ -15,6 +15,14 @@ export default function ResetPasswordScreen() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    // Detectar error en URL (token expirado)
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash
+      if (hash.includes('error=access_denied') || hash.includes('otp_expired')) {
+        setMsg('El enlace ha expirado. Solicita uno nuevo.')
+        return
+      }
+    }
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') setReady(true)
     })
