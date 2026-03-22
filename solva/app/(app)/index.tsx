@@ -388,7 +388,9 @@ export default function HomeScreen() {
                   </View>
                   <View style={s.clientRating}>
                     <Ionicons name="star" size={11} color="#F59E0B" />
-                    <Text style={s.clientRatingText}>Nuevo</Text>
+                    <Text style={s.clientRatingText}>
+                      {job.client?.avg_rating ? job.client.avg_rating.toFixed(1) + ' (' + job.client.total_reviews + ')' : 'Nuevo'}
+                    </Text>
                   </View>
                 </View>
                 <View style={s.proJobBottom}>
