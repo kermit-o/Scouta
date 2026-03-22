@@ -15,32 +15,53 @@ export default function ResetPasswordScreen() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    // Detectar error en URL (token expirado)
-    if (typeof window !== 'undefined') {
-      const hash = window.location.hash
-      if (hash.includes('error=access_denied') || hash.includes('otp_expired')) {
-        setMsg('El enlace ha expirado. Solicita uno nuevo.')
-        return
-      }
+    if (typeof window === 'undefined') return
+    const hash = window.location.hash
+    if (hash.includes('error=access_denied') || hash.includes('otp_expired')) {
+      setMsg('expired')
+      return
     }
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') setReady(true)
-    })
-    return () => subscription.unsubscribe()
+    // Extraer access_token del hash
+    const params = new URLSearchParams(hash.replace('#', ''))
+    const accessToken = params.get('access_token')
+    const refreshToken = params.get('refresh_token')
+    if (accessToken && refreshToken) {
+      supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error }) => {
+          if (error) setMsg('expired')
+          else setReady(true)
+        })
+    } else {
+      // Fallback: escuchar evento
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+        if (event === 'PASSWORD_RECOVERY') setReady(true)
+      })
+      return () => subscription.unsubscribe()
+    }
   }, [])
 
   async function handleReset() {
-    if (password !== confirm) { setMsg('Las contraseñas no coinciden'); return }
-    if (password.length < 6) { setMsg('Mínimo 6 caracteres'); return }
+    if (password !== confirm) { setMsg('no_match'); return }
+    if (password.length < 6) { setMsg('too_short'); return }
     setLoading(true)
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
-    if (error) { setMsg('Error: ' + error.message) }
+    if (error) { setMsg('error:' + error.message) }
     else {
-      setMsg('Contraseña actualizada correctamente')
-      setTimeout(() => router.replace('/(auth)/login'), 2000)
+      setMsg('success')
+      setTimeout(() => router.replace('/(auth)/login'), 2500)
     }
   }
+
+  const msgMap: Record<string, { text: string; color: string }> = {
+    expired: { text: 'El enlace ha expirado. Solicita uno nuevo desde la pantalla de login.', color: '#DC2626' },
+    no_match: { text: 'Las contraseñas no coinciden.', color: '#DC2626' },
+    too_short: { text: 'La contraseña debe tener al menos 6 caracteres.', color: '#DC2626' },
+    success: { text: 'Contraseña actualizada. Redirigiendo...', color: '#059669' },
+  }
+  const msgDisplay = msg.startsWith('error:')
+    ? { text: msg.replace('error:', ''), color: '#DC2626' }
+    : msgMap[msg]
 
   return (
     <KeyboardAvoidingView style={[styles.screen, { paddingTop: insets.top + 24 }]} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -50,13 +71,26 @@ export default function ResetPasswordScreen() {
         </View>
         <Text style={styles.title}>Nueva contraseña</Text>
         <Text style={styles.sub}>Elige una contraseña segura para tu cuenta</Text>
-        {!ready && (
+
+        {!ready && msg !== 'expired' && msg !== 'success' && (
           <View style={styles.waitBox}>
             <ActivityIndicator color="#2563EB" />
             <Text style={styles.waitText}>Verificando enlace...</Text>
           </View>
         )}
-        {ready && (
+
+        {msgDisplay && (
+          <View style={[styles.msgBox, { borderColor: msgDisplay.color }]}>
+            <Text style={[styles.msg, { color: msgDisplay.color }]}>{msgDisplay.text}</Text>
+            {msg === 'expired' && (
+              <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
+                <Text style={styles.link}>Volver al login →</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        )}
+
+        {ready && msg !== 'success' && (
           <>
             <Text style={styles.label}>Nueva contraseña</Text>
             <View style={styles.inputRow}>
@@ -71,7 +105,6 @@ export default function ResetPasswordScreen() {
               <Ionicons name="lock-closed-outline" size={18} color="#888" />
               <TextInput style={styles.input} value={confirm} onChangeText={setConfirm} placeholder="Repite la contraseña" placeholderTextColor="#aaa" secureTextEntry={!showPwd} />
             </View>
-            {msg ? <Text style={[styles.msg, { color: msg.startsWith('Error') ? '#DC2626' : '#059669' }]}>{msg}</Text> : null}
             <TouchableOpacity style={[styles.btn, (!password || !confirm || loading) && styles.btnDisabled]} onPress={handleReset} disabled={!password || !confirm || loading}>
               {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Actualizar contraseña</Text>}
             </TouchableOpacity>
@@ -91,7 +124,9 @@ const styles = StyleSheet.create({
   label: { fontSize: 12, fontWeight: '700', color: '#555', marginTop: 8 },
   inputRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 16, borderWidth: 1, borderColor: '#E5E7EB' },
   input: { flex: 1, paddingVertical: 16, fontSize: 15, color: '#1a1a2e' },
-  msg: { fontSize: 13, fontWeight: '600', marginTop: 4 },
+  msgBox: { backgroundColor: '#FFF', borderRadius: 12, padding: 14, borderWidth: 1, gap: 8 },
+  msg: { fontSize: 13, fontWeight: '600', lineHeight: 20 },
+  link: { fontSize: 13, fontWeight: '700', color: '#2563EB' },
   btn: { backgroundColor: '#2563EB', borderRadius: 16, height: 56, alignItems: 'center', justifyContent: 'center', marginTop: 16 },
   btnDisabled: { opacity: 0.45 },
   btnText: { fontSize: 16, fontWeight: '700', color: '#fff' },
