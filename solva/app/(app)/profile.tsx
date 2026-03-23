@@ -34,6 +34,11 @@ export default function ProfileScreen() {
   const [fullName, setFullName] = useState(profile?.full_name || '')
   const [bio, setBio] = useState(profile?.bio || '')
   const [skillsText, setSkillsText] = useState((profile?.skills ?? []).join(', '))
+  const [yearsExp, setYearsExp] = useState(String(profile?.years_experience ?? ''))
+  const [hourlyRate, setHourlyRate] = useState(String(profile?.hourly_rate ?? ''))
+  const [availability, setAvailability] = useState<'available'|'busy'|'unavailable'>(profile?.availability ?? 'available')
+  const [portfolioText, setPortfolioText] = useState((profile?.portfolio_urls ?? []).join('\n'))
+  const [certText, setCertText] = useState('')
   const [phone, setPhone] = useState(profile?.phone || '')
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '')
   const [uploading, setUploading] = useState(false)
@@ -91,6 +96,10 @@ export default function ProfileScreen() {
       avatar_url: avatarUrl || null,
       bio: bio.trim() || null,
       skills: skillsText.split(',').map((s: string) => s.trim()).filter(Boolean),
+      years_experience: yearsExp ? parseInt(yearsExp) : null,
+      hourly_rate: hourlyRate ? parseFloat(hourlyRate) : null,
+      availability: availability,
+      portfolio_urls: portfolioText.split('\n').map((u: string) => u.trim()).filter(Boolean),
     }).eq('id', session!.user.id)
     setSaving(false)
     if (error) {
@@ -368,6 +377,55 @@ export default function ProfileScreen() {
             onChangeText={setSkillsText}
             placeholder={t('profile.skillsPlaceholder')}
           />
+          {isPro && (
+            <>
+              <Text style={styles.inputLabel}>Años de experiencia</Text>
+              <TextInput
+                style={styles.input}
+                value={yearsExp}
+                onChangeText={setYearsExp}
+                placeholder="Ej: 5"
+                placeholderTextColor="#aaa"
+                keyboardType="numeric"
+              />
+              <Text style={styles.inputLabel}>Tarifa por hora (opcional)</Text>
+              <TextInput
+                style={styles.input}
+                value={hourlyRate}
+                onChangeText={setHourlyRate}
+                placeholder={"Ej: 25 (" + (profile?.currency ?? 'EUR') + ")"}
+                placeholderTextColor="#aaa"
+                keyboardType="numeric"
+              />
+              <Text style={styles.inputLabel}>Disponibilidad</Text>
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 4 }}>
+                {(['available','busy','unavailable'] as const).map(a => (
+                  <TouchableOpacity
+                    key={a}
+                    style={{ flex: 1, padding: 10, borderRadius: 12, borderWidth: 2,
+                      borderColor: availability === a ? '#2563EB' : '#E5E7EB',
+                      backgroundColor: availability === a ? '#EEF4FF' : '#fff',
+                      alignItems: 'center' }}
+                    onPress={() => setAvailability(a)}
+                  >
+                    <Text style={{ fontSize: 12, fontWeight: '700',
+                      color: availability === a ? '#2563EB' : '#888' }}>
+                      {a === 'available' ? '✅ Disponible' : a === 'busy' ? '🟡 Ocupado' : '🔴 No disponible'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+              <Text style={styles.inputLabel}>Portfolio (URLs, una por línea)</Text>
+              <TextInput
+                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                value={portfolioText}
+                onChangeText={setPortfolioText}
+                placeholder={"https://mi-portfolio.com\nhttps://behance.net/..."}
+                placeholderTextColor="#aaa"
+                multiline
+              />
+            </>
+          )}
           <Text style={styles.inputLabel}>{t('profile.phone')}</Text>
           <TextInput
             style={styles.input}
