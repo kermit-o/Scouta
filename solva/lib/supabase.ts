@@ -39,6 +39,13 @@ export interface UserProfile {
   onboarding_step: number
   bio: string | null
   skills: string[] | null
+  years_experience: number | null
+  portfolio_urls: string[] | null
+  certifications: { name: string; issuer: string; year: number }[] | null
+  languages_spoken: string[] | null
+  availability: 'available' | 'busy' | 'unavailable' | null
+  hourly_rate: number | null
+  service_radius_km: number | null
   city: string | null
   ai_keywords: string[] | null
   created_at: string
