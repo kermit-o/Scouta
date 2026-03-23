@@ -29,6 +29,7 @@ export default function ProfileScreen() {
   const { t } = useTranslation()
   const { session, signOut } = useAuth()
   const { profile, refreshProfile } = useProfile()
+  const isPro = profile?.role === 'pro' || profile?.role === 'company'
   const insets = useSafeAreaInsets()
 
   const [fullName, setFullName] = useState(profile?.full_name || '')
