@@ -124,6 +124,50 @@ export default function ProProfileScreen() {
           </View>
         )}
 
+        {/* Disponibilidad + tarifa */}
+        {(pro.availability || pro.hourly_rate || pro.years_experience) && (
+          <View style={s.infoRow}>
+            {pro.availability && (
+              <View style={[s.infoBadge, {
+                backgroundColor: pro.availability === 'available' ? '#F0FDF4' : pro.availability === 'busy' ? '#FFFBEB' : '#FEF2F2',
+                borderColor: pro.availability === 'available' ? '#BBF7D0' : pro.availability === 'busy' ? '#FDE68A' : '#FECACA',
+              }]}>
+                <Text style={[s.infoBadgeText, {
+                  color: pro.availability === 'available' ? '#059669' : pro.availability === 'busy' ? '#D97706' : '#DC2626'
+                }]}>
+                  {pro.availability === 'available' ? '✅ Disponible' : pro.availability === 'busy' ? '🟡 Ocupado' : '🔴 No disponible'}
+                </Text>
+              </View>
+            )}
+            {pro.years_experience > 0 && (
+              <View style={[s.infoBadge, { backgroundColor: '#EEF4FF', borderColor: '#DBEAFE' }]}>
+                <Text style={[s.infoBadgeText, { color: '#2563EB' }]}>🏆 {pro.years_experience} años exp.</Text>
+              </View>
+            )}
+            {pro.hourly_rate && (
+              <View style={[s.infoBadge, { backgroundColor: '#F0FDF4', borderColor: '#BBF7D0' }]}>
+                <Text style={[s.infoBadgeText, { color: '#059669' }]}>💰 {pro.hourly_rate}{pro.currency ?? 'EUR'}/h</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Portfolio */}
+        {pro.portfolio_urls?.length > 0 && (
+          <View style={s.bioCard}>
+            <Text style={s.bioTitle}>🖼️ Portfolio</Text>
+            {pro.portfolio_urls.map((url: string, i: number) => (
+              <TouchableOpacity key={i} style={s.portfolioRow} onPress={() => {
+                if (typeof window !== 'undefined') window.open(url, '_blank')
+              }}>
+                <Ionicons name="link-outline" size={14} color="#2563EB" />
+                <Text style={s.portfolioUrl} numberOfLines={1}>{url}</Text>
+                <Ionicons name="open-outline" size={14} color="#2563EB" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Stats */}
         <View style={s.statsRow}>
           {[
@@ -338,6 +382,11 @@ const s = StyleSheet.create({
   },
   jobItemTitle: { flex: 1, fontSize: 14, color: '#1a1a2e', fontWeight: '500' },
   jobItemDate: { fontSize: 12, color: '#aaa' },
+  infoRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  infoBadge: { flexDirection: 'row', alignItems: 'center', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1 },
+  infoBadgeText: { fontSize: 12, fontWeight: '700' },
+  portfolioRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  portfolioUrl: { flex: 1, fontSize: 13, color: '#2563EB', textDecorationLine: 'underline' },
   bioCard: {
     backgroundColor: '#fff', borderRadius: 16, padding: 18,
     borderWidth: 1, borderColor: '#E5E7EB',
