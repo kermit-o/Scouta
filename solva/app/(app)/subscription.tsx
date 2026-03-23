@@ -187,7 +187,7 @@ export default function SubscriptionScreen() {
         )}
 
         {/* Cards de planes */}
-        {!isPro && (
+        {true && (
           <>
             {/* PRO */}
             <View style={s.planCard}>
@@ -195,7 +195,13 @@ export default function SubscriptionScreen() {
                 <Ionicons name="star" size={10} color="#fff" />
                 <Text style={s.popularText}>{t('subscription.popular')}</Text>
               </View>
-              <View style={s.planTop}>
+              {isPro && !isBusiness && (
+                <View style={s.currentPlanBadge}>
+                  <Ionicons name="checkmark-circle" size={12} color="#fff" />
+                  <Text style={s.currentPlanBadgeText}>Tu plan actual</Text>
+                </View>
+              )}
+              <View style={[s.planTop, isPro && !isBusiness && { opacity: 1 }]}>
                 <Text style={s.planEmoji}>⚡</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={s.planName}>Pro</Text>
@@ -218,21 +224,28 @@ export default function SubscriptionScreen() {
                 </View>
               ))}
 
-              <TouchableOpacity
-                style={[s.upgradeBtn, upgrading === 'pro' && s.upgradeBtnDisabled]}
-                onPress={() => handleUpgrade('pro')}
-                disabled={!!upgrading}
-                activeOpacity={0.85}
-              >
-                {upgrading === 'pro'
-                  ? <ActivityIndicator color="#fff" />
-                  : <>
-                      <Ionicons name="sparkles" size={16} color="#fff" />
-                      <Text style={s.upgradeBtnText}>{t('subscription.trial')}</Text>
-                    </>
-                }
-              </TouchableOpacity>
-              <Text style={s.noCard}>Sin tarjeta de crédito</Text>
+              {isPro && !isBusiness ? (
+                <View style={s.currentPlanBtn}>
+                  <Ionicons name="checkmark-circle" size={16} color="#059669" />
+                  <Text style={s.currentPlanBtnText}>Tu plan actual</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={[s.upgradeBtn, (!!upgrading || isPro) && s.upgradeBtnDisabled]}
+                  onPress={() => handleUpgrade('pro')}
+                  disabled={!!upgrading || isPro}
+                  activeOpacity={0.85}
+                >
+                  {upgrading === 'pro'
+                    ? <ActivityIndicator color="#fff" />
+                    : <>
+                        <Ionicons name="sparkles" size={16} color="#fff" />
+                        <Text style={s.upgradeBtnText}>{t('subscription.trial')}</Text>
+                      </>
+                  }
+                </TouchableOpacity>
+              )}
+              {!isPro && <Text style={s.noCard}>Sin tarjeta de crédito</Text>}
             </View>
 
             {/* BUSINESS */}
@@ -349,6 +362,10 @@ const s = StyleSheet.create({
   savePillText: { fontSize: 11, fontWeight: '800', color: '#059669' },
   planCard: { backgroundColor: '#fff', borderRadius: 20, padding: 20, gap: 10, borderWidth: 2, borderColor: '#2563EB' },
   planCardBusiness: { borderColor: '#7C3AED' },
+  currentPlanBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#F0FDF4', borderRadius: 14, paddingVertical: 14, borderWidth: 2, borderColor: '#059669' },
+  currentPlanBtnText: { fontSize: 15, fontWeight: '700', color: '#059669' },
+  currentPlanBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#059669', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start', marginBottom: 10 },
+  currentPlanBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff' },
   popularBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#2563EB', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, alignSelf: 'flex-start' },
   popularText: { color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   planTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
