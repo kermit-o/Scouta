@@ -198,7 +198,7 @@ export default function ProProfileScreen() {
           </View>
         )}
         {isOwnProfile && (
-          <TouchableOpacity style={s.editBtn} onPress={() => router.push('/(app)/profile')} activeOpacity={0.85}>
+          <TouchableOpacity style={s.editBtn} onPress={() => router.push('/(app)/profile?edit=1')} activeOpacity={0.85}>
             <Ionicons name="create-outline" size={18} color="#2563EB" />
             <Text style={s.editBtnText}>{t('profile.editProfile')}</Text>
           </TouchableOpacity>

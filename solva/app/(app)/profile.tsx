@@ -7,7 +7,7 @@ import * as ImagePicker from 'expo-image-picker'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useTranslation } from 'react-i18next'
@@ -30,6 +30,7 @@ export default function ProfileScreen() {
   const { session, signOut } = useAuth()
   const { profile, refreshProfile } = useProfile()
   const isPro = profile?.role === 'pro' || profile?.role === 'company'
+  const params = useLocalSearchParams()
   const insets = useSafeAreaInsets()
 
   const [fullName, setFullName] = useState(profile?.full_name || '')
