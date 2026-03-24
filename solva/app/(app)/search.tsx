@@ -89,7 +89,7 @@ export default function SearchScreen() {
       setResults(enriched)
       setParsed(data.parsed)
     }
-    // Búsqueda de pros por nombre/especialidad
+    // Búsqueda de pros por nombre/especialidad (v2)
     const { data: prosData } = await supabase
       .from('pro_profiles')
       .select('id, full_name, avatar_url, bio, skills, score, total_reviews, total_jobs_done, country, is_verified, availability, years_experience, hourly_rate')
