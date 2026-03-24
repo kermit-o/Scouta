@@ -253,35 +253,61 @@ export default function SearchScreen() {
               onPress={() => router.push(`/(app)/pro/${item.id}`)}
               activeOpacity={0.85}
             >
-              <View style={styles.proAvatar}>
-                <Text style={styles.proAvatarText}>{(item.full_name ?? '?')[0].toUpperCase()}</Text>
-                {item.is_verified && (
-                  <View style={styles.verifiedBadge}>
-                    <Ionicons name="checkmark-circle" size={14} color="#2563EB" />
-                  </View>
-                )}
-              </View>
-              <View style={styles.proInfo}>
-                <Text style={styles.proName}>{item.full_name}</Text>
-                {item.bio && <Text style={styles.proBio} numberOfLines={1}>{item.bio}</Text>}
-                <View style={styles.proMeta}>
-                  {item.score > 0 && (
-                    <View style={styles.proRating}>
-                      <Ionicons name="star" size={11} color="#F59E0B" />
-                      <Text style={styles.proRatingText}>{Number(item.score).toFixed(1)}</Text>
+              <View style={styles.proCardHeader}>
+                <View style={styles.proAvatar}>
+                  <Text style={styles.proAvatarText}>{(item.full_name ?? '?')[0].toUpperCase()}</Text>
+                  {item.is_verified && (
+                    <View style={styles.verifiedBadge}>
+                      <Ionicons name="checkmark-circle" size={14} color="#2563EB" />
                     </View>
                   )}
-                  {item.total_jobs_done > 0 && (
-                    <Text style={styles.proJobs}>{item.total_jobs_done} trabajos</Text>
-                  )}
-                  {item.skills?.slice(0, 2).map((sk: string, i: number) => (
+                </View>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                    <Text style={styles.proName}>{item.full_name}</Text>
+                    {item.availability === 'available' && (
+                      <View style={styles.availBadge}>
+                        <Text style={styles.availText}>Disponible</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={styles.proMeta}>
+                    {item.score > 0 ? (
+                      <View style={styles.proRating}>
+                        <Ionicons name="star" size={11} color="#F59E0B" />
+                        <Text style={styles.proRatingText}>{Number(item.score).toFixed(1)}</Text>
+                        <Text style={styles.proJobs}> ({item.total_reviews})</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.proJobs}>Sin reseñas</Text>
+                    )}
+                    {item.years_experience > 0 && (
+                      <Text style={styles.proJobs}> · {item.years_experience} años</Text>
+                    )}
+                    {item.total_jobs_done > 0 && (
+                      <Text style={styles.proJobs}> · {item.total_jobs_done} trabajos</Text>
+                    )}
+                  </View>
+                </View>
+                {item.hourly_rate ? (
+                  <View style={styles.rateBox}>
+                    <Text style={styles.rateText}>{item.hourly_rate}€</Text>
+                    <Text style={styles.rateLabel}>/h</Text>
+                  </View>
+                ) : (
+                  <Ionicons name="chevron-forward" size={16} color="#ccc" />
+                )}
+              </View>
+              {item.bio && <Text style={styles.proBio} numberOfLines={2}>{item.bio}</Text>}
+              {item.skills?.length > 0 && (
+                <View style={styles.proMeta}>
+                  {item.skills.slice(0, 3).map((sk: string, i: number) => (
                     <View key={i} style={styles.skillChip}>
                       <Text style={styles.skillChipText}>{sk}</Text>
                     </View>
                   ))}
                 </View>
-              </View>
-              <Ionicons name="chevron-forward" size={16} color="#ccc" />
+              )}
             </TouchableOpacity>
           )}
         />
