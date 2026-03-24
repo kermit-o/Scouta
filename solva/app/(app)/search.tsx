@@ -92,7 +92,7 @@ export default function SearchScreen() {
     // Búsqueda de pros por nombre/especialidad
     const { data: prosData } = await supabase
       .from('pro_profiles')
-      .select('id, full_name, avatar_url, bio, skills, score, total_reviews, total_jobs_done, country, is_verified')
+      .select('id, full_name, avatar_url, bio, skills, score, total_reviews, total_jobs_done, country, is_verified, availability, years_experience, hourly_rate')
       .or(`full_name.ilike.%${searchQuery}%,bio.ilike.%${searchQuery}%,skills.cs.{${searchQuery}}`)
       .gt('total_jobs_done', -1)
       .order('score', { ascending: false })
