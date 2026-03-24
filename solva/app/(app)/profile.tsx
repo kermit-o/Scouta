@@ -55,6 +55,10 @@ export default function ProfileScreen() {
   }, [profile])
   const [saving, setSaving] = useState(false)
   const [editing, setEditing] = useState(false)
+
+  useEffect(() => {
+    if (params.edit === '1') setEditing(true)
+  }, [params.edit])
   const [showLangModal, setShowLangModal] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
