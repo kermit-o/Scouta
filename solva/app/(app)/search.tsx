@@ -406,6 +406,12 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
+  proCardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 8 },
+  availBadge: { backgroundColor: '#D1FAE5', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
+  availText: { fontSize: 10, fontWeight: '700', color: '#065F46' },
+  rateBox: { alignItems: 'center', backgroundColor: '#EEF4FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, minWidth: 48 },
+  rateText: { fontSize: 14, fontWeight: '800', color: '#2563EB' },
+  rateLabel: { fontSize: 10, color: '#2563EB' },
   screen: { flex: 1, backgroundColor: '#F6F7FB' },
 
   // Header
