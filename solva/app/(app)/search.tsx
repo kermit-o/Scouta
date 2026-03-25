@@ -406,6 +406,18 @@ export default function SearchScreen() {
 }
 
 const styles = StyleSheet.create({
+  proAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  proAvatarText: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  verifiedBadge: { position: 'absolute', bottom: -2, right: -2, backgroundColor: '#fff', borderRadius: 8 },
+  proName: { fontSize: 15, fontWeight: '800', color: '#1a1a2e' },
+  proInfo: { flex: 1 },
+  proBio: { fontSize: 13, color: '#666', lineHeight: 18, marginBottom: 6 },
+  proMeta: { flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 4, marginTop: 2 },
+  proRating: { flexDirection: 'row', alignItems: 'center', gap: 3 },
+  proRatingText: { fontSize: 12, fontWeight: '700', color: '#F59E0B' },
+  proJobs: { fontSize: 12, color: '#888' },
+  skillChip: { backgroundColor: '#F3F4F6', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  skillChipText: { fontSize: 11, fontWeight: '600', color: '#555' },
   proCard: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 },
   proCardHeader: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginBottom: 8 },
   availBadge: { backgroundColor: '#D1FAE5', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
