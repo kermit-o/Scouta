@@ -14,17 +14,26 @@ export default function AuthCallback() {
         const type = params.get('type')
 
         if (accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
+          const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           })
-          if (!error) {
-            // Si es recovery, ir a reset-password
+          if (!error && data.user) {
             if (type === 'recovery') {
               router.replace('/reset-password')
               return
             }
-            router.replace('/(app)')
+            // Verificar onboarding
+            const { data: profile } = await supabase
+              .from('users')
+              .select('onboarding_completed')
+              .eq('id', data.user.id)
+              .single()
+            if (profile && !profile.onboarding_completed) {
+              router.replace('/(app)/onboarding')
+            } else {
+              router.replace('/(app)')
+            }
             return
           }
         }
