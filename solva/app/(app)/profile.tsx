@@ -220,6 +220,20 @@ export default function ProfileScreen() {
       onPress: () => router.push('/(app)/referrals'),
     },
     ...(profile?.role === 'pro' || profile?.role === 'company' ? [{
+      icon: 'construct-outline' as const,
+      label: 'Mis servicios',
+      badge: 'Nuevo',
+      badgeColor: '#059669',
+      badgeBg: '#D1FAE5',
+      onPress: () => router.push('/(app)/pro-services'),
+    }, {
+      icon: 'construct-outline' as const,
+      label: 'Mis servicios',
+      badge: 'Nuevo',
+      badgeColor: '#059669',
+      badgeBg: '#D1FAE5',
+      onPress: () => router.push('/(app)/pro-services'),
+    }, {
       icon: 'card-outline' as const,
       label: profile?.stripe_onboarding_completed ? '✅ Cuenta de cobro activa' : '💳 Activar cuenta de cobro',
       badge: profile?.stripe_onboarding_completed ? 'Activo' : 'Requerido',

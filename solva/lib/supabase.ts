@@ -220,3 +220,78 @@ export interface Guarantee {
   expires_at: string
   created_at: string
 }
+
+export interface ProService {
+  id: string
+  pro_id: string
+  title: string
+  description: string | null
+  price_from: number | null
+  price_to: number | null
+  price_type: 'fixed' | 'from' | 'hourly' | 'quote'
+  category: string | null
+  duration_hours: number | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface ProPortfolio {
+  id: string
+  pro_id: string
+  media_url: string
+  media_type: 'image' | 'video'
+  title: string | null
+  description: string | null
+  category: string | null
+  created_at: string
+}
+
+export interface ProService {
+  id: string
+  pro_id: string
+  title: string
+  description: string | null
+  price_from: number | null
+  price_to: number | null
+  price_type: 'fixed' | 'from' | 'hourly' | 'quote'
+  category: string | null
+  duration_hours: number | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface ProPortfolio {
+  id: string
+  pro_id: string
+  media_url: string
+  media_type: 'image' | 'video'
+  title: string | null
+  description: string | null
+  category: string | null
+  created_at: string
+}
+
+export interface ProService {
+  id: string
+  pro_id: string
+  title: string
+  description: string | null
+  price_from: number | null
+  price_to: number | null
+  price_type: 'fixed' | 'from' | 'hourly' | 'quote'
+  category: string | null
+  duration_hours: number | null
+  is_active: boolean
+  created_at: string
+}
+
+export interface ProPortfolio {
+  id: string
+  pro_id: string
+  media_url: string
+  media_type: 'image' | 'video'
+  title: string | null
+  description: string | null
+  category: string | null
+  created_at: string
+}
