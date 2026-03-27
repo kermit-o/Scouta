@@ -1,6 +1,7 @@
 // v2
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useLocalSearchParams } from 'expo-router'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView
@@ -69,6 +70,13 @@ export default function LoginScreen() {
   }
 
   const [errorMsg, setErrorMsg] = useState('')
+  const [successMsg, setSuccessMsg] = useState('')
+  const params = useLocalSearchParams()
+  useEffect(() => {
+    if (params.msg === 'confirm_email') {
+      setSuccessMsg('✅ Cuenta creada. Revisa tu email y confirma tu cuenta para iniciar sesión.')
+    }
+  }, [])
   const canLogin = email.trim().length > 0 && password.length >= 6
 
   return (
@@ -151,7 +159,12 @@ export default function LoginScreen() {
         </View>
 
         {/* Social */}
-        {errorMsg ? (
+        {successMsg ? (
+        <View style={s.successBox}>
+          <Text style={s.successText}>{successMsg}</Text>
+        </View>
+      ) : null}
+      {errorMsg ? (
           <View style={styles.errorBox}>
             <Text style={styles.errorText}>{errorMsg}</Text>
           </View>
@@ -274,6 +287,8 @@ const styles = StyleSheet.create({
   socialText: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
 
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  successBox: { backgroundColor: '#D1FAE5', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#6EE7B7' },
+  successText: { color: '#065F46', fontSize: 14, lineHeight: 20 },
   errorBox: { backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, marginBottom: 12 },
   errorText: { color: '#DC2626', fontSize: 13, textAlign: 'center' },
   footerText: { fontSize: 14, color: '#888' },

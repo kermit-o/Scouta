@@ -113,8 +113,8 @@ export default function RegisterScreen() {
     }
 
     if (data.user && !data.session) {
-      // Sin sesión inmediata - ir al login
-      router.replace('/(auth)/login')
+      // Email de confirmación enviado - informar al usuario
+      router.replace({ pathname: '/(auth)/login', params: { msg: 'confirm_email' } })
       return
     }
 
