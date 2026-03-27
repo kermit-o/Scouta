@@ -102,7 +102,7 @@ export default function RegisterScreen() {
     setLoading(false)
 
     if (error) {
-      if (error.message.includes('already registered') || error.status === 422) {
+      if (error.message.includes('already registered') || error.message.includes('already exists')) {
         setErrorMsg('Este email ya está registrado. ¿Quieres iniciar sesión?')
       } else if (error.message.includes('password')) {
         setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
