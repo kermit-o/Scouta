@@ -113,8 +113,8 @@ export default function RegisterScreen() {
     }
 
     if (data.user && !data.session) {
-      // Email confirmation required
-      setErrorMsg('✅ Revisa tu email para confirmar tu cuenta antes de iniciar sesión.')
+      // Sin sesión inmediata - ir al login
+      router.replace('/(auth)/login')
       return
     }
 
