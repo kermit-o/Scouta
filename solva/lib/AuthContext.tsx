@@ -32,8 +32,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .single()
     if (error) {
       console.error('fetchProfile error:', error.message, 'userId:', userId)
-      // Si no existe el perfil, crearlo con datos básicos
+      // Si no existe el perfil en DB, cerrar sesión
       if (error.code === 'PGRST116') {
+        await supabase.auth.signOut()
+        setProfile(null)
+        setSession(null)
+        return
+      }
+      if (false) {
         const { data: authUser } = await supabase.auth.getUser()
         if (authUser?.user) {
           const meta = authUser.user.user_metadata
