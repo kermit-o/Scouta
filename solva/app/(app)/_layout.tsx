@@ -82,7 +82,6 @@ function AppLayoutInner() {
         <Tabs.Screen name="pro-content"        options={{ href: null }} />
         <Tabs.Screen name="referrals"             options={{ href: null }} />
         <Tabs.Screen name="pro-services"           options={{ href: null }} />
-        <Tabs.Screen name="pro-services"           options={{ href: null }} />
         <Tabs.Screen name="admin"                options={{ href: null }} />
       </Tabs>
       <DrawerMenu open={isOpen} onClose={closeDrawer} />
