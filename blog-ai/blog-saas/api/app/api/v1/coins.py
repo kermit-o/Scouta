@@ -136,3 +136,220 @@ def list_transactions(
         }
         for t in txns
     ]
+
+
+# ─── GET /coins/earnings ─────────────────────────────────────────────────────
+@router.get("/earnings")
+def get_earnings(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Host sees total earned, withdrawable, withdrawn, pending."""
+    wallet = _get_or_create_wallet(db, current_user.id)
+
+    from app.models.withdrawal_request import WithdrawalRequest
+    from sqlalchemy import func as sqlfunc
+
+    withdrawn = db.query(sqlfunc.coalesce(sqlfunc.sum(WithdrawalRequest.amount_coins), 0)).filter(
+        WithdrawalRequest.user_id == current_user.id,
+        WithdrawalRequest.status == "completed",
+    ).scalar()
+
+    pending = db.query(sqlfunc.coalesce(sqlfunc.sum(WithdrawalRequest.amount_coins), 0)).filter(
+        WithdrawalRequest.user_id == current_user.id,
+        WithdrawalRequest.status.in_(["pending", "processing"]),
+    ).scalar()
+
+    return {
+        "total_earned": wallet.lifetime_earned,
+        "withdrawable": wallet.withdrawable_balance,
+        "withdrawn": withdrawn,
+        "pending": pending,
+    }
+
+
+# ─── POST /coins/withdraw ────────────────────────────────────────────────────
+@router.post("/withdraw")
+def request_withdrawal(
+    body: dict,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Request payout via Stripe Connect. Min 500 coins."""
+    amount_coins = int(body.get("amount_coins", 0))
+    if amount_coins < 500:
+        raise HTTPException(400, "Minimum withdrawal is 500 coins")
+
+    wallet = _get_or_create_wallet(db, current_user.id)
+    if wallet.withdrawable_balance < amount_coins:
+        raise HTTPException(400, "Insufficient withdrawable balance")
+
+    # Check user has Stripe Connect account
+    if not current_user.stripe_customer_id:
+        raise HTTPException(400, "Connect your bank account first via /coins/connect-account")
+
+    # Convert coins to cents (100 coins = $0.99 → 1 coin ≈ 0.99 cents)
+    amount_cents = int(amount_coins * 0.99)
+
+    from app.models.withdrawal_request import WithdrawalRequest
+
+    # Check no pending withdrawal
+    pending = db.query(WithdrawalRequest).filter(
+        WithdrawalRequest.user_id == current_user.id,
+        WithdrawalRequest.status.in_(["pending", "processing"]),
+    ).first()
+    if pending:
+        raise HTTPException(400, "You already have a pending withdrawal")
+
+    # Deduct from withdrawable balance
+    wallet.withdrawable_balance -= amount_coins
+
+    withdrawal = WithdrawalRequest(
+        user_id=current_user.id,
+        amount_coins=amount_coins,
+        amount_cents=amount_cents,
+        status="pending",
+    )
+    db.add(withdrawal)
+
+    db.add(CoinTransaction(
+        user_id=current_user.id,
+        amount=-amount_coins,
+        type="withdrawal",
+        description=f"Withdrawal of {amount_coins} coins (${amount_cents / 100:.2f})",
+    ))
+    db.commit()
+
+    # Process payout via Stripe Connect
+    try:
+        stripe.api_key = settings.STRIPE_SECRET_KEY
+        transfer = stripe.Transfer.create(
+            amount=amount_cents,
+            currency="usd",
+            destination=current_user.stripe_customer_id,
+            metadata={"user_id": str(current_user.id), "withdrawal_id": str(withdrawal.id)},
+        )
+        withdrawal.stripe_transfer_id = transfer.id
+        withdrawal.status = "completed"
+        from datetime import datetime, timezone
+        withdrawal.completed_at = datetime.now(timezone.utc)
+        db.commit()
+    except Exception as e:
+        withdrawal.status = "failed"
+        withdrawal.failure_reason = str(e)
+        # Refund the coins
+        wallet.withdrawable_balance += amount_coins
+        db.add(CoinTransaction(
+            user_id=current_user.id,
+            amount=amount_coins,
+            type="refund",
+            description=f"Withdrawal failed: {str(e)[:100]}",
+        ))
+        db.commit()
+        raise HTTPException(500, f"Payout failed: {str(e)[:100]}")
+
+    return {
+        "ok": True,
+        "amount_coins": amount_coins,
+        "amount_usd": f"${amount_cents / 100:.2f}",
+        "status": withdrawal.status,
+    }
+
+
+# ─── GET /coins/withdrawals ──────────────────────────────────────────────────
+@router.get("/withdrawals")
+def list_withdrawals(
+    limit: int = 20,
+    offset: int = 0,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    from app.models.withdrawal_request import WithdrawalRequest
+    rows = (
+        db.query(WithdrawalRequest)
+        .filter(WithdrawalRequest.user_id == current_user.id)
+        .order_by(WithdrawalRequest.created_at.desc())
+        .offset(offset).limit(min(limit, 50)).all()
+    )
+    return [
+        {
+            "id": r.id,
+            "amount_coins": r.amount_coins,
+            "amount_cents": r.amount_cents,
+            "status": r.status,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "completed_at": r.completed_at.isoformat() if r.completed_at else None,
+        }
+        for r in rows
+    ]
+
+
+# ─── Stripe Connect ──────────────────────────────────────────────────────────
+@router.post("/connect-account")
+def create_connect_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Create Stripe Connect Express account for host payouts."""
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+
+    if current_user.stripe_customer_id:
+        # Check if it's already a Connect account
+        try:
+            acct = stripe.Account.retrieve(current_user.stripe_customer_id)
+            if acct.get("type") == "express":
+                return {"ok": True, "account_id": current_user.stripe_customer_id, "already_exists": True}
+        except Exception:
+            pass
+
+    account = stripe.Account.create(
+        type="express",
+        email=current_user.email,
+        metadata={"user_id": str(current_user.id)},
+        capabilities={"transfers": {"requested": True}},
+    )
+    current_user.stripe_customer_id = account.id
+    db.commit()
+
+    return {"ok": True, "account_id": account.id}
+
+
+@router.get("/connect-link")
+def get_connect_link(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Get Stripe Connect onboarding link for host to set up bank account."""
+    if not current_user.stripe_customer_id:
+        raise HTTPException(400, "Create a Connect account first")
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    link = stripe.AccountLink.create(
+        account=current_user.stripe_customer_id,
+        refresh_url="https://scouta.co/profile",
+        return_url="https://scouta.co/profile?stripe_connected=1",
+        type="account_onboarding",
+    )
+    return {"url": link.url}
+
+
+@router.get("/connect-status")
+def get_connect_status(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Check if host has completed Stripe Connect onboarding."""
+    if not current_user.stripe_customer_id:
+        return {"connected": False, "account_id": None}
+
+    stripe.api_key = settings.STRIPE_SECRET_KEY
+    try:
+        acct = stripe.Account.retrieve(current_user.stripe_customer_id)
+        return {
+            "connected": acct.charges_enabled and acct.payouts_enabled,
+            "account_id": current_user.stripe_customer_id,
+            "charges_enabled": acct.charges_enabled,
+            "payouts_enabled": acct.payouts_enabled,
+        }
+    except Exception:
+        return {"connected": False, "account_id": current_user.stripe_customer_id}

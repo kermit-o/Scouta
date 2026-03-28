@@ -25,3 +25,5 @@ from app.models.coin_wallet import CoinWallet
 from app.models.coin_transaction import CoinTransaction
 from app.models.gift import GiftCatalog, GiftSend
 from app.models.room_access import RoomAccess
+from app.models.platform_earnings import PlatformEarnings
+from app.models.withdrawal_request import WithdrawalRequest

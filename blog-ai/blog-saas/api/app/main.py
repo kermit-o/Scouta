@@ -38,6 +38,15 @@ try:
         if col_name not in _existing_cols:
             _conn.execute(_text(f"ALTER TABLE live_streams ADD COLUMN {col_name} {col_def}"))
             print(f"[migrate] added column live_streams.{col_name}")
+    # Auto-add withdrawable_balance to coin_wallets
+    try:
+        _cw_cols = {c["name"] for c in _inspect(engine).get_columns("coin_wallets")}
+        if "withdrawable_balance" not in _cw_cols:
+            _conn.execute(_text("ALTER TABLE coin_wallets ADD COLUMN withdrawable_balance INTEGER DEFAULT 0"))
+            print("[migrate] added column coin_wallets.withdrawable_balance")
+    except Exception:
+        pass
+
     _conn.commit()
     _conn.close()
 except Exception as e:

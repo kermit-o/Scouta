@@ -11,4 +11,5 @@ class CoinWallet(Base):
     balance: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     lifetime_earned: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
     lifetime_spent: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    withdrawable_balance: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # coins host can cash out
     updated_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

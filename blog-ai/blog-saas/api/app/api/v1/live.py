@@ -529,11 +529,15 @@ async def send_gift(
         db.add(host_wallet)
         db.flush()
 
-    # Atomic transfer
+    # Atomic transfer with 80/20 commission split
+    PLATFORM_FEE = 0.20
+    fee_amount = max(1, int(gift.coin_cost * PLATFORM_FEE)) if gift.coin_cost >= 5 else 0
+    host_amount = gift.coin_cost - fee_amount
+
     sender_wallet.balance -= gift.coin_cost
     sender_wallet.lifetime_spent += gift.coin_cost
-    host_wallet.balance += gift.coin_cost
-    host_wallet.lifetime_earned += gift.coin_cost
+    host_wallet.withdrawable_balance += host_amount  # host earns 80% as withdrawable
+    host_wallet.lifetime_earned += host_amount
 
     # Record gift send
     gift_send = GiftSend(
@@ -544,6 +548,17 @@ async def send_gift(
         coin_amount=gift.coin_cost,
     )
     db.add(gift_send)
+    db.flush()  # get gift_send.id
+
+    # Record platform earnings
+    from app.models.platform_earnings import PlatformEarnings
+    db.add(PlatformEarnings(
+        stream_room_name=room_name,
+        gift_send_id=gift_send.id,
+        amount=gift.coin_cost,
+        fee_amount=fee_amount,
+        host_amount=host_amount,
+    ))
 
     # Record transactions
     db.add(CoinTransaction(
@@ -555,10 +570,10 @@ async def send_gift(
     ))
     db.add(CoinTransaction(
         user_id=host_user_id,
-        amount=gift.coin_cost,
+        amount=host_amount,
         type="gift_received",
         reference_id=f"gift_{room_name}_{gift.id}",
-        description=f"Received {gift.name} from {user.display_name or user.username}",
+        description=f"Received {gift.name} from {user.display_name or user.username} ({host_amount} coins after 20% fee)",
     ))
     db.commit()
 
