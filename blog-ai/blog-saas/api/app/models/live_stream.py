@@ -16,3 +16,9 @@ class LiveStream(Base):
     description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     started_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     ended_at: Mapped[Optional[DateTime]] = mapped_column(DateTime(timezone=True), nullable=True)
+    # Private room fields
+    is_private: Mapped[bool] = mapped_column(Boolean, default=False, server_default="false")
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    access_type: Mapped[str] = mapped_column(String(20), default="public", server_default="public")  # public, password, invite_only, paid
+    entry_coin_cost: Mapped[int] = mapped_column(Integer, default=0, server_default="0")
+    max_viewer_limit: Mapped[int] = mapped_column(Integer, default=0, server_default="0")  # 0 = unlimited

@@ -5,6 +5,8 @@ import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import LiveChat from "./LiveChat";
+import GiftPanel from "./GiftPanel";
+import GiftAnimation from "./GiftAnimation";
 const LivePlayer = dynamic(() => import("./LivePlayer"), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
@@ -42,20 +44,62 @@ export default function LiveRoomPage() {
   const [joinRequested, setJoinRequested] = useState(false);
   const [joinRequests, setJoinRequests] = useState<{username: string; display_name: string; user_id: number}[]>([]);
   const [joinAccepted, setJoinAccepted] = useState(false);
+  const [coinBalance, setCoinBalance] = useState(0);
+  // Private room access states
+  const [accessBlock, setAccessBlock] = useState<string | null>(null); // password_required, invite_only, paid_entry:N, room_full
+  const [roomPassword, setRoomPassword] = useState("");
+  const [accessError, setAccessError] = useState("");
   const isCoHost = !isHost && searchParams.get('token') !== null && searchParams.get('host') === '1';
+
+  // Fetch coin balance
+  useEffect(() => {
+    if (!token) return;
+    fetch(`/api/proxy/coins/balance`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then(r => r.json())
+      .then(d => { if (d.balance !== undefined) setCoinBalance(d.balance); })
+      .catch(() => {});
+  }, [token]);
+
+  async function attemptJoin(pw?: string, payCoins?: boolean) {
+    const body: any = {};
+    if (pw) body.password = pw;
+    const endpoint = token
+      ? `/api/proxy/live/${room}/join`
+      : `${API}/api/v1/live/${room}/join-anon`;
+    const opts = token
+      ? { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } as Record<string, string>, body: JSON.stringify(body) }
+      : { method: "GET" } as RequestInit;
+    const res = await fetch(endpoint, opts);
+    const d = await res.json();
+    if (res.ok && d.token) {
+      setLivekitToken(d.token);
+      setStreamTitle(d.title || "");
+      setAccessBlock(null);
+      setAccessError("");
+    } else if (res.status === 403 || res.status === 402) {
+      const detail = d.detail || "";
+      if (detail === "password_required" || detail === "wrong_password") {
+        setAccessBlock("password_required");
+        if (detail === "wrong_password") setAccessError("Wrong password");
+      } else if (detail === "invite_only") {
+        setAccessBlock("invite_only");
+      } else if (detail.startsWith("paid_entry:")) {
+        setAccessBlock(detail);
+      } else if (detail === "room_full") {
+        setAccessBlock("room_full");
+      } else {
+        window.location.href = "/live";
+      }
+    } else {
+      window.location.href = "/live";
+    }
+  }
 
   useEffect(() => {
     if (!preToken) {
-      const endpoint = token
-        ? `/api/proxy/live/${room}/join`
-        : `${API}/api/v1/live/${room}/join-anon`;
-      const opts = token
-        ? { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({}) }
-        : { method: "GET" } as RequestInit;
-      fetch(endpoint, opts)
-        .then(r => r.json())
-        .then(d => { if (d.token) { setLivekitToken(d.token); setStreamTitle(d.title || ""); } else window.location.href = "/live"; })
-        .catch(() => window.location.href = "/live");
+      attemptJoin();
     }
   }, [room, token, preToken]);
 
@@ -161,6 +205,89 @@ export default function LiveRoomPage() {
     </div>
   );
 
+  // Private room access blocks
+  if (accessBlock) {
+    const paidMatch = accessBlock.match(/^paid_entry:(\d+)$/);
+    const cost = paidMatch ? parseInt(paidMatch[1]) : 0;
+
+    return (
+      <div style={{ height: "100vh", background: "#080808", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ background: "#0e0e0e", border: "1px solid #1a1a1a", padding: "2rem", maxWidth: 360, width: "90%", textAlign: "center" }}>
+          {accessBlock === "password_required" && (
+            <>
+              <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>🔒</p>
+              <p style={{ fontSize: "0.9rem", color: "#f0e8d8", fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>Private Room</p>
+              <p style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", margin: "0 0 1rem" }}>Enter the room password to join</p>
+              {accessError && <p style={{ fontSize: "0.65rem", color: "#e44", fontFamily: "monospace", margin: "0 0 0.5rem" }}>{accessError}</p>}
+              <input
+                value={roomPassword}
+                onChange={e => setRoomPassword(e.target.value)}
+                onKeyDown={e => { if (e.key === "Enter") { setAccessError(""); attemptJoin(roomPassword); } }}
+                placeholder="Password"
+                type="password"
+                autoFocus
+                style={{ width: "100%", background: "#111", border: "1px solid #222", color: "#f0e8d8", padding: "0.6rem 0.75rem", fontFamily: "monospace", fontSize: "0.8rem", marginBottom: "0.75rem", boxSizing: "border-box", textAlign: "center" }}
+              />
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <Link href="/live" style={{ flex: 1, display: "block", textAlign: "center", border: "1px solid #222", color: "#555", padding: "0.5rem", fontFamily: "monospace", fontSize: "0.65rem", textDecoration: "none" }}>Back</Link>
+                <button
+                  onClick={() => { setAccessError(""); attemptJoin(roomPassword); }}
+                  disabled={!roomPassword.trim()}
+                  style={{ flex: 1, background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a", padding: "0.5rem", fontFamily: "monospace", fontSize: "0.65rem", cursor: "pointer" }}
+                >Enter</button>
+              </div>
+            </>
+          )}
+
+          {accessBlock === "invite_only" && (
+            <>
+              <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>✉️</p>
+              <p style={{ fontSize: "0.9rem", color: "#f0e8d8", fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>Invite Only</p>
+              <p style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", margin: "0 0 1rem" }}>This room is invite-only. Ask the host for access.</p>
+              <Link href="/live" style={{ display: "inline-block", border: "1px solid #222", color: "#4a7a9a", padding: "0.5rem 1.5rem", fontFamily: "monospace", fontSize: "0.65rem", textDecoration: "none" }}>Back to Live</Link>
+            </>
+          )}
+
+          {paidMatch && (
+            <>
+              <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>🪙</p>
+              <p style={{ fontSize: "0.9rem", color: "#f0e8d8", fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>Paid Entry</p>
+              <p style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", margin: "0 0 0.25rem" }}>This room costs</p>
+              <p style={{ fontSize: "1.2rem", color: "#9a6a4a", fontFamily: "monospace", margin: "0 0 0.5rem" }}>🪙 {cost} coins</p>
+              <p style={{ fontSize: "0.6rem", color: "#444", fontFamily: "monospace", margin: "0 0 1rem" }}>Your balance: 🪙 {coinBalance.toLocaleString()}</p>
+              <div style={{ display: "flex", gap: "0.5rem" }}>
+                <Link href="/live" style={{ flex: 1, display: "block", textAlign: "center", border: "1px solid #222", color: "#555", padding: "0.5rem", fontFamily: "monospace", fontSize: "0.65rem", textDecoration: "none" }}>Back</Link>
+                <button
+                  onClick={() => attemptJoin()}
+                  disabled={coinBalance < cost}
+                  style={{
+                    flex: 1,
+                    background: coinBalance >= cost ? "#1a2a1a" : "#0a0a0a",
+                    border: `1px solid ${coinBalance >= cost ? "#2a4a2a" : "#1a1a1a"}`,
+                    color: coinBalance >= cost ? "#4a9a4a" : "#555",
+                    padding: "0.5rem",
+                    fontFamily: "monospace",
+                    fontSize: "0.65rem",
+                    cursor: coinBalance >= cost ? "pointer" : "not-allowed",
+                  }}
+                >{coinBalance >= cost ? "Pay & Enter" : "Not enough coins"}</button>
+              </div>
+            </>
+          )}
+
+          {accessBlock === "room_full" && (
+            <>
+              <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>🚫</p>
+              <p style={{ fontSize: "0.9rem", color: "#f0e8d8", fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>Room Full</p>
+              <p style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", margin: "0 0 1rem" }}>This room has reached its viewer limit.</p>
+              <Link href="/live" style={{ display: "inline-block", border: "1px solid #222", color: "#4a7a9a", padding: "0.5rem 1.5rem", fontFamily: "monospace", fontSize: "0.65rem", textDecoration: "none" }}>Back to Live</Link>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   if (!livekitToken) return (
     <div style={{ height: "100vh", background: "#080808", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.7rem", letterSpacing: "0.2em" }}>CONNECTING...</p>
@@ -176,6 +303,7 @@ export default function LiveRoomPage() {
         <span style={{ fontSize: "0.55rem", color: "#e44", fontFamily: "monospace", letterSpacing: "0.1em" }}>LIVE</span>
         <h2 style={{ fontSize: "0.9rem", fontWeight: 400, fontFamily: "Georgia, serif", color: "#f0e8d8", margin: 0, flex: 1 }}>{streamTitle || `Room: ${room}`}</h2>
         <span style={{ fontSize: "0.6rem", color: "#444", fontFamily: "monospace" }}>{viewerCount} viewers</span>
+        {token && <span style={{ fontSize: "0.6rem", color: "#9a6a4a", fontFamily: "monospace" }}>🪙 {coinBalance.toLocaleString()}</span>}
         {isHost && (
           <>
             <button
@@ -239,6 +367,9 @@ export default function LiveRoomPage() {
           </div>
         )}
 
+        {/* Gift animations overlay */}
+        <GiftAnimation />
+
         {/* Chat overlay — TikTok style */}
         <LiveChat
           roomName={room as string}
@@ -253,6 +384,14 @@ export default function LiveRoomPage() {
         <div style={{ position: "absolute", right: 12, bottom: 80, display: "flex", flexDirection: "column", gap: "1rem" }}>
           <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
           <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
+          {!isHost && (
+            <GiftPanel
+              roomName={room as string}
+              token={token}
+              balance={coinBalance}
+              onBalanceUpdate={setCoinBalance}
+            />
+          )}
           {!isHost && token && !joinRequested && (
             <button
               onClick={requestJoin}

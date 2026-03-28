@@ -86,11 +86,29 @@ def start_live(
 
     room_name = _gen_room_name()
 
+    # Private room settings
+    is_private = payload.get("is_private", False)
+    access_type = payload.get("access_type", "public")  # public, password, invite_only, paid
+    entry_coin_cost = int(payload.get("entry_coin_cost", 0))
+    max_viewer_limit = int(payload.get("max_viewer_limit", 0))
+    password = payload.get("password", "")
+
+    password_hash = None
+    if is_private and access_type == "password" and password:
+        import hashlib
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
+
     # Save to DB
     db.execute(text(
-        "INSERT INTO live_streams (room_name, title, host_user_id, org_id, description, status) "
-        "VALUES (:room, :title, :uid, 1, :desc, 'live')"
-    ), {"room": room_name, "title": title, "uid": user.id, "desc": description})
+        "INSERT INTO live_streams (room_name, title, host_user_id, org_id, description, status, "
+        "is_private, password_hash, access_type, entry_coin_cost, max_viewer_limit) "
+        "VALUES (:room, :title, :uid, 1, :desc, 'live', "
+        ":is_private, :pw_hash, :access_type, :entry_cost, :max_limit)"
+    ), {
+        "room": room_name, "title": title, "uid": user.id, "desc": description,
+        "is_private": is_private, "pw_hash": password_hash, "access_type": access_type if is_private else "public",
+        "entry_cost": entry_coin_cost if is_private else 0, "max_limit": max_viewer_limit,
+    })
     db.commit()
 
     token = _create_livekit_token(room_name, user.display_name or user.username or f"user_{user.id}", can_publish=True)
@@ -100,24 +118,79 @@ def start_live(
         "token": token,
         "livekit_url": LIVEKIT_URL,
         "title": title,
+        "is_private": is_private,
     }
 
 
 @router.post("/live/{room_name}/join")
 def join_live(
     room_name: str,
+    payload: dict = {},
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
     """Join a live stream as viewer."""
     stream = db.execute(
-        text("SELECT id, title, status FROM live_streams WHERE room_name=:room"),
+        text("SELECT id, title, status, is_private, access_type, password_hash, entry_coin_cost, max_viewer_limit, viewer_count, host_user_id "
+             "FROM live_streams WHERE room_name=:room"),
         {"room": room_name}
     ).first()
     if not stream:
         raise HTTPException(status_code=404, detail="Stream not found")
     if stream.status != "live":
         raise HTTPException(status_code=400, detail="Stream has ended")
+
+    # Host always has access
+    if stream.host_user_id != user.id and stream.is_private:
+        from app.models.room_access import RoomAccess
+
+        # Check max viewer limit
+        if stream.max_viewer_limit and stream.max_viewer_limit > 0 and stream.viewer_count >= stream.max_viewer_limit:
+            raise HTTPException(status_code=403, detail="room_full")
+
+        # Check if user already has access
+        has_access = db.query(RoomAccess).filter(
+            RoomAccess.room_name == room_name,
+            RoomAccess.user_id == user.id,
+        ).first()
+
+        if not has_access:
+            if stream.access_type == "password":
+                password = payload.get("password", "")
+                if not password:
+                    raise HTTPException(status_code=403, detail="password_required")
+                import hashlib
+                if hashlib.sha256(password.encode()).hexdigest() != stream.password_hash:
+                    raise HTTPException(status_code=403, detail="wrong_password")
+                db.add(RoomAccess(room_name=room_name, user_id=user.id, access_type="password_entered"))
+                db.commit()
+
+            elif stream.access_type == "invite_only":
+                raise HTTPException(status_code=403, detail="invite_only")
+
+            elif stream.access_type == "paid":
+                cost = stream.entry_coin_cost or 0
+                if cost > 0:
+                    from app.models.coin_wallet import CoinWallet
+                    from app.models.coin_transaction import CoinTransaction
+                    wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user.id).first()
+                    if not wallet or wallet.balance < cost:
+                        raise HTTPException(status_code=402, detail=f"paid_entry:{cost}")
+                    # Deduct coins
+                    wallet.balance -= cost
+                    wallet.lifetime_spent += cost
+                    # Credit host
+                    host_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == stream.host_user_id).first()
+                    if not host_wallet:
+                        host_wallet = CoinWallet(user_id=stream.host_user_id, balance=0)
+                        db.add(host_wallet)
+                        db.flush()
+                    host_wallet.balance += cost
+                    host_wallet.lifetime_earned += cost
+                    db.add(CoinTransaction(user_id=user.id, amount=-cost, type="room_entry", reference_id=room_name, description=f"Paid entry to {stream.title}"))
+                    db.add(CoinTransaction(user_id=stream.host_user_id, amount=cost, type="gift_received", reference_id=room_name, description=f"Room entry fee from {user.display_name or user.username}"))
+                db.add(RoomAccess(room_name=room_name, user_id=user.id, access_type="paid"))
+                db.commit()
 
     token = _create_livekit_token(room_name, user.display_name or user.username or f"user_{user.id}", can_publish=False)
 
@@ -141,8 +214,48 @@ def invite_to_live(
     if not invitee:
         raise HTTPException(status_code=404, detail="User not found")
 
+    # Also grant room access for private rooms
+    from app.models.room_access import RoomAccess
+    existing = db.query(RoomAccess).filter(RoomAccess.room_name == room_name, RoomAccess.user_id == invitee.id).first()
+    if not existing:
+        db.add(RoomAccess(room_name=room_name, user_id=invitee.id, access_type="invited"))
+        db.commit()
+
     token = _create_livekit_token(room_name, invitee.display_name or invitee.username, can_publish=True)
     return {"token": token, "livekit_url": LIVEKIT_URL, "invited_user": invitee_username}
+
+
+@router.post("/live/{room_name}/grant-access")
+def grant_access(
+    room_name: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Host grants viewer access to a user for a private room."""
+    username = payload.get("username")
+    if not username:
+        raise HTTPException(status_code=400, detail="username required")
+
+    # Verify caller is host
+    stream = db.execute(
+        text("SELECT host_user_id FROM live_streams WHERE room_name=:room AND status='live'"),
+        {"room": room_name}
+    ).first()
+    if not stream or stream.host_user_id != user.id:
+        raise HTTPException(status_code=403, detail="Only host can grant access")
+
+    invitee = db.query(User).filter(User.username == username).first()
+    if not invitee:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    from app.models.room_access import RoomAccess
+    existing = db.query(RoomAccess).filter(RoomAccess.room_name == room_name, RoomAccess.user_id == invitee.id).first()
+    if not existing:
+        db.add(RoomAccess(room_name=room_name, user_id=invitee.id, access_type="invited"))
+        db.commit()
+
+    return {"ok": True, "granted_to": username}
 
 
 @router.post("/live/{room_name}/end")
@@ -179,11 +292,13 @@ async def end_live(
 def join_live_anon(room_name: str, db: Session = Depends(get_db)):
     """Join a live stream as anonymous viewer."""
     stream = db.execute(
-        text("SELECT id, title, status FROM live_streams WHERE room_name=:room"),
+        text("SELECT id, title, status, is_private FROM live_streams WHERE room_name=:room"),
         {"room": room_name}
     ).first()
     if not stream or stream.status != "live":
         raise HTTPException(status_code=404, detail="Stream not found or ended")
+    if stream.is_private:
+        raise HTTPException(status_code=403, detail="Private room — sign in to join")
 
     import random, string
     anon_name = "viewer_" + "".join(random.choices(string.ascii_lowercase, k=6))
@@ -356,21 +471,160 @@ def get_join_requests(
     return {"requests": requests}
 
 
+# ── Gift system ──────────────────────────────────────────────────────────────
+
+@router.get("/live/gifts/catalog")
+def get_gift_catalog(db: Session = Depends(get_db)):
+    """Return available gifts."""
+    from app.models.gift import GiftCatalog
+    gifts = db.query(GiftCatalog).order_by(GiftCatalog.sort_order).all()
+    return {"gifts": [
+        {"id": g.id, "name": g.name, "emoji": g.emoji, "coin_cost": g.coin_cost, "animation_type": g.animation_type}
+        for g in gifts
+    ]}
+
+
+@router.post("/live/{room_name}/gift")
+async def send_gift(
+    room_name: str,
+    payload: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Send a gift during a live stream."""
+    from app.models.gift import GiftCatalog, GiftSend
+    from app.models.coin_wallet import CoinWallet
+    from app.models.coin_transaction import CoinTransaction
+
+    gift_id = payload.get("gift_id")
+    if not gift_id:
+        raise HTTPException(status_code=400, detail="gift_id required")
+
+    # Validate gift exists
+    gift = db.query(GiftCatalog).filter(GiftCatalog.id == gift_id).first()
+    if not gift:
+        raise HTTPException(status_code=404, detail="Gift not found")
+
+    # Validate stream is live and get host
+    stream = db.execute(
+        text("SELECT id, host_user_id, status FROM live_streams WHERE room_name=:room"),
+        {"room": room_name}
+    ).first()
+    if not stream or stream.status != "live":
+        raise HTTPException(status_code=404, detail="Stream not found or ended")
+    if stream.host_user_id == user.id:
+        raise HTTPException(status_code=400, detail="Cannot gift yourself")
+
+    host_user_id = stream.host_user_id
+
+    # Check sender balance
+    sender_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user.id).first()
+    if not sender_wallet or sender_wallet.balance < gift.coin_cost:
+        raise HTTPException(status_code=402, detail="Insufficient coins")
+
+    # Get or create host wallet
+    host_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == host_user_id).first()
+    if not host_wallet:
+        host_wallet = CoinWallet(user_id=host_user_id, balance=0)
+        db.add(host_wallet)
+        db.flush()
+
+    # Atomic transfer
+    sender_wallet.balance -= gift.coin_cost
+    sender_wallet.lifetime_spent += gift.coin_cost
+    host_wallet.balance += gift.coin_cost
+    host_wallet.lifetime_earned += gift.coin_cost
+
+    # Record gift send
+    gift_send = GiftSend(
+        stream_room_name=room_name,
+        sender_user_id=user.id,
+        recipient_user_id=host_user_id,
+        gift_id=gift.id,
+        coin_amount=gift.coin_cost,
+    )
+    db.add(gift_send)
+
+    # Record transactions
+    db.add(CoinTransaction(
+        user_id=user.id,
+        amount=-gift.coin_cost,
+        type="gift_sent",
+        reference_id=f"gift_{room_name}_{gift.id}",
+        description=f"Sent {gift.name} to host",
+    ))
+    db.add(CoinTransaction(
+        user_id=host_user_id,
+        amount=gift.coin_cost,
+        type="gift_received",
+        reference_id=f"gift_{room_name}_{gift.id}",
+        description=f"Received {gift.name} from {user.display_name or user.username}",
+    ))
+    db.commit()
+
+    # Broadcast gift to all viewers via WebSocket
+    sender_name = user.display_name or user.username or f"user_{user.id}"
+    gift_msg = json.dumps({
+        "type": "gift",
+        "sender": sender_name,
+        "sender_username": user.username,
+        "gift_name": gift.name,
+        "emoji": gift.emoji,
+        "coin_amount": gift.coin_cost,
+        "animation": gift.animation_type,
+    })
+    for ws in list(_room_connections.get(room_name, [])):
+        try:
+            await ws.send_text(gift_msg)
+        except Exception:
+            pass
+
+    return {
+        "ok": True,
+        "new_balance": sender_wallet.balance,
+        "gift": {"name": gift.name, "emoji": gift.emoji, "coin_cost": gift.coin_cost},
+    }
+
+
+@router.get("/live/{room_name}/top-gifters")
+def get_top_gifters(room_name: str, db: Session = Depends(get_db)):
+    """Leaderboard: top 10 gifters for a stream."""
+    rows = db.execute(text(
+        "SELECT gs.sender_user_id, u.username, u.display_name, u.avatar_url, "
+        "SUM(gs.coin_amount) as total_coins, COUNT(*) as gift_count "
+        "FROM gift_sends gs JOIN users u ON gs.sender_user_id = u.id "
+        "WHERE gs.stream_room_name = :room "
+        "GROUP BY gs.sender_user_id, u.username, u.display_name, u.avatar_url "
+        "ORDER BY total_coins DESC LIMIT 10"
+    ), {"room": room_name}).fetchall()
+    return {"gifters": [
+        {
+            "user_id": r[0], "username": r[1], "display_name": r[2], "avatar_url": r[3],
+            "total_coins": r[4], "gift_count": r[5],
+        }
+        for r in rows
+    ]}
+
+
 @router.get("/live/active")
 def list_active_streams(db: Session = Depends(get_db)):
-    """List all active live streams."""
+    """List all active live streams (public + private with badge)."""
     rows = db.execute(text(
         "SELECT ls.room_name, ls.title, ls.viewer_count, ls.started_at, ls.description, "
-        "u.username, u.display_name "
+        "u.username, u.display_name, ls.is_private, ls.access_type, ls.entry_coin_cost "
         "FROM live_streams ls JOIN users u ON ls.host_user_id = u.id "
         "WHERE ls.status = 'live' ORDER BY ls.viewer_count DESC LIMIT 20"
     )).fetchall()
     return {"streams": [
         {
-            "room_name": r[0], "title": r[1], "viewer_count": r[2],
+            "room_name": r[0], "title": r[1] if not r[7] else "Private Stream",
+            "viewer_count": r[2],
             "started_at": r[3].isoformat() if r[3] else None,
-            "description": r[4],
+            "description": r[4] if not r[7] else "",
             "host_username": r[5], "host_display_name": r[6],
+            "is_private": bool(r[7]),
+            "access_type": r[8] or "public",
+            "entry_coin_cost": r[9] or 0,
         }
         for r in rows
     ]}

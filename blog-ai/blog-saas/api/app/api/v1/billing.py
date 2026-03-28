@@ -179,6 +179,8 @@ async def stripe_webhook(
         _handle_payment_succeeded(event["data"]["object"], db)
     elif event["type"] in ("customer.subscription.deleted", "invoice.payment_failed"):
         _handle_subscription_ended(event["data"]["object"], db)
+    elif event["type"] == "payment_intent.succeeded":
+        _handle_coin_purchase(event["data"]["object"], db)
     return {"ok": True}
 
 
@@ -251,6 +253,56 @@ def _handle_subscription_ended(obj, db: Session):
                     org.plan_id = 1
                     org.subscription_status = "free"
         db.commit()
+
+def _handle_coin_purchase(payment_intent, db: Session):
+    """Credit coins to user wallet after successful Stripe payment."""
+    metadata = payment_intent.get("metadata", {})
+    if metadata.get("type") != "coin_purchase":
+        return  # Not a coin purchase, skip
+
+    user_id = metadata.get("user_id")
+    coin_amount = metadata.get("coin_amount")
+    if not user_id or not coin_amount:
+        return
+
+    user_id = int(user_id)
+    coin_amount = int(coin_amount)
+    payment_id = payment_intent.get("id", "")
+
+    from app.models.coin_wallet import CoinWallet
+    from app.models.coin_transaction import CoinTransaction
+
+    # Check for duplicate (idempotency)
+    existing = db.query(CoinTransaction).filter(
+        CoinTransaction.reference_id == payment_id,
+        CoinTransaction.type == "purchase",
+    ).first()
+    if existing:
+        return
+
+    # Get or create wallet
+    wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user_id).first()
+    if not wallet:
+        wallet = CoinWallet(user_id=user_id, balance=0)
+        db.add(wallet)
+        db.flush()
+
+    # Add coins to existing balance
+    wallet.balance += coin_amount
+    wallet.lifetime_earned += coin_amount
+
+    # Record transaction
+    txn = CoinTransaction(
+        user_id=user_id,
+        amount=coin_amount,
+        type="purchase",
+        reference_id=payment_id,
+        description=f"Purchased {coin_amount} coins",
+    )
+    db.add(txn)
+    db.commit()
+    print(f"[coins] credited {coin_amount} coins to user {user_id} (payment {payment_id})")
+
 
 @router.post("/fix-org-member")
 def fix_org_member(
