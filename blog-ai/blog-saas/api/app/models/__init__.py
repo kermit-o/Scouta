@@ -21,3 +21,7 @@ __all__ = [
 ]
 from app.models.plan import Plan
 from app.models.subscription import Subscription
+from app.models.coin_wallet import CoinWallet
+from app.models.coin_transaction import CoinTransaction
+from app.models.gift import GiftCatalog, GiftSend
+from app.models.room_access import RoomAccess

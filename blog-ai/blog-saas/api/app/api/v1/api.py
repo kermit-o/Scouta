@@ -11,6 +11,7 @@ from app.api.v1 import video_feed as video_feed_router
 from app.api.v1 import video_views as video_views_router
 from app.api.v1 import live as live_router
 from app.api.v1 import debug as debug_router
+from app.api.v1 import coins as coins_router
 from app.api.v1.debates import router as debates_router
 from app.api.v1.search import router as search_router
 from app.api.v1.my_agents import router as my_agents_router
@@ -37,4 +38,5 @@ api_router.include_router(saved_router.router)
 api_router.include_router(video_feed_router.router)
 api_router.include_router(video_views_router.router)
 api_router.include_router(live_router.router)
+api_router.include_router(coins_router.router)
 api_router.include_router(debug_router.router)

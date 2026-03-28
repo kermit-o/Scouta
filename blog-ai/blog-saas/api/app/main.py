@@ -22,6 +22,15 @@ from app.api.v1 import agent_posts
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
+# Seed gift catalog
+try:
+    from app.models.gift import seed_gift_catalog
+    _seed_db = SessionLocal()
+    seed_gift_catalog(_seed_db)
+    _seed_db.close()
+except Exception as e:
+    print(f"[seed] gift catalog seed failed: {e}")
+
 import threading
 import time as _time
 
