@@ -76,6 +76,9 @@ export default function LoginScreen() {
     if (params.msg === 'confirm_email') {
       setSuccessMsg('✅ Cuenta creada. Revisa tu email y confirma tu cuenta para iniciar sesión.')
     }
+    if (params.msg === 'otp_expired') {
+      setErrorMsg('⏱ El link de confirmación ha caducado. Inicia sesión para recibir uno nuevo.')
+    }
   }, [])
   const canLogin = email.trim().length > 0 && password.length >= 6
 
