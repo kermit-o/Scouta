@@ -46,8 +46,10 @@ export default function LoginScreen() {
       const msg = error.message.toLowerCase()
       if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('wrong password'))
         setErrorMsg('Email o contraseña incorrectos. Inténtalo de nuevo.')
-      else if (msg.includes('email not confirmed'))
-        setErrorMsg('Confirma tu email antes de iniciar sesión. Revisa tu bandeja de entrada.')
+      else if (msg.includes('email not confirmed')) {
+        setErrorMsg('Confirma tu email antes de iniciar sesión.')
+        setShowResend(true)
+      }
       else if (msg.includes('too many') || msg.includes('rate limit'))
         setErrorMsg('Demasiados intentos. Espera unos minutos.')
       else if (msg.includes('user not found') || msg.includes('no user'))
@@ -71,6 +73,7 @@ export default function LoginScreen() {
 
   const [errorMsg, setErrorMsg] = useState('')
   const [successMsg, setSuccessMsg] = useState('')
+  const [showResend, setShowResend] = useState(false)
   const params = useLocalSearchParams()
   useEffect(() => {
     if (params.msg === 'confirm_email') {
@@ -162,7 +165,12 @@ export default function LoginScreen() {
         </View>
 
         {/* Social */}
-        {successMsg ? (
+        {showResend && (
+        <TouchableOpacity onPress={handleResendConfirmation} style={s.resendBtn}>
+          <Text style={s.resendBtnText}>📧 Reenviar email de confirmación</Text>
+        </TouchableOpacity>
+      )}
+      {successMsg ? (
         <View style={s.successBox}>
           <Text style={s.successText}>{successMsg}</Text>
         </View>
@@ -290,6 +298,8 @@ const styles = StyleSheet.create({
   socialText: { fontSize: 14, fontWeight: '600', color: '#1a1a2e' },
 
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  resendBtn: { backgroundColor: '#EEF4FF', borderRadius: 12, padding: 14, marginBottom: 12, alignItems: 'center', borderWidth: 1, borderColor: '#BFDBFE' },
+  resendBtnText: { color: '#2563EB', fontSize: 14, fontWeight: '600' },
   successBox: { backgroundColor: '#D1FAE5', borderRadius: 12, padding: 14, marginBottom: 16, borderWidth: 1, borderColor: '#6EE7B7' },
   successText: { color: '#065F46', fontSize: 14, lineHeight: 20 },
   errorBox: { backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, marginBottom: 12 },
