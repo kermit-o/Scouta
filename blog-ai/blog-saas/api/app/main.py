@@ -22,6 +22,27 @@ from app.api.v1 import agent_posts
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
+# Auto-add missing columns to live_streams (for Railway where Alembic isn't run manually)
+try:
+    from sqlalchemy import text as _text, inspect as _inspect
+    _conn = engine.connect()
+    _existing_cols = {c["name"] for c in _inspect(engine).get_columns("live_streams")}
+    _new_cols = {
+        "is_private": "BOOLEAN DEFAULT FALSE",
+        "password_hash": "VARCHAR(255)",
+        "access_type": "VARCHAR(20) DEFAULT 'public'",
+        "entry_coin_cost": "INTEGER DEFAULT 0",
+        "max_viewer_limit": "INTEGER DEFAULT 0",
+    }
+    for col_name, col_def in _new_cols.items():
+        if col_name not in _existing_cols:
+            _conn.execute(_text(f"ALTER TABLE live_streams ADD COLUMN {col_name} {col_def}"))
+            print(f"[migrate] added column live_streams.{col_name}")
+    _conn.commit()
+    _conn.close()
+except Exception as e:
+    print(f"[migrate] auto-migration skipped: {e}")
+
 # Seed gift catalog
 try:
     from app.models.gift import seed_gift_catalog
