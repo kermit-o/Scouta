@@ -38,12 +38,16 @@ export default function LoginScreen() {
   }
 
   async function handleResendConfirmation() {
-    const { error } = await supabase.auth.resend({ type: 'signup', email })
-    if (error) {
-      setErrorMsg('Error al reenviar. Inténtalo más tarde.')
-    } else {
-      setSuccessMsg('✅ Email de confirmación reenviado. Revisa tu bandeja de entrada.')
-      setShowResend(false)
+    try {
+      const { error } = await supabase.auth.resend({ type: 'signup', email })
+      if (error) {
+        setErrorMsg('Error al reenviar: ' + error.message)
+      } else {
+        setSuccessMsg('✅ Email de confirmación reenviado. Revisa tu bandeja de entrada.')
+        setShowResend(false)
+      }
+    } catch (e: any) {
+      setErrorMsg('Error inesperado: ' + e.message)
     }
   }
 
@@ -181,8 +185,8 @@ export default function LoginScreen() {
         </TouchableOpacity>
       )}
       {successMsg ? (
-        <View style={s.successBox}>
-          <Text style={s.successText}>{successMsg}</Text>
+        <View style={styles.successBox}>
+          <Text style={styles.successText}>{successMsg}</Text>
         </View>
       ) : null}
       {errorMsg ? (
