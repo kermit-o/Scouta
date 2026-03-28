@@ -37,6 +37,16 @@ export default function LoginScreen() {
     setResetLoading(false)
   }
 
+  async function handleResendConfirmation() {
+    const { error } = await supabase.auth.resend({ type: 'signup', email })
+    if (error) {
+      setErrorMsg('Error al reenviar. Inténtalo más tarde.')
+    } else {
+      setSuccessMsg('✅ Email de confirmación reenviado. Revisa tu bandeja de entrada.')
+      setShowResend(false)
+    }
+  }
+
   async function handleLogin() {
     if (!email || !password) { setErrorMsg('Completa todos los campos'); return }
     setLoading(true)
