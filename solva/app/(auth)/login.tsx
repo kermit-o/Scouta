@@ -176,8 +176,8 @@ export default function LoginScreen() {
 
         {/* Social */}
         {showResend && (
-        <TouchableOpacity onPress={handleResendConfirmation} style={s.resendBtn}>
-          <Text style={s.resendBtnText}>📧 Reenviar email de confirmación</Text>
+        <TouchableOpacity onPress={handleResendConfirmation} style={styles.resendBtn}>
+          <Text style={styles.resendBtnText}>📧 Reenviar email de confirmación</Text>
         </TouchableOpacity>
       )}
       {successMsg ? (
