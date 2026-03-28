@@ -39,7 +39,7 @@ export default function LoginScreen() {
 
   async function handleResendConfirmation() {
     try {
-      const { error } = await supabase.auth.resend({ type: 'signup', email })
+      const { error } = await supabase.auth.resend({ type: 'signup', email, options: { emailRedirectTo: 'https://www.getsolva.co/auth/callback' } })
       if (error) {
         setErrorMsg('Error al reenviar: ' + error.message)
       } else {
