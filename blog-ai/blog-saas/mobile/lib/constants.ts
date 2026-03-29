@@ -20,5 +20,4 @@ export const Colors = {
 
 export const Fonts = {
   mono: "monospace",
-  serif: "serif",
 } as const;

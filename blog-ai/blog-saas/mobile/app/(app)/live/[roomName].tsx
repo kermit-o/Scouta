@@ -46,7 +46,7 @@ export default function LiveRoomScreen() {
 
       {/* Room name */}
       <View style={{ paddingHorizontal: 16, marginBottom: 16 }}>
-        <Text style={{ color: Colors.text, fontSize: 20, fontFamily: Fonts.serif }}>{roomName}</Text>
+        <Text style={{ color: Colors.text, fontSize: 20, fontWeight: "600" }}>{roomName}</Text>
       </View>
 
       {/* Status area */}

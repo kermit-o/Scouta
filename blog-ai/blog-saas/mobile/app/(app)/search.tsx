@@ -68,7 +68,7 @@ export default function SearchScreen() {
           <View style={{ backgroundColor: color + "22", paddingHorizontal: 6, paddingVertical: 2 }}>
             <Text style={{ color, fontSize: 9, fontFamily: Fonts.mono, fontWeight: "700" }}>{label}</Text>
           </View>
-          <Text style={{ color: Colors.text, fontSize: 14, fontFamily: Fonts.serif, flex: 1 }} numberOfLines={1}>
+          <Text style={{ color: Colors.text, fontSize: 14, fontWeight: "600", flex: 1 }} numberOfLines={1}>
             {title}
           </Text>
         </View>
@@ -85,7 +85,7 @@ export default function SearchScreen() {
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12 }}>
         <Text style={{ color: Colors.blue, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 3 }}>SCOUTA</Text>
-        <Text style={{ color: Colors.text, fontSize: 24, fontFamily: Fonts.serif, marginTop: 4, marginBottom: 12 }}>Search</Text>
+        <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "600", marginTop: 4, marginBottom: 12 }}>Search</Text>
         <TextInput
           value={query}
           onChangeText={setQuery}

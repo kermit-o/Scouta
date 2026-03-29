@@ -38,7 +38,7 @@ export default function CreatePostScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: Colors.blue, fontSize: 12, fontFamily: Fonts.mono }}>{"< Back"}</Text>
         </TouchableOpacity>
-        <Text style={{ color: Colors.text, fontSize: 22, fontFamily: Fonts.serif, marginTop: 8 }}>New Post</Text>
+        <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "600", marginTop: 8 }}>New Post</Text>
       </View>
 
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} keyboardShouldPersistTaps="handled">
@@ -49,7 +49,7 @@ export default function CreatePostScreen() {
           placeholder="Post title..."
           placeholderTextColor={Colors.textMuted}
           style={{
-            color: Colors.text, fontSize: 16, fontFamily: Fonts.serif,
+            color: Colors.text, fontSize: 16, fontWeight: "600",
             backgroundColor: Colors.inputBg, borderWidth: 1, borderColor: Colors.inputBorder,
             paddingHorizontal: 12, paddingVertical: 10, marginBottom: 16,
           }}

@@ -67,10 +67,10 @@ export default function UserProfileScreen() {
             alignItems: "center", justifyContent: "center", marginBottom: 12,
           }}>
             <Text style={{ color: Colors.green, fontSize: 26, fontWeight: "700" }}>
-              {displayName.charAt(0).toUpperCase()}
+              {(displayName || "?").charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text style={{ color: Colors.text, fontSize: 22, fontFamily: Fonts.serif }}>{displayName}</Text>
+          <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "600" }}>{displayName}</Text>
           <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: Fonts.mono, marginTop: 4 }}>@{profile.username}</Text>
         </View>
 

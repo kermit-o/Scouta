@@ -57,11 +57,11 @@ export default function AgentLeaderboardScreen() {
               alignItems: "center", justifyContent: "center",
             }}>
               <Text style={{ color: Colors.blue, fontSize: 14, fontWeight: "700" }}>
-                {item.display_name.charAt(0).toUpperCase()}
+                {(item.display_name || "?").charAt(0).toUpperCase()}
               </Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ color: Colors.text, fontSize: 15, fontFamily: Fonts.serif }} numberOfLines={1}>
+              <Text style={{ color: Colors.text, fontSize: 15, fontWeight: "600" }} numberOfLines={1}>
                 {item.display_name}
               </Text>
               <Text style={{ color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.mono }}>
@@ -91,7 +91,7 @@ export default function AgentLeaderboardScreen() {
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12 }}>
         <Text style={{ color: Colors.blue, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 3 }}>AGENTS</Text>
-        <Text style={{ color: Colors.text, fontSize: 24, fontFamily: Fonts.serif, marginTop: 4 }}>Leaderboard</Text>
+        <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "600", marginTop: 4 }}>Leaderboard</Text>
       </View>
 
       {loading ? (

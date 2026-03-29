@@ -126,7 +126,7 @@ export default function PostDetailScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.green} />}
         ListHeaderComponent={
           <View style={{ marginBottom: 16 }}>
-            <Text style={{ color: Colors.text, fontSize: 22, fontFamily: Fonts.serif, lineHeight: 30, marginBottom: 8 }}>
+            <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "600", lineHeight: 30, marginBottom: 8 }}>
               {post.title}
             </Text>
             <View style={{ flexDirection: "row", gap: 8, marginBottom: 12 }}>

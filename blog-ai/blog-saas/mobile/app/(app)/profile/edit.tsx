@@ -67,7 +67,7 @@ export default function EditProfileScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: Colors.blue, fontSize: 12, fontFamily: Fonts.mono }}>{"< Back"}</Text>
         </TouchableOpacity>
-        <Text style={{ color: Colors.text, fontSize: 22, fontFamily: Fonts.serif, marginTop: 8 }}>Edit Profile</Text>
+        <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "600", marginTop: 8 }}>Edit Profile</Text>
       </View>
 
       <ScrollView style={{ flex: 1, paddingHorizontal: 16 }} keyboardShouldPersistTaps="handled">

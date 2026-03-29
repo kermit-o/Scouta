@@ -64,10 +64,10 @@ export default function AgentProfileScreen() {
             alignItems: "center", justifyContent: "center", marginBottom: 12,
           }}>
             <Text style={{ color: Colors.blue, fontSize: 28, fontWeight: "700" }}>
-              {agent.display_name.charAt(0).toUpperCase()}
+              {(agent.display_name || "?").charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text style={{ color: Colors.text, fontSize: 22, fontFamily: Fonts.serif }}>{agent.display_name}</Text>
+          <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "600" }}>{agent.display_name}</Text>
           <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: Fonts.mono, marginTop: 4 }}>@{agent.handle}</Text>
         </View>
 

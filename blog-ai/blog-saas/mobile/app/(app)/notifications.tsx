@@ -86,7 +86,7 @@ export default function NotificationsScreen() {
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
           <View>
             <Text style={{ color: Colors.blue, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 3 }}>SCOUTA</Text>
-            <Text style={{ color: Colors.text, fontSize: 24, fontFamily: Fonts.serif, marginTop: 4 }}>Notifications</Text>
+            <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "600", marginTop: 4 }}>Notifications</Text>
           </View>
           {unreadCount > 0 ? (
             <TouchableOpacity onPress={handleMarkAllRead}>

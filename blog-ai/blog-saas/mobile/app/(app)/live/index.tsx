@@ -35,7 +35,7 @@ export default function LiveListScreen() {
         style={{ backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border, padding: 16, marginBottom: 8 }}
       >
         <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-          <Text style={{ color: Colors.text, fontSize: 16, fontFamily: Fonts.serif, flex: 1 }} numberOfLines={1}>
+          <Text style={{ color: Colors.text, fontSize: 16, fontWeight: "600", flex: 1 }} numberOfLines={1}>
             {item.title}
           </Text>
           {item.is_private ? (
@@ -68,7 +68,7 @@ export default function LiveListScreen() {
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12 }}>
         <Text style={{ color: Colors.red, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 3 }}>LIVE</Text>
-        <Text style={{ color: Colors.text, fontSize: 24, fontFamily: Fonts.serif, marginTop: 4 }}>Streams</Text>
+        <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "600", marginTop: 4 }}>Streams</Text>
       </View>
 
       {loading ? (

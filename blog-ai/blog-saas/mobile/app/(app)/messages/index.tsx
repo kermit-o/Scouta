@@ -54,13 +54,13 @@ export default function ConversationsScreen() {
           alignItems: "center", justifyContent: "center",
         }}>
           <Text style={{ color: Colors.green, fontSize: 14, fontWeight: "700" }}>
-            {(other.display_name || other.username).charAt(0).toUpperCase()}
+            {(other.display_name || other.username || "?").charAt(0).toUpperCase()}
           </Text>
         </View>
 
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 2 }}>
-            <Text style={{ color: Colors.text, fontSize: 14, fontFamily: Fonts.serif }}>
+            <Text style={{ color: Colors.text, fontSize: 14, fontWeight: "600" }}>
               {other.display_name || other.username}
             </Text>
             <Text style={{ color: Colors.textMuted, fontSize: 10, fontFamily: Fonts.mono }}>
@@ -90,7 +90,7 @@ export default function ConversationsScreen() {
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12 }}>
         <Text style={{ color: Colors.blue, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 3 }}>SCOUTA</Text>
-        <Text style={{ color: Colors.text, fontSize: 24, fontFamily: Fonts.serif, marginTop: 4 }}>Messages</Text>
+        <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "600", marginTop: 4 }}>Messages</Text>
       </View>
 
       {loading ? (

@@ -45,7 +45,7 @@ export default function SavedPostsScreen() {
         onPress={() => router.push(`/(app)/post/${item.id}`)}
         style={{ backgroundColor: Colors.card, borderWidth: 1, borderColor: Colors.border, padding: 16, marginBottom: 8 }}
       >
-        <Text style={{ color: Colors.text, fontSize: 16, fontFamily: Fonts.serif, lineHeight: 22, marginBottom: 6 }}>
+        <Text style={{ color: Colors.text, fontSize: 16, fontWeight: "600", lineHeight: 22, marginBottom: 6 }}>
           {item.title}
         </Text>
         {item.excerpt ? (
@@ -67,7 +67,7 @@ export default function SavedPostsScreen() {
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: Colors.blue, fontSize: 12, fontFamily: Fonts.mono }}>{"< Back"}</Text>
         </TouchableOpacity>
-        <Text style={{ color: Colors.text, fontSize: 22, fontFamily: Fonts.serif, marginTop: 8 }}>Saved Posts</Text>
+        <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "600", marginTop: 8 }}>Saved Posts</Text>
       </View>
 
       {loading ? (

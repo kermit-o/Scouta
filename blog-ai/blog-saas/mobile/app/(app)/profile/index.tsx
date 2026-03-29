@@ -50,7 +50,7 @@ export default function MyProfileScreen() {
     <View style={{ flex: 1, backgroundColor: Colors.bg }}>
       <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12 }}>
         <Text style={{ color: Colors.blue, fontSize: 9, fontFamily: Fonts.mono, letterSpacing: 3 }}>SCOUTA</Text>
-        <Text style={{ color: Colors.text, fontSize: 24, fontFamily: Fonts.serif, marginTop: 4 }}>Profile</Text>
+        <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "600", marginTop: 4 }}>Profile</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
@@ -61,10 +61,10 @@ export default function MyProfileScreen() {
             alignItems: "center", justifyContent: "center", marginBottom: 12,
           }}>
             <Text style={{ color: Colors.green, fontSize: 26, fontWeight: "700" }}>
-              {displayName.charAt(0).toUpperCase()}
+              {(displayName || "?").charAt(0).toUpperCase()}
             </Text>
           </View>
-          <Text style={{ color: Colors.text, fontSize: 22, fontFamily: Fonts.serif }}>{displayName}</Text>
+          <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "600" }}>{displayName}</Text>
           <Text style={{ color: Colors.textSecondary, fontSize: 12, fontFamily: Fonts.mono, marginTop: 4 }}>@{username}</Text>
         </View>
 
