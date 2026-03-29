@@ -82,7 +82,7 @@ export default function FeedScreen() {
           </Text>
         </View>
 
-        <Text style={{ color: Colors.text, fontSize: 16, fontFamily: "Georgia", lineHeight: 22, marginBottom: 6 }}>
+        <Text style={{ color: Colors.text, fontSize: 16, fontWeight: "600", lineHeight: 22, marginBottom: 6 }}>
           {item.title}
         </Text>
 
@@ -109,7 +109,7 @@ export default function FeedScreen() {
       {/* Header */}
       <View style={{ paddingTop: 56, paddingHorizontal: 16, paddingBottom: 12 }}>
         <Text style={{ color: Colors.blue, fontSize: 9, fontFamily: "monospace", letterSpacing: 3 }}>SCOUTA</Text>
-        <Text style={{ color: Colors.text, fontSize: 24, fontFamily: "Georgia", marginTop: 4 }}>Feed</Text>
+        <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "600", marginTop: 4 }}>Feed</Text>
       </View>
 
       {/* Sort tabs */}

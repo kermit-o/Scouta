@@ -1,50 +1,39 @@
+import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 
 const TOKEN_KEY = "scouta_jwt";
 const USER_KEY = "scouta_user";
 
-// SecureStore doesn't work on web — use localStorage as fallback
-let SecureStore: any = null;
-
-async function getStore() {
-  if (Platform.OS !== "web" && !SecureStore) {
-    SecureStore = await import("expo-secure-store");
-  }
-  return SecureStore;
-}
+const isWeb = Platform.OS === "web";
 
 export async function saveToken(token: string): Promise<void> {
-  const store = await getStore();
-  if (store) {
-    await store.setItemAsync(TOKEN_KEY, token);
-  } else {
+  if (isWeb) {
     localStorage.setItem(TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(TOKEN_KEY, token);
   }
 }
 
 export async function getToken(): Promise<string | null> {
-  const store = await getStore();
-  if (store) {
-    return store.getItemAsync(TOKEN_KEY);
+  if (isWeb) {
+    return localStorage.getItem(TOKEN_KEY);
   }
-  return localStorage.getItem(TOKEN_KEY);
+  return SecureStore.getItemAsync(TOKEN_KEY);
 }
 
 export async function saveUser(user: object): Promise<void> {
   const value = JSON.stringify(user);
-  const store = await getStore();
-  if (store) {
-    await store.setItemAsync(USER_KEY, value);
-  } else {
+  if (isWeb) {
     localStorage.setItem(USER_KEY, value);
+  } else {
+    await SecureStore.setItemAsync(USER_KEY, value);
   }
 }
 
 export async function getUser(): Promise<any | null> {
-  const store = await getStore();
-  const raw = store
-    ? await store.getItemAsync(USER_KEY)
-    : localStorage.getItem(USER_KEY);
+  const raw = isWeb
+    ? localStorage.getItem(USER_KEY)
+    : await SecureStore.getItemAsync(USER_KEY);
   if (!raw) return null;
   try {
     return JSON.parse(raw);
@@ -54,12 +43,11 @@ export async function getUser(): Promise<any | null> {
 }
 
 export async function clearAuth(): Promise<void> {
-  const store = await getStore();
-  if (store) {
-    await store.deleteItemAsync(TOKEN_KEY);
-    await store.deleteItemAsync(USER_KEY);
-  } else {
+  if (isWeb) {
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(USER_KEY);
+  } else {
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await SecureStore.deleteItemAsync(USER_KEY);
   }
 }

@@ -10,18 +10,22 @@ export default function SplashScreen() {
 
   useEffect(() => {
     if (!loading) {
-      if (isAuthenticated) {
-        router.replace("/(app)");
-      } else {
-        router.replace("/(auth)/login");
-      }
+      // Small delay to ensure navigation is ready
+      const timer = setTimeout(() => {
+        if (isAuthenticated) {
+          router.replace("/(app)");
+        } else {
+          router.replace("/(auth)/login");
+        }
+      }, 100);
+      return () => clearTimeout(timer);
     }
   }, [loading, isAuthenticated]);
 
   return (
     <View style={{ flex: 1, backgroundColor: Colors.bg, alignItems: "center", justifyContent: "center" }}>
-      <Text style={{ color: Colors.text, fontSize: 28, fontFamily: "Georgia", marginBottom: 16 }}>SCOUTA</Text>
-      <Text style={{ color: Colors.textMuted, fontSize: 11, fontFamily: "monospace", letterSpacing: 2, marginBottom: 24 }}>AI DEBATES</Text>
+      <Text style={{ color: Colors.text, fontSize: 28, fontWeight: "700", marginBottom: 16 }}>SCOUTA</Text>
+      <Text style={{ color: Colors.textMuted, fontSize: 11, letterSpacing: 2, marginBottom: 24 }}>AI DEBATES</Text>
       <ActivityIndicator color={Colors.green} />
     </View>
   );

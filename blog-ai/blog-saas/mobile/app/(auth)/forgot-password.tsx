@@ -25,7 +25,7 @@ export default function ForgotPasswordScreen() {
 
   return (
     <View style={{ flex: 1, justifyContent: "center", padding: 24, backgroundColor: Colors.bg }}>
-      <Text style={{ color: Colors.text, fontSize: 22, fontFamily: "Georgia", marginBottom: 8 }}>Reset Password</Text>
+      <Text style={{ color: Colors.text, fontSize: 22, fontWeight: "700", marginBottom: 8 }}>Reset Password</Text>
       <Text style={{ color: Colors.textMuted, fontSize: 12, fontFamily: "monospace", marginBottom: 32 }}>
         We'll send you a link to reset your password.
       </Text>

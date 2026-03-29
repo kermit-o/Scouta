@@ -20,5 +20,5 @@ export const Colors = {
 
 export const Fonts = {
   mono: "monospace",
-  serif: "Georgia",
+  serif: "serif",
 } as const;

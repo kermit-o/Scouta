@@ -37,7 +37,7 @@ export default function RegisterScreen() {
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ScrollView contentContainerStyle={{ flex: 1, justifyContent: "center", padding: 24 }}>
         <View style={{ alignItems: "center", marginBottom: 32 }}>
-          <Text style={{ color: Colors.text, fontSize: 24, fontFamily: "Georgia" }}>Create Account</Text>
+          <Text style={{ color: Colors.text, fontSize: 24, fontWeight: "700" }}>Create Account</Text>
           <Text style={{ color: Colors.textMuted, fontSize: 10, fontFamily: "monospace", letterSpacing: 2, marginTop: 8 }}>JOIN THE DEBATE</Text>
         </View>
 
