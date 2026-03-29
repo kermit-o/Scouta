@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": false,
     "scheme": "scouta",
     "splash": {
       "image": "./assets/splash-icon.png",
@@ -14,10 +13,12 @@
       "backgroundColor": "#080808"
     },
     "ios": {
+      "newArchEnabled": false,
       "supportsTablet": true,
       "bundleIdentifier": "co.scouta.app"
     },
     "android": {
+      "newArchEnabled": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#080808"
@@ -27,6 +28,9 @@
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
+    },
+    "install": {
+      "exclude": ["react-native-reanimated"]
     },
     "plugins": [
       "expo-router",
