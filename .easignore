@@ -1,0 +1,21 @@
+# Exclude everything except blog-ai/blog-saas/mobile
+backend/
+backend_consolidate_20251015/
+core/
+diet_ai/
+forge_saas/
+solva/
+FO/
+app/
+supabase/
+blog-ai/blog-saas/api/
+blog-ai/blog-saas/frontend/
+blog-ai/blog-saas/web/
+blog-ai/blog-saas/templates/
+blog-ai/blog-saas/next/
+blog-ai/blog-saas/*.txt
+blog-ai/blog-saas/*.sh
+blog-ai/blog-saas/*.log
+node_modules/
+.expo/
+*.log

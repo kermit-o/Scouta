@@ -3,3 +3,18 @@ node_modules
 dist
 .git
 *.log
+android
+ios
+
+# Exclude everything outside mobile (monorepo siblings)
+../api
+../frontend
+../web
+../templates
+../../backend
+../../core
+../../diet_ai
+../../forge_saas
+../../solva
+../../FO
+../../app
