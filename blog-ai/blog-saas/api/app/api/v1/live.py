@@ -192,6 +192,39 @@ def join_live(
                 db.add(RoomAccess(room_name=room_name, user_id=user.id, access_type="paid"))
                 db.commit()
 
+            elif stream.access_type == "followers":
+                is_follower = db.execute(
+                    text("SELECT id FROM follows WHERE follower_id=:fid AND following_id=:tid"),
+                    {"fid": user.id, "tid": stream.host_user_id}
+                ).first()
+                if not is_follower:
+                    raise HTTPException(status_code=403, detail="followers_only")
+                db.add(RoomAccess(room_name=room_name, user_id=user.id, access_type="follower"))
+                db.commit()
+
+            elif stream.access_type == "subscribers":
+                from app.models.user_subscription import UserSubscription
+                is_sub = db.query(UserSubscription).filter(
+                    UserSubscription.subscriber_id == user.id,
+                    UserSubscription.creator_id == stream.host_user_id,
+                    UserSubscription.status == "active",
+                ).first()
+                if not is_sub:
+                    raise HTTPException(status_code=403, detail="subscribers_only")
+                db.add(RoomAccess(room_name=room_name, user_id=user.id, access_type="subscriber"))
+                db.commit()
+
+            elif stream.access_type == "vip":
+                from app.models.vip_list import VipList
+                is_vip = db.query(VipList).filter(
+                    VipList.owner_user_id == stream.host_user_id,
+                    VipList.vip_user_id == user.id,
+                ).first()
+                if not is_vip:
+                    raise HTTPException(status_code=403, detail="vip_only")
+                db.add(RoomAccess(room_name=room_name, user_id=user.id, access_type="vip"))
+                db.commit()
+
     token = _create_livekit_token(room_name, user.display_name or user.username or f"user_{user.id}", can_publish=False)
 
     # Update viewer count

@@ -299,3 +299,66 @@ def search_users(q: str = "", db: Session = Depends(get_db), user: User = Depend
         (User.username.ilike(f"%{q}%")) | (User.display_name.ilike(f"%{q}%"))
     ).filter(User.id != user.id).limit(10).all()
     return [{"id": u.id, "username": u.username, "display_name": u.display_name or u.username, "avatar_url": u.avatar_url or ""} for u in results]
+
+
+# ── VIP List ──────────────────────────────────────────────────────────────────
+
+@router.get("/profile/vip")
+def get_vip_list(db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    """Get current user's VIP list."""
+    from app.models.vip_list import VipList
+    vips = db.query(VipList).filter(VipList.owner_user_id == user.id).all()
+    vip_user_ids = [v.vip_user_id for v in vips]
+    if not vip_user_ids:
+        return []
+    users = db.query(User).filter(User.id.in_(vip_user_ids)).all()
+    return [
+        {"id": u.id, "username": u.username, "display_name": u.display_name or u.username, "avatar_url": u.avatar_url or ""}
+        for u in users
+    ]
+
+
+@router.post("/profile/vip/add")
+def add_to_vip(
+    body: dict,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Add a user to your VIP list."""
+    username = body.get("username")
+    if not username:
+        raise HTTPException(status_code=400, detail="username required")
+    target = db.query(User).filter(User.username == username).first()
+    if not target:
+        raise HTTPException(status_code=404, detail="User not found")
+    if target.id == user.id:
+        raise HTTPException(status_code=400, detail="Cannot add yourself")
+
+    from app.models.vip_list import VipList
+    existing = db.query(VipList).filter(
+        VipList.owner_user_id == user.id, VipList.vip_user_id == target.id
+    ).first()
+    if existing:
+        return {"ok": True, "already_added": True}
+
+    db.add(VipList(owner_user_id=user.id, vip_user_id=target.id))
+    db.commit()
+    return {"ok": True, "added": username}
+
+
+@router.delete("/profile/vip/{user_id}")
+def remove_from_vip(
+    user_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Remove a user from your VIP list."""
+    from app.models.vip_list import VipList
+    vip = db.query(VipList).filter(
+        VipList.owner_user_id == user.id, VipList.vip_user_id == user_id
+    ).first()
+    if not vip:
+        raise HTTPException(status_code=404, detail="User not in VIP list")
+    db.delete(vip)
+    db.commit()
+    return {"ok": True, "removed": user_id}

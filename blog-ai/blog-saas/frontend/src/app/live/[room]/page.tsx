@@ -275,6 +275,33 @@ export default function LiveRoomPage() {
             </>
           )}
 
+          {accessBlock === "followers_only" && (
+            <>
+              <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>👥</p>
+              <p style={{ fontSize: "0.9rem", color: "#f0e8d8", fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>Followers Only</p>
+              <p style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", margin: "0 0 1rem" }}>You need to follow the host to join this room.</p>
+              <Link href="/live" style={{ display: "inline-block", border: "1px solid #222", color: "#4a7a9a", padding: "0.5rem 1.5rem", fontFamily: "monospace", fontSize: "0.65rem", textDecoration: "none" }}>Back to Live</Link>
+            </>
+          )}
+
+          {accessBlock === "subscribers_only" && (
+            <>
+              <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>⭐</p>
+              <p style={{ fontSize: "0.9rem", color: "#f0e8d8", fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>Subscribers Only</p>
+              <p style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", margin: "0 0 1rem" }}>You need an active subscription to the host to join.</p>
+              <Link href="/live" style={{ display: "inline-block", border: "1px solid #222", color: "#4a7a9a", padding: "0.5rem 1.5rem", fontFamily: "monospace", fontSize: "0.65rem", textDecoration: "none" }}>Back to Live</Link>
+            </>
+          )}
+
+          {accessBlock === "vip_only" && (
+            <>
+              <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>💎</p>
+              <p style={{ fontSize: "0.9rem", color: "#f0e8d8", fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>VIP Only</p>
+              <p style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", margin: "0 0 1rem" }}>This room is for VIP members only. Ask the host for access.</p>
+              <Link href="/live" style={{ display: "inline-block", border: "1px solid #222", color: "#4a7a9a", padding: "0.5rem 1.5rem", fontFamily: "monospace", fontSize: "0.65rem", textDecoration: "none" }}>Back to Live</Link>
+            </>
+          )}
+
           {accessBlock === "room_full" && (
             <>
               <p style={{ fontSize: "1.5rem", margin: "0 0 0.75rem" }}>🚫</p>

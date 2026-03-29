@@ -136,11 +136,14 @@ export default function LivePage() {
                   {/* Access type */}
                   <div>
                     <span style={labelStyle}>ACCESS TYPE</span>
-                    <div style={{ display: "flex", gap: "0.5rem" }}>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                       {[
                         { value: "password", label: "🔑 Password" },
                         { value: "invite_only", label: "✉️ Invite Only" },
                         { value: "paid", label: "🪙 Paid Entry" },
+                        { value: "followers", label: "👥 Followers" },
+                        { value: "subscribers", label: "⭐ Subscribers" },
+                        { value: "vip", label: "💎 VIP List" },
                       ].map(opt => (
                         <button
                           key={opt.value}
