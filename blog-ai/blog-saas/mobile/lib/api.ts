@@ -14,10 +14,12 @@ async function apiFetch(path: string, options: RequestInit = {}): Promise<Respon
 }
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
+const MOBILE_TOKEN = "scouta-mobile-app-2026";
+
 export async function login(email: string, password: string) {
   const res = await apiFetch("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ email, password, cf_turnstile_token: "" }),
+    body: JSON.stringify({ email, password, cf_turnstile_token: MOBILE_TOKEN }),
   });
   return res.json();
 }
@@ -25,9 +27,13 @@ export async function login(email: string, password: string) {
 export async function register(email: string, password: string, username: string, display_name?: string) {
   const res = await apiFetch("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ email, password, username, display_name: display_name || username, cf_turnstile_token: "" }),
+    body: JSON.stringify({ email, password, username, display_name: display_name || username, cf_turnstile_token: MOBILE_TOKEN }),
   });
   return res.json();
+}
+
+export function getGoogleLoginUrl() {
+  return `${API_BASE}/auth/google?redirect_mobile=1`;
 }
 
 export async function forgotPassword(email: string) {
