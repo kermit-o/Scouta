@@ -172,15 +172,17 @@ GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "https://scouta-productio
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://serene-eagerness-production.up.railway.app")
 
 @router.get("/auth/google")
-def google_login():
+def google_login(redirect_mobile: str = ""):
     """Redirige a Google OAuth"""
     import urllib.parse
+    state = "mobile" if redirect_mobile == "1" else "web"
     params = {
         "client_id": GOOGLE_CLIENT_ID,
         "redirect_uri": GOOGLE_REDIRECT_URI,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
+        "state": state,
     }
     url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
     from fastapi.responses import RedirectResponse
@@ -188,7 +190,7 @@ def google_login():
 
 
 @router.get("/auth/google/callback")
-def google_callback(code: str, db: Session = Depends(get_db)):
+def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)):
     """Callback de Google OAuth"""
     from fastapi.responses import RedirectResponse
 
@@ -248,10 +250,13 @@ def google_callback(code: str, db: Session = Depends(get_db)):
 
     token = create_access_token(subject=str(user.id))
 
-    # Redirigir al frontend con token
-    return RedirectResponse(
-        f"{FRONTEND_URL}/auth/callback?token={token}&user_id={user.id}&username={user.username}&display_name={user.display_name or ''}&avatar_url={user.avatar_url or ''}"
-    )
+    callback_params = f"token={token}&user_id={user.id}&username={user.username}&display_name={user.display_name or ''}&avatar_url={user.avatar_url or ''}"
+
+    # Redirect to mobile app deep link or web frontend
+    if state == "mobile":
+        return RedirectResponse(f"scouta://auth/callback?{callback_params}")
+
+    return RedirectResponse(f"{FRONTEND_URL}/auth/callback?{callback_params}")
 
 
 @router.put("/auth/profile")
