@@ -20,6 +20,7 @@ export default function AuthCallback() {
         const type = params.get('type')
 
         if (accessToken && refreshToken) {
+          await new Promise(r => setTimeout(r, 500))
           const { data, error } = await supabase.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
