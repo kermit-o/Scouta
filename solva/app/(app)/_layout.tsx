@@ -23,7 +23,7 @@ function AppLayoutInner() {
   const { t } = useTranslation()
 
   useEffect(() => {
-    if (!loading && profile && profile.onboarding_completed === false && profile.created_at && (Date.now() - new Date(profile.created_at).getTime() < 60000)) {
+    if (!loading && profile && profile.onboarding_completed === false) {
       router.replace('/(app)/onboarding')
     }
   }, [profile, loading])
