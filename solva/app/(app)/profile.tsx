@@ -495,7 +495,7 @@ export default function ProfileScreen() {
       {/* Logout */}
       <TouchableOpacity
         style={styles.logoutBtn}
-        onPress={() => { if (typeof window !== 'undefined' && window.confirm('¿Cerrar sesión?')) signOut() }}
+        onPress={async () => { if (typeof window !== 'undefined' && window.confirm('¿Cerrar sesión?')) await signOut() }}
         activeOpacity={0.8}
       >
         <Ionicons name="log-out-outline" size={18} color="#EF4444" />
