@@ -59,6 +59,11 @@ export default function JobsScreen() {
 
   async function fetchJobs() {
     setLoading(true)
+    if (searchMode === 'nearby' && !coords) {
+      setLoading(false)
+      setRefreshing(false)
+      return
+    }
     if (searchMode === 'nearby' && coords) {
       const { data } = await searchJobsNearby(coords.latitude, coords.longitude, radius)
       setJobs(data ?? [])
