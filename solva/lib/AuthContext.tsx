@@ -84,10 +84,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false)
     })
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSession(session)
-      if (session?.user?.id) await fetchProfile(session.user.id)
-      else setProfile(null)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setSession(null)
+        setProfile(null)
+        return
+      }
+      if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+        setSession(session)
+        if (session?.user?.id) await fetchProfile(session.user.id)
+        else setProfile(null)
+      }
     })
 
     return () => subscription.unsubscribe()
