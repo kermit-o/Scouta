@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { router } from 'expo-router'
 import { Session } from '@supabase/supabase-js'
 import { supabase, UserProfile } from './supabase'
 import { changeLanguage } from './i18n'
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut()
     setProfile(null)
     setSession(null)
+    router.replace('/(auth)/login')
   }
 
   useEffect(() => {
