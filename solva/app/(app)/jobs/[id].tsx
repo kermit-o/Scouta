@@ -58,11 +58,12 @@ export default function JobDetailScreen() {
   }
 
   async function fetchBids() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('bids')
       .select('*, users(full_name, avatar_url, is_verified)')
       .eq('job_id', id)
       .order('created_at', { ascending: false })
+    if (error) console.error('fetchBids error:', error.message)
     if (data) {
       setBids(data as Bid[])
       const mine = data.find((b: Bid) => b.pro_id === session?.user.id)
