@@ -94,10 +94,9 @@ export default function HomeScreen() {
         .eq('status', 'active')
         .limit(3),
       supabase.from('users')
-        .select('id, full_name, avatar_url, bio, hourly_rate, avg_rating, total_reviews')
+        .select('id, full_name, avatar_url, bio, hourly_rate')
         .in('role', ['pro', 'company'])
         .eq('country', profile!.country ?? 'ES')
-        .order('avg_rating', { ascending: false })
         .limit(6),
     ])
     if (jobsRes.data) setRecentJobs(minBudget > 0 ? jobsRes.data.filter((j: any) => (j.budget_max ?? 0) >= minBudget) : jobsRes.data)
