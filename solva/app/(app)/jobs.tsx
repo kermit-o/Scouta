@@ -87,6 +87,7 @@ export default function JobsScreen() {
   }
 
   useEffect(() => { fetchJobs() }, [searchMode, coords, radius])
+  useEffect(() => { fetchMyJobs() }, [session?.user?.id, activeTab])
 
   async function handleNearbyToggle() {
     if (searchMode === 'nearby') {
