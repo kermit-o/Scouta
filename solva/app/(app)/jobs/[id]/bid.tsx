@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import {
+import { Alert,
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView
 } from 'react-native'
@@ -27,6 +27,7 @@ export default function NewBidScreen() {
   const [deliveryDays, setDeliveryDays] = useState('')
   const [saving, setSaving] = useState(false)
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState('')
 
   async function handleSubmit() {
     const { allowed } = await canUse('bid')
