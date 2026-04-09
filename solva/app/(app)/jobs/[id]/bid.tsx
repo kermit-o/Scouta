@@ -19,7 +19,7 @@ export default function NewBidScreen() {
   const { session } = useAuth()
   const { profile } = useProfile()
   const insets = useSafeAreaInsets()
-  const { canSendBid } = useSubscription()
+  const { canUse } = useSubscription()
 
   const { t } = useTranslation()
   const [amount, setAmount] = useState('')
@@ -29,7 +29,7 @@ export default function NewBidScreen() {
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null)
 
   async function handleSubmit() {
-    const { allowed, reason } = await canSendBid()
+    const { allowed } = await canUse('bid')
     if (!allowed) { setPaywallFeature('bid'); return }
     if (!amount) { setErrorMsg('El precio es obligatorio.'); return }
     if (parseFloat(amount) <= 0) { setErrorMsg('El precio debe ser mayor a 0.'); return }
