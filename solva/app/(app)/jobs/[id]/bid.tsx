@@ -10,7 +10,6 @@ import { useAuth } from '../../../../lib/AuthContext'
 import { useProfile } from '../../../../hooks/useProfile'
 import { notifyUser } from '../../../../hooks/useNotifications'
 import { useSubscription } from '../../../../hooks/useSubscription'
-import { checkPlanLimit } from '../../../../lib/planLimits'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { PaywallModal } from '../../../../components/PaywallModal'
@@ -30,12 +29,6 @@ export default function NewBidScreen() {
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null)
 
   async function handleSubmit() {
-    // Verificar límite de bids
-    const limit = await checkPlanLimit(session!.user.id, 'bid')
-    if (!limit.allowed) {
-      setPaywallFeature('bid')
-      return
-    }
     const { allowed, reason } = await canSendBid()
     if (!allowed) { setPaywallFeature('bid'); return }
     if (!amount) { setErrorMsg('El precio es obligatorio.'); return }
