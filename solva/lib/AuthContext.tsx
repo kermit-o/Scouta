@@ -30,39 +30,53 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .from('users')
       .select('*')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
+
     if (error) {
       console.error('fetchProfile error:', error.message, 'userId:', userId)
-      // Si no existe el perfil en DB, cerrar sesión
-      if (error.code === 'PGRST116') {
-        await supabase.auth.signOut()
-        setProfile(null)
-        setSession(null)
-        return
-      }
-      if (false) {
-        const { data: authUser } = await supabase.auth.getUser()
-        if (authUser?.user) {
-          const meta = authUser.user.user_metadata
-          await supabase.from('users').upsert({
-            id: userId,
-            email: authUser.user.email || '',
-            full_name: meta?.full_name || meta?.name || authUser.user.email?.split('@')[0] || 'Usuario',
-            avatar_url: meta?.avatar_url || meta?.picture || null,
-            role: 'client',
-            country: 'ES',
-            currency: 'EUR',
-            language: 'es',
-          })
-          const { data: newProfile } = await supabase.from('users').select('*').eq('id', userId).single()
-          if (newProfile) {
-        setProfile(newProfile as UserProfile)
-        if ((newProfile as UserProfile).language) changeLanguage((newProfile as UserProfile).language)
-      }
-        }
-      }
-    } else if (data) {
+      return
+    }
+
+    if (data) {
       setProfile(data as UserProfile)
+      if ((data as UserProfile).language) changeLanguage((data as UserProfile).language)
+      return
+    }
+
+    // No existe el perfil aún: crearlo a partir del auth user (flujo OAuth / signup sin trigger)
+    const { data: authUser } = await supabase.auth.getUser()
+    if (!authUser?.user) return
+
+    const meta = authUser.user.user_metadata ?? {}
+    const newRow = {
+      id: userId,
+      email: authUser.user.email ?? '',
+      full_name:
+        meta.full_name ??
+        meta.name ??
+        authUser.user.email?.split('@')[0] ??
+        'Usuario',
+      avatar_url: meta.avatar_url ?? meta.picture ?? null,
+      role: 'client',
+      country: 'ES',
+      currency: 'EUR',
+      language: 'es',
+    }
+    const { error: upsertError } = await supabase.from('users').upsert(newRow)
+    if (upsertError) {
+      console.error('fetchProfile upsert error:', upsertError.message)
+      return
+    }
+    const { data: newProfile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .maybeSingle()
+    if (newProfile) {
+      setProfile(newProfile as UserProfile)
+      if ((newProfile as UserProfile).language) {
+        changeLanguage((newProfile as UserProfile).language)
+      }
     }
   }
 
@@ -78,16 +92,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
+    let cancelled = false
+
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (cancelled) return
       setSession(session)
       if (session?.user?.id) {
         await fetchProfile(session.user.id)
       }
-      setLoading(false)
+      if (!cancelled) setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+      if (cancelled) return
+      if (event === 'SIGNED_OUT') {
         setSession(null)
         setProfile(null)
         return
@@ -99,7 +117,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      cancelled = true
+      subscription.unsubscribe()
+    }
   }, [])
 
   return (

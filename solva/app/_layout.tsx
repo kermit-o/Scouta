@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Stack, router } from 'expo-router'
 import 'react-native-url-polyfill/auto'
 import { initI18n } from '../lib/i18n'
@@ -7,12 +7,12 @@ import * as Font from 'expo-font'
 import { Ionicons } from '@expo/vector-icons'
 import * as SplashScreen from 'expo-splash-screen'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import PaymentProvider from '../components/PaymentProvider'
 
 SplashScreen.preventAutoHideAsync()
 
 function RootLayoutNav() {
   const { session, loading } = useAuth()
-  useEffect(() => { initI18n() }, [])
   const prevSessionId = useRef<string | null>(null)
   useEffect(() => {
     if (loading) return
@@ -38,15 +38,32 @@ function RootLayoutNav() {
 
 export default function RootLayout() {
   const [fontsLoaded] = Font.useFonts({ ...Ionicons.font })
+  const [i18nReady, setI18nReady] = useState(false)
+
   useEffect(() => {
-    if (fontsLoaded) SplashScreen.hideAsync()
-  }, [fontsLoaded])
-  if (!fontsLoaded) return null
+    let cancelled = false
+    initI18n()
+      .catch((err) => console.warn('initI18n error:', err))
+      .finally(() => {
+        if (!cancelled) setI18nReady(true)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  useEffect(() => {
+    if (fontsLoaded && i18nReady) SplashScreen.hideAsync()
+  }, [fontsLoaded, i18nReady])
+
+  if (!fontsLoaded || !i18nReady) return null
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <RootLayoutNav />
-      </AuthProvider>
+      <PaymentProvider>
+        <AuthProvider>
+          <RootLayoutNav />
+        </AuthProvider>
+      </PaymentProvider>
     </SafeAreaProvider>
   )
 }
