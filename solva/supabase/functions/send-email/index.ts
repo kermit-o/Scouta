@@ -53,16 +53,29 @@ const TEMPLATES: Record<string, (data: any) => { subject: string; html: string }
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
+
+  const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
+  if (!RESEND_API_KEY) {
+    console.error('send-email: RESEND_API_KEY not configured')
+    return new Response(JSON.stringify({ error: 'Email provider not configured' }), {
+      status: 500,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
+    })
+  }
+
   try {
     const { to, template, data } = await req.json()
     if (!to || !template || !TEMPLATES[template]) {
-      return new Response(JSON.stringify({ error: 'Parámetros inválidos' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ error: 'Parámetros inválidos' }), {
+        status: 400,
+        headers: { ...CORS, 'Content-Type': 'application/json' },
+      })
     }
     const { subject, html } = TEMPLATES[template](data)
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${Deno.env.get('RESEND_API_KEY')}`,
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -71,15 +84,18 @@ Deno.serve(async (req) => {
         subject,
         html,
       }),
+      signal: AbortSignal.timeout(8000),
     })
     const result = await res.json()
     if (!res.ok) throw new Error(result.message ?? 'Error enviando email')
     return new Response(JSON.stringify({ success: true, id: result.id }), {
-      headers: { ...CORS, 'Content-Type': 'application/json' }
+      headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500, headers: { ...CORS, 'Content-Type': 'application/json' }
+    console.error('send-email error:', err?.message ?? err)
+    return new Response(JSON.stringify({ error: 'Failed to send email' }), {
+      status: 500,
+      headers: { ...CORS, 'Content-Type': 'application/json' },
     })
   }
 })

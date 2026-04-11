@@ -10,13 +10,24 @@ const CORS = {
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: CORS })
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Missing Authorization header' }), {
+        status: 401, headers: { ...CORS, 'Content-Type': 'application/json' },
+      })
+    }
+    const jwt = authHeader.replace('Bearer ', '')
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     )
-    const authHeader = req.headers.get('Authorization')!
-    const { data: { user } } = await supabase.auth.getUser(authHeader.replace('Bearer ', ''))
-    if (!user) throw new Error('No autenticado')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt)
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'No autenticado' }), {
+        status: 401, headers: { ...CORS, 'Content-Type': 'application/json' },
+      })
+    }
 
     const { data: profile } = await supabase
       .from('users')

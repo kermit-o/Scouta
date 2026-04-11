@@ -67,22 +67,21 @@ entrypoint = "./functions/create-mercadopago-payment/index.ts"
 
 [functions.mercadopago-webhook]
 enabled = true
-verify_jwt = true
+# Los webhooks de MercadoPago no envían JWT; la autenticación se hace vía HMAC en la función.
+verify_jwt = false
 import_map = "./functions/mercadopago-webhook/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/mercadopago-webhook/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/mercadopago-webhook/*.html" ]
+
+[functions.stripe-webhook]
+enabled = true
+# Los webhooks de Stripe no envían JWT; la autenticación se hace vía signature en la función.
+verify_jwt = false
+import_map = "./functions/stripe-webhook/deno.json"
+entrypoint = "./functions/stripe-webhook/index.ts"
 
 [functions.api-gateway]
 enabled = true
-verify_jwt = true
+# El api-gateway usa su propio esquema x-api-key; no usa JWT de Supabase Auth.
+verify_jwt = false
 import_map = "./functions/api-gateway/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
 entrypoint = "./functions/api-gateway/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/api-gateway/*.html" ]
