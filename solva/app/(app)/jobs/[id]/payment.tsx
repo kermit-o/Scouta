@@ -1,15 +1,29 @@
 import { useTranslation } from 'react-i18next'
-import { loadStripe } from '@stripe/stripe-js'
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { useEffect, useRef, useState } from 'react'
-import { Modal, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
+import { useEffect, useState } from 'react'
+import { Alert, Modal, Platform, View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView } from 'react-native'
 import { useLocalSearchParams, router } from 'expo-router'
 import { supabase } from '../../../../lib/supabase'
 import { useAuth } from '../../../../lib/AuthContext'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import StripeCardForm from '../../../../components/StripeCardForm'
 
-const stripePromise = loadStripe('pk_live_51RuUjn5CZiSWsN34qyJyjh5HQMHPSWtWJLO43DndusKf6QtSAHHUT9UnZFTGhP7YPQOcm9UcA6cf1kUwLojdyFQy008mzQDFN8')
+function confirmCrossPlatform(message: string): Promise<boolean> {
+  if (Platform.OS === 'web') {
+    return Promise.resolve(typeof window !== 'undefined' && window.confirm(message))
+  }
+  return new Promise((resolve) => {
+    Alert.alert(
+      'Confirmar',
+      message,
+      [
+        { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+        { text: 'OK', onPress: () => resolve(true) },
+      ],
+      { cancelable: true, onDismiss: () => resolve(false) }
+    )
+  })
+}
 
 export default function PaymentScreen() {
   const { id } = useLocalSearchParams<{ id: string }>()
@@ -27,7 +41,6 @@ export default function PaymentScreen() {
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const [showCardModal, setShowCardModal] = useState(false)
-  const [stripeInstance, setStripeInstance] = useState<any>(null)
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [paymentData, setPaymentData] = useState<any>(null)
   const [errorMsg, setErrorMsg] = useState('')
@@ -35,10 +48,23 @@ export default function PaymentScreen() {
   const [releasing, setReleasing] = useState(false)
 
   async function fetchData() {
-    const { data: c } = await supabase.from('contracts').select('*').eq('job_id', id).single()
+    const { data: c, error: cErr } = await supabase
+      .from('contracts')
+      .select('*')
+      .eq('job_id', id)
+      .maybeSingle()
+    if (cErr) {
+      console.warn('fetch contract error:', cErr.message)
+      setLoading(false)
+      return
+    }
     setContract(c)
     if (c) {
-      const { data: p } = await supabase.from('payments').select('*').eq('contract_id', c.id).maybeSingle()
+      const { data: p } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('contract_id', c.id)
+        .maybeSingle()
       setPayment(p)
     }
     setLoading(false)
@@ -51,47 +77,44 @@ export default function PaymentScreen() {
     setProcessing(true)
     try {
       const { data: fnData, error: fnError } = await supabase.functions.invoke('create-payment-intent', {
-        body: { contract_id: contract.id, amount: contract.amount, currency: contract.currency, country: contract.country, client_id: contract.client_id, pro_id: contract.pro_id }
+        body: {
+          contract_id: contract.id,
+          amount: contract.amount,
+          currency: contract.currency,
+          country: contract.country,
+          client_id: contract.client_id,
+          pro_id: contract.pro_id,
+        },
       })
       if (fnError) throw new Error(fnError.message)
-      if (fnData.provider === 'mercadopago') { setErrorMsg(t('payment.mercadopago')); setProcessing(false); return }
-      // stripe se carga via Elements provider
+      if (fnData.provider === 'mercadopago') {
+        setErrorMsg(t('payment.mercadopago'))
+        setProcessing(false)
+        return
+      }
       setClientSecret(fnData.client_secret)
       setPaymentData(fnData)
       setProcessing(false)
       setShowCardModal(true)
-    } catch (err: any) { setErrorMsg(err.message); setProcessing(false) }
-  }
-
-  async function handleConfirmPay(cardElement: any) {
-    if (!stripeInstance || !clientSecret || !contract || !paymentData) return
-    setProcessing(true)
-    try {
-      const { error } = await stripeInstance.confirmCardPayment(clientSecret, {
-        payment_method: { card: cardElement }
-      })
-      if (error) throw new Error(error.message)
-      await supabase.from('payments').insert({
-        contract_id: contract.id, client_id: contract.client_id, pro_id: contract.pro_id,
-        amount: contract.amount, platform_fee: paymentData.platform_fee, pro_amount: paymentData.pro_amount,
-        currency: contract.currency, country: contract.country, provider: 'stripe',
-        provider_payment_id: paymentData.payment_intent_id, status: 'held', held_at: new Date().toISOString(),
-      })
-      setShowCardModal(false)
-      fetchData()
-    } catch (err: any) { setErrorMsg(err.message) }
-    finally { setProcessing(false) }
+    } catch (err: any) {
+      setErrorMsg(err?.message ?? 'Error al iniciar el pago')
+      setProcessing(false)
+    }
   }
 
   async function handleRelease() {
     if (!payment || !contract) return
-    if (!window.confirm('¿Confirmas que el trabajo está completado?')) return
+    const ok = await confirmCrossPlatform('¿Confirmas que el trabajo está completado?')
+    if (!ok) return
     setReleasing(true)
     const { error } = await supabase.functions.invoke('release-payment', {
-      body: { paymentId: payment.id, contractId: contract.id }
+      body: { paymentId: payment.id, contractId: contract.id },
     })
     setReleasing(false)
-    if (error) { setErrorMsg(error.message); return }
+    if (error) {
+      setErrorMsg(error.message)
+      return
+    }
     setSuccessMsg(t('payment.released'))
     setTimeout(() => router.replace('/(app)/jobs'), 1500)
   }
@@ -285,86 +308,20 @@ export default function PaymentScreen() {
               </TouchableOpacity>
             </View>
             <Text style={s.modalAmount}>{contract?.amount} {contract?.currency}</Text>
-            <Elements stripe={stripePromise}>
-              <StripeCardForm
-                clientSecret={clientSecret}
-                paymentData={paymentData}
-                contract={contract}
-                onSuccess={() => { setShowCardModal(false); fetchData() }}
-                onError={(msg: string) => setErrorMsg(msg)}
-                processing={processing}
-                setProcessing={setProcessing}
-                t={t}
-              />
-            </Elements>
+            <StripeCardForm
+              clientSecret={clientSecret}
+              paymentData={paymentData}
+              contract={contract}
+              onSuccess={() => { setShowCardModal(false); fetchData() }}
+              onError={(msg: string) => setErrorMsg(msg)}
+              processing={processing}
+              setProcessing={setProcessing}
+              t={t}
+            />
           </View>
         </View>
       </Modal>
     </>
-  )
-}
-
-function StripeCardForm({ clientSecret, paymentData, contract, onSuccess, onError, processing, setProcessing, t }: any) {
-  const stripe = useStripe()
-  const elements = useElements()
-
-  async function handleSubmit() {
-    if (!stripe || !elements) { onError('Stripe no está listo. Espera un momento.'); return }
-    const card = elements.getElement(CardElement)
-    if (!card) { onError('No se encontró el campo de tarjeta.'); return }
-    setProcessing(true)
-    try {
-      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
-        payment_method: { card }
-      })
-      if (error) throw new Error(error.message)
-      await supabase.from('payments').insert({
-        contract_id: contract.id, client_id: contract.client_id, pro_id: contract.pro_id,
-        amount: contract.amount, platform_fee: paymentData.platform_fee, pro_amount: paymentData.pro_amount,
-        currency: contract.currency, country: contract.country, provider: 'stripe',
-        provider_payment_id: paymentData.payment_intent_id, status: 'held', held_at: new Date().toISOString(),
-      })
-      onSuccess()
-    } catch (err: any) { onError(err.message) }
-    finally { setProcessing(false) }
-  }
-
-  return (
-    <View>
-      <Text style={{ fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 8 }}>
-        {t('payment.cardNumber') ?? 'Número de tarjeta'}
-      </Text>
-      <View style={{
-        backgroundColor: '#F9FAFB', borderRadius: 12, borderWidth: 1,
-        borderColor: '#E5E7EB', padding: 14, marginBottom: 20,
-      }}>
-        <CardElement options={{
-          style: {
-            base: { fontSize: '16px', color: '#1a1a2e', fontFamily: 'system-ui, sans-serif', '::placeholder': { color: '#9CA3AF' } },
-            invalid: { color: '#EF4444' }
-          },
-          hidePostalCode: true,
-        }} />
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 16 }}>
-        <Ionicons name="lock-closed-outline" size={14} color="#059669" />
-        <Text style={{ fontSize: 12, color: '#059669', fontWeight: '600' }}>
-          {t('payment.securedByStripe') ?? 'Pago seguro con Stripe'}
-        </Text>
-      </View>
-      <TouchableOpacity
-        style={{ backgroundColor: '#2563EB', borderRadius: 14, height: 52, alignItems: 'center', justifyContent: 'center', opacity: (processing || !stripe) ? 0.6 : 1 }}
-        onPress={handleSubmit}
-        disabled={processing || !stripe}
-      >
-        {processing
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff' }}>
-              {t('payment.confirmPay') ?? 'Confirmar pago'}
-            </Text>
-        }
-      </TouchableOpacity>
-    </View>
   )
 }
 
