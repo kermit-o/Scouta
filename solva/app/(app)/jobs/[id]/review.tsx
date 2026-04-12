@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   View, Text, StyleSheet, TouchableOpacity, TextInput, Alert,
   ActivityIndicator, ScrollView, Image
@@ -57,7 +57,7 @@ export default function ReviewScreen() {
     setLoaded(true)
   }
 
-  useState(() => { loadContract() })
+  useEffect(() => { loadContract() }, [id])
 
   async function pickPhotos(type: 'before' | 'after') {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()

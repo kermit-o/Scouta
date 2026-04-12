@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 
 export default function InvoicesScreen() {
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>
