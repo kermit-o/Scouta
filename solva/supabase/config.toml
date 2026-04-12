@@ -85,3 +85,27 @@ enabled = true
 verify_jwt = false
 import_map = "./functions/api-gateway/deno.json"
 entrypoint = "./functions/api-gateway/index.ts"
+
+[functions.create-stripe-account]
+enabled = true
+verify_jwt = true
+import_map = "./functions/create-stripe-account/deno.json"
+entrypoint = "./functions/create-stripe-account/index.ts"
+
+[functions.generate-pro-content]
+enabled = true
+verify_jwt = true
+import_map = "./functions/generate-pro-content/deno.json"
+entrypoint = "./functions/generate-pro-content/index.ts"
+
+[functions.send-email]
+enabled = true
+verify_jwt = true
+import_map = "./functions/send-email/deno.json"
+entrypoint = "./functions/send-email/index.ts"
+
+[functions.send-notification]
+enabled = true
+verify_jwt = true
+import_map = "./functions/send-notification/deno.json"
+entrypoint = "./functions/send-notification/index.ts"
