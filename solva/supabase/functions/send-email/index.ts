@@ -49,6 +49,18 @@ const TEMPLATES: Record<string, (data: any) => { subject: string; html: string }
         <a href="https://www.getsolva.co" style="display:inline-block;margin-top:16px;background:#2563EB;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">Ver historial →</a>
       </div>`,
   }),
+  dispute_opened: (d) => ({
+    subject: `⚠️ Disputa abierta — "${d.jobTitle}"`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:32px">
+        <h1 style="color:#DC2626">Se ha abierto una disputa</h1>
+        <p>Hola <b>${d.userName}</b>,</p>
+        <p>Se ha abierto una disputa para el trabajo <b>"${d.jobTitle}"</b>.</p>
+        <p><b>Motivo:</b> ${d.reason}</p>
+        <p style="color:#555">El pago queda bloqueado hasta que se resuelva. Nuestro equipo revisará el caso en 48-72h hábiles.</p>
+        <a href="https://www.getsolva.co/(app)/jobs/${d.jobId}/dispute" style="display:inline-block;margin-top:16px;background:#DC2626;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:700">Ver disputa →</a>
+      </div>`,
+  }),
 }
 
 Deno.serve(async (req) => {
