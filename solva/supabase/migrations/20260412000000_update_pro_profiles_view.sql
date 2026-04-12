@@ -1,9 +1,9 @@
--- Update pro_profiles view to include missing profile fields
--- that pro/[id].tsx and search.tsx depend on (bio, skills,
--- availability, years_experience, hourly_rate, portfolio_urls).
--- These columns exist in users but were omitted from the original view.
+-- Update pro_profiles view to include missing profile fields.
+-- Must DROP first because CREATE OR REPLACE cannot add/remove columns.
 
-CREATE OR REPLACE VIEW public.pro_profiles AS
+DROP VIEW IF EXISTS public.pro_profiles;
+
+CREATE VIEW public.pro_profiles AS
 SELECT
   u.id,
   u.full_name,
@@ -29,5 +29,5 @@ LEFT JOIN public.contracts c ON c.pro_id = u.id AND c.status = 'completed'
 WHERE u.role IN ('pro', 'company')
 GROUP BY u.id;
 
--- Re-grant (CREATE OR REPLACE preserves grants but be explicit)
+-- Re-grant (DROP removes grants so we must re-apply)
 GRANT SELECT ON public.pro_profiles TO anon, authenticated;
