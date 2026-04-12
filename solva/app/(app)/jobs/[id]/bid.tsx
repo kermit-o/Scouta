@@ -76,6 +76,12 @@ export default function NewBidScreen() {
 
       <ScrollView style={s.scroll} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
 
+        {errorMsg ? (
+          <TouchableOpacity style={s.errorBox} onPress={() => setErrorMsg('')} activeOpacity={0.8}>
+            <Text style={s.errorText}>{errorMsg}</Text>
+          </TouchableOpacity>
+        ) : null}
+
         {/* Moneda badge */}
         <View style={s.currencyCard}>
           <View style={s.currencyIcon}>

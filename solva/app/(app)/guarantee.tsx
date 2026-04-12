@@ -15,6 +15,7 @@ const FEATURES = [
 
 export default function GuaranteeScreen() {
   const insets = useSafeAreaInsets()
+  const { t } = useTranslation()
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       <View style={styles.header}>

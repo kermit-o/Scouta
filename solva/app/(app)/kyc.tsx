@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { useEffect, useState } from 'react'
 import {
-  View, Text, StyleSheet, TouchableOpacity, ScrollView,
+  Alert, View, Text, StyleSheet, TouchableOpacity, ScrollView,
   ActivityIndicator, Image
 } from 'react-native'
 import { router } from 'expo-router'
@@ -37,6 +37,7 @@ export default function KycScreen() {
   const [selfieUrl, setSelfieUrl] = useState('')
   const [uploading, setUploading] = useState('')
   const [saving, setSaving] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   async function loadKyc() {
     const { data } = await supabase

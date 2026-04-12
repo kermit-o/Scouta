@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  Alert, Platform, View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView, Image
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
@@ -139,48 +139,6 @@ export default function ProfileScreen() {
   }, [])
 
 
-  // Detectar retorno de Stripe onboarding
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('stripe') === 'success') {
-        supabase.from('users')
-          .update({ stripe_onboarding_completed: true })
-          .eq('id', session!.user.id)
-          .then(() => {
-            refreshProfile()
-            setSuccessMsg('✅ Cuenta de cobro activada correctamente')
-            setTimeout(() => setSuccessMsg(''), 4000)
-          })
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-    }
-  }, [])
-
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('stripe') === 'success') {
-        supabase.from('users').update({ stripe_onboarding_completed: true }).eq('id', session!.user.id).then(() => { refreshProfile(); })
-        setSuccessMsg('Cuenta de cobro activada')
-        setTimeout(() => setSuccessMsg(''), 4000)
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('stripe') === 'success') {
-        supabase.from('users').update({ stripe_onboarding_completed: true }).eq('id', session!.user.id).then(() => { refreshProfile() })
-        setSuccessMsg('Cuenta de cobro activada')
-        setTimeout(() => setSuccessMsg(''), 4000)
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-    }
-  }, [])
   
   async function handleStripeConnect() {
     try {
@@ -220,13 +178,6 @@ export default function ProfileScreen() {
       onPress: () => router.push('/(app)/referrals'),
     },
     ...(profile?.role === 'pro' || profile?.role === 'company' ? [{
-      icon: 'construct-outline' as const,
-      label: 'Mis servicios',
-      badge: 'Nuevo',
-      badgeColor: '#059669',
-      badgeBg: '#D1FAE5',
-      onPress: () => router.push('/(app)/pro-services'),
-    }, {
       icon: 'construct-outline' as const,
       label: 'Mis servicios',
       badge: 'Nuevo',
@@ -341,7 +292,7 @@ export default function ProfileScreen() {
             <Text style={styles.profileEmail}>{profile?.email}</Text>
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={14} color="#F59E0B" />
-              <Text style={styles.ratingText}>4.9</Text>
+              <Text style={styles.ratingText}>{profile?.avg_rating ? Number(profile.avg_rating).toFixed(1) : '-'}</Text>
               <Text style={styles.ratingLabel}>{t('profile.rating')}</Text>
             </View>
           </View>
@@ -495,7 +446,16 @@ export default function ProfileScreen() {
       {/* Logout */}
       <TouchableOpacity
         style={styles.logoutBtn}
-        onPress={async () => { if (typeof window !== 'undefined' && window.confirm('¿Cerrar sesión?')) await signOut() }}
+        onPress={() => {
+          if (Platform.OS === 'web') {
+            if (typeof window !== 'undefined' && window.confirm('¿Cerrar sesión?')) signOut()
+          } else {
+            Alert.alert('Cerrar sesión', '¿Estás seguro?', [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Cerrar sesión', style: 'destructive', onPress: () => signOut() },
+            ])
+          }
+        }}
         activeOpacity={0.8}
       >
         <Ionicons name="log-out-outline" size={18} color="#EF4444" />
