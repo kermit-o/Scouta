@@ -4,7 +4,7 @@
   "framework": null,
   "installCommand": "npm install",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!_expo|assets|static|favicon|manifest|robots|sitemap|.*\\.(js|css|map|png|jpg|jpeg|gif|svg|ico|webp|woff2?|ttf|eot|json)).*)", "destination": "/index.html" }
   ],
   "headers": [
     {

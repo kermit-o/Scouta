@@ -40,9 +40,19 @@ Deno.serve(async (req) => {
           Deno.env.get('SUPABASE_URL')!,
           Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
         )
-        const { data: pct } = await supabase.rpc('get_commission_pct', { p_user_id: pro_id })
-        if (pct != null) commissionPct = pct / 100
-      } catch (_) {}
+        const { data: pct, error: pctError } = await supabase.rpc('get_commission_pct', { p_user_id: pro_id })
+        if (pctError) {
+          console.warn('get_commission_pct error, falling back to default:', pctError.message)
+        } else if (pct != null && !Number.isNaN(Number(pct))) {
+          commissionPct = Number(pct) / 100
+        }
+      } catch (err: any) {
+        console.warn('commissionPct fetch failed:', err?.message ?? err)
+      }
+    }
+    // Guard against NaN regardless of source
+    if (!Number.isFinite(commissionPct) || commissionPct < 0 || commissionPct > 1) {
+      commissionPct = PLATFORM_FEE_PCT
     }
 
     const platformFee = Math.round(amount * commissionPct * 100) / 100

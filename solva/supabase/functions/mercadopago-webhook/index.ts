@@ -6,6 +6,47 @@ const supabase = createClient(
 )
 
 const MP_ACCESS_TOKEN = Deno.env.get('MP_ACCESS_TOKEN')!
+const MP_WEBHOOK_SECRET = Deno.env.get('MP_WEBHOOK_SECRET')
+
+/**
+ * Verifica la firma del webhook de MercadoPago.
+ * MP envía x-signature: "ts=<timestamp>,v1=<hash>"
+ * donde v1 = HMAC-SHA256(manifest, MP_WEBHOOK_SECRET).
+ * El manifest es: id:<data.id>;request-id:<x-request-id>;ts:<ts>;
+ */
+async function verifyMpSignature(req: Request, dataId: string): Promise<boolean> {
+  if (!MP_WEBHOOK_SECRET) {
+    console.error('MP_WEBHOOK_SECRET not configured — rejecting all webhooks')
+    return false
+  }
+  const sigHeader = req.headers.get('x-signature') ?? ''
+  const requestId = req.headers.get('x-request-id') ?? ''
+  const parts = Object.fromEntries(
+    sigHeader.split(',').map((p) => p.trim().split('=') as [string, string])
+  )
+  const ts = parts.ts
+  const v1 = parts.v1
+  if (!ts || !v1) return false
+
+  const manifest = `id:${dataId};request-id:${requestId};ts:${ts};`
+  const key = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(MP_WEBHOOK_SECRET),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(manifest))
+  const hex = Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('')
+
+  // Comparación constant-time simple
+  if (hex.length !== v1.length) return false
+  let diff = 0
+  for (let i = 0; i < hex.length; i++) diff |= hex.charCodeAt(i) ^ v1.charCodeAt(i)
+  return diff === 0
+}
 
 Deno.serve(async (req) => {
   try {
@@ -16,15 +57,33 @@ Deno.serve(async (req) => {
       return new Response('ok', { status: 200 })
     }
 
+    if (!data?.id) {
+      return new Response('Missing data.id', { status: 400 })
+    }
+
+    // Verifica firma HMAC antes de procesar
+    const sigOk = await verifyMpSignature(req, String(data.id))
+    if (!sigOk) {
+      console.error('MercadoPago webhook signature verification failed')
+      return new Response('invalid signature', { status: 401 })
+    }
+
     // Obtiene detalles del pago de MercadoPago
     const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${data.id}`, {
-      headers: { 'Authorization': `Bearer ${MP_ACCESS_TOKEN}` }
+      headers: { 'Authorization': `Bearer ${MP_ACCESS_TOKEN}` },
+      signal: AbortSignal.timeout(8000),
     })
+    if (!mpResponse.ok) {
+      console.error('MP API error:', mpResponse.status)
+      return new Response('mp api error', { status: 502 })
+    }
     const payment = await mpResponse.json()
 
-    const { contract_id, client_id, pro_id, platform_fee, pro_amount } = payment.metadata ?? {}
+    const metadata = payment.metadata ?? {}
+    const { contract_id, client_id, pro_id, platform_fee, pro_amount } = metadata
 
     if (!contract_id) {
+      console.warn('MP webhook: missing contract_id in metadata, payment.id=', payment.id)
       return new Response('No contract_id in metadata', { status: 200 })
     }
 

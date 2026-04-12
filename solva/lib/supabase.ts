@@ -2,8 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { createClient } from '@supabase/supabase-js'
 import { Platform } from 'react-native'
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? 'https://qzyxcooctlahwhhixyiy.supabase.co'
-const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? 'sb_publishable_gvNlWZrANOGAqW4o7HquUw_uFGfDgCB'
+const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    'Missing Supabase environment variables. Please set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY.'
+  )
+}
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
@@ -18,7 +24,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 export type UserRole = 'client' | 'pro' | 'company' | 'admin'
 export type SupportedCountry = 'ES' | 'FR' | 'BE' | 'NL' | 'DE' | 'PT' | 'IT' | 'GB' | 'MX' | 'CO' | 'AR' | 'BR' | 'CL'
 export type SupportedCurrency = 'EUR' | 'GBP' | 'MXN' | 'COP' | 'ARS' | 'BRL' | 'CLP'
-export type SupportedLanguage = 'es' | 'es-ES' | 'pt-BR'
+export type SupportedLanguage = 'en' | 'es' | 'fr' | 'pt' | 'nl' | 'de' | 'it'
 
 export interface UserProfile {
   id: string
@@ -183,6 +189,11 @@ export interface Subscription {
   stripe_subscription_id: string | null
   current_period_end: string | null
   cancel_at_period_end: boolean
+  trial_started_at: string | null
+  trial_ends_at: string | null
+  trial_converted: boolean
+  paused_at: string | null
+  pause_reason: string | null
   created_at: string
 }
 
@@ -218,56 +229,6 @@ export interface Guarantee {
   claimed_at: string | null
   resolved_at: string | null
   expires_at: string
-  created_at: string
-}
-
-export interface ProService {
-  id: string
-  pro_id: string
-  title: string
-  description: string | null
-  price_from: number | null
-  price_to: number | null
-  price_type: 'fixed' | 'from' | 'hourly' | 'quote'
-  category: string | null
-  duration_hours: number | null
-  is_active: boolean
-  created_at: string
-}
-
-export interface ProPortfolio {
-  id: string
-  pro_id: string
-  media_url: string
-  media_type: 'image' | 'video'
-  title: string | null
-  description: string | null
-  category: string | null
-  created_at: string
-}
-
-export interface ProService {
-  id: string
-  pro_id: string
-  title: string
-  description: string | null
-  price_from: number | null
-  price_to: number | null
-  price_type: 'fixed' | 'from' | 'hourly' | 'quote'
-  category: string | null
-  duration_hours: number | null
-  is_active: boolean
-  created_at: string
-}
-
-export interface ProPortfolio {
-  id: string
-  pro_id: string
-  media_url: string
-  media_type: 'image' | 'video'
-  title: string | null
-  description: string | null
-  category: string | null
   created_at: string
 }
 

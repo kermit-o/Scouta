@@ -14,17 +14,25 @@ async function hashKey(key: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
-function corsHeaders() {
+const ALLOWED_ORIGINS = (Deno.env.get('API_GATEWAY_ALLOWED_ORIGINS') ??
+  'https://www.getsolva.co,https://getsolva.co')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean)
+
+function corsHeaders(origin: string | null) {
+  const allow = origin && ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0]
   return {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin': allow,
+    'Vary': 'Origin',
     'Access-Control-Allow-Headers': 'authorization, x-api-key, content-type',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Content-Type': 'application/json',
   }
 }
 
-function response(data: any, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers: corsHeaders() })
+function response(data: any, status = 200, origin: string | null = null) {
+  return new Response(JSON.stringify(data), { status, headers: corsHeaders(origin) })
 }
 
 async function validateApiKey(apiKey: string): Promise<{ valid: boolean; keyRecord?: any; error?: string }> {
@@ -56,16 +64,17 @@ function hasScope(keyRecord: any, scope: string): boolean {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders() })
+  const origin = req.headers.get('origin')
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders(origin) })
 
   const url = new URL(req.url)
   const path = url.pathname.replace('/functions/v1/api-gateway', '')
   const apiKey = req.headers.get('x-api-key')
 
-  if (!apiKey) return response({ error: 'Falta x-api-key header' }, 401)
+  if (!apiKey) return response({ error: 'Falta x-api-key header' }, 401, origin)
 
   const { valid, keyRecord, error } = await validateApiKey(apiKey)
-  if (!valid) return response({ error }, 401)
+  if (!valid) return response({ error }, 401, origin)
 
   // ============================================
   // GET /jobs — Lista jobs abiertos
@@ -75,8 +84,8 @@ Deno.serve(async (req) => {
 
     const country = url.searchParams.get('country')
     const category = url.searchParams.get('category')
-    const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '20'), 100)
-    const page = parseInt(url.searchParams.get('page') ?? '0')
+    const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') ?? '20') || 20, 1), 100)
+    const page = Math.max(parseInt(url.searchParams.get('page') ?? '0') || 0, 0)
 
     let query = supabase
       .from('jobs')
@@ -119,8 +128,8 @@ Deno.serve(async (req) => {
     if (!hasScope(keyRecord, 'pros:read')) return response({ error: 'Sin permisos: pros:read' }, 403)
 
     const country = url.searchParams.get('country')
-    const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '20'), 100)
-    const page = parseInt(url.searchParams.get('page') ?? '0')
+    const limit = Math.min(Math.max(parseInt(url.searchParams.get('limit') ?? '20') || 20, 1), 100)
+    const page = Math.max(parseInt(url.searchParams.get('page') ?? '0') || 0, 0)
 
     let query = supabase
       .from('pro_profiles')
