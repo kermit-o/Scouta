@@ -9,13 +9,19 @@ import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 
 const COUNTRIES = [
-  { code: 'ES', flag: '🇪🇸', name: 'España', currency: 'EUR', language: 'es-ES' },
+  { code: 'ES', flag: '🇪🇸', name: 'España', currency: 'EUR', language: 'es' },
+  { code: 'FR', flag: '🇫🇷', name: 'France', currency: 'EUR', language: 'fr' },
+  { code: 'BE', flag: '🇧🇪', name: 'Belgique', currency: 'EUR', language: 'fr' },
+  { code: 'NL', flag: '🇳🇱', name: 'Nederland', currency: 'EUR', language: 'nl' },
+  { code: 'DE', flag: '🇩🇪', name: 'Deutschland', currency: 'EUR', language: 'de' },
+  { code: 'PT', flag: '🇵🇹', name: 'Portugal', currency: 'EUR', language: 'pt' },
+  { code: 'IT', flag: '🇮🇹', name: 'Italia', currency: 'EUR', language: 'it' },
+  { code: 'GB', flag: '🇬🇧', name: 'United Kingdom', currency: 'GBP', language: 'en' },
   { code: 'MX', flag: '🇲🇽', name: 'México', currency: 'MXN', language: 'es' },
   { code: 'CO', flag: '🇨🇴', name: 'Colombia', currency: 'COP', language: 'es' },
   { code: 'AR', flag: '🇦🇷', name: 'Argentina', currency: 'ARS', language: 'es' },
   { code: 'CL', flag: '🇨🇱', name: 'Chile', currency: 'CLP', language: 'es' },
-  { code: 'BR', flag: '🇧🇷', name: 'Brasil', currency: 'BRL', language: 'pt-BR' },
-  { code: 'FR', flag: '🇫🇷', name: 'Francia', currency: 'EUR', language: 'es' },
+  { code: 'BR', flag: '🇧🇷', name: 'Brasil', currency: 'BRL', language: 'pt' },
 ]
 
 export default function CountryScreen() {
