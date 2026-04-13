@@ -62,6 +62,7 @@
     },
     "plugins": [
       "./plugins/withNoGoogleServices",
+      "@sentry/react-native/expo",
       "expo-secure-store",
       "expo-localization",
       "expo-font",
