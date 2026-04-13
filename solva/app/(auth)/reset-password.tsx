@@ -29,7 +29,7 @@ export default function ResetPasswordScreen() {
 
   async function handleReset() {
     if (password !== confirm) { setMsg('no_match'); return }
-    if (password.length < 6) { setMsg('too_short'); return }
+    if (password.length < 8) { setMsg('too_short'); return }
     setLoading(true)
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
@@ -81,7 +81,7 @@ export default function ResetPasswordScreen() {
             <Text style={styles.label}>{t('security.newPassword')}</Text>
             <View style={styles.inputRow}>
               <Ionicons name="lock-closed-outline" size={18} color="#888" />
-              <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="Mínimo 6 caracteres" placeholderTextColor="#aaa" secureTextEntry={!showPwd} />
+              <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder={t('auth.min8chars')} placeholderTextColor="#aaa" secureTextEntry={!showPwd} />
               <TouchableOpacity onPress={() => setShowPwd(!showPwd)}>
                 <Ionicons name={showPwd ? 'eye-off-outline' : 'eye-outline'} size={18} color="#888" />
               </TouchableOpacity>
