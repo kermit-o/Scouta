@@ -80,7 +80,7 @@ export default function RegisterScreen() {
 
   const strength = passwordStrength(password)
   const selectedCountry = COUNTRIES.find(c => c.value === country)!
-  const canStep1 = fullName.trim().length > 0 && email.trim().length > 0 && password.length >= 6
+  const canStep1 = fullName.trim().length > 0 && email.trim().length > 0 && password.length >= 8
 
   async function handleRegister() {
     if (!acceptTerms) { setErrorMsg('Debes aceptar los términos para continuar.'); return }
@@ -105,7 +105,7 @@ export default function RegisterScreen() {
       if (error.message.includes('already registered') || error.message.includes('already exists')) {
         setErrorMsg('Este email ya está registrado. ¿Quieres iniciar sesión?')
       } else if (error.message.includes('password')) {
-        setErrorMsg('La contraseña debe tener al menos 6 caracteres.')
+        setErrorMsg('La contraseña debe tener al menos 8 caracteres.')
       } else {
         setErrorMsg(error.message)
       }
@@ -206,7 +206,7 @@ export default function RegisterScreen() {
                 style={styles.input}
                 value={password}
                 onChangeText={setPassword}
-                placeholder={t("auth.min6chars")}
+                placeholder={t("auth.min8chars")}
                 placeholderTextColor="#aaa"
                 secureTextEntry={!showPassword}
               />

@@ -100,7 +100,7 @@ export default function LoginScreen() {
       setErrorMsg('⏱ El link de confirmación ha caducado. Inicia sesión para recibir uno nuevo.')
     }
   }, [])
-  const canLogin = email.trim().length > 0 && password.length >= 6
+  const canLogin = email.trim().length > 0 && password.length >= 8
 
   return (
     <KeyboardAvoidingView
