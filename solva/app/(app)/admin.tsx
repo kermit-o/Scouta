@@ -70,6 +70,17 @@ export default function AdminScreen() {
     if (status === 'approved') {
       await supabase.from('users').update({ is_verified: true }).eq('id', userId)
     }
+    // Send KYC result email
+    const { data: kycUser } = await supabase.from('users').select('email, full_name').eq('id', userId).maybeSingle()
+    if (kycUser?.email) {
+      supabase.functions.invoke('send-email', {
+        body: {
+          to: kycUser.email,
+          template: status === 'approved' ? 'kyc_approved' : 'kyc_rejected',
+          data: { userName: kycUser.full_name ?? 'Usuario' },
+        },
+      }).catch(() => {})
+    }
     await loadAll()
     setActing(null)
   }
