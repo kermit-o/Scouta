@@ -210,7 +210,7 @@ export default function AdminScreen() {
           keyExtractor={i => i.id}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={s.empty}>No hay disputas</Text>}
+          ListEmptyComponent={<Text style={s.empty}>{t('admin.noDisputes')}</Text>}
           renderItem={({ item }) => (
             <View style={s.card}>
               <Text style={s.cardName}>{item.contracts?.jobs?.title ?? 'Sin título'}</Text>
@@ -228,21 +228,21 @@ export default function AdminScreen() {
                     disabled={acting === item.id}
                     onPress={() => handleDispute(item.id, 'resolved_client')}
                   >
-                    <Text style={s.actionBtnText}>👤 Favor cliente</Text>
+                    <Text style={s.actionBtnText}>👤 {t('admin.favorClient')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[s.actionBtn, { backgroundColor: '#7C3AED' }]}
                     disabled={acting === item.id}
                     onPress={() => handleDispute(item.id, 'resolved_pro')}
                   >
-                    <Text style={s.actionBtnText}>🔧 Favor pro</Text>
+                    <Text style={s.actionBtnText}>🔧 {t('admin.favorPro')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[s.actionBtn, s.rejectBtn]}
                     disabled={acting === item.id}
                     onPress={() => handleDispute(item.id, 'cancelled')}
                   >
-                    <Text style={s.actionBtnText}>Cancelar</Text>
+                    <Text style={s.actionBtnText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -258,7 +258,7 @@ export default function AdminScreen() {
           keyExtractor={i => i.id}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={s.empty}>No hay pagos</Text>}
+          ListEmptyComponent={<Text style={s.empty}>{t('admin.noPayments')}</Text>}
           renderItem={({ item }) => (
             <View style={s.card}>
               <View style={s.cardRow}>
