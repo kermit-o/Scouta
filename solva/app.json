@@ -95,7 +95,6 @@
         }
       ],
       "./plugins/withNoJitpack",
-      "./plugins/withStripeVersionPin",
       [
         "expo-router",
         {
