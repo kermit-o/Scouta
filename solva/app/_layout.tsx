@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Stack, router } from 'expo-router'
 import 'react-native-url-polyfill/auto'
+import { initSentry } from '../lib/sentry'
 import { initI18n } from '../lib/i18n'
 import { AuthProvider, useAuth } from '../lib/AuthContext'
 import * as Font from 'expo-font'
@@ -8,6 +9,9 @@ import { Ionicons } from '@expo/vector-icons'
 import * as SplashScreen from 'expo-splash-screen'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import PaymentProvider from '../components/PaymentProvider'
+
+// Initialize Sentry as early as possible
+initSentry()
 
 SplashScreen.preventAutoHideAsync()
 
