@@ -90,6 +90,16 @@ export default function NewJobScreen() {
     if (error) {
       setErrorMsg('Error al publicar: ' + error.message)
     } else {
+      // Send job_posted email
+      if (data && session?.user?.email) {
+        supabase.functions.invoke('send-email', {
+          body: {
+            to: session.user.email,
+            template: 'job_posted',
+            data: { userName: profile?.full_name ?? 'Usuario', jobTitle: title, jobId: data.id },
+          },
+        }).catch(() => {})
+      }
       router.replace('/(app)/jobs')
     }
   }

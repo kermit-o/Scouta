@@ -77,6 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if ((newProfile as UserProfile).language) {
         changeLanguage((newProfile as UserProfile).language)
       }
+      // Send welcome email for new users
+      supabase.functions.invoke('send-email', {
+        body: {
+          to: newRow.email,
+          template: 'welcome',
+          data: { userName: newRow.full_name },
+        },
+      }).catch(() => {})
     }
   }
 
