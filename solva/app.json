@@ -97,7 +97,7 @@
       [
         "expo-router",
         {
-          "asyncRoutes": "production"
+          "asyncRoutes": false
         }
       ]
     ],
