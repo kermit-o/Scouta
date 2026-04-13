@@ -33,7 +33,9 @@ export default function PaymentsScreen() {
     load()
   }, [session])
 
-  const total = payments.filter(p => p.status === 'released').reduce((s, p) => s + p.amount, 0)
+  const releasedPayments = payments.filter(p => p.status === 'released')
+  const total = releasedPayments.reduce((s, p) => s + p.amount, 0)
+  const summaryCurrency = releasedPayments[0]?.currency ?? 'EUR'
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -41,19 +43,19 @@ export default function PaymentsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={styles.title}>Pagos y cobros</Text>
+        <Text style={styles.title}>{t('payments.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
       <ScrollView contentContainerStyle={styles.container}>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>Total pagado</Text>
-          <Text style={styles.summaryAmount}>€{total.toFixed(2)}</Text>
-          <Text style={styles.summaryNote}>{payments.filter(p => p.status === 'released').length} transacciones completadas</Text>
+          <Text style={styles.summaryAmount}>{total.toFixed(2)} {summaryCurrency}</Text>
+          <Text style={styles.summaryNote}>{releasedPayments.length} transacciones completadas</Text>
         </View>
         {loading ? <ActivityIndicator color="#2563EB" style={{ marginTop: 40 }} /> : payments.length === 0 ? (
           <View style={styles.empty}>
             <Text style={styles.emptyIcon}>💳</Text>
-            <Text style={styles.emptyTitle}>Sin transacciones</Text>
+            <Text style={styles.emptyTitle}>{t('payments.noPayments')}</Text>
             <Text style={styles.emptyDesc}>Aquí aparecerán tus pagos y cobros.</Text>
           </View>
         ) : (
@@ -66,7 +68,7 @@ export default function PaymentsScreen() {
                   <Text style={styles.rowDate}>{new Date(p.created_at).toLocaleDateString('es-ES')}</Text>
                 </View>
                 <View style={styles.rowRight}>
-                  <Text style={styles.rowAmount}>€{p.amount.toFixed(2)}</Text>
+                  <Text style={styles.rowAmount}>{p.amount.toFixed(2)} {p.currency ?? 'EUR'}</Text>
                   <Text style={[styles.rowStatus, { color: STATUS_COLOR[p.status] || '#9CA3AF' }]}>{t(`payments.status.${p.status}`) || p.status || p.status}</Text>
                 </View>
               </View>

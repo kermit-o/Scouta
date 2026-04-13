@@ -21,12 +21,11 @@ const FLAG: Record<string, string> = {
   NL: '🇳🇱', DE: '🇩🇪', PT: '🇵🇹', IT: '🇮🇹', GB: '🇬🇧'
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  client: 'Cliente', pro: 'Profesional', company: 'Empresa'
-}
-
 export default function ProfileScreen() {
   const { t } = useTranslation()
+  const ROLE_LABEL: Record<string, string> = {
+    client: t('roles.client'), pro: t('roles.pro'), company: t('roles.company')
+  }
   const { session, signOut } = useAuth()
   const { profile, refreshProfile } = useProfile()
   const isPro = profile?.role === 'pro' || profile?.role === 'company'
@@ -163,7 +162,7 @@ export default function ProfileScreen() {
     },
     ...(profile?.role === 'admin' ? [{
       icon: 'shield-half-outline' as const,
-      label: 'Panel Admin',
+      label: t('admin.title'),
       badge: 'Admin',
       badgeColor: '#DC2626',
       badgeBg: '#FEE2E2',
@@ -171,7 +170,7 @@ export default function ProfileScreen() {
     }] : []),
     {
       icon: 'gift-outline' as const,
-      label: 'Programa de referidos',
+      label: t('referrals.title'),
       badge: 'Gana dinero',
       badgeColor: '#7C3AED',
       badgeBg: '#F3E8FF',
@@ -179,7 +178,7 @@ export default function ProfileScreen() {
     },
     ...(profile?.role === 'pro' || profile?.role === 'company' ? [{
       icon: 'construct-outline' as const,
-      label: 'Mis servicios',
+      label: t('proServices.title'),
       badge: 'Nuevo',
       badgeColor: '#059669',
       badgeBg: '#D1FAE5',
@@ -350,7 +349,7 @@ export default function ProfileScreen() {
           />
           {isPro && (
             <>
-              <Text style={styles.inputLabel}>Años de experiencia</Text>
+              <Text style={styles.inputLabel}>{t('onboarding.experience')}</Text>
               <TextInput
                 style={styles.input}
                 value={yearsExp}
@@ -381,7 +380,7 @@ export default function ProfileScreen() {
                   >
                     <Text style={{ fontSize: 12, fontWeight: '700',
                       color: availability === a ? '#2563EB' : '#888' }}>
-                      {a === 'available' ? '✅ Disponible' : a === 'busy' ? '🟡 Ocupado' : '🔴 No disponible'}
+                      {a === 'available' ? `✅ ${t('availability.available')}` : a === 'busy' ? `🟡 ${t('availability.busy')}` : `🔴 ${t('availability.unavailable')}`}
                     </Text>
                   </TouchableOpacity>
                 ))}

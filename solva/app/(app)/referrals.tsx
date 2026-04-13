@@ -3,11 +3,13 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
 
 export default function ReferralsScreen() {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
   const { profile } = useProfile()
@@ -65,7 +67,7 @@ export default function ReferralsScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Programa de referidos</Text>
+        <Text style={s.headerTitle}>{t('referrals.title')}</Text>
         <View style={{ width: 40 }} />
       </View>
 
@@ -73,54 +75,54 @@ export default function ReferralsScreen() {
         {/* Hero */}
         <View style={s.hero}>
           <Text style={s.heroEmoji}>🎁</Text>
-          <Text style={s.heroTitle}>Invita y gana</Text>
-          <Text style={s.heroDesc}>Por cada amigo que completa su primer pago en Solva, ambos recibís una recompensa.</Text>
+          <Text style={s.heroTitle}>{t('referrals.heroTitle')}</Text>
+          <Text style={s.heroDesc}>{t('referrals.heroDesc')}</Text>
         </View>
 
         {/* Código */}
         <View style={s.codeCard}>
-          <Text style={s.codeLabel}>Tu código de referido</Text>
+          <Text style={s.codeLabel}>{t('referrals.codeLabel')}</Text>
           <TouchableOpacity style={s.codeBox} onPress={handleCopyCode}>
             <Text style={s.codeText}>{profile?.referral_code ?? '...'}</Text>
             <Ionicons name={copied ? 'checkmark-circle' : 'copy-outline'} size={22} color={copied ? '#10B981' : '#2563EB'} />
           </TouchableOpacity>
-          <Text style={s.codeTip}>{copied ? '✅ Copiado!' : 'Toca para copiar'}</Text>
+          <Text style={s.codeTip}>{copied ? `✅ ${t('referrals.copied')}` : t('referrals.tapToCopy')}</Text>
         </View>
 
         {/* Compartir */}
         <TouchableOpacity style={s.shareBtn} onPress={handleShare}>
           <Ionicons name="share-social-outline" size={20} color="#fff" />
-          <Text style={s.shareBtnText}>Compartir mi código</Text>
+          <Text style={s.shareBtnText}>{t('referrals.shareCode')}</Text>
         </TouchableOpacity>
 
         {/* Stats */}
         <View style={s.statsRow}>
           <View style={s.statCard}>
             <Text style={s.statValue}>{referrals.length}</Text>
-            <Text style={s.statLabel}>Invitados</Text>
+            <Text style={s.statLabel}>{t('referrals.statInvited')}</Text>
           </View>
           <View style={s.statCard}>
             <Text style={[s.statValue, { color: '#10B981' }]}>{completed}</Text>
-            <Text style={s.statLabel}>Completados</Text>
+            <Text style={s.statLabel}>{t('referrals.statCompleted')}</Text>
           </View>
           <View style={s.statCard}>
             <Text style={[s.statValue, { color: '#F59E0B' }]}>{pending}</Text>
-            <Text style={s.statLabel}>Pendientes</Text>
+            <Text style={s.statLabel}>{t('referrals.statPending')}</Text>
           </View>
           <View style={s.statCard}>
             <Text style={[s.statValue, { color: '#7C3AED' }]}>{totalReward.toFixed(0)}€</Text>
-            <Text style={s.statLabel}>Ganado</Text>
+            <Text style={s.statLabel}>{t('referrals.statEarned')}</Text>
           </View>
         </View>
 
         {/* Como funciona */}
         <View style={s.howCard}>
-          <Text style={s.howTitle}>¿Cómo funciona?</Text>
+          <Text style={s.howTitle}>{t('referrals.howItWorks')}</Text>
           {[
-            { icon: '📤', text: 'Comparte tu código con amigos' },
-            { icon: '📝', text: 'Se registran con tu código' },
-            { icon: '💳', text: 'Completan su primer pago' },
-            { icon: '🎉', text: 'Ambos recibís una recompensa' },
+            { icon: '📤', text: t('referrals.step1') },
+            { icon: '📝', text: t('referrals.step2') },
+            { icon: '💳', text: t('referrals.step3') },
+            { icon: '🎉', text: t('referrals.step4') },
           ].map((step, i) => (
             <View key={i} style={s.howStep}>
               <Text style={s.howStepIcon}>{step.icon}</Text>
@@ -132,7 +134,7 @@ export default function ReferralsScreen() {
         {/* Lista referidos */}
         {loading ? <ActivityIndicator color="#2563EB" style={{ marginTop: 20 }} /> : referrals.length > 0 ? (
           <View style={s.listCard}>
-            <Text style={s.listTitle}>Tus referidos</Text>
+            <Text style={s.listTitle}>{t('referrals.yourReferrals')}</Text>
             {referrals.map((r, i) => (
               <View key={i} style={s.listItem}>
                 <View style={s.listAvatar}>
@@ -144,7 +146,7 @@ export default function ReferralsScreen() {
                 </View>
                 <View style={[s.listBadge, { backgroundColor: r.status === 'rewarded' ? '#D1FAE5' : r.status === 'completed' ? '#DBEAFE' : '#FEF3C7' }]}>
                   <Text style={[s.listBadgeText, { color: r.status === 'rewarded' ? '#065F46' : r.status === 'completed' ? '#1D4ED8' : '#92400E' }]}>
-                    {r.status === 'rewarded' ? '✅ Recompensado' : r.status === 'completed' ? '🎯 Completado' : '⏳ Pendiente'}
+                    {r.status === 'rewarded' ? `✅ ${t('status.rewarded')}` : r.status === 'completed' ? `🎯 ${t('status.completed')}` : `⏳ ${t('status.pending')}`}
                   </Text>
                 </View>
               </View>
@@ -153,8 +155,8 @@ export default function ReferralsScreen() {
         ) : (
           <View style={s.emptyCard}>
             <Text style={s.emptyEmoji}>👥</Text>
-            <Text style={s.emptyText}>Aún no tienes referidos</Text>
-            <Text style={s.emptySub}>Comparte tu código y empieza a ganar</Text>
+            <Text style={s.emptyText}>{t('referrals.emptyTitle')}</Text>
+            <Text style={s.emptySub}>{t('referrals.emptySub')}</Text>
           </View>
         )}
       </ScrollView>
