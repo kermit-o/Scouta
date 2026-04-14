@@ -5,8 +5,8 @@ core/
 diet_ai/
 forge_saas/
 FO/
-app/
-supabase/
+/app/
+/supabase/
 blog-ai/
 ExcelBypass/
 recovered_from_pyc/
