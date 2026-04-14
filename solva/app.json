@@ -97,7 +97,8 @@
       [
         "expo-router",
         {
-          "asyncRoutes": false
+          "asyncRoutes": false,
+          "root": "./app"
         }
       ]
     ],
