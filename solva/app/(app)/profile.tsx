@@ -119,10 +119,9 @@ export default function ProfileScreen() {
 
   // Detectar retorno de Stripe onboarding
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       if (params.get('stripe') === 'success') {
-        // Marcar onboarding como completado
         supabase.from('users')
           .update({ stripe_onboarding_completed: true })
           .eq('id', session!.user.id)
@@ -131,7 +130,6 @@ export default function ProfileScreen() {
             setSuccessMsg('✅ Cuenta de cobro activada correctamente')
             setTimeout(() => setSuccessMsg(''), 4000)
           })
-        // Limpiar URL
         window.history.replaceState({}, '', window.location.pathname)
       }
     }
