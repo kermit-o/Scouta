@@ -60,8 +60,11 @@ export default function SubscriptionScreen() {
 
   useEffect(() => {
     if (!session?.user.id || !isPro) return
-    supabase.from('pro_analytics').select('*').eq('user_id', session.user.id).single()
-      .then(({ data }) => setAnalytics(data as ProAnalytics))
+    supabase.from('pro_analytics').select('*').eq('user_id', session.user.id).maybeSingle()
+      .then(({ data, error }) => {
+        if (error) console.error('pro_analytics error:', error.message)
+        setAnalytics(data as ProAnalytics)
+      })
   }, [session?.user.id, isPro])
 
   async function handleUpgrade(plan: 'pro' | 'company') {

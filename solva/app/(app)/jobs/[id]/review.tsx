@@ -52,12 +52,17 @@ export default function ReviewScreen() {
 
   async function loadContract() {
     if (loaded) return
-    const { data } = await supabase.from('contracts').select('*').eq('job_id', id).single()
-    setContract(data)
+    try {
+      const { data, error } = await supabase.from('contracts').select('*').eq('job_id', id).maybeSingle()
+      if (error) console.error('review loadContract error:', error.message)
+      setContract(data)
+    } catch (err: any) {
+      console.error('review loadContract unexpected:', err?.message ?? err)
+    }
     setLoaded(true)
   }
 
-  useEffect(() => { loadContract() }, [id])
+  useEffect(() => { if (id) loadContract() }, [id])
 
   async function pickPhotos(type: 'before' | 'after') {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync()

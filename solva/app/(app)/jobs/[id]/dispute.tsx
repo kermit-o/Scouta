@@ -54,24 +54,29 @@ export default function DisputeScreen() {
   const [sendingMsg, setSendingMsg] = useState(false)
 
   async function loadData() {
-    const { data: c } = await supabase.from('contracts').select('*').eq('job_id', id).single()
-    setContract(c)
-    if (c) {
-      const { data: d } = await supabase.from('disputes').select('*').eq('contract_id', c.id).maybeSingle()
-      setDispute(d as Dispute | null)
-      if (d) {
-        const { data: msgs } = await supabase
-          .from('dispute_messages')
-          .select('*, sender:sender_id(full_name)')
-          .eq('dispute_id', d.id)
-          .order('created_at', { ascending: true })
-        setMessages(msgs ?? [])
+    try {
+      const { data: c, error: cErr } = await supabase.from('contracts').select('*').eq('job_id', id).maybeSingle()
+      if (cErr) console.error('dispute loadData contract error:', cErr.message)
+      setContract(c)
+      if (c) {
+        const { data: d } = await supabase.from('disputes').select('*').eq('contract_id', c.id).maybeSingle()
+        setDispute(d as Dispute | null)
+        if (d) {
+          const { data: msgs } = await supabase
+            .from('dispute_messages')
+            .select('*, sender:sender_id(full_name)')
+            .eq('dispute_id', d.id)
+            .order('created_at', { ascending: true })
+          setMessages(msgs ?? [])
+        }
       }
+    } catch (err: any) {
+      console.error('dispute loadData unexpected:', err?.message ?? err)
     }
     setLoading(false)
   }
 
-  useEffect(() => { loadData() }, [id])
+  useEffect(() => { if (id) loadData() }, [id])
 
   useEffect(() => {
     if (!dispute?.id) return

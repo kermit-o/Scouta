@@ -18,34 +18,38 @@ export default function DashboardProScreen() {
 
   useEffect(() => {
     async function load() {
-      if (!session?.user?.id) return
-      const now = new Date()
-      const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
-      const [bidsRes, contractsRes, reviewsRes, paymentsRes, paymentsMonthRes] = await Promise.all([
-        supabase.from('bids').select('id', { count: 'exact' }).eq('pro_id', session.user.id),
-        supabase.from('contracts').select('id', { count: 'exact' }).eq('pro_id', session.user.id),
-        supabase.from('reviews').select('rating').eq('reviewed_id', session.user.id),
-        supabase.from('payments').select('pro_amount, currency, status, created_at, contracts(jobs(title))').eq('pro_id', session.user.id).eq('status', 'released').order('created_at', { ascending: false }).limit(5),
-        supabase.from('payments').select('pro_amount').eq('pro_id', session.user.id).eq('status', 'released').gte('created_at', firstOfMonth),
-      ])
-      const reviews = reviewsRes.data || []
-      const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
-      const totalEarnings = (paymentsRes.data || []).reduce((s: number, p: any) => s + (p.pro_amount || 0), 0)
-      const monthEarnings = (paymentsMonthRes.data || []).reduce((s: number, p: any) => s + (p.pro_amount || 0), 0)
-      setStats({
-        jobs: 0,
-        bids: bidsRes.count || 0,
-        contracts: contractsRes.count || 0,
-        earnings: totalEarnings,
-        monthEarnings,
-        rating: Math.round(avgRating * 10) / 10,
-        reviews: reviews.length,
-        recentPayments: paymentsRes.data || [],
-      })
+      if (!session?.user?.id) { setLoading(false); return }
+      try {
+        const now = new Date()
+        const firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+        const [bidsRes, contractsRes, reviewsRes, paymentsRes, paymentsMonthRes] = await Promise.all([
+          supabase.from('bids').select('id', { count: 'exact' }).eq('pro_id', session.user.id),
+          supabase.from('contracts').select('id', { count: 'exact' }).eq('pro_id', session.user.id),
+          supabase.from('reviews').select('rating').eq('reviewed_id', session.user.id),
+          supabase.from('payments').select('pro_amount, currency, status, created_at, contracts(jobs(title))').eq('pro_id', session.user.id).eq('status', 'released').order('created_at', { ascending: false }).limit(5),
+          supabase.from('payments').select('pro_amount').eq('pro_id', session.user.id).eq('status', 'released').gte('created_at', firstOfMonth),
+        ])
+        const reviews = reviewsRes.data || []
+        const avgRating = reviews.length > 0 ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0
+        const totalEarnings = (paymentsRes.data || []).reduce((s: number, p: any) => s + (p.pro_amount || 0), 0)
+        const monthEarnings = (paymentsMonthRes.data || []).reduce((s: number, p: any) => s + (p.pro_amount || 0), 0)
+        setStats({
+          jobs: 0,
+          bids: bidsRes.count || 0,
+          contracts: contractsRes.count || 0,
+          earnings: totalEarnings,
+          monthEarnings,
+          rating: Math.round(avgRating * 10) / 10,
+          reviews: reviews.length,
+          recentPayments: paymentsRes.data || [],
+        })
+      } catch (err: any) {
+        console.error('dashboard-pro load error:', err?.message ?? err)
+      }
       setLoading(false)
     }
     load()
-  }, [session])
+  }, [session?.user?.id])
 
   if (profile?.role === 'client') return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>

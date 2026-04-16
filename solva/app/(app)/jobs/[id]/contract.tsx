@@ -24,10 +24,12 @@ export default function ContractScreen() {
   const [expanded, setExpanded] = useState<string | null>(null)
 
   useEffect(() => {
-    getContract(id!).then(({ data }) => {
+    if (!id) { setLoading(false); return }
+    getContract(id).then(({ data, error }) => {
+      if (error) console.error('getContract error:', error)
       setContract(data)
       setLoading(false)
-    })
+    }).catch(() => setLoading(false))
   }, [id])
 
   if (loading) return (

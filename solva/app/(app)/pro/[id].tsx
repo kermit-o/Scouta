@@ -35,18 +35,23 @@ export default function ProProfileScreen() {
 
   useEffect(() => {
     async function load() {
-      const { data: proData } = await supabase.from('pro_profiles').select('*').eq('id', id).single()
-      setPro(proData)
-      const { data: reviewData } = await supabase.from('reviews')
-        .select('*, reviewer:reviewer_id(full_name, avatar_url)')
-        .eq('reviewed_id', id).order('created_at', { ascending: false }).limit(10)
-      setReviews((reviewData ?? []) as Review[])
-      const { data: jobData } = await supabase.from('contracts')
-        .select('jobs(title, category, created_at)').eq('pro_id', id).eq('status', 'completed').limit(5)
-      setJobs(jobData ?? [])
+      try {
+        const { data: proData, error: proErr } = await supabase.from('pro_profiles').select('*').eq('id', id).maybeSingle()
+        if (proErr) console.error('pro profile error:', proErr.message)
+        setPro(proData)
+        const { data: reviewData } = await supabase.from('reviews')
+          .select('*, reviewer:reviewer_id(full_name, avatar_url)')
+          .eq('reviewed_id', id).order('created_at', { ascending: false }).limit(10)
+        setReviews((reviewData ?? []) as Review[])
+        const { data: jobData } = await supabase.from('contracts')
+          .select('jobs(title, category, created_at)').eq('pro_id', id).eq('status', 'completed').limit(5)
+        setJobs(jobData ?? [])
+      } catch (err: any) {
+        console.error('pro profile load unexpected:', err?.message ?? err)
+      }
       setLoading(false)
     }
-    load()
+    if (id) load()
   }, [id])
 
   if (loading) return <View style={s.center}><ActivityIndicator size="large" color="#2563EB" /></View>
@@ -55,18 +60,16 @@ export default function ProProfileScreen() {
   const isOwnProfile = session?.user.id === id
 
   async function handleContact() {
-    // Buscar si hay contrato activo entre los dos
     const { data: contract } = await supabase
       .from('contracts')
       .select('job_id')
       .or(`client_id.eq.${session!.user.id},pro_id.eq.${session!.user.id}`)
       .eq(session!.user.id === pro?.id ? 'client_id' : 'pro_id', id)
       .in('status', ['active'])
-      .single()
+      .maybeSingle()
     if (contract) {
       router.push(`/(app)/jobs/${contract.job_id}/chat`)
     } else {
-      // No hay contrato — ir a publicar job (el pro será el objetivo)
       router.push('/(app)/jobs/new')
     }
   }
