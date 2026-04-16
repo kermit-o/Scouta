@@ -44,24 +44,32 @@ export default function ChatScreen() {
   }
 
   async function loadData() {
-    const { data: c } = await supabase
-      .from('contracts')
-      .select('*, client:client_id(full_name), pro:pro_id(full_name)')
-      .eq('job_id', id)
-      .single()
-    if (!c) { setLoading(false); return }
-    setContract(c)
-    const otherId = c.client_id === session!.user.id ? c.pro_id : c.client_id
-    const otherName = c.client_id === session!.user.id ? c.pro?.full_name : c.client?.full_name
-    setOtherUser({ id: otherId, full_name: otherName })
-    const { data: msgs } = await supabase
-      .from('messages').select('*').eq('contract_id', c.id).order('created_at', { ascending: true })
-    if (msgs) setMessages(msgs as Message[])
-    if (c?.id) markAsRead(c.id)
+    try {
+      const { data: c, error } = await supabase
+        .from('contracts')
+        .select('*, client:client_id(full_name), pro:pro_id(full_name)')
+        .eq('job_id', id)
+        .maybeSingle()
+      if (error) console.error('chat loadData error:', error.message)
+      if (!c) { setLoading(false); return }
+      setContract(c)
+      const otherId = c.client_id === session!.user.id ? c.pro_id : c.client_id
+      const otherName = c.client_id === session!.user.id ? c.pro?.full_name : c.client?.full_name
+      setOtherUser({ id: otherId, full_name: otherName })
+      const { data: msgs } = await supabase
+        .from('messages').select('*').eq('contract_id', c.id).order('created_at', { ascending: true })
+      if (msgs) setMessages(msgs as Message[])
+      if (c?.id) markAsRead(c.id)
+    } catch (err: any) {
+      console.error('chat loadData unexpected:', err?.message ?? err)
+    }
     setLoading(false)
   }
 
-  useEffect(() => { loadData() }, [id])
+  useEffect(() => {
+    if (!id || !session?.user?.id) return
+    loadData()
+  }, [id, session?.user?.id])
 
   useEffect(() => {
     if (!contract?.id) return

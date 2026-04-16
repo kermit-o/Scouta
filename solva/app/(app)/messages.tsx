@@ -28,38 +28,43 @@ export default function MessagesScreen() {
   }, [])
 
   useEffect(() => {
+    if (!session?.user?.id) { setLoading(false); return }
     async function load() {
-      const { data } = await supabase
-        .from('contracts')
-        .select(`
-          id, status, amount, currency, job_id, created_at,
-          jobs(title),
-          client:client_id(id, full_name),
-          pro:pro_id(id, full_name),
-          messages(id, content, sender_id, created_at, read_at)
-        `)
-        .or(`client_id.eq.${session!.user.id},pro_id.eq.${session!.user.id}`)
-        .in('status', ['active', 'completed'])
-        .order('created_at', { ascending: false })
+      try {
+        const { data, error } = await supabase
+          .from('contracts')
+          .select(`
+            id, status, amount, currency, job_id, created_at,
+            jobs(title),
+            client:client_id(id, full_name),
+            pro:pro_id(id, full_name),
+            messages(id, content, sender_id, created_at, read_at)
+          `)
+          .or(`client_id.eq.${session!.user.id},pro_id.eq.${session!.user.id}`)
+          .in('status', ['active', 'completed'])
+          .order('created_at', { ascending: false })
 
-      if (data) {
-        // Ordenar por último mensaje
-        const enriched = data.map((c: any) => {
-          const msgs = c.messages ?? []
-          const last = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
-          const unread = msgs.filter((m: any) => m.sender_id !== session!.user.id && !m.read_at).length
-          return { ...c, lastMessage: last, unreadCount: unread }
-        }).sort((a: any, b: any) => {
-          const aTime = a.lastMessage?.created_at ?? a.created_at
-          const bTime = b.lastMessage?.created_at ?? b.created_at
-          return new Date(bTime).getTime() - new Date(aTime).getTime()
-        })
-        setContracts(enriched)
+        if (error) console.error('messages load error:', error.message)
+        if (data) {
+          const enriched = data.map((c: any) => {
+            const msgs = c.messages ?? []
+            const last = msgs.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0]
+            const unread = msgs.filter((m: any) => m.sender_id !== session!.user.id && !m.read_at).length
+            return { ...c, lastMessage: last, unreadCount: unread }
+          }).sort((a: any, b: any) => {
+            const aTime = a.lastMessage?.created_at ?? a.created_at
+            const bTime = b.lastMessage?.created_at ?? b.created_at
+            return new Date(bTime).getTime() - new Date(aTime).getTime()
+          })
+          setContracts(enriched)
+        }
+      } catch (err: any) {
+        console.error('messages load unexpected:', err?.message ?? err)
       }
       setLoading(false)
     }
     load()
-  }, [session])
+  }, [session?.user?.id])
 
   if (loading) return (
     <View style={styles.center}>

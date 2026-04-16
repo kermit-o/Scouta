@@ -53,7 +53,8 @@ export default function JobDetailScreen() {
   const [msgSuccess, setMsgSuccess] = useState("")
 
   async function fetchJob() {
-    const { data } = await supabase.from('jobs').select('*').eq('id', id).single()
+    const { data, error } = await supabase.from('jobs').select('*').eq('id', id).single()
+    if (error) console.error('fetchJob error:', error.message)
     if (data) setJob(data as Job)
   }
 
@@ -69,10 +70,12 @@ export default function JobDetailScreen() {
       const mine = data.find((b: Bid) => b.pro_id === session?.user.id)
       setMyBid(mine ?? null)
     }
-    setLoading(false)
   }
 
-  useEffect(() => { fetchJob(); fetchBids() }, [id])
+  useEffect(() => {
+    if (!id) return
+    Promise.all([fetchJob(), fetchBids()]).finally(() => setLoading(false))
+  }, [id])
 
   async function handleAcceptBid(bid: Bid) {
     setAccepting(bid.id)

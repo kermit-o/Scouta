@@ -301,9 +301,9 @@ export default function HomeScreen() {
             ) : recentJobs.map((job: any) => (
               <TouchableOpacity key={job.id} style={s.jobCard} onPress={() => router.push(`/(app)/jobs/${job.id}`)}>
                 <View style={s.jobLeft}>
-                  <View style={[s.jobStatus, { backgroundColor: job.status === 'open' ? '#D1FAE5' : '#F3F4F6' }]}>
-                    <Text style={[s.jobStatusText, { color: job.status === 'open' ? '#065F46' : '#888' }]}>
-                      {job.status === 'open' ? 'Abierto' : job.status}
+                  <View style={[s.jobStatus, { backgroundColor: job.status === 'open' ? '#D1FAE5' : job.status === 'in_progress' ? '#DBEAFE' : '#F3F4F6' }]}>
+                    <Text style={[s.jobStatusText, { color: job.status === 'open' ? '#065F46' : job.status === 'in_progress' ? '#2563EB' : '#888' }]}>
+                      {t(`jobs.status${job.status === 'open' ? 'Open' : job.status === 'in_progress' ? 'InProgress' : job.status === 'completed' ? 'Completed' : 'Cancelled'}`)}
                     </Text>
                   </View>
                   <Text style={s.jobTitle} numberOfLines={1}>{job.title}</Text>

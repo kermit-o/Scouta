@@ -59,35 +59,41 @@ export default function JobsScreen() {
 
   async function fetchJobs() {
     setLoading(true)
-    if (searchMode === 'nearby' && !coords) {
-      setLoading(false)
-      setRefreshing(false)
-      return
-    }
-    if (searchMode === 'nearby' && coords) {
-      const { data } = await searchJobsNearby(coords.latitude, coords.longitude, radius)
-      setJobs(data ?? [])
-    } else {
-      const query = supabase
-        .from('jobs')
-        .select('*')
-        .eq('status', 'open')
-        .eq('country', profile?.country ?? 'ES')
-        .order('created_at', { ascending: false })
-
-      if (searchText.trim()) {
-        query.ilike('title', `%${searchText.trim()}%`)
+    try {
+      if (searchMode === 'nearby' && !coords) {
+        setLoading(false)
+        setRefreshing(false)
+        return
       }
+      if (searchMode === 'nearby' && coords) {
+        const { data } = await searchJobsNearby(coords.latitude, coords.longitude, radius)
+        setJobs(data ?? [])
+      } else {
+        const query = supabase
+          .from('jobs')
+          .select('*')
+          .eq('status', 'open')
+          .eq('country', profile?.country ?? 'ES')
+          .order('created_at', { ascending: false })
 
-      const { data } = await query
-      setJobs(data ?? [])
+        if (searchText.trim()) {
+          query.ilike('title', `%${searchText.trim()}%`)
+        }
+
+        const { data, error } = await query
+        if (error) console.error('fetchJobs error:', error.message)
+        setJobs(data ?? [])
+      }
+    } catch (err: any) {
+      console.error('fetchJobs unexpected:', err?.message ?? err)
     }
     setLoading(false)
     setRefreshing(false)
   }
 
-  useEffect(() => { fetchJobs() }, [searchMode, coords, radius])
+  useEffect(() => { fetchJobs() }, [searchMode, coords, radius, profile?.country])
   useEffect(() => { fetchMyJobs() }, [session?.user?.id, activeTab])
+  useEffect(() => { if (activeTab === 'history') fetchHistory() }, [session?.user?.id, activeTab])
 
   async function handleNearbyToggle() {
     if (searchMode === 'nearby') {
@@ -186,7 +192,7 @@ export default function JobsScreen() {
             : myJobs.map((job: any) => {
                 const contract = job.contracts?.[0]
                 const statusColor = job.status === 'open' ? '#10B981' : job.status === 'in_progress' ? '#2563EB' : '#888'
-                const statusLabel = job.status === 'open' ? 'Abierto' : job.status === 'in_progress' ? 'En progreso' : job.status
+                const statusLabel = job.status === 'open' ? t('jobs.statusOpen') : job.status === 'in_progress' ? t('jobs.statusInProgress') : job.status === 'completed' ? t('jobs.statusCompleted') : t('jobs.statusCancelled')
                 return (
                   <TouchableOpacity
                     key={job.id}
