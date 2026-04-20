@@ -86,7 +86,7 @@ export default function MessagesScreen() {
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mensajes</Text>
+        <Text style={styles.headerTitle}>{t('messages.title')}</Text>
         <Text style={styles.headerSub}>{t('messages.noMessagesSub')}</Text>
       </View>
 
@@ -120,8 +120,8 @@ export default function MessagesScreen() {
             </Text>
             <Text style={styles.emptySub}>
               {search
-                ? 'Prueba con otro término'
-                : 'Los chats aparecen cuando se acepta un bid'}
+                ? t('messages.tryOtherTerm')
+                : t('messages.chatsAppearWhenBid')}
             </Text>
           </View>
         }
@@ -154,15 +154,15 @@ export default function MessagesScreen() {
               {/* Info */}
               <View style={styles.info}>
                 <View style={styles.infoTop}>
-                  <Text style={styles.name} numberOfLines={1}>{otherName ?? 'Usuario'}</Text>
+                  <Text style={styles.name} numberOfLines={1}>{otherName ?? t('common.user')}</Text>
                   <Text style={styles.time}>{timeAgo}</Text>
                 </View>
                 <Text style={styles.jobTitle} numberOfLines={1}>
-                  {item.jobs?.title ?? 'Trabajo'}
+                  {item.jobs?.title ?? t('common.job')}
                 </Text>
                 {item.lastMessage && (
                   <Text style={styles.lastMsg} numberOfLines={1}>
-                    {item.lastMessage.sender_id === session!.user.id ? 'Tú: ' : ''}{item.lastMessage.content}
+                    {item.lastMessage.sender_id === session!.user.id ? t('messages.you') : ''}{item.lastMessage.content}
                   </Text>
                 )}
                 <View style={styles.infoBottom}>
@@ -171,7 +171,7 @@ export default function MessagesScreen() {
                   </Text>
                   <View style={[styles.statusBadge, isActive ? styles.statusActive : styles.statusDone]}>
                     <Text style={[styles.statusText, isActive ? styles.statusTextActive : styles.statusTextDone]}>
-                      {isActive ? 'Activo' : 'Completado'}
+                      {isActive ? t('contract.statusActive') : t('contract.statusCompleted')}
                     </Text>
                   </View>
                 </View>

@@ -149,7 +149,7 @@ export default function JobsScreen() {
       {/* Radio selector (solo en modo nearby) */}
       {searchMode === 'nearby' && (
         <View style={s.radiusRow}>
-          <Text style={s.radiusLabel}>Radio:</Text>
+          <Text style={s.radiusLabel}>{t('jobs.radius')}:</Text>
           {RADIUS_OPTIONS.map(r => (
             <TouchableOpacity
               key={r}
@@ -184,7 +184,7 @@ export default function JobsScreen() {
             ? <View style={s.emptyState}>
                 <Text style={s.emptyStateIcon}>📋</Text>
                 <Text style={s.emptyStateTitle}>{t('jobs.noMyJobs')}</Text>
-                <Text style={s.emptyStateSub}>Publica tu primer trabajo y recibe ofertas de profesionales</Text>
+                <Text style={s.emptyStateSub}>{t('jobs.publishFirstJob')}</Text>
                 <TouchableOpacity style={s.emptyStateBtn} onPress={() => router.push('/(app)/jobs/new')}>
                   <Text style={s.emptyStateBtnText}>{t('jobs.postJob')}</Text>
                 </TouchableOpacity>
@@ -210,7 +210,7 @@ export default function JobsScreen() {
                       </View>
                     </View>
                     <Text style={s.myJobSub}>
-                      {contract ? `Ver contrato →` : `${job.budget_min ?? '?'}–${job.budget_max ?? '?'} ${job.currency}`}
+                      {contract ? t('jobs.viewContract') : `${job.budget_min ?? '?'}–${job.budget_max ?? '?'} ${job.currency}`}
                     </Text>
                   </TouchableOpacity>
                 )
