@@ -164,6 +164,7 @@
     "release": "Release payment",
     "jobDetails": "Job details",
     "negotiate": "Negotiable",
+    "negotiable": "Negotiable",
     "category": "Category",
     "searchPlaceholder": "Search jobs...",
     "newTitlePlaceholder": "e.g. Home cleaning 3 bedrooms",
