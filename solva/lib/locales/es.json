@@ -408,7 +408,16 @@
     "confirmPassword": "Confirmar contraseña",
     "changePassword": "Cambiar contraseña",
     "passwordUpdated": "✅ Contraseña actualizada correctamente.",
-    "passwordMismatch": "Las contraseñas no coinciden."
+    "passwordMismatch": "Las contraseñas no coinciden.",
+    "updatePassword": "Actualizar contraseña",
+    "activeSessions": "Sesiones activas",
+    "closeAllSessions": "Cerrar todas las sesiones",
+    "deleteAccount": "Eliminar cuenta",
+    "deleteAccountDesc": "Esta acción es permanente. Todos tus datos, trabajos, contratos y mensajes se eliminarán y no se podrán recuperar.",
+    "deleteAccountConfirm": "Escribe ELIMINAR para confirmar",
+    "deleteAccountButton": "Eliminar mi cuenta permanentemente",
+    "deleteAccountSuccess": "Cuenta eliminada. Serás redirigido.",
+    "deleteAccountError": "Error al eliminar la cuenta. Inténtalo de nuevo."
   },
   "kyc": {
     "title": "Verificación de identidad",

@@ -408,7 +408,16 @@
     "confirmPassword": "Confirm password",
     "changePassword": "Change password",
     "passwordUpdated": "✅ Password updated successfully.",
-    "passwordMismatch": "Passwords do not match."
+    "passwordMismatch": "Passwords do not match.",
+    "updatePassword": "Update password",
+    "activeSessions": "Active sessions",
+    "closeAllSessions": "Close all sessions",
+    "deleteAccount": "Delete account",
+    "deleteAccountDesc": "This action is permanent. All your data, jobs, contracts, and messages will be deleted and cannot be recovered.",
+    "deleteAccountConfirm": "Type DELETE to confirm",
+    "deleteAccountButton": "Delete my account permanently",
+    "deleteAccountSuccess": "Account deleted. You will be redirected.",
+    "deleteAccountError": "Error deleting account. Try again."
   },
   "kyc": {
     "title": "Identity Verification",

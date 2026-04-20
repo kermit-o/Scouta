@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Alert, Platform } from 'react-native'
 import { router } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -15,6 +15,8 @@ export default function SecurityScreen() {
   const [showConfirm, setShowConfirm] = useState(false)
   const [loading, setLoading] = useState(false)
   const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   async function changePassword() {
     if (newPassword.length < 8) { setMsg({ text: 'La contraseña debe tener al menos 8 caracteres.', ok: false }); return }
@@ -69,6 +71,68 @@ export default function SecurityScreen() {
             <Text style={styles.dangerText}>{t('security.closeAllSessions')}</Text>
           </TouchableOpacity>
         </View>
+
+        <View style={[styles.card, { marginTop: 16, borderColor: '#FCA5A5' }]}>
+          <View style={styles.dangerRow}>
+            <Ionicons name="warning" size={20} color="#DC2626" />
+            <Text style={[styles.sectionTitle, { color: '#DC2626', marginBottom: 0 }]}>{t('security.deleteAccount')}</Text>
+          </View>
+          <Text style={styles.deleteDesc}>{t('security.deleteAccountDesc')}</Text>
+          <Text style={styles.label}>{t('security.deleteAccountConfirm')}</Text>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              value={deleteConfirm}
+              onChangeText={setDeleteConfirm}
+              placeholder="DELETE / ELIMINAR"
+              placeholderTextColor="#ccc"
+              autoCapitalize="characters"
+            />
+          </View>
+          <TouchableOpacity
+            style={[styles.deleteBtn, (deleteConfirm !== 'DELETE' && deleteConfirm !== 'ELIMINAR') && { opacity: 0.4 }]}
+            disabled={deleting || (deleteConfirm !== 'DELETE' && deleteConfirm !== 'ELIMINAR')}
+            activeOpacity={0.85}
+            onPress={async () => {
+              const doDelete = async () => {
+                setDeleting(true)
+                try {
+                  const { data, error } = await supabase.functions.invoke('delete-account')
+                  if (error || !data?.success) {
+                    setMsg({ text: t('security.deleteAccountError'), ok: false })
+                    setDeleting(false)
+                    return
+                  }
+                  await supabase.auth.signOut()
+                  router.replace('/(auth)/login')
+                } catch {
+                  setMsg({ text: t('security.deleteAccountError'), ok: false })
+                  setDeleting(false)
+                }
+              }
+              if (Platform.OS === 'web') {
+                if (window.confirm(t('security.deleteAccountDesc'))) doDelete()
+              } else {
+                Alert.alert(
+                  t('security.deleteAccount'),
+                  t('security.deleteAccountDesc'),
+                  [
+                    { text: t('common.cancel'), style: 'cancel' },
+                    { text: t('security.deleteAccountButton'), style: 'destructive', onPress: doDelete },
+                  ]
+                )
+              }
+            }}
+          >
+            {deleting
+              ? <ActivityIndicator color="#fff" />
+              : <>
+                  <Ionicons name="trash-outline" size={18} color="#fff" />
+                  <Text style={styles.deleteBtnText}>{t('security.deleteAccountButton')}</Text>
+                </>
+            }
+          </TouchableOpacity>
+        </View>
       </ScrollView>
     </View>
   )
@@ -90,4 +154,7 @@ const styles = StyleSheet.create({
   btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   dangerRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 4 },
   dangerText: { fontSize: 14, fontWeight: '600', color: '#DC2626' },
+  deleteDesc: { fontSize: 13, color: '#888', lineHeight: 19, marginTop: 12, marginBottom: 8 },
+  deleteBtn: { backgroundColor: '#DC2626', borderRadius: 14, height: 50, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 12 },
+  deleteBtnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 })

@@ -39,6 +39,10 @@ import_map = "./functions/api-gateway/deno.json"
 verify_jwt = true
 import_map = "./functions/create-stripe-account/deno.json"
 
+[functions.delete-account]
+verify_jwt = true
+import_map = "./functions/delete-account/deno.json"
+
 [functions.generate-invoice]
 verify_jwt = true
 import_map = "./functions/generate-invoice/deno.json"
