@@ -61,7 +61,6 @@
       "preferRelatedApplications": false
     },
     "plugins": [
-      "./plugins/withNoGoogleServices",
       "expo-secure-store",
       "expo-localization",
       "expo-font",
