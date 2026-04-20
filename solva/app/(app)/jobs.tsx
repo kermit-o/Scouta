@@ -232,7 +232,7 @@ export default function JobsScreen() {
                   {searchMode === 'nearby' ? t('jobs.noJobs') : t('jobs.noJobs')}
                 </Text>
                 <Text style={s.emptySub}>
-                  {searchMode === 'nearby' ? 'Prueba aumentar el radio de busqueda' : 'Se el primero en publicar'}
+                  {searchMode === 'nearby' ? t('jobs.tryLargerRadius') : t('jobs.beFirstToPublish')}
                 </Text>
               </View>
             }
@@ -255,7 +255,7 @@ export default function JobsScreen() {
                 <View style={s.cardFooter}>
                   {item.budget_min || item.budget_max
                     ? <Text style={s.budget}>💰 {item.budget_min ?? '?'} — {item.budget_max ?? '?'} {item.currency}</Text>
-                    : <Text style={s.budget}>💰 A negociar</Text>
+                    : <Text style={s.budget}>💰 {t('jobs.negotiable')}</Text>
                   }
                   {item.city && <Text style={s.city}>📍 {item.city}</Text>}
                 </View>
@@ -267,13 +267,13 @@ export default function JobsScreen() {
           {historyJobs.length === 0
             ? <View style={s.emptyState}>
                 <Text style={s.emptyStateIcon}>🏆</Text>
-                <Text style={s.emptyStateTitle}>Sin historial</Text>
-                <Text style={s.emptyStateSub}>Aquí aparecerán los trabajos completados</Text>
+                <Text style={s.emptyStateTitle}>{t('jobs.noHistory')}</Text>
+                <Text style={s.emptyStateSub}>{t('jobs.historyDesc')}</Text>
               </View>
             : historyJobs.map((contract: any) => {
                 const isCompleted = contract.status === 'completed'
                 const statusColor = isCompleted ? '#059669' : '#9CA3AF'
-                const statusLabel = isCompleted ? 'Completado' : 'Cancelado'
+                const statusLabel = isCompleted ? t('jobs.statusCompleted') : t('jobs.statusCancelled')
                 return (
                   <TouchableOpacity
                     key={contract.id}
@@ -282,7 +282,7 @@ export default function JobsScreen() {
                     activeOpacity={0.85}
                   >
                     <View style={s.myJobTop}>
-                      <Text style={s.myJobTitle}>{contract.jobs?.title ?? 'Trabajo'}</Text>
+                      <Text style={s.myJobTitle}>{contract.jobs?.title ?? t('jobs.title')}</Text>
                       <View style={[s.myJobBadge, { backgroundColor: statusColor + '20' }]}>
                         <Text style={[s.myJobBadgeText, { color: statusColor }]}>{statusLabel}</Text>
                       </View>

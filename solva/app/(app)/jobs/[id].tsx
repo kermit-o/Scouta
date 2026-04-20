@@ -504,14 +504,14 @@ export default function JobDetailScreen() {
         {/* Bids list (owner) */}
         {isOwner && (
           <View style={s.bidsSection}>
-            <Text style={s.bidsTitle}>Ofertas recibidas</Text>
+            <Text style={s.bidsTitle}>{t('jobs.bidsReceived')}</Text>
             <Text style={s.bidsCount}>{bids.length} oferta{bids.length !== 1 ? 's' : ''}</Text>
 
             {bids.length === 0 ? (
               <View style={s.emptyBids}>
                 <Ionicons name="time-outline" size={32} color="#ccc" />
-                <Text style={s.emptyBidsText}>Aún no hay ofertas</Text>
-                <Text style={s.emptyBidsDesc}>Los profesionales podrán enviar sus propuestas pronto</Text>
+                <Text style={s.emptyBidsText}>{t('jobs.noBids')}</Text>
+                <Text style={s.emptyBidsDesc}>{t('jobs.noBidsDesc')}</Text>
               </View>
             ) : (
               bids.map(bid => (
@@ -537,7 +537,7 @@ export default function JobDetailScreen() {
                       </View>
                       <Text style={s.bidMsg} numberOfLines={2}>{bid.message}</Text>
                       {bid.delivery_days && (
-                        <Text style={s.bidDays}>⏱ {bid.delivery_days} días</Text>
+                        <Text style={s.bidDays}>⏱ {bid.delivery_days} {t('jobs.days')}</Text>
                       )}
                     </View>
                   </View>
@@ -566,7 +566,7 @@ export default function JobDetailScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="briefcase-outline" size={20} color="#fff" />
-            <Text style={s.footerBtnText}>Hacer una oferta</Text>
+            <Text style={s.footerBtnText}>{t('jobs.makeOffer')}</Text>
           </TouchableOpacity>
         </View>
       )}

@@ -72,7 +72,7 @@ export default function HomeScreen() {
   }
 
   const isPro = profile?.role === 'pro' || profile?.role === 'company'
-  const firstName = profile?.full_name?.split(' ')[0] || 'Usuario'
+  const firstName = profile?.full_name?.split(' ')[0] || t('home.defaultUser')
   const hour = new Date().getHours()
   const greeting = hour < 12 ? t('home.greetingMorning') : hour < 20 ? t('home.greetingAfternoon') : t('home.greetingEvening')
 
@@ -153,7 +153,7 @@ export default function HomeScreen() {
         <View style={s.navRight}>
           {isPro && monthEarnings > 0 && (
             <View style={s.earningsBadge}>
-              <Text style={s.earningsBadgeText}>{monthEarnings.toFixed(0)}€ mes</Text>
+              <Text style={s.earningsBadgeText}>{monthEarnings.toFixed(0)}€ {t('home.monthShort')}</Text>
             </View>
           )}
           <TouchableOpacity style={s.avatarBtn} onPress={openDrawer}>
@@ -260,7 +260,7 @@ export default function HomeScreen() {
                       <Text style={s.proCardRate}>{pro.hourly_rate}€/h</Text>
                     )}
                     <View style={s.proCardBtn}>
-                      <Text style={s.proCardBtnText}>Ver perfil</Text>
+                      <Text style={s.proCardBtnText}>{t('home.viewProfile')}</Text>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -275,8 +275,8 @@ export default function HomeScreen() {
                   <TouchableOpacity key={c.id} style={s.contractCard} onPress={() => router.push(`/(app)/jobs/${c.job_id}/contract`)}>
                     <View style={s.contractDot} />
                     <View style={{ flex: 1 }}>
-                      <Text style={s.contractTitle}>{c.jobs?.title ?? 'Trabajo'}</Text>
-                      <Text style={s.contractSub}>En curso · {c.amount} {c.currency}</Text>
+                      <Text style={s.contractTitle}>{c.jobs?.title ?? t('home.defaultJob')}</Text>
+                      <Text style={s.contractSub}>{t('home.inProgress')} · {c.amount} {c.currency}</Text>
                     </View>
                     <Ionicons name="chevron-forward" size={18} color="#2563EB" />
                   </TouchableOpacity>
@@ -286,17 +286,17 @@ export default function HomeScreen() {
 
             {/* Mis jobs */}
             <View style={s.sectionRow}>
-              <Text style={s.sectionTitle}>Mis trabajos</Text>
+              <Text style={s.sectionTitle}>{t('home.myJobs')}</Text>
               <TouchableOpacity onPress={() => router.push('/(app)/jobs?filter=mine')}>
-                <Text style={s.sectionLink}>Ver todos →</Text>
+                <Text style={s.sectionLink}>{t('home.viewAll')}</Text>
               </TouchableOpacity>
             </View>
             {recentJobs.length === 0 ? (
               <View style={s.emptyCard}>
                 <Text style={s.emptyEmoji}>📋</Text>
-                <Text style={s.emptyText}>Aún no tienes trabajos publicados</Text>
+                <Text style={s.emptyText}>{t('home.noJobsYet')}</Text>
                 <TouchableOpacity style={s.emptyBtn} onPress={() => router.push('/(app)/jobs/new')}>
-                  <Text style={s.emptyBtnText}>Publicar ahora</Text>
+                  <Text style={s.emptyBtnText}>{t('home.publishNow')}</Text>
                 </TouchableOpacity>
               </View>
             ) : recentJobs.map((job: any) => (
@@ -323,26 +323,26 @@ export default function HomeScreen() {
             <View style={s.proStatsRow}>
               <TouchableOpacity style={s.proStatCard} onPress={() => router.push('/(app)/dashboard-pro')}>
                 <Text style={s.proStatValue}>{monthEarnings.toFixed(0)}€</Text>
-                <Text style={s.proStatLabel}>Ganado este mes</Text>
+                <Text style={s.proStatLabel}>{t('home.earnedThisMonth')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[s.proStatCard, { backgroundColor: '#F0FDF4' }]} onPress={() => router.push('/(app)/jobs')}>
                 <Text style={[s.proStatValue, { color: '#16A34A' }]}>{recentJobs.length}</Text>
-                <Text style={s.proStatLabel}>Jobs disponibles</Text>
+                <Text style={s.proStatLabel}>{t('home.availableJobs')}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={[s.proStatCard, { backgroundColor: '#FEF3C7' }]} onPress={() => router.push('/(app)/jobs?filter=bids')}>
                 <Text style={[s.proStatValue, { color: '#D97706' }]}>{pendingBids.length}</Text>
-                <Text style={s.proStatLabel}>Ofertas enviadas</Text>
+                <Text style={s.proStatLabel}>{t('home.bidsSent')}</Text>
               </TouchableOpacity>
             </View>
 
             {/* Filtros categoría */}
-            <Text style={s.sectionTitle}>Trabajos cerca de ti</Text>
+            <Text style={s.sectionTitle}>{t('home.jobsNearYou')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
               <TouchableOpacity
                 style={[s.filterChip, !selectedCategory && s.filterChipActive]}
                 onPress={() => setSelectedCategory(null)}
               >
-                <Text style={[s.filterChipText, !selectedCategory && s.filterChipTextActive]}>Todos</Text>
+                <Text style={[s.filterChipText, !selectedCategory && s.filterChipTextActive]}>{t('common.all')}</Text>
               </TouchableOpacity>
               {CATEGORIES.map((cat, i) => (
                 <TouchableOpacity
@@ -359,10 +359,10 @@ export default function HomeScreen() {
             {/* Filtros de ordenación */}
             <View style={s.sortRow}>
               {[
-                { key: 'recent', label: '🕐 Recientes' },
-                { key: 'budget_high', label: '💰 Mayor precio' },
-                { key: 'budget_low', label: '📉 Menor precio' },
-                { key: 'nearby', label: '📍 Cercanos' },
+                { key: 'recent', label: `🕐 ${t('home.sortRecent')}` },
+                { key: 'budget_high', label: `💰 ${t('home.sortBudgetHigh')}` },
+                { key: 'budget_low', label: `📉 ${t('home.sortBudgetLow')}` },
+                { key: 'nearby', label: `📍 ${t('home.sortNearby')}` },
               ].map((opt: any) => (
                 <TouchableOpacity
                   key={opt.key}
@@ -376,7 +376,7 @@ export default function HomeScreen() {
 
             {/* Filtro presupuesto mínimo */}
             <View style={s.budgetFilterRow}>
-              <Text style={s.budgetFilterLabel}>Presupuesto mínimo:</Text>
+              <Text style={s.budgetFilterLabel}>{t('home.minBudget')}</Text>
               {[0, 50, 100, 200, 500].map(val => (
                 <TouchableOpacity
                   key={val}
@@ -384,7 +384,7 @@ export default function HomeScreen() {
                   onPress={() => setMinBudget(val)}
                 >
                   <Text style={[s.budgetChipText, minBudget === val && s.budgetChipTextActive]}>
-                    {val === 0 ? 'Todos' : val + '€+'}
+                    {val === 0 ? t('common.all') : val + '€+'}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -394,7 +394,7 @@ export default function HomeScreen() {
             {recentJobs.length === 0 ? (
               <View style={s.emptyCard}>
                 <Text style={s.emptyEmoji}>🔍</Text>
-                <Text style={s.emptyText}>No hay trabajos disponibles ahora</Text>
+                <Text style={s.emptyText}>{t('home.noJobsAvailable')}</Text>
               </View>
             ) : recentJobs.map((job: any) => (
               <TouchableOpacity key={job.id} style={s.proJobCard} onPress={() => router.push(`/(app)/jobs/${job.id}`)}>
@@ -410,12 +410,12 @@ export default function HomeScreen() {
                     <Text style={s.clientAvatarText}>{(job.client?.full_name ?? '?')[0].toUpperCase()}</Text>
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={s.clientName}>{job.client?.full_name ?? 'Cliente'}</Text>
+                    <Text style={s.clientName}>{job.client?.full_name ?? t('roles.client')}</Text>
                   </View>
                   <View style={s.clientRating}>
                     <Ionicons name="star" size={11} color="#F59E0B" />
                     <Text style={s.clientRatingText}>
-                      {job.client?.avg_rating ? job.client.avg_rating.toFixed(1) + ' (' + job.client.total_reviews + ')' : 'Nuevo'}
+                      {job.client?.avg_rating ? job.client.avg_rating.toFixed(1) + ' (' + job.client.total_reviews + ')' : t('home.newUser')}
                     </Text>
                   </View>
                 </View>
@@ -428,7 +428,7 @@ export default function HomeScreen() {
                   <Text style={s.proJobTime}> · {(() => { const diff = Math.floor((Date.now() - new Date(job.created_at).getTime()) / 60000); return diff < 60 ? `${diff}m` : diff < 1440 ? `${Math.floor(diff/60)}h` : `${Math.floor(diff/1440)}d` })()}</Text>
                 </View>
                 <TouchableOpacity style={s.bidBtn} onPress={() => router.push(`/(app)/jobs/${job.id}/bid`)}>
-                  <Text style={s.bidBtnText}>Enviar oferta →</Text>
+                  <Text style={s.bidBtnText}>{t('home.sendBid')}</Text>
                 </TouchableOpacity>
               </TouchableOpacity>
             ))}
@@ -436,12 +436,12 @@ export default function HomeScreen() {
             {/* Ofertas pendientes */}
             {pendingBids.length > 0 && (
               <>
-                <Text style={s.sectionTitle}>Mis ofertas pendientes</Text>
+                <Text style={s.sectionTitle}>{t('home.myPendingBids')}</Text>
                 {pendingBids.map((bid: any) => (
                   <TouchableOpacity key={bid.id} style={s.bidCard} onPress={() => router.push(`/(app)/jobs/${bid.job_id}`)}>
                     <View style={{ flex: 1 }}>
                       <Text style={s.bidTitle} numberOfLines={1}>{bid.jobs?.title ?? 'Trabajo'}</Text>
-                      <Text style={s.bidSub}>{bid.jobs?.city ?? '—'} · Pendiente</Text>
+                      <Text style={s.bidSub}>{bid.jobs?.city ?? '—'} · {t('status.pending')}</Text>
                     </View>
                     <Text style={s.bidAmount}>{bid.amount} {bid.currency}</Text>
                   </TouchableOpacity>

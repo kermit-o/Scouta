@@ -100,7 +100,7 @@ export default function ChatScreen() {
     setText('')
     await supabase.from('messages').insert({ contract_id: contract.id, sender_id: session!.user.id, content })
     const otherId = session!.user.id === contract.client_id ? contract.pro_id : contract.client_id
-    try { await notifyUser(otherId, '💬 Nuevo mensaje', content.slice(0, 80), { job_id: contract.job_id }) } catch (_) {}
+    try { await notifyUser(otherId, t('chat.newMessage'), content.slice(0, 80), { job_id: contract.job_id }) } catch (_) {}
     setSending(false)
     setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100)
   }
