@@ -21,7 +21,8 @@
     "user": "Usuario",
     "job": "Trabajo",
     "today": "Hoy",
-    "yesterday": "Ayer"
+    "yesterday": "Ayer",
+    "all": "Todos"
   },
   "auth": {
     "login": "Iniciar sesión",

@@ -440,7 +440,7 @@ export default function HomeScreen() {
                 {pendingBids.map((bid: any) => (
                   <TouchableOpacity key={bid.id} style={s.bidCard} onPress={() => router.push(`/(app)/jobs/${bid.job_id}`)}>
                     <View style={{ flex: 1 }}>
-                      <Text style={s.bidTitle} numberOfLines={1}>{bid.jobs?.title ?? 'Trabajo'}</Text>
+                      <Text style={s.bidTitle} numberOfLines={1}>{bid.jobs?.title ?? t('home.defaultJob')}</Text>
                       <Text style={s.bidSub}>{bid.jobs?.city ?? '—'} · {t('status.pending')}</Text>
                     </View>
                     <Text style={s.bidAmount}>{bid.amount} {bid.currency}</Text>
