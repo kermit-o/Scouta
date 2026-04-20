@@ -16,15 +16,15 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 
 const { width } = Dimensions.get('window')
 
-const CATEGORIES = [
-  { icon: '🧹', label: 'Limpieza', key: 'cleaning' },
-  { icon: '🔧', label: 'Fontanería', key: 'plumbing' },
-  { icon: '⚡', label: 'Electricidad', key: 'electrical' },
-  { icon: '🎨', label: 'Pintura', key: 'painting' },
-  { icon: '🌿', label: 'Jardinería', key: 'gardening' },
-  { icon: '📦', label: 'Mudanzas', key: 'moving' },
-  { icon: '🪚', label: 'Carpintería', key: 'carpentry' },
-  { icon: '❄️', label: 'Climatización', key: 'hvac' },
+const CATEGORY_KEYS = [
+  { icon: '🧹', key: 'cleaning' },
+  { icon: '🔧', key: 'plumbing' },
+  { icon: '⚡', key: 'electrical' },
+  { icon: '🎨', key: 'painting' },
+  { icon: '🌿', key: 'gardening' },
+  { icon: '📦', key: 'moving' },
+  { icon: '🪚', key: 'carpentry' },
+  { icon: '❄️', key: 'hvac' },
 ]
 
 const FLAG: Record<string, string> = {
@@ -36,6 +36,7 @@ const FLAG: Record<string, string> = {
 export default function HomeScreen() {
   const { t } = useTranslation()
   const insets = useSafeAreaInsets()
+  const CATEGORIES = CATEGORY_KEYS.map(c => ({ ...c, label: t(`categories.${c.key}`) }))
   useNotifications()
   const { profile, loading } = useProfile()
   const { openDrawer } = useDrawer()
@@ -73,7 +74,7 @@ export default function HomeScreen() {
   const isPro = profile?.role === 'pro' || profile?.role === 'company'
   const firstName = profile?.full_name?.split(' ')[0] || 'Usuario'
   const hour = new Date().getHours()
-  const greeting = hour < 12 ? '☀️ Buenos días' : hour < 20 ? '👋 Buenas tardes' : '🌙 Buenas noches'
+  const greeting = hour < 12 ? t('home.greetingMorning') : hour < 20 ? t('home.greetingAfternoon') : t('home.greetingEvening')
 
   useEffect(() => {
     if (!profile?.id) return
@@ -167,8 +168,8 @@ export default function HomeScreen() {
         {isTrialing && (
           <TouchableOpacity style={s.trialBanner} onPress={() => router.push('/(app)/subscription')}>
             <Ionicons name="star" size={14} color="#92400E" />
-            <Text style={s.trialText}>{trialDaysLeft === 0 ? 'Tu trial expira hoy' : `${trialDaysLeft} días Pro gratis`}</Text>
-            <Text style={s.trialCta}>Activar →</Text>
+            <Text style={s.trialText}>{trialDaysLeft === 0 ? t('home.trialExpiresToday') : t('home.trialDaysLeft', { days: trialDaysLeft })}</Text>
+            <Text style={s.trialCta}>{t('home.activateTrial')}</Text>
           </TouchableOpacity>
         )}
 
@@ -176,7 +177,7 @@ export default function HomeScreen() {
         {!profile?.is_verified && (
           <TouchableOpacity style={s.kycBanner} onPress={() => router.push('/(app)/kyc')}>
             <Ionicons name="shield-checkmark-outline" size={16} color="#2563EB" />
-            <Text style={s.kycText}>Verifica tu identidad para más funciones</Text>
+            <Text style={s.kycText}>{t('home.verifyIdentity')}</Text>
             <Ionicons name="chevron-forward" size={16} color="#2563EB" />
           </TouchableOpacity>
         )}
@@ -189,7 +190,7 @@ export default function HomeScreen() {
               <Ionicons name="search-outline" size={18} color="#888" />
               <TextInput
                 style={s.searchInput}
-                placeholder="¿Qué servicio necesitas?"
+                placeholder={t('home.searchPlaceholder')}
                 placeholderTextColor="#aaa"
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -203,7 +204,7 @@ export default function HomeScreen() {
             </View>
 
             {/* Categorías */}
-            <Text style={s.sectionTitle}>¿Qué necesitas?</Text>
+            <Text style={s.sectionTitle}>{t('home.whatDoYouNeed')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
               {CATEGORIES.map((cat, i) => (
                 <TouchableOpacity
@@ -220,8 +221,8 @@ export default function HomeScreen() {
             {/* CTA Publicar */}
             <TouchableOpacity style={s.ctaCard} onPress={() => router.push('/(app)/jobs/new')}>
               <View style={s.ctaLeft}>
-                <Text style={s.ctaTitle}>Publica un trabajo</Text>
-                <Text style={s.ctaSub}>Recibe ofertas de pros verificados en minutos</Text>
+                <Text style={s.ctaTitle}>{t('home.postJob')}</Text>
+                <Text style={s.ctaSub}>{t('home.postJobDesc')}</Text>
               </View>
               <View style={s.ctaIcon}>
                 <Ionicons name="add-circle" size={32} color="#fff" />
@@ -230,9 +231,9 @@ export default function HomeScreen() {
 
             {/* Pros destacados */}
             <View style={s.sectionRow}>
-              <Text style={s.sectionTitle}>Profesionales cerca</Text>
+              <Text style={s.sectionTitle}>{t('home.nearbyPros')}</Text>
               <TouchableOpacity onPress={() => router.push('/(app)/search?tab=pros')}>
-                <Text style={s.sectionLink}>Ver todos →</Text>
+                <Text style={s.sectionLink}>{t('home.viewAll')}</Text>
               </TouchableOpacity>
             </View>
             {nearbyPros.length === 0 ? (
@@ -269,7 +270,7 @@ export default function HomeScreen() {
             {/* Contratos activos */}
             {activeContracts.length > 0 && (
               <>
-                <Text style={s.sectionTitle}>Trabajos en curso</Text>
+                <Text style={s.sectionTitle}>{t('home.activeContracts')}</Text>
                 {activeContracts.map((c: any) => (
                   <TouchableOpacity key={c.id} style={s.contractCard} onPress={() => router.push(`/(app)/jobs/${c.job_id}/contract`)}>
                     <View style={s.contractDot} />

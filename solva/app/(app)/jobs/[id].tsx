@@ -168,7 +168,7 @@ export default function JobDetailScreen() {
   )
   if (!job) return (
     <View style={s.center}>
-      <Text style={s.notFound}>Job no encontrado</Text>
+      <Text style={s.notFound}>{t('jobs.notFound')}</Text>
     </View>
   )
 
@@ -195,12 +195,12 @@ export default function JobDetailScreen() {
             <Text style={s.jobSummaryTitle}>{job.title}</Text>
             {(job.budget_min || job.budget_max) && (
               <Text style={s.jobSummaryBudget}>
-                Presupuesto: {job.budget_min ?? '?'} – {job.budget_max ?? '?'} {job.currency}
+                {t('jobs.budget')}: {job.budget_min ?? '?'} – {job.budget_max ?? '?'} {job.currency}
               </Text>
             )}
           </View>
 
-          <Text style={s.inputLabel}>Tu oferta ({job.currency})</Text>
+          <Text style={s.inputLabel}>{t('jobs.yourBid')} ({job.currency})</Text>
           <View style={s.inputRow}>
             <Ionicons name="cash-outline" size={20} color="#888" style={s.inputIcon} />
             <TextInput
@@ -213,7 +213,7 @@ export default function JobDetailScreen() {
             />
           </View>
 
-          <Text style={s.inputLabel}>Días estimados de entrega</Text>
+          <Text style={s.inputLabel}>{t('jobs.estimatedDeliveryDays')}</Text>
           <View style={s.inputRow}>
             <Ionicons name="time-outline" size={20} color="#888" style={s.inputIcon} />
             <TextInput
@@ -226,7 +226,7 @@ export default function JobDetailScreen() {
             />
           </View>
 
-          <Text style={s.inputLabel}>Mensaje al cliente</Text>
+          <Text style={s.inputLabel}>{t('jobs.messageToClient')}</Text>
           <TextInput
             style={s.textarea}
             placeholder={t("bid.messagePlaceholder")}
@@ -241,9 +241,9 @@ export default function JobDetailScreen() {
           <View style={s.escrowNote}>
             <Ionicons name="shield-checkmark" size={18} color="#2563EB" />
             <View style={{ flex: 1 }}>
-              <Text style={s.escrowNoteTitle}>Pago protegido con escrow</Text>
+              <Text style={s.escrowNoteTitle}>{t('jobs.escrowProtected')}</Text>
               <Text style={s.escrowNoteDesc}>
-                El cliente depositará el pago antes de que comiences. Se libera cuando confirma que el trabajo está completo.
+                {t('jobs.escrowProtectedDesc')}
               </Text>
             </View>
           </View>
@@ -258,7 +258,7 @@ export default function JobDetailScreen() {
           >
             {submittingBid
               ? <ActivityIndicator color="#fff" />
-              : <Text style={s.footerBtnText}>Enviar oferta</Text>
+              : <Text style={s.footerBtnText}>{t('jobs.submitBid')}</Text>
             }
           </TouchableOpacity>
         </View>
@@ -274,7 +274,7 @@ export default function JobDetailScreen() {
           <TouchableOpacity style={s.backBtn} onPress={() => { setViewMode('detail'); setSelectedBid(null) }}>
             <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
           </TouchableOpacity>
-          <Text style={s.headerTitle}>Detalle de oferta</Text>
+          <Text style={s.headerTitle}>{t('jobs.bidDetail')}</Text>
           <View style={{ width: 40 }} />
         </View>
 
@@ -295,7 +295,7 @@ export default function JobDetailScreen() {
                   )}
                 </View>
               </TouchableOpacity>
-              <Text style={s.proProfession}>Ver perfil completo →</Text>
+              <Text style={s.proProfession}>{t('jobs.viewProfile')}</Text>
             </View>
             <TouchableOpacity
               style={s.msgBtn}
@@ -307,22 +307,22 @@ export default function JobDetailScreen() {
 
           {/* Detalles */}
           <View style={s.bidDetailsCard}>
-            <Text style={s.bidDetailsTitle}>Detalles de la oferta</Text>
+            <Text style={s.bidDetailsTitle}>{t('jobs.bidDetails')}</Text>
             <View style={s.bidDetailRow}>
-              <Text style={s.bidDetailLabel}>Precio ofertado</Text>
+              <Text style={s.bidDetailLabel}>{t('jobs.bidPrice')}</Text>
               <Text style={s.bidDetailAmount}>{selectedBid.amount} {selectedBid.currency}</Text>
             </View>
             {selectedBid.delivery_days && (
               <View style={s.bidDetailRow}>
-                <Text style={s.bidDetailLabel}>Tiempo estimado</Text>
+                <Text style={s.bidDetailLabel}>{t('jobs.estimatedTime')}</Text>
                 <View style={s.bidDetailRowRight}>
                   <Ionicons name="time-outline" size={16} color="#555" />
-                  <Text style={s.bidDetailValue}>{selectedBid.delivery_days} días</Text>
+                  <Text style={s.bidDetailValue}>{selectedBid.delivery_days} {t('jobs.days')}</Text>
                 </View>
               </View>
             )}
             <View style={s.divider} />
-            <Text style={s.bidDetailLabel}>Mensaje del profesional</Text>
+            <Text style={s.bidDetailLabel}>{t('jobs.proMessage')}</Text>
             <Text style={s.bidDetailMessage}>{selectedBid.message}</Text>
           </View>
 
@@ -330,9 +330,9 @@ export default function JobDetailScreen() {
           <View style={s.escrowNote}>
             <Ionicons name="shield-checkmark" size={18} color="#2563EB" />
             <View style={{ flex: 1 }}>
-              <Text style={s.escrowNoteTitle}>Pago seguro con escrow</Text>
+              <Text style={s.escrowNoteTitle}>{t('jobs.escrowSecure')}</Text>
               <Text style={s.escrowNoteDesc}>
-                Al aceptar, depositarás {selectedBid.amount} {selectedBid.currency} en escrow. El pago solo se libera cuando confirmas que el trabajo está completo.
+                {t('jobs.escrowSecureDesc', { amount: selectedBid.amount, currency: selectedBid.currency })}
               </Text>
             </View>
           </View>
@@ -348,7 +348,7 @@ export default function JobDetailScreen() {
             {accepting === selectedBid.id
               ? <ActivityIndicator color="#fff" />
               : <>
-                  <Text style={s.footerBtnText}>Aceptar oferta y pagar</Text>
+                  <Text style={s.footerBtnText}>{t('jobs.acceptAndPay')}</Text>
                   <Ionicons name="chevron-forward" size={20} color="#fff" />
                 </>
             }
@@ -358,7 +358,7 @@ export default function JobDetailScreen() {
             onPress={() => { setViewMode('detail'); setSelectedBid(null) }}
             activeOpacity={0.85}
           >
-            <Text style={s.outlineBtnText}>Ver otras ofertas</Text>
+            <Text style={s.outlineBtnText}>{t('jobs.viewOtherBids')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -379,7 +379,7 @@ export default function JobDetailScreen() {
           <Ionicons name="arrow-back" size={20} color="#1a1a2e" />
         </TouchableOpacity>
         <View style={s.headerCenter}>
-          <Text style={s.headerTitle}>Detalle del trabajo</Text>
+          <Text style={s.headerTitle}>{t('jobs.jobDetail')}</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
@@ -413,7 +413,7 @@ export default function JobDetailScreen() {
             {job.is_remote && (
               <View style={s.metaChip}>
                 <Ionicons name="globe-outline" size={14} color="#2563EB" />
-                <Text style={[s.metaChipText, { color: '#2563EB' }]}>Remoto</Text>
+                <Text style={[s.metaChipText, { color: '#2563EB' }]}>{t('jobs.remote')}</Text>
               </View>
             )}
           </View>
@@ -423,7 +423,7 @@ export default function JobDetailScreen() {
         {myBid && (
           <View style={s.myBidCard}>
             <View style={s.myBidLeft}>
-              <Text style={s.myBidLabel}>Tu oferta</Text>
+              <Text style={s.myBidLabel}>{t('jobs.yourBid')}</Text>
               <Text style={s.myBidAmount}>{myBid.amount} {myBid.currency}</Text>
             </View>
             <View style={[s.myBidStatus,
@@ -434,8 +434,8 @@ export default function JobDetailScreen() {
                 myBid.status === 'accepted' ? { color: '#059669' } :
                 myBid.status === 'rejected' ? { color: '#DC2626' } : { color: '#D97706' }
               ]}>
-                {myBid.status === 'accepted' ? '✅ Aceptada' :
-                 myBid.status === 'rejected' ? '❌ Rechazada' : '⏳ Pendiente'}
+                {myBid.status === 'accepted' ? `✅ ${t('jobs.bidAccepted')}` :
+                 myBid.status === 'rejected' ? `❌ ${t('jobs.bidRejected')}` : `⏳ ${t('jobs.bidPending')}`}
               </Text>
             </View>
           </View>
@@ -451,7 +451,7 @@ export default function JobDetailScreen() {
               <View style={[s.actionIcon, { backgroundColor: '#DBEAFE' }]}>
                 <Ionicons name="chatbubbles-outline" size={22} color="#2563EB" />
               </View>
-              <Text style={s.actionLabel}>Chat</Text>
+              <Text style={s.actionLabel}>{t('jobs.chat')}</Text>
             </TouchableOpacity>
 
             {isOwner && (
@@ -462,7 +462,7 @@ export default function JobDetailScreen() {
                 <View style={[s.actionIcon, { backgroundColor: '#D1FAE5' }]}>
                   <Ionicons name="card-outline" size={22} color="#059669" />
                 </View>
-                <Text style={s.actionLabel}>Pago escrow</Text>
+                <Text style={s.actionLabel}>{t('jobs.escrowPayment')}</Text>
               </TouchableOpacity>
             )}
 
@@ -473,7 +473,7 @@ export default function JobDetailScreen() {
               <View style={[s.actionIcon, { backgroundColor: '#EDE9FE' }]}>
                 <Ionicons name="document-text-outline" size={22} color="#7C3AED" />
               </View>
-              <Text style={s.actionLabel}>Contrato</Text>
+              <Text style={s.actionLabel}>{t('jobs.contract')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -483,7 +483,7 @@ export default function JobDetailScreen() {
               <View style={[s.actionIcon, { backgroundColor: '#FEE2E2' }]}>
                 <Ionicons name="warning-outline" size={22} color="#DC2626" />
               </View>
-              <Text style={s.actionLabel}>Disputa</Text>
+              <Text style={s.actionLabel}>{t('jobs.dispute')}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -496,7 +496,7 @@ export default function JobDetailScreen() {
             activeOpacity={0.85}
           >
             <Ionicons name="star" size={20} color="#D97706" />
-            <Text style={s.reviewBannerText}>Deja una reseña del trabajo</Text>
+            <Text style={s.reviewBannerText}>{t('jobs.leaveReview')}</Text>
             <Ionicons name="chevron-forward" size={18} color="#D97706" />
           </TouchableOpacity>
         )}

@@ -113,8 +113,8 @@ export default function ChatScreen() {
     const d = new Date(ts)
     const today = new Date()
     const diff = today.getDate() - d.getDate()
-    if (diff === 0) return 'Hoy'
-    if (diff === 1) return 'Ayer'
+    if (diff === 0) return t('common.today')
+    if (diff === 1) return t('common.yesterday')
     return d.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
   }
 
@@ -133,10 +133,10 @@ export default function ChatScreen() {
           <Path d="M21 15C21 16.1 20.1 17 19 17H7L3 21V5C3 3.9 3.9 3 5 3H19C20.1 3 21 3.9 21 5V15Z" stroke="#9CA3AF" strokeWidth="1.8" strokeLinejoin="round"/>
         </Svg>
       </View>
-      <Text style={s.noContractTitle}>Sin contrato activo</Text>
-      <Text style={s.noContractSub}>El chat estará disponible cuando se acepte un bid</Text>
+      <Text style={s.noContractTitle}>{t('chat.noContract')}</Text>
+      <Text style={s.noContractSub}>{t('chat.chatAvailableWhenBid')}</Text>
       <TouchableOpacity onPress={() => router.back()} style={s.backPill}>
-        <Text style={s.backPillText}>Volver</Text>
+        <Text style={s.backPillText}>{t('common.back')}</Text>
       </TouchableOpacity>
     </View>
   )
@@ -169,7 +169,7 @@ export default function ChatScreen() {
           <Text style={s.headerName}>{otherUser?.full_name ?? 'Chat'}</Text>
           <View style={s.onlineRow}>
             <View style={s.onlineDot} />
-            <Text style={s.onlineText}>Contrato activo</Text>
+            <Text style={s.onlineText}>{t('chat.activeContract')}</Text>
           </View>
         </View>
         <TouchableOpacity style={s.infoBtn} onPress={() => router.push(`/(app)/jobs/${id}/contract` as any)}>
@@ -189,8 +189,8 @@ export default function ChatScreen() {
         onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
         ListEmptyComponent={
           <View style={s.emptyChat}>
-            <Text style={s.emptyChatText}>Di hola a {otherUser?.full_name?.split(' ')[0]} 👋</Text>
-            <Text style={s.emptyChatSub}>Los mensajes están protegidos y solo visibles entre las partes</Text>
+            <Text style={s.emptyChatText}>{t('chat.sayHello', { name: otherUser?.full_name?.split(' ')[0] })} 👋</Text>
+            <Text style={s.emptyChatSub}>{t('chat.messagesProtected')}</Text>
           </View>
         }
         renderItem={({ item }) => {
