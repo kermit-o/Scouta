@@ -33,6 +33,8 @@
     "forgotPassword": "Forgot password?",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
+    "oauthError": "Error connecting. Please try again.",
+    "emailExistsOAuth": "This email is already registered with password. Please log in with your email and password instead.",
     "signIn": "Sign in",
     "signUp": "Sign up",
     "resetPassword": "Reset password",

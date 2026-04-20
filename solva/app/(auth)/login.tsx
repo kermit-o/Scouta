@@ -84,25 +84,34 @@ export default function LoginScreen() {
         provider,
         options: { redirectTo }
       })
-      if (error) setErrorMsg('Error al conectar con ' + provider + '. Inténtalo de nuevo.')
+      if (error) setErrorMsg(t('auth.oauthError'))
     } else {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
         options: { redirectTo: 'solva://auth/callback', skipBrowserRedirect: true }
       })
-      if (error) { setErrorMsg('Error al conectar con ' + provider + '. Inténtalo de nuevo.'); return }
+      if (error) { setErrorMsg(t('auth.oauthError')); return }
       if (data?.url) {
         const WebBrowser = require('expo-web-browser')
         const result = await WebBrowser.openAuthSessionAsync(data.url, 'solva://auth/callback')
         if (result.type === 'success' && result.url) {
           const url = new URL(result.url)
-          const params = new URLSearchParams(url.hash.replace('#', ''))
-          const access_token = params.get('access_token')
-          const refresh_token = params.get('refresh_token')
+          const hashParams = new URLSearchParams(url.hash.replace('#', ''))
+          const callbackError = hashParams.get('error_description') ?? hashParams.get('error')
+          if (callbackError) {
+            if (callbackError.toLowerCase().includes('already') || callbackError.toLowerCase().includes('exists')) {
+              setErrorMsg(t('auth.emailExistsOAuth'))
+            } else {
+              setErrorMsg(callbackError)
+            }
+            return
+          }
+          const access_token = hashParams.get('access_token')
+          const refresh_token = hashParams.get('refresh_token')
           if (access_token && refresh_token) {
             const { error: sessionErr } = await supabase.auth.setSession({ access_token, refresh_token })
             if (!sessionErr) router.replace('/(app)')
-            else setErrorMsg('Error al iniciar sesión')
+            else setErrorMsg(t('auth.oauthError'))
           }
         }
       }
