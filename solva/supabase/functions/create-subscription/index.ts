@@ -15,9 +15,20 @@ const PRICES: Record<string, { pro: number; company: number; currency: string }>
   CL: { pro: 12990, company: 34990, currency: 'clp' },
 }
 
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? 'https://www.getsolva.co,https://getsolva.co').split(',')
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, content-type',
+  }
+}
+
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req)
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, content-type' } })
+    return new Response('ok', { headers: cors })
   }
   try {
     const { user_id, plan, country, email } = await req.json()
@@ -75,9 +86,9 @@ Deno.serve(async (req) => {
       trial_end: subscription.trial_end,
       amount: amount / 100,
       currency: pricing.currency.toUpperCase(),
-    }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } })
+    }), { headers: { ...cors, 'Content-Type': 'application/json' } })
 
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } })
   }
 })

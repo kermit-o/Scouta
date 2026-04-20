@@ -3,9 +3,14 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY')!, { apiVersion: '2024-04-10' })
 
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info, apikey',
+const ALLOWED_ORIGINS = (Deno.env.get('ALLOWED_ORIGINS') ?? 'https://www.getsolva.co,https://getsolva.co').split(',')
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('origin') ?? ''
+  return {
+    'Access-Control-Allow-Origin': ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0],
+    'Access-Control-Allow-Headers': 'authorization, content-type, x-client-info, apikey',
+  }
 }
 
 const PROVIDER_BY_COUNTRY: Record<string, 'stripe' | 'mercadopago'> = {
@@ -22,13 +27,38 @@ const STRIPE_CURRENCY: Record<string, string> = {
 const PLATFORM_FEE_PCT = 0.10
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req)
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: CORS })
+    return new Response('ok', { headers: cors })
   }
   try {
+    // 1.3 — Validate auth and ownership
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(JSON.stringify({ error: 'Missing Authorization' }), { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } })
+    }
+    const supabaseAuth = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+    const { data: { user }, error: authErr } = await supabaseAuth.auth.getUser(authHeader.replace('Bearer ', ''))
+    if (authErr || !user) {
+      return new Response(JSON.stringify({ error: 'Not authenticated' }), { status: 401, headers: { ...cors, 'Content-Type': 'application/json' } })
+    }
+
     const { contract_id, amount, currency, country, client_id, pro_id } = await req.json()
     if (!contract_id || !amount || !currency || !country) {
-      return new Response(JSON.stringify({ error: 'Faltan parámetros' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify({ error: 'Missing parameters' }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
+    }
+
+    // Validate amount and currency
+    if (typeof amount !== 'number' || amount <= 0) {
+      return new Response(JSON.stringify({ error: 'Invalid amount' }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
+    }
+    if (!STRIPE_CURRENCY[currency]) {
+      return new Response(JSON.stringify({ error: 'Unsupported currency' }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
+    }
+
+    // Verify caller is the client on this contract
+    if (client_id && user.id !== client_id) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), { status: 403, headers: { ...cors, 'Content-Type': 'application/json' } })
     }
 
     const provider = PROVIDER_BY_COUNTRY[country] ?? 'stripe'
@@ -71,7 +101,7 @@ Deno.serve(async (req) => {
         payment_intent_id: paymentIntent.id,
         platform_fee: platformFee,
         pro_amount: proAmount,
-      }), { headers: { ...CORS, 'Content-Type': 'application/json' } })
+      }), { headers: { ...cors, 'Content-Type': 'application/json' } })
     }
 
     if (provider === 'mercadopago') {
@@ -82,11 +112,11 @@ Deno.serve(async (req) => {
         body: JSON.stringify({ contract_id, amount, country, client_id, pro_id, client_email: '' })
       })
       const mpData = await mpResponse.json()
-      return new Response(JSON.stringify(mpData), { headers: { ...CORS, 'Content-Type': 'application/json' } })
+      return new Response(JSON.stringify(mpData), { headers: { ...cors, 'Content-Type': 'application/json' } })
     }
 
-    return new Response(JSON.stringify({ error: 'Provider no soportado' }), { status: 400, headers: { ...CORS, 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify({ error: 'Provider no soportado' }), { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } })
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...CORS, 'Content-Type': 'application/json' } })
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } })
   }
 })
