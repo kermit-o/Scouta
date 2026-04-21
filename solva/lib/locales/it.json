@@ -496,7 +496,16 @@
     "confirmPassword": "Conferma password",
     "changePassword": "Cambia password",
     "passwordUpdated": "✅ Password aggiornata con successo.",
-    "passwordMismatch": "Le password non coincidono."
+    "passwordMismatch": "Le password non coincidono.",
+    "updatePassword": "Aggiorna password",
+    "activeSessions": "Sessioni attive",
+    "closeAllSessions": "Chiudi tutte le sessioni",
+    "deleteAccount": "Elimina account",
+    "deleteAccountDesc": "Questa azione è permanente. Tutti i tuoi dati, lavori, contratti e messaggi saranno eliminati e non potranno essere recuperati.",
+    "deleteAccountConfirm": "Scrivi ELIMINA per confermare",
+    "deleteAccountButton": "Elimina il mio account definitivamente",
+    "deleteAccountSuccess": "Account eliminato. Verrai reindirizzato.",
+    "deleteAccountError": "Errore durante l'eliminazione dell'account. Riprova."
   },
   "kyc": {
     "title": "Verifica dell'identità",
@@ -600,6 +609,7 @@
     "carpentry": "Falegnameria",
     "tech": "Tecnologia",
     "design": "Design",
+    "hvac": "Climatizzazione",
     "other": "Altro"
   },
   "proServices": {

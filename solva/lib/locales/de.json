@@ -609,6 +609,7 @@
     "carpentry": "Schreinerei",
     "tech": "Technologie",
     "design": "Design",
+    "hvac": "Klimaanlage",
     "other": "Sonstiges"
   },
   "proServices": {

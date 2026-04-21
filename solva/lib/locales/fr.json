@@ -609,6 +609,7 @@
     "carpentry": "Menuiserie",
     "tech": "Technologie",
     "design": "Design",
+    "hvac": "Climatisation",
     "other": "Autre"
   },
   "proServices": {
