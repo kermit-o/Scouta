@@ -78,17 +78,18 @@ export default function LoginScreen() {
   }
 
   async function handleOAuth(provider: 'google' | 'apple') {
+    const queryParams = provider === 'google' ? { prompt: 'select_account' } : {}
     if (Platform.OS === 'web') {
       const redirectTo = window.location.origin + '/auth/callback'
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo }
+        options: { redirectTo, queryParams }
       })
       if (error) setErrorMsg(t('auth.oauthError'))
     } else {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: 'solva://auth/callback', skipBrowserRedirect: true }
+        options: { redirectTo: 'solva://auth/callback', skipBrowserRedirect: true, queryParams }
       })
       if (error) { setErrorMsg(t('auth.oauthError')); return }
       if (data?.url) {
