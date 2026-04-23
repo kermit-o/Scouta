@@ -1,7 +1,9 @@
-// v2
+// v3
 import { useTranslation } from 'react-i18next'
 import { useState, useEffect } from 'react'
 import { useLocalSearchParams } from 'expo-router'
+import * as AuthSession from 'expo-auth-session'
+import * as WebBrowser from 'expo-web-browser'
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, KeyboardAvoidingView, Modal, Platform, ScrollView
@@ -78,42 +80,73 @@ export default function LoginScreen() {
   }
 
   async function handleOAuth(provider: 'google' | 'apple') {
-    const queryParams = provider === 'google' ? { prompt: 'select_account' } : {}
     if (Platform.OS === 'web') {
       const redirectTo = window.location.origin + '/auth/callback'
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo, queryParams }
+        options: { redirectTo, queryParams: provider === 'google' ? { prompt: 'select_account' } : {} }
       })
       if (error) setErrorMsg(t('auth.oauthError'))
-    } else {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider,
-        options: { redirectTo: 'solva://auth/callback', skipBrowserRedirect: true, queryParams }
-      })
-      if (error) { setErrorMsg(t('auth.oauthError')); return }
-      if (data?.url) {
-        const WebBrowser = require('expo-web-browser')
-        const result = await WebBrowser.openAuthSessionAsync(data.url, 'solva://auth/callback')
-        if (result.type === 'success' && result.url) {
-          const url = new URL(result.url)
-          const hashParams = new URLSearchParams(url.hash.replace('#', ''))
-          const callbackError = hashParams.get('error_description') ?? hashParams.get('error')
-          if (callbackError) {
-            if (callbackError.toLowerCase().includes('already') || callbackError.toLowerCase().includes('exists')) {
+      return
+    }
+
+    if (provider === 'google') {
+      try {
+        const redirectUri = AuthSession.makeRedirectUri({ path: 'auth/callback' })
+        const discovery = AuthSession.useAutoDiscovery ? undefined : {
+          authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+          tokenEndpoint: 'https://oauth2.googleapis.com/token',
+        }
+        const request = new AuthSession.AuthRequest({
+          clientId: '862116404572-eqjfbo1ps9v2j6avivko3lifjlv8vogf.apps.googleusercontent.com',
+          redirectUri,
+          scopes: ['openid', 'profile', 'email'],
+          responseType: AuthSession.ResponseType.IdToken,
+          usePKCE: false,
+          extraParams: { nonce: Math.random().toString(36).substring(7) },
+        })
+        const result = await request.promptAsync({
+          authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+        })
+        if (result.type === 'success' && result.params?.id_token) {
+          const { error: signInErr } = await supabase.auth.signInWithIdToken({
+            provider: 'google',
+            token: result.params.id_token,
+          })
+          if (signInErr) {
+            if (signInErr.message?.toLowerCase().includes('already')) {
               setErrorMsg(t('auth.emailExistsOAuth'))
             } else {
-              setErrorMsg(callbackError)
+              setErrorMsg(signInErr.message)
             }
-            return
+          } else {
+            router.replace('/(app)')
           }
-          const access_token = hashParams.get('access_token')
-          const refresh_token = hashParams.get('refresh_token')
-          if (access_token && refresh_token) {
-            const { error: sessionErr } = await supabase.auth.setSession({ access_token, refresh_token })
-            if (!sessionErr) router.replace('/(app)')
-            else setErrorMsg(t('auth.oauthError'))
-          }
+        }
+      } catch (err: any) {
+        console.error('Google OAuth error:', err)
+        setErrorMsg(t('auth.oauthError'))
+      }
+      return
+    }
+
+    // Apple and other providers: use browser-based flow
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider,
+      options: { redirectTo: 'solva://auth/callback', skipBrowserRedirect: true }
+    })
+    if (error) { setErrorMsg(t('auth.oauthError')); return }
+    if (data?.url) {
+      const result = await WebBrowser.openAuthSessionAsync(data.url, 'solva://auth/callback')
+      if (result.type === 'success' && result.url) {
+        const url = new URL(result.url)
+        const hashParams = new URLSearchParams(url.hash.replace('#', ''))
+        const access_token = hashParams.get('access_token')
+        const refresh_token = hashParams.get('refresh_token')
+        if (access_token && refresh_token) {
+          const { error: sessionErr } = await supabase.auth.setSession({ access_token, refresh_token })
+          if (!sessionErr) router.replace('/(app)')
+          else setErrorMsg(t('auth.oauthError'))
         }
       }
     }

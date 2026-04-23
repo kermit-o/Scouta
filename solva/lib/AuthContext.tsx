@@ -93,7 +93,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function signOut() {
-    await supabase.auth.signOut()
+    try {
+      await supabase.auth.signOut()
+    } catch (err: any) {
+      console.error('signOut error:', err?.message ?? err)
+    }
     setProfile(null)
     setSession(null)
     router.replace('/(auth)/login')
