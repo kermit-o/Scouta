@@ -3,7 +3,7 @@ import secrets
 import requests
 
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET_KEY", "")
-MOBILE_BYPASS_TOKEN = os.getenv("MOBILE_BYPASS_TOKEN", secrets.token_urlsafe(32))
+MOBILE_BYPASS_TOKEN = os.getenv("MOBILE_BYPASS_TOKEN", "")
 
 def verify_turnstile(token: str, ip: str = "") -> bool:
     """Verifica el token de Cloudflare Turnstile"""
