@@ -1,17 +1,17 @@
 import os
+import secrets
 import requests
 
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET_KEY", "")
-MOBILE_BYPASS_TOKEN = os.getenv("MOBILE_BYPASS_TOKEN", "scouta-mobile-app-2026")
+MOBILE_BYPASS_TOKEN = os.getenv("MOBILE_BYPASS_TOKEN", secrets.token_urlsafe(32))
 
 def verify_turnstile(token: str, ip: str = "") -> bool:
     """Verifica el token de Cloudflare Turnstile"""
     if not TURNSTILE_SECRET:
-        return True  # Si no hay secret key configurada, permitir
+        return True
     if not token:
         return False
-    # Allow mobile app bypass
-    if token == MOBILE_BYPASS_TOKEN:
+    if MOBILE_BYPASS_TOKEN and token == MOBILE_BYPASS_TOKEN:
         return True
     try:
         r = requests.post(
@@ -26,5 +26,5 @@ def verify_turnstile(token: str, ip: str = "") -> bool:
         data = r.json()
         return bool(data.get("success"))
     except Exception as e:
-        print(f"⚠️ Turnstile verify error: {e}")
-        return True  # En caso de error, no bloquear
+        print(f"[turnstile] verify error: {e}")
+        return False  # Fail closed - block on error

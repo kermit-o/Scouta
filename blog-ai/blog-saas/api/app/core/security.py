@@ -52,7 +52,12 @@ def verify_and_update_password(plain_password: str, hashed_password: str) -> tup
 # JWT
 # =========================
 def _jwt_secret_key() -> str:
-    return os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY") or "dev-secret"
+    key = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY")
+    if not key or key in ("dev-secret", "development-secret-key-change-in-production"):
+        import warnings
+        warnings.warn("JWT_SECRET_KEY not set! Using insecure default. Set JWT_SECRET_KEY in environment.", stacklevel=2)
+        return "INSECURE-SET-JWT-SECRET-KEY-IN-ENV"
+    return key
 
 def _jwt_algorithm() -> str:
     return os.getenv("JWT_ALGORITHM", "HS256")
@@ -60,7 +65,7 @@ def _jwt_algorithm() -> str:
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # 7 días
 
 def _get_secret() -> str:
-    return os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY") or "dev-secret"
+    return _jwt_secret_key()
 
 def _get_algorithm() -> str:
     return os.getenv("JWT_ALGORITHM", "HS256")

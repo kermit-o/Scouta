@@ -82,6 +82,16 @@ app = FastAPI(
     description="AI-powered blog content generation",
     version="1.0.0"
 )
+
+# Rate limiting
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.include_router(api_router, prefix="/api/v1")
 
 # CORS
@@ -92,7 +102,7 @@ ALLOWED_ORIGINS = [
     for o in os.getenv(
         "ALLOWED_ORIGINS",
         "http://localhost:3000,"
-        "https://verbose-funicular-54pj46qxgw5h75x5-3000.app.github.dev,""https://serene-eagerness-production.up.railway.app",
+        "https://serene-eagerness-production.up.railway.app",
     ).split(",")
     if o.strip()
 ]

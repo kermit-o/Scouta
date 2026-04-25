@@ -1,12 +1,9 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-function setCookie(name: string, value: string, days = 7) {
-  const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${value}; expires=${expires}; path=/; SameSite=Strict; Secure`;
-}
-function deleteCookie(name: string) {
-  document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+// Token stored in localStorage only - not in cookies (avoids XSS via document.cookie)
+function clearAuthCookie() {
+  document.cookie = `auth_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
 }
 
 interface User {
@@ -44,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const savedUser = localStorage.getItem("user");
     if (savedToken) {
       setToken(savedToken);
-      setCookie("auth_token", savedToken, 7);
+      
     }
     if (savedUser) {
       try {
@@ -67,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   function login(t: string, u?: User) {
     setToken(t);
-    setCookie("auth_token", t, 7);
+    
     localStorage.setItem("token", t);
     if (u) {
       setUser(u);
@@ -78,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     setToken(null);
     setUser(null);
-    deleteCookie("auth_token");
+    clearAuthCookie();
     localStorage.removeItem("token");
     localStorage.removeItem("user");
   }

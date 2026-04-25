@@ -8,7 +8,10 @@ from app.models.user import User
 from app.api.v1.schemas.auth import RegisterIn, LoginIn, TokenOut
 from app.services.email_service import send_verification_email
 from app.services.turnstile import verify_turnstile
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(tags=["auth"])
 
 def _ensure_org_member(db, user_id: int, org_id: int = 1):
@@ -24,6 +27,7 @@ def _ensure_org_member(db, user_id: int, org_id: int = 1):
         db.commit()
 
 @router.post("/auth/register")
+@limiter.limit("5/minute")
 def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db)):
     if not verify_turnstile(payload.cf_turnstile_token or "", request.client.host if request.client else ""):
         raise HTTPException(status_code=400, detail="CAPTCHA verification failed")
@@ -78,6 +82,7 @@ def verify_email(token: str, db: Session = Depends(get_db)):
     )
 
 @router.post("/auth/login", response_model=TokenOut)
+@limiter.limit("10/minute")
 def login(payload: LoginIn, request: Request, db: Session = Depends(get_db)) -> TokenOut:
     if not verify_turnstile(payload.cf_turnstile_token or "", request.client.host if request.client else ""):
         raise HTTPException(status_code=400, detail="CAPTCHA verification failed")
@@ -124,7 +129,8 @@ def me(
 
 
 @router.post("/auth/forgot-password")
-def forgot_password(payload: dict, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+def forgot_password(payload: dict, request: Request, db: Session = Depends(get_db)):
     email = payload.get("email", "")
     user = db.query(User).filter(User.email == email).one_or_none()
     # Siempre responder igual para no revelar si el email existe

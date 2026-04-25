@@ -17,9 +17,9 @@ import asyncio
 
 router = APIRouter()
 
-LIVEKIT_URL = os.getenv("LIVEKIT_URL", "wss://scouta-pi70lg8z.livekit.cloud")
-LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY", "APIb89yuTt3jXAH")
-LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET", "AiUeExsGHO2zSAfL9O4eXMGQm07qZjCWB9uWUH5vFh2A")
+LIVEKIT_URL = os.getenv("LIVEKIT_URL", "")
+LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY", "")
+LIVEKIT_API_SECRET = os.getenv("LIVEKIT_API_SECRET", "")
 
 
 def _gen_room_name() -> str:
@@ -73,10 +73,12 @@ def start_live(
     user: User = Depends(get_current_user),
 ):
     """Start a live stream — creates room and returns token."""
-    title = payload.get("title", "Live Stream").strip()
-    description = payload.get("description", "")
+    title = payload.get("title", "Live Stream").strip()[:200]
+    description = payload.get("description", "").strip()[:1000]
     if not title:
         raise HTTPException(status_code=400, detail="Title required")
+    if len(title) < 3:
+        raise HTTPException(status_code=400, detail="Title too short (min 3 chars)")
 
     # Terminar cualquier live anterior del mismo usuario
     db.execute(text(
@@ -242,6 +244,14 @@ def invite_to_live(
     user: User = Depends(get_current_user),
 ):
     """Invite another user to publish (duo/group live)."""
+    # Verify caller is the host
+    stream = db.execute(
+        text("SELECT host_user_id FROM live_streams WHERE room_name=:room AND status='live'"),
+        {"room": room_name}
+    ).first()
+    if not stream or stream.host_user_id != user.id:
+        raise HTTPException(status_code=403, detail="Only the host can invite users")
+
     invitee_username = payload.get("username")
     invitee = db.query(User).filter(User.username == invitee_username).first()
     if not invitee:
@@ -550,13 +560,13 @@ async def send_gift(
 
     host_user_id = stream.host_user_id
 
-    # Check sender balance
-    sender_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user.id).first()
+    # Check sender balance with row-level locking to prevent race conditions
+    sender_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user.id).with_for_update().first()
     if not sender_wallet or sender_wallet.balance < gift.coin_cost:
         raise HTTPException(status_code=402, detail="Insufficient coins")
 
-    # Get or create host wallet
-    host_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == host_user_id).first()
+    # Get or create host wallet with locking
+    host_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == host_user_id).with_for_update().first()
     if not host_wallet:
         host_wallet = CoinWallet(user_id=host_user_id, balance=0)
         db.add(host_wallet)
