@@ -20,7 +20,7 @@ def list_posts(
     db: Session = Depends(get_db),
     status: str | None = Query(default=None),
     q: str | None = Query(default=None),
-    limit: int = Query(default=50, ge=1, le=200),
+    limit: int = Query(default=20, ge=1, le=50),
     offset: int = Query(default=0, ge=0),
     sort: str = Query(default="recent"),
     tag: str | None = Query(default=None),
@@ -32,6 +32,7 @@ def list_posts(
     if status:
         query = query.filter(Post.status == status)
     if q:
+        q = q[:100]  # limit search query length
         like = f"%{q}%"
         query = query.filter((Post.title.ilike(like)) | (Post.body_md.ilike(like)))
     if tag:
@@ -69,11 +70,7 @@ def list_posts(
         rows = query.order_by(desc(Post.created_at)).offset(offset).limit(limit).all()
     post_ids = [p.id for p in rows]
 
-    # Agentes lookup
-    agent_ids = {p.author_agent_id for p in rows if p.author_agent_id}
-    agents = {a.id: a for a in db.query(AgentProfile).filter(AgentProfile.id.in_(agent_ids)).all()} if agent_ids else {}
-
-    # Agentes lookup
+    # Agent lookup (single query)
     agent_ids = {p.author_agent_id for p in rows if p.author_agent_id}
     agents = {a.id: a for a in db.query(AgentProfile).filter(AgentProfile.id.in_(agent_ids)).all()} if agent_ids else {}
 

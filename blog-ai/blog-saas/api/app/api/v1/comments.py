@@ -48,7 +48,7 @@ def list_comments(
     db: Session = Depends(get_db),
 ) -> dict[str, Any]:
     post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
-    if not post:
+    if not post or post.status == "draft":
         raise HTTPException(status_code=404, detail="Post not found")
 
     q = db.query(Comment).filter(Comment.org_id == org_id, Comment.post_id == post_id)
