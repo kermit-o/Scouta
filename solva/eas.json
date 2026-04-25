@@ -1,9 +1,13 @@
 {
   "cli": {
     "version": ">= 10.0.0",
-    "appVersionSource": "local"
+    "appVersionSource": "local",
+    "requireCommit": false
   },
   "build": {
+    "base": {
+      "node": "20.18.0"
+    },
     "development": {
       "developmentClient": true,
       "distribution": "internal",
@@ -16,7 +20,8 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://qzyxcooctlahwhhixyiy.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_gvNlWZrANOGAqW4o7HquUw_uFGfDgCB",
-        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka"
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://afb49fb9daaa43fee1c19988771cfb43@o4511209848766464.ingest.us.sentry.io/4511213223673856"
       }
     },
     "preview": {
@@ -27,7 +32,8 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://qzyxcooctlahwhhixyiy.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_gvNlWZrANOGAqW4o7HquUw_uFGfDgCB",
-        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka"
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_test_51RuUkA9TXLctvE6F5II8MqzR3cLyyL5CucNV7KS2ouOSmKYuUriJWztRizjdHdVBtTs8CGmYMahqkb13r4xM5NPY002pWVcSka",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://afb49fb9daaa43fee1c19988771cfb43@o4511209848766464.ingest.us.sentry.io/4511213223673856"
       },
       "prebuildCommand": "npx expo prebuild --clean"
     },
@@ -39,7 +45,8 @@
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "https://qzyxcooctlahwhhixyiy.supabase.co",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_gvNlWZrANOGAqW4o7HquUw_uFGfDgCB",
-        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_TU_STRIPE_LIVE_KEY_AQUI"
+        "EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY": "pk_live_51RuUjn5CZiSWsN34qyJyjh5HQMHPSWtWJLO43DndusKf6QtSAHHUT9UnZFTGhP7YPQOcm9UcA6cf1kUwLojdyFQy008mzQDFN8",
+        "EXPO_PUBLIC_SENTRY_DSN": "https://afb49fb9daaa43fee1c19988771cfb43@o4511209848766464.ingest.us.sentry.io/4511213223673856"
       }
     }
   },

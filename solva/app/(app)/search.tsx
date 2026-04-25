@@ -10,6 +10,7 @@ import { useProfile } from '../../hooks/useProfile'
 import { useLocation } from '../../hooks/useLocation'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import JobsMap from '../../components/JobsMap'
 
 const CATEGORIES = [
   { labelKey: 'search.catAll',         icon: '✨', value: null },
@@ -321,32 +322,51 @@ export default function SearchScreen() {
           contentContainerStyle={filteredResults.length === 0 ? styles.emptyContainer : styles.list}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            parsed ? (
-              <View style={styles.parsedCard}>
-                <View style={styles.parsedHeader}>
-                  <Ionicons name="sparkles" size={16} color="#2563EB" />
-                  <Text style={styles.parsedSummary}>{parsed.summary}</Text>
+            <>
+              {/* Map */}
+              {filteredResults.some(j => j.latitude && j.longitude) && (
+                <View style={{ marginBottom: 12 }}>
+                  <JobsMap
+                    jobs={filteredResults.filter((j: any) => j.latitude && j.longitude).map((j: any) => ({
+                      id: j.id, title: j.title, category: j.category,
+                      latitude: j.latitude, longitude: j.longitude,
+                      budget_min: j.budget_min, budget_max: j.budget_max,
+                      currency: j.currency, city: j.city,
+                    }))}
+                    userLat={coords?.latitude}
+                    userLng={coords?.longitude}
+                    onJobPress={(id) => router.push(`/(app)/jobs/${id}`)}
+                    height={220}
+                  />
                 </View>
-                {parsed.suggestions?.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                    <View style={styles.suggestionsRow}>
-                      {parsed.suggestions.map((sug: string, i: number) => (
-                        <TouchableOpacity
-                          key={i}
-                          style={styles.suggestionChip}
-                          onPress={() => { setQuery(sug); handleSearch(sug) }}
-                        >
-                          <Text style={styles.suggestionText}>{sug}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </ScrollView>
-                )}
-                <Text style={styles.resultCount}>
-                  {filteredResults.length} resultado{filteredResults.length !== 1 ? 's' : ''}
-                </Text>
-              </View>
-            ) : null
+              )}
+              {parsed ? (
+                <View style={styles.parsedCard}>
+                  <View style={styles.parsedHeader}>
+                    <Ionicons name="sparkles" size={16} color="#2563EB" />
+                    <Text style={styles.parsedSummary}>{parsed.summary}</Text>
+                  </View>
+                  {parsed.suggestions?.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                      <View style={styles.suggestionsRow}>
+                        {parsed.suggestions.map((sug: string, i: number) => (
+                          <TouchableOpacity
+                            key={i}
+                            style={styles.suggestionChip}
+                            onPress={() => { setQuery(sug); handleSearch(sug) }}
+                          >
+                            <Text style={styles.suggestionText}>{sug}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </ScrollView>
+                  )}
+                  <Text style={styles.resultCount}>
+                    {filteredResults.length} resultado{filteredResults.length !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+              ) : null}
+            </>
           }
           ListEmptyComponent={
             <View style={styles.empty}>

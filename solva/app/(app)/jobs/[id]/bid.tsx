@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import {
+import { Alert,
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView
 } from 'react-native'
@@ -19,7 +19,7 @@ export default function NewBidScreen() {
   const { session } = useAuth()
   const { profile } = useProfile()
   const insets = useSafeAreaInsets()
-  const { canSendBid } = useSubscription()
+  const { canUse } = useSubscription()
 
   const { t } = useTranslation()
   const [amount, setAmount] = useState('')
@@ -27,15 +27,10 @@ export default function NewBidScreen() {
   const [deliveryDays, setDeliveryDays] = useState('')
   const [saving, setSaving] = useState(false)
   const [paywallFeature, setPaywallFeature] = useState<string | null>(null)
+  const [errorMsg, setErrorMsg] = useState('')
 
   async function handleSubmit() {
-    // Verificar límite de bids
-    const limit = await checkPlanLimit(session!.user.id, 'bid')
-    if (!limit.allowed) {
-      setPaywallFeature('bid')
-      return
-    }
-    const { allowed, reason } = await canSendBid()
+    const { allowed } = await canUse('bid')
     if (!allowed) { setPaywallFeature('bid'); return }
     if (!amount) { setErrorMsg('El precio es obligatorio.'); return }
     if (parseFloat(amount) <= 0) { setErrorMsg('El precio debe ser mayor a 0.'); return }
@@ -80,6 +75,12 @@ export default function NewBidScreen() {
       </View>
 
       <ScrollView style={s.scroll} contentContainerStyle={s.content} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+
+        {errorMsg ? (
+          <TouchableOpacity style={s.errorBox} onPress={() => setErrorMsg('')} activeOpacity={0.8}>
+            <Text style={s.errorText}>{errorMsg}</Text>
+          </TouchableOpacity>
+        ) : null}
 
         {/* Moneda badge */}
         <View style={s.currencyCard}>

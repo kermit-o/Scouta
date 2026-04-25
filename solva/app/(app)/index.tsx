@@ -42,6 +42,7 @@ export default function HomeScreen() {
   const { isTrialing, trialDaysLeft } = useSubscription()
   const [recentJobs, setRecentJobs] = useState<any[]>([])
   const [activeContracts, setActiveContracts] = useState<any[]>([])
+  const [nearbyPros, setNearbyPros] = useState<any[]>([])
   const [pendingBids, setPendingBids] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -81,7 +82,7 @@ export default function HomeScreen() {
   }, [profile?.id, isPro, selectedCategory, sortBy, minBudget])
 
   async function loadClientData() {
-    const [jobsRes, contractsRes] = await Promise.all([
+    const [jobsRes, contractsRes, prosRes] = await Promise.all([
       supabase.from('jobs')
         .select('id, title, category, city, budget_min, budget_max, currency, created_at, status, client:client_id(id, full_name, avatar_url, country)')
         .eq('client_id', profile!.id)
@@ -92,9 +93,15 @@ export default function HomeScreen() {
         .eq('client_id', profile!.id)
         .eq('status', 'active')
         .limit(3),
+      supabase.from('users')
+        .select('id, full_name, avatar_url, bio, hourly_rate')
+        .in('role', ['pro', 'company'])
+        .eq('country', profile!.country ?? 'ES')
+        .limit(6),
     ])
     if (jobsRes.data) setRecentJobs(minBudget > 0 ? jobsRes.data.filter((j: any) => (j.budget_max ?? 0) >= minBudget) : jobsRes.data)
     if (contractsRes.data) setActiveContracts(contractsRes.data)
+    if (prosRes.data) setNearbyPros(prosRes.data)
   }
 
   async function loadProData() {
@@ -221,25 +228,43 @@ export default function HomeScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* Encuentra un Pro */}
+            {/* Pros destacados */}
             <View style={s.sectionRow}>
-              <Text style={s.sectionTitle}>Encuentra un profesional</Text>
+              <Text style={s.sectionTitle}>Profesionales cerca</Text>
               <TouchableOpacity onPress={() => router.push('/(app)/search?tab=pros')}>
                 <Text style={s.sectionLink}>Ver todos →</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
-              {CATEGORIES.map((cat, i) => (
-                <TouchableOpacity
-                  key={i}
-                  style={s.proSearchChip}
-                  onPress={() => router.push(`/(app)/search?tab=pros&category=${cat.key}`)}
-                >
-                  <Text style={s.catChipIcon}>{cat.icon}</Text>
-                  <Text style={s.catChipLabel}>{cat.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            {nearbyPros.length === 0 ? (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
+                {CATEGORIES.map((cat, i) => (
+                  <TouchableOpacity key={i} style={s.proSearchChip} onPress={() => router.push(`/(app)/search?tab=pros&category=${cat.key}`)}>
+                    <Text style={s.catChipIcon}>{cat.icon}</Text>
+                    <Text style={s.catChipLabel}>{cat.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.catScroll}>
+                {nearbyPros.map((pro: any) => (
+                  <TouchableOpacity key={pro.id} style={s.proCard} onPress={() => router.push(`/(app)/pro/${pro.id}`)}>
+                    <View style={s.proCardAvatar}>
+                      <Text style={s.proCardAvatarText}>{(pro.full_name ?? '?')[0].toUpperCase()}</Text>
+                    </View>
+                    <Text style={s.proCardName} numberOfLines={1}>{pro.full_name}</Text>
+                    {pro.avg_rating > 0 && (
+                      <Text style={s.proCardRating}>★ {pro.avg_rating?.toFixed(1)} ({pro.total_reviews})</Text>
+                    )}
+                    {pro.hourly_rate && (
+                      <Text style={s.proCardRate}>{pro.hourly_rate}€/h</Text>
+                    )}
+                    <View style={s.proCardBtn}>
+                      <Text style={s.proCardBtnText}>Ver perfil</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
 
             {/* Contratos activos */}
             {activeContracts.length > 0 && (
@@ -461,6 +486,14 @@ const s = StyleSheet.create({
   catChip: { alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)', gap: 4 },
   catChipIcon: { fontSize: 22 },
   catChipLabel: { fontSize: 11, fontWeight: '600', color: '#555' },
+  proCard: { backgroundColor: '#fff', borderRadius: 16, padding: 12, marginRight: 12, width: 140, borderWidth: 1, borderColor: 'rgba(0,0,0,0.06)' },
+  proCardAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#2563EB', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  proCardAvatarText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  proCardName: { fontSize: 13, fontWeight: '700', color: '#1a1a2e', marginBottom: 2 },
+  proCardRating: { fontSize: 11, color: '#F59E0B', marginBottom: 2 },
+  proCardRate: { fontSize: 12, color: '#2563EB', fontWeight: '600', marginBottom: 8 },
+  proCardBtn: { backgroundColor: '#EEF4FF', borderRadius: 8, paddingVertical: 6, alignItems: 'center' },
+  proCardBtnText: { fontSize: 11, color: '#2563EB', fontWeight: '600' },
   proSearchChip: { alignItems: 'center', backgroundColor: '#F0FDF4', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10, marginRight: 10, borderWidth: 1, borderColor: '#BBF7D0', gap: 4 },
 
   // CTA Card cliente

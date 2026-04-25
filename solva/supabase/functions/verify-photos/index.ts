@@ -1,4 +1,4 @@
-const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')!
+const ANTHROPIC_API_KEY = Deno.env.get('ANTHROPIC_API_KEY')
 
 interface VerifyResult {
   is_valid: boolean
@@ -11,13 +11,28 @@ interface VerifyResult {
   summary: string
 }
 
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024 // 5 MB
+
 async function fetchImageAsBase64(url: string): Promise<{ data: string; mediaType: string }> {
-  const response = await fetch(url)
+  const response = await fetch(url, { signal: AbortSignal.timeout(6000) })
+  if (!response.ok) {
+    throw new Error(`Image fetch failed: ${response.status}`)
+  }
+  const contentType = response.headers.get('content-type') || 'image/jpeg'
+  if (!contentType.startsWith('image/')) {
+    throw new Error(`Invalid content-type: ${contentType}`)
+  }
+  const contentLength = parseInt(response.headers.get('content-length') ?? '0', 10)
+  if (contentLength > MAX_IMAGE_BYTES) {
+    throw new Error(`Image too large: ${contentLength} bytes`)
+  }
   const buffer = await response.arrayBuffer()
+  if (buffer.byteLength > MAX_IMAGE_BYTES) {
+    throw new Error(`Image too large: ${buffer.byteLength} bytes`)
+  }
   const bytes = new Uint8Array(buffer)
   const binary = bytes.reduce((acc, byte) => acc + String.fromCharCode(byte), '')
   const base64 = btoa(binary)
-  const contentType = response.headers.get('content-type') || 'image/jpeg'
   return { data: base64, mediaType: contentType.split(';')[0] }
 }
 
@@ -94,6 +109,10 @@ Responde SOLO con JSON valido sin markdown:
 }`
   })
 
+  if (!ANTHROPIC_API_KEY) {
+    throw new Error('ANTHROPIC_API_KEY not configured')
+  }
+
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -105,8 +124,13 @@ Responde SOLO con JSON valido sin markdown:
       model: 'claude-sonnet-4-20250514',
       max_tokens: 500,
       messages: [{ role: 'user', content: imageBlocks }]
-    })
+    }),
+    signal: AbortSignal.timeout(30000),
   })
+
+  if (!response.ok) {
+    throw new Error(`Anthropic API error: ${response.status}`)
+  }
 
   const data = await response.json()
   const text = data.content?.[0]?.text ?? '{}'

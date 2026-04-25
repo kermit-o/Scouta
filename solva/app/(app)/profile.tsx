@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  Alert, Platform, View, Text, TextInput, TouchableOpacity, StyleSheet,
   ActivityIndicator, ScrollView, Image
 } from 'react-native'
 import * as ImagePicker from 'expo-image-picker'
@@ -21,12 +21,11 @@ const FLAG: Record<string, string> = {
   NL: '🇳🇱', DE: '🇩🇪', PT: '🇵🇹', IT: '🇮🇹', GB: '🇬🇧'
 }
 
-const ROLE_LABEL: Record<string, string> = {
-  client: 'Cliente', pro: 'Profesional', company: 'Empresa'
-}
-
 export default function ProfileScreen() {
   const { t } = useTranslation()
+  const ROLE_LABEL: Record<string, string> = {
+    client: t('roles.client'), pro: t('roles.pro'), company: t('roles.company')
+  }
   const { session, signOut } = useAuth()
   const { profile, refreshProfile } = useProfile()
   const isPro = profile?.role === 'pro' || profile?.role === 'company'
@@ -120,28 +119,7 @@ export default function ProfileScreen() {
 
   // Detectar retorno de Stripe onboarding
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('stripe') === 'success') {
-        // Marcar onboarding como completado
-        supabase.from('users')
-          .update({ stripe_onboarding_completed: true })
-          .eq('id', session!.user.id)
-          .then(() => {
-            refreshProfile()
-            setSuccessMsg('✅ Cuenta de cobro activada correctamente')
-            setTimeout(() => setSuccessMsg(''), 4000)
-          })
-        // Limpiar URL
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-    }
-  }, [])
-
-
-  // Detectar retorno de Stripe onboarding
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       if (params.get('stripe') === 'success') {
         supabase.from('users')
@@ -158,29 +136,6 @@ export default function ProfileScreen() {
   }, [])
 
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('stripe') === 'success') {
-        supabase.from('users').update({ stripe_onboarding_completed: true }).eq('id', session!.user.id).then(() => { refreshProfile(); })
-        setSuccessMsg('Cuenta de cobro activada')
-        setTimeout(() => setSuccessMsg(''), 4000)
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('stripe') === 'success') {
-        supabase.from('users').update({ stripe_onboarding_completed: true }).eq('id', session!.user.id).then(() => { refreshProfile() })
-        setSuccessMsg('Cuenta de cobro activada')
-        setTimeout(() => setSuccessMsg(''), 4000)
-        window.history.replaceState({}, '', window.location.pathname)
-      }
-    }
-  }, [])
   
   async function handleStripeConnect() {
     try {
@@ -205,7 +160,7 @@ export default function ProfileScreen() {
     },
     ...(profile?.role === 'admin' ? [{
       icon: 'shield-half-outline' as const,
-      label: 'Panel Admin',
+      label: t('admin.title'),
       badge: 'Admin',
       badgeColor: '#DC2626',
       badgeBg: '#FEE2E2',
@@ -213,7 +168,7 @@ export default function ProfileScreen() {
     }] : []),
     {
       icon: 'gift-outline' as const,
-      label: 'Programa de referidos',
+      label: t('referrals.title'),
       badge: 'Gana dinero',
       badgeColor: '#7C3AED',
       badgeBg: '#F3E8FF',
@@ -221,14 +176,7 @@ export default function ProfileScreen() {
     },
     ...(profile?.role === 'pro' || profile?.role === 'company' ? [{
       icon: 'construct-outline' as const,
-      label: 'Mis servicios',
-      badge: 'Nuevo',
-      badgeColor: '#059669',
-      badgeBg: '#D1FAE5',
-      onPress: () => router.push('/(app)/pro-services'),
-    }, {
-      icon: 'construct-outline' as const,
-      label: 'Mis servicios',
+      label: t('proServices.title'),
       badge: 'Nuevo',
       badgeColor: '#059669',
       badgeBg: '#D1FAE5',
@@ -341,7 +289,7 @@ export default function ProfileScreen() {
             <Text style={styles.profileEmail}>{profile?.email}</Text>
             <View style={styles.ratingRow}>
               <Ionicons name="star" size={14} color="#F59E0B" />
-              <Text style={styles.ratingText}>4.9</Text>
+              <Text style={styles.ratingText}>{profile?.avg_rating ? Number(profile.avg_rating).toFixed(1) : '-'}</Text>
               <Text style={styles.ratingLabel}>{t('profile.rating')}</Text>
             </View>
           </View>
@@ -399,7 +347,7 @@ export default function ProfileScreen() {
           />
           {isPro && (
             <>
-              <Text style={styles.inputLabel}>Años de experiencia</Text>
+              <Text style={styles.inputLabel}>{t('onboarding.experience')}</Text>
               <TextInput
                 style={styles.input}
                 value={yearsExp}
@@ -430,7 +378,7 @@ export default function ProfileScreen() {
                   >
                     <Text style={{ fontSize: 12, fontWeight: '700',
                       color: availability === a ? '#2563EB' : '#888' }}>
-                      {a === 'available' ? '✅ Disponible' : a === 'busy' ? '🟡 Ocupado' : '🔴 No disponible'}
+                      {a === 'available' ? `✅ ${t('availability.available')}` : a === 'busy' ? `🟡 ${t('availability.busy')}` : `🔴 ${t('availability.unavailable')}`}
                     </Text>
                   </TouchableOpacity>
                 ))}
@@ -495,7 +443,16 @@ export default function ProfileScreen() {
       {/* Logout */}
       <TouchableOpacity
         style={styles.logoutBtn}
-        onPress={() => { if (typeof window !== 'undefined' && window.confirm('¿Cerrar sesión?')) signOut() }}
+        onPress={() => {
+          if (Platform.OS === 'web') {
+            if (typeof window !== 'undefined' && window.confirm('¿Cerrar sesión?')) signOut()
+          } else {
+            Alert.alert('Cerrar sesión', '¿Estás seguro?', [
+              { text: 'Cancelar', style: 'cancel' },
+              { text: 'Cerrar sesión', style: 'destructive', onPress: () => signOut() },
+            ])
+          }
+        }}
         activeOpacity={0.8}
       >
         <Ionicons name="log-out-outline" size={18} color="#EF4444" />

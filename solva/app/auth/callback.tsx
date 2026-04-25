@@ -27,22 +27,18 @@ export default function AuthCallback() {
           })
           if (!error && data.user) {
             if (type === 'recovery') {
-              router.replace('/reset-password')
+              router.replace('/(auth)/reset-password')
               return
             }
             // Verificar onboarding
-            console.log('user id:', data.user.id)
             const { data: profile } = await supabase
               .from('users')
               .select('onboarding_completed')
               .eq('id', data.user.id)
               .single()
-            console.log('profile:', JSON.stringify(profile))
             if (profile && !profile.onboarding_completed) {
-              console.log('→ onboarding')
               router.replace('/(app)/onboarding')
             } else {
-              console.log('→ home')
               router.replace('/(app)')
             }
             return

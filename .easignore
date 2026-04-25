@@ -1,8 +1,21 @@
-# Exclude EVERYTHING by default
-*
-
-# Then include only what mobile needs
-!blog-ai/
-!blog-ai/blog-saas/
-!blog-ai/blog-saas/mobile/
-!blog-ai/blog-saas/mobile/**
+# Exclude everything except solva/
+backend/
+backend_consolidate_20251015-1755/
+core/
+diet_ai/
+forge_saas/
+FO/
+/app/
+/supabase/
+blog-ai/
+ExcelBypass/
+recovered_from_pyc/
+reorg_plan_20251015-0021/
+reorg_stage_20251015-0036/
+.venv/
+*.zip
+*.tar.gz
+*.db
+*.log
+node_modules/
+.expo/

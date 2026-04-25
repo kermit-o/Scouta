@@ -3,27 +3,21 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Activi
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 import { supabase, ProService } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 
-const CATEGORIES = [
-  { key: 'plumbing', label: '🔧 Fontanería' },
-  { key: 'electrical', label: '⚡ Electricidad' },
-  { key: 'cleaning', label: '🧹 Limpieza' },
-  { key: 'painting', label: '🎨 Pintura' },
-  { key: 'gardening', label: '🌿 Jardinería' },
-  { key: 'moving', label: '📦 Mudanzas' },
-  { key: 'carpentry', label: '🪚 Carpintería' },
-  { key: 'hvac', label: '❄️ Climatización' },
-  { key: 'other', label: '🔹 Otros' },
-]
+const CATEGORY_ICONS: Record<string, string> = {
+  plumbing: '🔧', electrical: '⚡', cleaning: '🧹', painting: '🎨',
+  gardening: '🌿', moving: '📦', carpentry: '🪚', hvac: '❄️', other: '🔹',
+}
+const CATEGORY_KEYS = ['plumbing', 'electrical', 'cleaning', 'painting', 'gardening', 'moving', 'carpentry', 'hvac', 'other'] as const
 
-const PRICE_TYPES = [
-  { key: 'fixed', label: 'Precio fijo' },
-  { key: 'from', label: 'Desde' },
-  { key: 'hourly', label: 'Por hora' },
-  { key: 'quote', label: 'Presupuesto' },
-]
+const PRICE_TYPE_KEYS = ['fixed', 'from', 'hourly', 'quote'] as const
+const PRICE_TYPE_I18N: Record<string, string> = {
+  fixed: 'proServices.priceFixed', from: 'proServices.priceFrom',
+  hourly: 'proServices.priceHourly', quote: 'proServices.priceQuote',
+}
 
 const EMPTY: Partial<ProService> = {
   title: '', description: '', price_from: undefined, price_to: undefined,
@@ -31,6 +25,7 @@ const EMPTY: Partial<ProService> = {
 }
 
 export default function ProServicesScreen() {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const { session } = useAuth()
   const [services, setServices] = useState<ProService[]>([])
@@ -53,7 +48,7 @@ export default function ProServicesScreen() {
   }
 
   async function handleSave() {
-    if (!editing?.title?.trim()) { Alert.alert('Error', 'El título es obligatorio'); return }
+    if (!editing?.title?.trim()) { Alert.alert(t('common.error'), t('proServices.titleRequired')); return }
     setSaving(true)
     const payload = {
       pro_id: session!.user.id,
@@ -77,9 +72,9 @@ export default function ProServicesScreen() {
   }
 
   async function handleDelete(id: string) {
-    Alert.alert('Eliminar servicio', '¿Seguro?', [
-      { text: 'Cancelar', style: 'cancel' },
-      { text: 'Eliminar', style: 'destructive', onPress: async () => {
+    Alert.alert(t('proServices.deleteConfirm'), '', [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('common.delete'), style: 'destructive', onPress: async () => {
         await supabase.from('pro_services').delete().eq('id', id)
         loadServices()
       }},
@@ -92,9 +87,9 @@ export default function ProServicesScreen() {
   }
 
   function priceLabel(svc: ProService) {
-    if (svc.price_type === 'quote') return 'Presupuesto'
+    if (svc.price_type === 'quote') return t('proServices.priceQuote')
     if (svc.price_type === 'hourly' && svc.price_from) return `${svc.price_from}€/h`
-    if (svc.price_type === 'from' && svc.price_from) return `desde ${svc.price_from}€`
+    if (svc.price_type === 'from' && svc.price_from) return `${t('proServices.priceFrom')} ${svc.price_from}€`
     if (svc.price_from && svc.price_to) return `${svc.price_from}–${svc.price_to}€`
     if (svc.price_from) return `${svc.price_from}€`
     return '—'
@@ -106,7 +101,7 @@ export default function ProServicesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Mis servicios</Text>
+        <Text style={s.headerTitle}>{t('proServices.title')}</Text>
         <TouchableOpacity style={s.addBtn} onPress={() => { setEditing({ ...EMPTY }); setIsNew(true) }}>
           <Ionicons name="add" size={22} color="#fff" />
         </TouchableOpacity>
@@ -119,10 +114,10 @@ export default function ProServicesScreen() {
           {services.length === 0 && (
             <View style={s.empty}>
               <Text style={s.emptyEmoji}>🛠️</Text>
-              <Text style={s.emptyTitle}>Sin servicios aún</Text>
-              <Text style={s.emptySub}>Añade los servicios que ofreces con sus precios</Text>
+              <Text style={s.emptyTitle}>{t('proServices.emptyTitle')}</Text>
+              <Text style={s.emptySub}>{t('proServices.emptySub')}</Text>
               <TouchableOpacity style={s.emptyBtn} onPress={() => { setEditing({ ...EMPTY }); setIsNew(true) }}>
-                <Text style={s.emptyBtnText}>+ Añadir primer servicio</Text>
+                <Text style={s.emptyBtnText}>{t('proServices.addFirst')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -133,12 +128,12 @@ export default function ProServicesScreen() {
                   <View style={s.cardTop}>
                     <Text style={s.cardTitle}>{svc.title}</Text>
                     {!svc.is_active && (
-                      <View style={s.inactiveBadge}><Text style={s.inactiveBadgeText}>Inactivo</Text></View>
+                      <View style={s.inactiveBadge}><Text style={s.inactiveBadgeText}>{t('proServices.inactive')}</Text></View>
                     )}
                   </View>
                   {svc.description && <Text style={s.cardDesc} numberOfLines={2}>{svc.description}</Text>}
                   <View style={s.cardMeta}>
-                    {svc.category && <Text style={s.cardCat}>{CATEGORIES.find(c => c.key === svc.category)?.label ?? svc.category}</Text>}
+                    {svc.category && <Text style={s.cardCat}>{CATEGORY_ICONS[svc.category] ?? ''} {t(`categories.${svc.category}`)}</Text>}
                     {svc.duration_hours && <Text style={s.cardTime}>⏱ {svc.duration_hours}h</Text>}
                   </View>
                 </View>
@@ -147,15 +142,15 @@ export default function ProServicesScreen() {
               <View style={s.cardActions}>
                 <TouchableOpacity style={s.actionBtn} onPress={() => { setEditing({ ...svc }); setIsNew(false) }}>
                   <Ionicons name="pencil-outline" size={14} color="#2563EB" />
-                  <Text style={s.actionBtnText}>Editar</Text>
+                  <Text style={s.actionBtnText}>{t('common.edit')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.actionBtn} onPress={() => toggleActive(svc)}>
                   <Ionicons name={svc.is_active ? 'eye-off-outline' : 'eye-outline'} size={14} color="#888" />
-                  <Text style={[s.actionBtnText, { color: '#888' }]}>{svc.is_active ? 'Desactivar' : 'Activar'}</Text>
+                  <Text style={[s.actionBtnText, { color: '#888' }]}>{svc.is_active ? t('proServices.deactivate') : t('proServices.activate')}</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={s.actionBtn} onPress={() => handleDelete(svc.id)}>
                   <Ionicons name="trash-outline" size={14} color="#DC2626" />
-                  <Text style={[s.actionBtnText, { color: '#DC2626' }]}>Eliminar</Text>
+                  <Text style={[s.actionBtnText, { color: '#DC2626' }]}>{t('common.delete')}</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -168,32 +163,32 @@ export default function ProServicesScreen() {
         <View style={s.modalOverlay}>
           <View style={s.modalBox}>
             <View style={s.modalHeader}>
-              <Text style={s.modalTitle}>{isNew ? 'Nuevo servicio' : 'Editar servicio'}</Text>
+              <Text style={s.modalTitle}>{isNew ? t('proServices.newService') : t('proServices.editService')}</Text>
               <TouchableOpacity onPress={() => setEditing(null)}>
                 <Ionicons name="close" size={22} color="#888" />
               </TouchableOpacity>
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
-              <Text style={s.label}>Título *</Text>
-              <TextInput style={s.input} value={editing.title} onChangeText={v => setEditing(e => ({ ...e!, title: v }))} placeholder="Ej: Reparación de fugas" placeholderTextColor="#aaa" />
+              <Text style={s.label}>{t('proServices.titleLabel')}</Text>
+              <TextInput style={s.input} value={editing.title} onChangeText={v => setEditing(e => ({ ...e!, title: v }))} placeholder={t('proServices.titlePlaceholder')} placeholderTextColor="#aaa" />
 
-              <Text style={s.label}>Descripción</Text>
-              <TextInput style={[s.input, { height: 70, textAlignVertical: 'top' }]} value={editing.description ?? ''} onChangeText={v => setEditing(e => ({ ...e!, description: v }))} placeholder="Describe el servicio..." placeholderTextColor="#aaa" multiline />
+              <Text style={s.label}>{t('proServices.descLabel')}</Text>
+              <TextInput style={[s.input, { height: 70, textAlignVertical: 'top' }]} value={editing.description ?? ''} onChangeText={v => setEditing(e => ({ ...e!, description: v }))} placeholder={t('proServices.descPlaceholder')} placeholderTextColor="#aaa" multiline />
 
-              <Text style={s.label}>Categoría</Text>
+              <Text style={s.label}>{t('proServices.categoryLabel')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-                {CATEGORIES.map(c => (
-                  <TouchableOpacity key={c.key} style={[s.catChip, editing.category === c.key && s.catChipActive]} onPress={() => setEditing(e => ({ ...e!, category: c.key }))}>
-                    <Text style={[s.catChipText, editing.category === c.key && s.catChipTextActive]}>{c.label}</Text>
+                {CATEGORY_KEYS.map(key => (
+                  <TouchableOpacity key={key} style={[s.catChip, editing.category === key && s.catChipActive]} onPress={() => setEditing(e => ({ ...e!, category: key }))}>
+                    <Text style={[s.catChipText, editing.category === key && s.catChipTextActive]}>{CATEGORY_ICONS[key]} {t(`categories.${key}`)}</Text>
                   </TouchableOpacity>
                 ))}
               </ScrollView>
 
-              <Text style={s.label}>Tipo de precio</Text>
+              <Text style={s.label}>{t('proServices.priceType')}</Text>
               <View style={s.priceTypeRow}>
-                {PRICE_TYPES.map(pt => (
-                  <TouchableOpacity key={pt.key} style={[s.priceTypeBtn, editing.price_type === pt.key && s.priceTypeBtnActive]} onPress={() => setEditing(e => ({ ...e!, price_type: pt.key as any }))}>
-                    <Text style={[s.priceTypeBtnText, editing.price_type === pt.key && s.priceTypeBtnTextActive]}>{pt.label}</Text>
+                {PRICE_TYPE_KEYS.map(key => (
+                  <TouchableOpacity key={key} style={[s.priceTypeBtn, editing.price_type === key && s.priceTypeBtnActive]} onPress={() => setEditing(e => ({ ...e!, price_type: key as any }))}>
+                    <Text style={[s.priceTypeBtnText, editing.price_type === key && s.priceTypeBtnTextActive]}>{t(PRICE_TYPE_I18N[key])}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -201,7 +196,7 @@ export default function ProServicesScreen() {
               {editing.price_type !== 'quote' && (
                 <View style={s.priceRow}>
                   <View style={{ flex: 1 }}>
-                    <Text style={s.label}>{editing.price_type === 'from' ? 'Precio desde (€)' : 'Precio (€)'}</Text>
+                    <Text style={s.label}>{editing.price_type === 'from' ? `${t('proServices.priceFrom')} (€)` : `${t('proServices.priceLabel')} (€)`}</Text>
                     <TextInput style={s.input} value={editing.price_from?.toString() ?? ''} onChangeText={v => setEditing(e => ({ ...e!, price_from: v ? parseFloat(v) : undefined }))} placeholder="0" placeholderTextColor="#aaa" keyboardType="numeric" />
                   </View>
                   {editing.price_type === 'fixed' && (
@@ -213,11 +208,11 @@ export default function ProServicesScreen() {
                 </View>
               )}
 
-              <Text style={s.label}>Duración estimada (horas)</Text>
+              <Text style={s.label}>{t('proServices.durationLabel')}</Text>
               <TextInput style={s.input} value={editing.duration_hours?.toString() ?? ''} onChangeText={v => setEditing(e => ({ ...e!, duration_hours: v ? parseFloat(v) : undefined }))} placeholder="Ej: 2" placeholderTextColor="#aaa" keyboardType="numeric" />
 
               <TouchableOpacity style={[s.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-                {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>{isNew ? 'Añadir servicio' : 'Guardar cambios'}</Text>}
+                {saving ? <ActivityIndicator color="#fff" /> : <Text style={s.saveBtnText}>{isNew ? t('proServices.addService') : t('common.save')}</Text>}
               </TouchableOpacity>
             </ScrollView>
           </View>

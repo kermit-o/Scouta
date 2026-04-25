@@ -4,8 +4,10 @@ import { router } from 'expo-router'
 import { supabase } from '../../lib/supabase'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { useTranslation } from 'react-i18next'
 
 export default function ResetPasswordScreen() {
+  const { t } = useTranslation()
   const insets = useSafeAreaInsets()
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
@@ -27,7 +29,7 @@ export default function ResetPasswordScreen() {
 
   async function handleReset() {
     if (password !== confirm) { setMsg('no_match'); return }
-    if (password.length < 6) { setMsg('too_short'); return }
+    if (password.length < 8) { setMsg('too_short'); return }
     setLoading(true)
     const { error } = await supabase.auth.updateUser({ password })
     setLoading(false)
@@ -40,10 +42,10 @@ export default function ResetPasswordScreen() {
   }
 
   const msgs: Record<string, { text: string; color: string }> = {
-    expired: { text: 'El enlace ha expirado. Solicita uno nuevo.', color: '#DC2626' },
-    no_match: { text: 'Las contraseñas no coinciden.', color: '#DC2626' },
-    too_short: { text: 'Mínimo 6 caracteres.', color: '#DC2626' },
-    success: { text: 'Contraseña actualizada. Redirigiendo al login...', color: '#059669' },
+    expired: { text: t('resetPassword.expired'), color: '#DC2626' },
+    no_match: { text: t('resetPassword.noMatch'), color: '#DC2626' },
+    too_short: { text: t('resetPassword.tooShort'), color: '#DC2626' },
+    success: { text: t('resetPassword.success'), color: '#059669' },
   }
   const display = msg.startsWith('error:') ? { text: msg.replace('error:', ''), color: '#DC2626' } : msgs[msg]
 
@@ -53,13 +55,13 @@ export default function ResetPasswordScreen() {
         <View style={styles.iconBox}>
           <Ionicons name="lock-closed" size={32} color="#2563EB" />
         </View>
-        <Text style={styles.title}>Nueva contraseña</Text>
-        <Text style={styles.sub}>Elige una contraseña segura para tu cuenta</Text>
+        <Text style={styles.title}>{t('resetPassword.title')}</Text>
+        <Text style={styles.sub}>{t('resetPassword.subtitle')}</Text>
 
         {checking && (
           <View style={styles.waitBox}>
             <ActivityIndicator color="#2563EB" />
-            <Text style={styles.waitText}>Verificando...</Text>
+            <Text style={styles.waitText}>{t('resetPassword.verifying')}</Text>
           </View>
         )}
 
@@ -68,7 +70,7 @@ export default function ResetPasswordScreen() {
             <Text style={[styles.msg, { color: display.color }]}>{display.text}</Text>
             {msg === 'expired' && (
               <TouchableOpacity onPress={() => router.replace('/(auth)/login')}>
-                <Text style={styles.link}>Volver al login →</Text>
+                <Text style={styles.link}>{t('resetPassword.backToLogin')}</Text>
               </TouchableOpacity>
             )}
           </View>
@@ -76,21 +78,21 @@ export default function ResetPasswordScreen() {
 
         {!checking && msg !== 'expired' && msg !== 'success' && (
           <>
-            <Text style={styles.label}>Nueva contraseña</Text>
+            <Text style={styles.label}>{t('security.newPassword')}</Text>
             <View style={styles.inputRow}>
               <Ionicons name="lock-closed-outline" size={18} color="#888" />
-              <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder="Mínimo 6 caracteres" placeholderTextColor="#aaa" secureTextEntry={!showPwd} />
+              <TextInput style={styles.input} value={password} onChangeText={setPassword} placeholder={t('auth.min8chars')} placeholderTextColor="#aaa" secureTextEntry={!showPwd} />
               <TouchableOpacity onPress={() => setShowPwd(!showPwd)}>
                 <Ionicons name={showPwd ? 'eye-off-outline' : 'eye-outline'} size={18} color="#888" />
               </TouchableOpacity>
             </View>
-            <Text style={styles.label}>Confirmar contraseña</Text>
+            <Text style={styles.label}>{t('security.confirmPassword')}</Text>
             <View style={styles.inputRow}>
               <Ionicons name="lock-closed-outline" size={18} color="#888" />
               <TextInput style={styles.input} value={confirm} onChangeText={setConfirm} placeholder="Repite la contraseña" placeholderTextColor="#aaa" secureTextEntry={!showPwd} />
             </View>
             <TouchableOpacity style={[styles.btn, (!password || !confirm || loading) && styles.btnDisabled]} onPress={handleReset} disabled={!password || !confirm || loading}>
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Actualizar contraseña</Text>}
+              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>{t('resetPassword.submit')}</Text>}
             </TouchableOpacity>
           </>
         )}

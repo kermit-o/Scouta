@@ -97,7 +97,8 @@
       [
         "expo-router",
         {
-          "asyncRoutes": "production"
+          "asyncRoutes": false,
+          "root": "./app"
         }
       ]
     ],
@@ -110,6 +111,6 @@
       },
       "router": {}
     },
-    "owner": "kermit-o"
+    "owner": "manoths-organization"
   }
 }

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import { Platform } from 'react-native'
 import * as Location from 'expo-location'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../lib/AuthContext'
@@ -14,14 +15,19 @@ export function useLocation(autoUpdate = false) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function requestLocation(): Promise<Coords | null> {
+  const requestLocation = useCallback(async (): Promise<Coords | null> => {
     setLoading(true)
     setError(null)
     try {
       let result: Coords | null = null
 
-      // Web: usar Geolocation API nativa del browser
-      if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+      if (Platform.OS === 'web') {
+        // Web: usar Geolocation API nativa del browser
+        if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+          setError('Geolocalización no soportada por el navegador')
+          setLoading(false)
+          return null
+        }
         result = await new Promise<Coords | null>((resolve) => {
           navigator.geolocation.getCurrentPosition(
             (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
@@ -51,24 +57,28 @@ export function useLocation(autoUpdate = false) {
 
       // Actualizar ubicación del usuario en DB
       if (session?.user.id) {
-        await supabase.from('users').update({
-          latitude: result.latitude,
-          longitude: result.longitude,
-        }).eq('id', session.user.id)
+        const { error: dbError } = await supabase
+          .from('users')
+          .update({
+            latitude: result.latitude,
+            longitude: result.longitude,
+          })
+          .eq('id', session.user.id)
+        if (dbError) console.warn('useLocation update error:', dbError.message)
       }
 
       setLoading(false)
       return result
     } catch (err: any) {
-      setError(err.message)
+      setError(err?.message ?? 'Error al obtener ubicación')
       setLoading(false)
       return null
     }
-  }
+  }, [session?.user.id])
 
   useEffect(() => {
     if (autoUpdate) requestLocation()
-  }, [])
+  }, [autoUpdate, requestLocation])
 
   return { coords, loading, error, requestLocation }
 }

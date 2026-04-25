@@ -4,6 +4,7 @@ import {
   ActivityIndicator, ScrollView, Alert
 } from 'react-native'
 import { router } from 'expo-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../lib/AuthContext'
 import { useProfile } from '../../hooks/useProfile'
@@ -13,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 type Tab = 'kyc' | 'disputes' | 'payments'
 
 export default function AdminScreen() {
+  const { t } = useTranslation()
   const { session } = useAuth()
   const { profile, loading: profileLoading } = useProfile()
   const insets = useSafeAreaInsets()
@@ -68,6 +70,17 @@ export default function AdminScreen() {
     if (status === 'approved') {
       await supabase.from('users').update({ is_verified: true }).eq('id', userId)
     }
+    // Send KYC result email
+    const { data: kycUser } = await supabase.from('users').select('email, full_name').eq('id', userId).maybeSingle()
+    if (kycUser?.email) {
+      supabase.functions.invoke('send-email', {
+        body: {
+          to: kycUser.email,
+          template: status === 'approved' ? 'kyc_approved' : 'kyc_rejected',
+          data: { userName: kycUser.full_name ?? 'Usuario' },
+        },
+      }).catch(() => {})
+    }
     await loadAll()
     setActing(null)
   }
@@ -84,11 +97,11 @@ export default function AdminScreen() {
   }
 
   const TABS: { key: Tab; label: string; icon: string; count: number }[] = [
-    { key: 'kyc', label: 'KYC', icon: 'shield-checkmark-outline',
+    { key: 'kyc', label: t('admin.tabKYC'), icon: 'shield-checkmark-outline',
       count: kycs.filter(k => k.status === 'submitted').length },
-    { key: 'disputes', label: 'Disputas', icon: 'warning-outline',
+    { key: 'disputes', label: t('admin.tabDisputes'), icon: 'warning-outline',
       count: disputes.filter(d => d.status === 'open').length },
-    { key: 'payments', label: 'Pagos', icon: 'cash-outline',
+    { key: 'payments', label: t('admin.tabPayments'), icon: 'cash-outline',
       count: payments.filter(p => p.status === 'held').length },
   ]
 
@@ -105,7 +118,7 @@ export default function AdminScreen() {
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
           <Ionicons name="arrow-back" size={22} color="#1a1a2e" />
         </TouchableOpacity>
-        <Text style={s.headerTitle}>Panel Admin</Text>
+        <Text style={s.headerTitle}>{t('admin.title')}</Text>
         <TouchableOpacity onPress={loadAll} style={s.backBtn}>
           <Ionicons name="refresh-outline" size={22} color="#1a1a2e" />
         </TouchableOpacity>
@@ -113,17 +126,17 @@ export default function AdminScreen() {
 
       {/* Tabs */}
       <View style={s.tabBar}>
-        {TABS.map(t => (
+        {TABS.map(tb => (
           <TouchableOpacity
-            key={t.key}
-            style={[s.tab, tab === t.key && s.tabActive]}
-            onPress={() => setTab(t.key)}
+            key={tb.key}
+            style={[s.tab, tab === tb.key && s.tabActive]}
+            onPress={() => setTab(tb.key)}
           >
-            <Ionicons name={t.icon as any} size={16} color={tab === t.key ? '#2563EB' : '#888'} />
-            <Text style={[s.tabLabel, tab === t.key && s.tabLabelActive]}>{t.label}</Text>
-            {t.count > 0 && (
+            <Ionicons name={tb.icon as any} size={16} color={tab === tb.key ? '#2563EB' : '#888'} />
+            <Text style={[s.tabLabel, tab === tb.key && s.tabLabelActive]}>{tb.label}</Text>
+            {tb.count > 0 && (
               <View style={s.badge}>
-                <Text style={s.badgeText}>{t.count}</Text>
+                <Text style={s.badgeText}>{tb.count}</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -137,7 +150,7 @@ export default function AdminScreen() {
           keyExtractor={i => i.id}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={s.empty}>No hay verificaciones</Text>}
+          ListEmptyComponent={<Text style={s.empty}>{t('admin.noVerifications')}</Text>}
           renderItem={({ item }) => (
             <View style={s.card}>
               <View style={s.cardRow}>
@@ -184,7 +197,7 @@ export default function AdminScreen() {
                   >
                     {acting === item.id
                       ? <ActivityIndicator size="small" color="#fff" />
-                      : <Text style={s.actionBtnText}>✅ Aprobar</Text>
+                      : <Text style={s.actionBtnText}>✅ {t('admin.approve')}</Text>
                     }
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -192,7 +205,7 @@ export default function AdminScreen() {
                     disabled={acting === item.id}
                     onPress={() => handleKyc(item.id, 'rejected', item.user_id)}
                   >
-                    <Text style={s.actionBtnText}>❌ Rechazar</Text>
+                    <Text style={s.actionBtnText}>❌ {t('admin.reject')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -208,7 +221,7 @@ export default function AdminScreen() {
           keyExtractor={i => i.id}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={s.empty}>No hay disputas</Text>}
+          ListEmptyComponent={<Text style={s.empty}>{t('admin.noDisputes')}</Text>}
           renderItem={({ item }) => (
             <View style={s.card}>
               <Text style={s.cardName}>{item.contracts?.jobs?.title ?? 'Sin título'}</Text>
@@ -226,21 +239,21 @@ export default function AdminScreen() {
                     disabled={acting === item.id}
                     onPress={() => handleDispute(item.id, 'resolved_client')}
                   >
-                    <Text style={s.actionBtnText}>👤 Favor cliente</Text>
+                    <Text style={s.actionBtnText}>👤 {t('admin.favorClient')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[s.actionBtn, { backgroundColor: '#7C3AED' }]}
                     disabled={acting === item.id}
                     onPress={() => handleDispute(item.id, 'resolved_pro')}
                   >
-                    <Text style={s.actionBtnText}>🔧 Favor pro</Text>
+                    <Text style={s.actionBtnText}>🔧 {t('admin.favorPro')}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[s.actionBtn, s.rejectBtn]}
                     disabled={acting === item.id}
                     onPress={() => handleDispute(item.id, 'cancelled')}
                   >
-                    <Text style={s.actionBtnText}>Cancelar</Text>
+                    <Text style={s.actionBtnText}>{t('common.cancel')}</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -256,7 +269,7 @@ export default function AdminScreen() {
           keyExtractor={i => i.id}
           contentContainerStyle={s.list}
           showsVerticalScrollIndicator={false}
-          ListEmptyComponent={<Text style={s.empty}>No hay pagos</Text>}
+          ListEmptyComponent={<Text style={s.empty}>{t('admin.noPayments')}</Text>}
           renderItem={({ item }) => (
             <View style={s.card}>
               <View style={s.cardRow}>

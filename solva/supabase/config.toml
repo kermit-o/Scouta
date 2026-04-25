@@ -1,88 +1,56 @@
 
 [functions.create-payment-intent]
-enabled = true
 verify_jwt = true
 import_map = "./functions/create-payment-intent/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/create-payment-intent/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/create-payment-intent/*.html" ]
 
 [functions.release-payment]
-enabled = true
 verify_jwt = true
 import_map = "./functions/release-payment/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/release-payment/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/release-payment/*.html" ]
 
 [functions.create-subscription]
-enabled = true
 verify_jwt = true
 import_map = "./functions/create-subscription/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/create-subscription/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/create-subscription/*.html" ]
 
 [functions.ai-search]
-enabled = true
 verify_jwt = true
 import_map = "./functions/ai-search/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/ai-search/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/ai-search/*.html" ]
 
 [functions.verify-photos]
-enabled = true
 verify_jwt = true
 import_map = "./functions/verify-photos/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/verify-photos/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/verify-photos/*.html" ]
 
 [functions.create-mercadopago-payment]
-enabled = true
 verify_jwt = true
 import_map = "./functions/create-mercadopago-payment/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/create-mercadopago-payment/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/create-mercadopago-payment/*.html" ]
 
 [functions.mercadopago-webhook]
-enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/mercadopago-webhook/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/mercadopago-webhook/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/mercadopago-webhook/*.html" ]
+
+[functions.stripe-webhook]
+verify_jwt = false
+import_map = "./functions/stripe-webhook/deno.json"
 
 [functions.api-gateway]
-enabled = true
-verify_jwt = true
+verify_jwt = false
 import_map = "./functions/api-gateway/deno.json"
-# Uncomment to specify a custom file path to the entrypoint.
-# Supported file extensions are: .ts, .js, .mjs, .jsx, .tsx
-entrypoint = "./functions/api-gateway/index.ts"
-# Specifies static files to be bundled with the function. Supports glob patterns.
-# For example, if you want to serve static HTML pages in your function:
-# static_files = [ "./functions/api-gateway/*.html" ]
+
+[functions.create-stripe-account]
+verify_jwt = true
+import_map = "./functions/create-stripe-account/deno.json"
+
+[functions.generate-invoice]
+verify_jwt = true
+import_map = "./functions/generate-invoice/deno.json"
+
+[functions.generate-pro-content]
+verify_jwt = true
+import_map = "./functions/generate-pro-content/deno.json"
+
+[functions.send-email]
+verify_jwt = true
+import_map = "./functions/send-email/deno.json"
+
+[functions.send-notification]
+verify_jwt = true
+import_map = "./functions/send-notification/deno.json"

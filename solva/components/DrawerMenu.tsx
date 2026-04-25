@@ -169,7 +169,7 @@ export default function DrawerMenu({ open, onClose }: Props) {
           {/* Cerrar sesión */}
           <TouchableOpacity
             style={styles.logoutBtn}
-            onPress={() => { onClose(); setTimeout(signOut, 200) }}
+            onPress={async () => { onClose(); await signOut() }}
             activeOpacity={0.7}
           >
             <Text style={styles.logoutIcon}>🚪</Text>
