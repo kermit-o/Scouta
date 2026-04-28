@@ -4,177 +4,372 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+interface Profile {
+  id: number;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  location?: string;
+  website?: string;
+  likes_received?: number;
+  followers?: number;
+  following?: number;
+}
+
+interface MyPost {
+  id: number;
+  title: string;
+  excerpt?: string;
+  comment_count: number;
+  upvote_count?: number;
+  created_at: string;
+  debate_status?: string;
+  media_url?: string;
+  media_type?: string;
+}
+
+interface MyComment {
+  id: number;
+  post_id: number;
+  body: string;
+  post_title?: string;
+  created_at: string;
+}
+
+const API = "/api/proxy/api/v1";
+
 function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return "just now";
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  return `${Math.floor(h / 24)}d`;
+  try {
+    const m = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
+    if (m < 1) return "just now";
+    if (m < 60) return `${m}m`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h`;
+    return `${Math.floor(h / 24)}d`;
+  } catch { return ""; }
+}
+
+function initials(name: string): string {
+  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
 export default function ProfilePage() {
-  const { token, user, logout, isLoaded } = useAuth();
+  const { token, logout, isLoaded } = useAuth();
   const router = useRouter();
-  const [data, setData] = useState<any>(null);
-  const [posts, setPosts] = useState<any[]>([]);
-  const [comments, setComments] = useState<any[]>([]);
-  const [tab, setTab] = useState<"posts" | "comments">("posts");
+  const [data, setData] = useState<Profile | null>(null);
+  const [posts, setPosts] = useState<MyPost[]>([]);
+  const [comments, setComments] = useState<MyComment[]>([]);
+  const [tab, setTab] = useState<"posts" | "videos" | "comments">("posts");
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!isLoaded) return;
-    const t = token || localStorage.getItem("token");
+    const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
     if (!t) { router.push("/login?next=/profile"); return; }
-    const API = "/api/proxy";
     Promise.all([
-      fetch(`${API}/api/v1/profile/me`, { headers: { Authorization: `Bearer ${t}` } }).then(r => r.json()),
-      fetch(`${API}/api/v1/profile/my-posts`, { headers: { Authorization: `Bearer ${t}` } }).then(r => r.ok ? r.json() : []),
-      fetch(`${API}/api/v1/profile/my-comments`, { headers: { Authorization: `Bearer ${t}` } }).then(r => r.ok ? r.json() : []),
+      fetch(`${API}/profile/me`, { headers: { Authorization: `Bearer ${t}` } }).then((r) => r.ok ? r.json() : null),
+      fetch(`${API}/profile/my-posts`, { headers: { Authorization: `Bearer ${t}` } }).then((r) => r.ok ? r.json() : []).catch(() => []),
+      fetch(`${API}/profile/my-comments`, { headers: { Authorization: `Bearer ${t}` } }).then((r) => r.ok ? r.json() : []).catch(() => []),
     ]).then(([profile, myPosts, myComments]) => {
       setData(profile);
-      setPosts(Array.isArray(myPosts) ? myPosts : myPosts.posts || []);
-      setComments(Array.isArray(myComments) ? myComments : myComments.comments || []);
+      setPosts(Array.isArray(myPosts) ? myPosts : (myPosts?.posts || []));
+      setComments(Array.isArray(myComments) ? myComments : (myComments?.comments || []));
       setLoading(false);
     }).catch(() => setLoading(false));
   }, [isLoaded, token]);
 
-  if (loading) return (
-    <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading...</p>
-    </main>
-  );
+  if (loading || !data) {
+    return (
+      <main style={pageStyle}>
+        <div style={{ ...container, paddingTop: "5rem", textAlign: "center" }}>
+          <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.75rem" }}>Loading...</p>
+        </div>
+      </main>
+    );
+  }
 
-  const name = data?.display_name || data?.username || "User";
-  const initials = name.split(" ").map((w: string) => w[0]).join("").slice(0, 2).toUpperCase();
-
-  const tabStyle = (active: boolean) => ({
-    background: "none", border: "none", borderBottom: active ? "1px solid #f0e8d8" : "1px solid transparent",
-    color: active ? "#f0e8d8" : "#444", padding: "0.5rem 0", cursor: "pointer",
-    fontSize: "0.65rem", fontFamily: "monospace", letterSpacing: "0.15em",
-    textTransform: "uppercase" as const, marginRight: "2rem",
-  });
+  const name = data.display_name || data.username;
+  const textPosts = posts.filter((p) => !p.media_url);
+  const videos = posts.filter((p) => p.media_type === "video");
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0", fontFamily: "monospace" }}>
-      <div style={{ maxWidth: "720px", margin: "0 auto", padding: "2rem 1.5rem" }}>
-
+    <main style={pageStyle}>
+      <div style={container}>
         {/* Header */}
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5rem", marginBottom: "2.5rem", paddingBottom: "2rem", borderBottom: "1px solid #1a1a1a" }}>
-          {/* Avatar */}
-          {data?.avatar_url ? (
-            <img src={data.avatar_url} alt={name} style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
+        <div style={{ display: "flex", alignItems: "flex-start", gap: "1.5rem", marginBottom: "1.5rem" }}>
+          {data.avatar_url ? (
+            <img
+              src={data.avatar_url}
+              alt={name}
+              style={{ width: 96, height: 96, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "1px solid #1a1a1a" }}
+            />
           ) : (
-            <div style={{ width: 72, height: 72, borderRadius: "50%", background: "#1a2a3a", border: "1px solid #2a3a4a", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: "#4a7a9a", flexShrink: 0 }}>
-              {initials}
+            <div
+              style={{
+                width: 96, height: 96, borderRadius: "50%",
+                background: "#1a2a1a", border: "1px solid #2a4a2a",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: "1.75rem", color: "#4a9a4a",
+                fontFamily: "monospace", fontWeight: 700, flexShrink: 0,
+              }}
+            >
+              {initials(name)}
             </div>
           )}
 
-          {/* Info */}
-          <div style={{ flex: 1 }}>
-            <h1 style={{ fontSize: "1.3rem", fontWeight: 400, fontFamily: "Georgia, serif", color: "#f0e8d8", margin: "0 0 0.25rem" }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={eyebrow}>SCOUTA / MY PROFILE</p>
+            <h1 style={{
+              fontSize: "clamp(1.5rem, 3.5vw, 2rem)", fontWeight: 400,
+              fontFamily: "Georgia, serif", color: "#f0e8d8",
+              margin: "0.4rem 0 0.25rem",
+            }}>
               {name}
             </h1>
-            <p style={{ fontSize: "0.7rem", color: "#555", margin: "0 0 0.5rem" }}>@{data?.username}</p>
-            {data?.bio && <p style={{ fontSize: "0.85rem", color: "#888", lineHeight: 1.6, margin: "0 0 0.5rem", fontFamily: "Georgia, serif" }}>{data.bio}</p>}
-            <div style={{ display: "flex", gap: "1.5rem", marginTop: "0.5rem" }}>
-              {data?.location && <span style={{ fontSize: "0.65rem", color: "#555" }}>📍 {data.location}</span>}
-              {data?.website && <a href={data.website} target="_blank" style={{ fontSize: "0.65rem", color: "#4a7a9a", textDecoration: "none" }}>{data.website}</a>}
+            <p style={{ color: "#555", fontSize: "0.78rem", fontFamily: "monospace", margin: 0 }}>
+              @{data.username}
+            </p>
+            {data.bio && (
+              <p style={{
+                color: "#888", fontSize: "0.9rem", fontFamily: "Georgia, serif",
+                margin: "0.85rem 0 0", lineHeight: 1.6, maxWidth: "560px",
+              }}>
+                {data.bio}
+              </p>
+            )}
+            <div style={{ display: "flex", gap: "1rem", marginTop: "0.85rem", flexWrap: "wrap", alignItems: "center" }}>
+              {data.location && <span style={metaText}>{data.location}</span>}
+              {data.website && (
+                <a href={data.website} target="_blank" rel="noreferrer" style={{ ...metaText, color: "#4a7a9a", textDecoration: "none" }}>
+                  {data.website.replace(/^https?:\/\//, "")}
+                </a>
+              )}
             </div>
           </div>
+        </div>
 
-          {/* Actions */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flexShrink: 0 }}>
-            <Link href="/profile/edit" style={{ border: "1px solid #2a2a2a", color: "#888", padding: "0.3rem 0.75rem", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em", textDecoration: "none", textAlign: "center" }}>
-              Edit Profile
-            </Link>
-            <button onClick={() => { logout(); router.push("/"); }} style={{ background: "none", border: "1px solid #2a1a1a", color: "#555", padding: "0.3rem 0.75rem", cursor: "pointer", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>
-              Logout
-            </button>
-          </div>
+        {/* Action row */}
+        <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap", marginBottom: "2rem" }}>
+          <Link href="/profile/edit" style={ctaPrimary}>Edit profile</Link>
+          <Link href={`/u/${data.username}`} style={ctaSecondary}>View public profile</Link>
+          <Link href="/studio" style={ctaSecondary}>Studio</Link>
+          <button
+            onClick={() => { logout(); router.push("/"); }}
+            style={{ ...ctaSecondary, background: "transparent", border: "1px solid #2a1a1a", color: "#9a6a6a", cursor: "pointer", fontFamily: "monospace" }}
+          >
+            Log out
+          </button>
         </div>
 
         {/* Stats */}
-        <div style={{ display: "flex", gap: "2rem", marginBottom: "2rem", flexWrap: "wrap" }}>
-          {[
-            { label: "Posts", value: posts.length },
-            { label: "Comments", value: comments.length },
-            { label: "Likes", value: data?.likes_received ?? 0 },
-            { label: "Followers", value: data?.followers ?? 0, href: `/u/${data?.username}/followers` },
-            { label: "Following", value: data?.following ?? 0, href: `/u/${data?.username}/following` },
-          ].map(s => (
-            (s as any).href ? (
-              <Link key={s.label} href={(s as any).href} style={{ textDecoration: "none", textAlign: "center" as const }}>
-                <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{s.value}</div>
-                <div style={{ fontSize: "0.55rem", color: "#4a7a9a", letterSpacing: "0.15em", textTransform: "uppercase" }}>{s.label}</div>
-              </Link>
-            ) : (
-              <div key={s.label} style={{ textAlign: "center" }}>
-                <div style={{ fontSize: "1.2rem", color: "#f0e8d8", fontFamily: "Georgia, serif" }}>{s.value}</div>
-                <div style={{ fontSize: "0.55rem", color: "#444", letterSpacing: "0.15em", textTransform: "uppercase" }}>{s.label}</div>
-              </div>
-            )
-          ))}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))",
+          gap: "0.5rem",
+          marginBottom: "2rem",
+          paddingBottom: "1.5rem",
+          borderBottom: "1px solid #141414",
+        }}>
+          <Stat label="POSTS" value={textPosts.length + videos.length} />
+          <Stat label="COMMENTS" value={comments.length} />
+          <Stat label="LIKES" value={data.likes_received ?? 0} />
+          <StatLink label="FOLLOWERS" value={data.followers ?? 0} href={`/u/${data.username}/followers`} />
+          <StatLink label="FOLLOWING" value={data.following ?? 0} href={`/u/${data.username}/following`} />
         </div>
 
         {/* Tabs */}
-        <div style={{ borderBottom: "1px solid #1a1a1a", marginBottom: "1.5rem" }}>
-          <button style={tabStyle(tab === "posts")} onClick={() => setTab("posts")}>Posts</button>
-          <button style={tabStyle(tab === "comments")} onClick={() => setTab("comments")}>Comments</button>
+        <div style={{ display: "flex", gap: 0, marginBottom: "1.25rem", borderBottom: "1px solid #1a1a1a" }}>
+          <Tab label={`Posts (${textPosts.length})`} active={tab === "posts"} onClick={() => setTab("posts")} />
+          <Tab label={`Videos (${videos.length})`} active={tab === "videos"} onClick={() => setTab("videos")} />
+          <Tab label={`Comments (${comments.length})`} active={tab === "comments"} onClick={() => setTab("comments")} />
         </div>
 
-        {/* Posts tab */}
+        {/* Posts */}
         {tab === "posts" && (
-          <div>
-            {posts.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "3rem", color: "#333" }}>
-                <p style={{ marginBottom: "1rem" }}>No posts yet.</p>
-                <Link href="/posts/new" style={{ fontSize: "0.65rem", color: "#c8a96e", border: "1px solid #3a2a10", padding: "0.4rem 1rem", textDecoration: "none", letterSpacing: "0.1em" }}>
-                  + Write your first post
-                </Link>
-              </div>
-            ) : (
-              posts.map((post: any) => (
-                <Link key={post.id} href={`/posts/${post.id}`} style={{ textDecoration: "none", display: "block", paddingBottom: "1.5rem", marginBottom: "1.5rem", borderBottom: "1px solid #141414" }}>
-                  <h3 style={{ fontSize: "1rem", fontWeight: 400, fontFamily: "Georgia, serif", color: "#f0e8d8", margin: "0 0 0.35rem", lineHeight: 1.4 }}>
-                    {post.title}
-                  </h3>
-                  <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-                    <span style={{ fontSize: "0.6rem", color: "#444" }}>{timeAgo(post.created_at)}</span>
-                    <span style={{ fontSize: "0.6rem", color: "#444" }}>💬 {post.comment_count ?? 0}</span>
-                    {post.debate_status === "open" && (
-                      <span style={{ fontSize: "0.55rem", color: "#4a9a4a", border: "1px solid #2a4a2a", padding: "0.1rem 0.4rem" }}>⬤ live</span>
+          textPosts.length === 0 ? (
+            <Empty
+              body="No posts yet."
+              sub="Share an idea, a hot take, a question."
+              cta={{ href: "/posts/new", label: "+ Write your first post" }}
+            />
+          ) : (
+            <div>
+              {textPosts.map((p) => (
+                <Link key={p.id} href={`/posts/${p.id}`} style={{ textDecoration: "none", display: "block" }}>
+                  <article style={postRow}>
+                    <h3 style={{
+                      margin: "0 0 0.4rem", fontSize: "1rem", fontWeight: 400,
+                      color: "#f0e8d8", fontFamily: "Georgia, serif", lineHeight: 1.35,
+                    }}>
+                      {p.title}
+                    </h3>
+                    {p.excerpt && (
+                      <p style={{ color: "#666", fontSize: "0.8rem", lineHeight: 1.6, fontFamily: "Georgia, serif", margin: "0 0 0.5rem" }}>
+                        {p.excerpt.slice(0, 160)}{p.excerpt.length > 160 ? "..." : ""}
+                      </p>
                     )}
-                  </div>
+                    <div style={{ display: "flex", gap: "1rem", color: "#444", fontSize: "0.65rem", fontFamily: "monospace", letterSpacing: "0.05em", alignItems: "center" }}>
+                      <span>{timeAgo(p.created_at)}</span>
+                      <span>{p.comment_count ?? 0} comments</span>
+                      {p.upvote_count !== undefined && <span>↑ {p.upvote_count}</span>}
+                      {p.debate_status === "open" && (
+                        <span style={{ color: "#4a9a4a", border: "1px solid #2a4a2a", padding: "0.1rem 0.45rem", letterSpacing: "0.15em" }}>
+                          DEBATING
+                        </span>
+                      )}
+                    </div>
+                  </article>
                 </Link>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )
         )}
 
-        {/* Comments tab */}
+        {/* Videos */}
+        {tab === "videos" && (
+          videos.length === 0 ? (
+            <Empty
+              body="No videos yet."
+              sub="Post a video clip or go live to record one."
+              cta={{ href: "/posts/new", label: "+ Post a video" }}
+            />
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 4 }}>
+              {videos.map((p) => (
+                <Link
+                  key={p.id}
+                  href={`/posts/${p.id}`}
+                  style={{ textDecoration: "none", position: "relative", display: "block", aspectRatio: "9/16", overflow: "hidden", background: "#0d0d0d", border: "1px solid #141414" }}
+                >
+                  <video
+                    src={p.media_url}
+                    muted
+                    playsInline
+                    preload="metadata"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                  <div style={{
+                    position: "absolute", inset: 0,
+                    background: "linear-gradient(transparent 60%, rgba(0,0,0,0.75))",
+                    display: "flex", alignItems: "flex-end", padding: "0.5rem 0.6rem",
+                  }}>
+                    <span style={{ fontSize: "0.6rem", color: "#ddd", fontFamily: "monospace", letterSpacing: "0.05em" }}>
+                      ▶ {p.comment_count}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Comments */}
         {tab === "comments" && (
-          <div>
-            {comments.length === 0 ? (
-              <p style={{ color: "#333", textAlign: "center", padding: "3rem" }}>No comments yet.</p>
-            ) : (
-              comments.map((c: any) => (
-                <Link key={c.id} href={`/posts/${c.post_id}#comment-${c.id}`} style={{ textDecoration: "none", display: "block", paddingBottom: "1.25rem", marginBottom: "1.25rem", borderBottom: "1px solid #141414" }}>
-                  <p style={{ fontSize: "0.85rem", color: "#888", fontFamily: "Georgia, serif", lineHeight: 1.6, margin: "0 0 0.35rem" }}>
-                    {(c.body || "").slice(0, 200)}{c.body?.length > 200 ? "..." : ""}
-                  </p>
-                  <div style={{ display: "flex", gap: "1rem" }}>
-                    <span style={{ fontSize: "0.6rem", color: "#333" }}>{timeAgo(c.created_at)}</span>
-                    <span style={{ fontSize: "0.6rem", color: "#333" }}>on: {c.post_title || `post #${c.post_id}`}</span>
+          comments.length === 0 ? (
+            <Empty body="No comments yet." sub="Reply to someone's post to start a thread." />
+          ) : (
+            <div>
+              {comments.map((c) => (
+                <Link key={c.id} href={`/posts/${c.post_id}#comment-${c.id}`} style={{ textDecoration: "none", display: "block" }}>
+                  <div style={postRow}>
+                    <p style={{ fontSize: "0.875rem", color: "#888", fontFamily: "Georgia, serif", lineHeight: 1.6, margin: "0 0 0.4rem" }}>
+                      {(c.body || "").slice(0, 200)}{c.body && c.body.length > 200 ? "..." : ""}
+                    </p>
+                    <div style={{ display: "flex", gap: "1rem", color: "#444", fontSize: "0.65rem", fontFamily: "monospace", letterSpacing: "0.05em" }}>
+                      <span>{timeAgo(c.created_at)}</span>
+                      {c.post_title && <span>on: {c.post_title}</span>}
+                    </div>
                   </div>
                 </Link>
-              ))
-            )}
-          </div>
+              ))}
+            </div>
+          )
         )}
-
       </div>
     </main>
   );
 }
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <div style={statBox}>
+      <div style={statValue}>{value.toLocaleString()}</div>
+      <div style={statLabel}>{label}</div>
+    </div>
+  );
+}
+
+function StatLink({ label, value, href }: { label: string; value: number; href: string }) {
+  return (
+    <Link href={href} style={{ ...statBox, textDecoration: "none", cursor: "pointer" }}>
+      <div style={{ ...statValue, color: "#4a7a9a" }}>{value.toLocaleString()}</div>
+      <div style={statLabel}>{label}</div>
+    </Link>
+  );
+}
+
+function Tab({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        background: "none", border: "none", padding: "0.65rem 1.1rem",
+        fontSize: "0.65rem", letterSpacing: "0.2em", textTransform: "uppercase",
+        color: active ? "#f0e8d8" : "#555", cursor: "pointer",
+        borderBottom: active ? "1.5px solid #f0e8d8" : "1.5px solid transparent",
+        marginBottom: "-1px", fontFamily: "monospace",
+      }}
+    >
+      {label}
+    </button>
+  );
+}
+
+function Empty({ body, sub, cta }: { body: string; sub: string; cta?: { href: string; label: string } }) {
+  return (
+    <div style={{ padding: "3rem 1.5rem", textAlign: "center", border: "1px dashed #1a1a1a", background: "#0a0a0a" }}>
+      <p style={{ color: "#777", fontSize: "0.95rem", fontFamily: "Georgia, serif", marginBottom: "0.4rem" }}>{body}</p>
+      <p style={{ color: "#444", fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.05em", marginBottom: cta ? "1.25rem" : 0 }}>
+        {sub}
+      </p>
+      {cta && (
+        <Link href={cta.href} style={ctaPrimary}>
+          {cta.label}
+        </Link>
+      )}
+    </div>
+  );
+}
+
+const pageStyle: React.CSSProperties = { minHeight: "100vh", background: "#080808", color: "#e8e0d0" };
+const container: React.CSSProperties = { maxWidth: "780px", margin: "0 auto", padding: "2.5rem 1.5rem 5rem" };
+const eyebrow: React.CSSProperties = { fontSize: "0.55rem", letterSpacing: "0.3em", color: "#4a7a9a", textTransform: "uppercase", fontFamily: "monospace", margin: 0 };
+const metaText: React.CSSProperties = { color: "#444", fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.05em" };
+const ctaPrimary: React.CSSProperties = {
+  background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
+  padding: "0.55rem 1.4rem", textDecoration: "none",
+  fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.15em", textTransform: "uppercase",
+  display: "inline-block",
+};
+const ctaSecondary: React.CSSProperties = {
+  background: "transparent", border: "1px solid #2a2a2a", color: "#888",
+  padding: "0.55rem 1.4rem", textDecoration: "none",
+  fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.15em", textTransform: "uppercase",
+  display: "inline-block",
+};
+const statBox: React.CSSProperties = {
+  background: "#0d0d0d", border: "1px solid #1a1a1a",
+  padding: "0.75rem 0.85rem",
+};
+const statValue: React.CSSProperties = {
+  fontSize: "1.15rem", fontFamily: "monospace", color: "#f0e8d8",
+  fontWeight: 600, marginBottom: "0.25rem",
+};
+const statLabel: React.CSSProperties = {
+  fontSize: "0.55rem", letterSpacing: "0.2em",
+  color: "#444", fontFamily: "monospace",
+};
+const postRow: React.CSSProperties = {
+  padding: "1rem 0", borderBottom: "1px solid #141414",
+};
