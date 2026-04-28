@@ -1,0 +1,216 @@
+"use client";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+
+interface Balance {
+  balance: number;
+  withdrawable_balance: number;
+  lifetime_earned: number;
+  lifetime_spent: number;
+}
+
+interface Transaction {
+  id: number;
+  amount: number;
+  type: string;
+  description: string;
+  created_at: string;
+}
+
+const API = "/api/proxy/api/v1";
+
+export default function WalletPage() {
+  const { token, user, isLoaded } = useAuth();
+  const [balance, setBalance] = useState<Balance | null>(null);
+  const [txs, setTxs] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!token) { setLoading(false); return; }
+    const headers = { Authorization: `Bearer ${token}` };
+    Promise.all([
+      fetch(`${API}/coins/balance`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API}/coins/transactions?limit=25`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]).then(([bal, txsRes]) => {
+      if (bal) setBalance(bal);
+      if (txsRes && Array.isArray(txsRes.transactions)) setTxs(txsRes.transactions);
+      setLoading(false);
+    });
+  }, [token]);
+
+  if (isLoaded && !token) {
+    return (
+      <main style={pageStyle}>
+        <div style={{ ...container, textAlign: "center", paddingTop: "5rem" }}>
+          <p style={{ color: "#888", marginBottom: "1rem", fontFamily: "monospace", fontSize: "0.85rem" }}>
+            Log in to see your wallet.
+          </p>
+          <Link href="/login" style={primaryBtn}>Log in →</Link>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main style={pageStyle}>
+      <div style={container}>
+        {/* Header */}
+        <div style={{ marginBottom: "2rem", paddingBottom: "1.25rem", borderBottom: "1px solid #141414" }}>
+          <p style={eyebrow}>SCOUTA / WALLET</p>
+          <h1 style={h1}>Wallet</h1>
+          <p style={{ color: "#555", fontSize: "0.78rem", fontFamily: "monospace", marginTop: "0.5rem" }}>
+            @{user?.username}
+          </p>
+        </div>
+
+        {loading && (
+          <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.78rem" }}>Loading...</p>
+        )}
+
+        {!loading && (
+          <>
+            {/* Balance + Withdrawable */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: "1rem",
+              marginBottom: "2rem",
+            }}>
+              <Card label="BALANCE" value={balance?.balance ?? 0} accent="#c8a96e" suffix="coins" big />
+              <Card label="WITHDRAWABLE" value={balance?.withdrawable_balance ?? 0} accent="#4a9a4a" suffix="coins" />
+              <Card label="LIFETIME EARNED" value={balance?.lifetime_earned ?? 0} accent="#4a7a9a" suffix="coins" />
+              <Card label="LIFETIME SPENT" value={balance?.lifetime_spent ?? 0} accent="#666" suffix="coins" />
+            </div>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "2.5rem" }}>
+              <Link href="/wallet/buy" style={ctaPrimary}>Buy coins →</Link>
+              <Link href="/wallet/withdraw" style={ctaSecondary}>Withdraw earnings</Link>
+            </div>
+
+            {/* Transactions */}
+            <div style={{ paddingBottom: "1rem", borderBottom: "1px solid #141414", marginBottom: "1rem" }}>
+              <p style={eyebrow}>RECENT ACTIVITY</p>
+              <h2 style={{ fontSize: "1.5rem", fontWeight: 400, fontFamily: "Georgia, serif", margin: "0.4rem 0 0", color: "#f0e8d8" }}>
+                Last {txs.length} transactions
+              </h2>
+            </div>
+
+            {txs.length === 0 ? (
+              <div style={emptyBox}>
+                <p style={{ color: "#666", fontFamily: "Georgia, serif", fontSize: "0.85rem", marginBottom: "0.4rem" }}>No transactions yet.</p>
+                <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.7rem", letterSpacing: "0.05em" }}>
+                  Buy coins or send a gift to see activity here.
+                </p>
+              </div>
+            ) : (
+              <div>
+                {txs.map((t) => (
+                  <div key={t.id} style={txRow}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ color: "#e0d0b0", fontSize: "0.82rem", fontFamily: "Georgia, serif", marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {t.description || labelType(t.type)}
+                      </div>
+                      <div style={{ color: "#444", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+                        {labelType(t.type)} · {formatDate(t.created_at)}
+                      </div>
+                    </div>
+                    <div style={{
+                      fontSize: "0.95rem", fontFamily: "monospace", fontWeight: 700,
+                      color: t.amount >= 0 ? "#4a9a4a" : "#9a6a4a",
+                      whiteSpace: "nowrap", marginLeft: "1rem",
+                    }}>
+                      {t.amount >= 0 ? "+" : ""}{t.amount}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </main>
+  );
+}
+
+function Card({ label, value, accent, suffix, big }: { label: string; value: number; accent: string; suffix?: string; big?: boolean }) {
+  return (
+    <div style={{
+      background: "#0d0d0d", border: "1px solid #1a1a1a",
+      padding: "1.25rem 1.25rem 1.1rem",
+    }}>
+      <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", margin: "0 0 0.6rem" }}>{label}</p>
+      <p style={{
+        fontSize: big ? "2.25rem" : "1.6rem", fontFamily: "monospace",
+        color: accent, margin: 0, lineHeight: 1, fontWeight: 600,
+      }}>
+        {value.toLocaleString()}
+      </p>
+      {suffix && (
+        <p style={{ fontSize: "0.6rem", color: "#444", fontFamily: "monospace", letterSpacing: "0.15em", margin: "0.3rem 0 0" }}>
+          {suffix.toUpperCase()}
+        </p>
+      )}
+    </div>
+  );
+}
+
+function labelType(t: string): string {
+  switch (t) {
+    case "purchase": return "Purchase";
+    case "gift_sent": return "Gift sent";
+    case "gift_received": return "Gift received";
+    case "room_entry": return "Paid entry";
+    case "withdrawal": return "Withdrawal";
+    case "subscription": return "Subscription";
+    default: return t.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  }
+}
+
+function formatDate(s: string): string {
+  try {
+    const d = new Date(s);
+    const now = Date.now();
+    const diff = now - d.getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return "just now";
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m / 60);
+    if (h < 24) return `${h}h ago`;
+    return d.toLocaleDateString();
+  } catch {
+    return "";
+  }
+}
+
+const pageStyle: React.CSSProperties = { minHeight: "100vh", background: "#080808", color: "#f0e8d8" };
+const container: React.CSSProperties = { maxWidth: "880px", margin: "0 auto", padding: "2.5rem 1.5rem 5rem" };
+const eyebrow: React.CSSProperties = { fontSize: "0.6rem", letterSpacing: "0.3em", color: "#4a7a9a", textTransform: "uppercase", fontFamily: "monospace", margin: 0 };
+const h1: React.CSSProperties = { fontSize: "clamp(1.6rem, 4vw, 2.5rem)", fontWeight: 400, fontFamily: "Georgia, serif", margin: "0.4rem 0 0" };
+const ctaPrimary: React.CSSProperties = {
+  background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
+  padding: "0.7rem 1.5rem", textDecoration: "none",
+  fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
+  fontFamily: "monospace",
+};
+const ctaSecondary: React.CSSProperties = {
+  background: "transparent", border: "1px solid #2a2a2a", color: "#888",
+  padding: "0.7rem 1.5rem", textDecoration: "none",
+  fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
+  fontFamily: "monospace",
+};
+const primaryBtn: React.CSSProperties = {
+  background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
+  padding: "0.75rem 1.75rem", textDecoration: "none",
+  fontFamily: "monospace", fontSize: "0.75rem", letterSpacing: "0.15em",
+  textTransform: "uppercase", display: "inline-block",
+};
+const txRow: React.CSSProperties = {
+  display: "flex", justifyContent: "space-between", alignItems: "center",
+  padding: "0.85rem 0", borderBottom: "1px solid #141414",
+};
+const emptyBox: React.CSSProperties = {
+  textAlign: "center", padding: "3rem 1.5rem",
+  border: "1px dashed #1a1a1a", background: "#0a0a0a",
+};
