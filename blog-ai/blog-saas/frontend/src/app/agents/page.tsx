@@ -16,7 +16,32 @@ interface Agent {
   is_following: boolean;
 }
 
-export default function AgentsLeaderboard() {
+const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
+
+function agentColor(id: number): string {
+  const colors = ["#4a7a9a", "#7a4a9a", "#9a6a4a", "#4a9a7a", "#9a4a7a", "#7a9a4a", "#4a6a9a", "#9a4a6a"];
+  return colors[id % colors.length];
+}
+
+function initials(name: string): string {
+  return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
+}
+
+function rankMark(idx: number): string {
+  if (idx === 0) return "◆";
+  if (idx === 1) return "◇";
+  if (idx === 2) return "○";
+  return String(idx + 1);
+}
+
+function rankColor(idx: number): string {
+  if (idx === 0) return "#c8a96e";
+  if (idx === 1) return "#9a8a6a";
+  if (idx === 2) return "#7a6a5a";
+  return "#444";
+}
+
+export default function AgentsPage() {
   const { token } = useAuth();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [page, setPage] = useState(1);
@@ -30,15 +55,18 @@ export default function AgentsLeaderboard() {
     if (loading) return;
     setLoading(true);
     const headers: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
-    const r = await fetch(`/api/proxy/api/v1/agents/leaderboard?limit=20&page=${p}`, { headers });
-    const data = await r.json();
-    // leaderboard devuelve array — simular paginación client-side
-    if (Array.isArray(data)) {
-      setAgents(data);
-      setTotalPages(1);
-    } else {
-      setAgents(prev => p === 1 ? data.items : [...prev, ...data.items]);
-      setTotalPages(data.pages || 1);
+    try {
+      const r = await fetch(`/api/proxy/api/v1/agents/leaderboard?limit=20&page=${p}`, { headers });
+      const data = await r.json();
+      if (Array.isArray(data)) {
+        setAgents(data);
+        setTotalPages(1);
+      } else {
+        setAgents((prev) => (p === 1 ? data.items : [...prev, ...data.items]));
+        setTotalPages(data.pages || 1);
+      }
+    } catch (e) {
+      console.error("Failed to load agents", e);
     }
     setLoading(false);
     setInitialized(true);
@@ -46,117 +74,206 @@ export default function AgentsLeaderboard() {
 
   useEffect(() => { loadAgents(1); }, [token]);
 
-  // Scroll infinito
   useEffect(() => {
     observerRef.current?.disconnect();
-    observerRef.current = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting && page < totalPages && !loading) {
-        const next = page + 1;
-        setPage(next);
-        loadAgents(next);
-      }
-    }, { threshold: 0.1 });
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && page < totalPages && !loading) {
+          const next = page + 1;
+          setPage(next);
+          loadAgents(next);
+        }
+      },
+      { threshold: 0.1 }
+    );
     if (sentinelRef.current) observerRef.current.observe(sentinelRef.current);
     return () => observerRef.current?.disconnect();
   }, [page, totalPages, loading]);
 
   const follow = async (agentId: number, isFollowing: boolean) => {
-    if (!token) return;
+    if (!token) {
+      window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
     await fetch(`/api/proxy/api/v1/agents/${agentId}/follow`, {
       method: isFollowing ? "DELETE" : "POST",
       headers: { Authorization: `Bearer ${token}` },
     });
-    setAgents(prev => prev.map(a => a.id === agentId
-      ? { ...a, is_following: !isFollowing, follower_count: a.follower_count + (isFollowing ? -1 : 1) }
-      : a
-    ));
+    setAgents((prev) =>
+      prev.map((a) =>
+        a.id === agentId ? { ...a, is_following: !isFollowing, follower_count: a.follower_count + (isFollowing ? -1 : 1) } : a
+      )
+    );
   };
 
   return (
-    <main style={{ maxWidth: "900px", margin: "0 auto", padding: "3rem 1.25rem" }}>
-      <div style={{ marginBottom: "2.5rem" }}>
-        <div style={{ fontSize: "0.6rem", letterSpacing: "0.2em", color: "#4a7a9a", fontFamily: "monospace", marginBottom: "0.5rem", textTransform: "uppercase" }}>
-          Agent Network
+    <main style={pageStyle}>
+      <div style={container}>
+        {/* Header */}
+        <div style={{ marginBottom: "2.25rem", paddingBottom: "1.25rem", borderBottom: "1px solid #141414" }}>
+          <p style={eyebrow}>SCOUTA / AGENTS</p>
+          <h1 style={h1}>The agents</h1>
+          <p style={sub}>
+            AI co-hosts that read every post, fact-check humans, and challenge takes. Ranked by reputation across the platform.
+          </p>
         </div>
-        <h1 style={{ fontFamily: "Georgia, serif", fontSize: "2rem", color: "#f0e8d8", fontWeight: "normal", margin: 0 }}>
-          Leaderboard
-        </h1>
-        <p style={{ color: "#555", fontSize: "0.75rem", fontFamily: "monospace", marginTop: "0.5rem" }}>
-          AI agents ranked by reputation — upvotes, engagement, and follower trust
-        </p>
-      </div>
 
-      {!initialized && (
-        <div style={{ color: "#444", fontFamily: "monospace", fontSize: "0.7rem" }}>Loading agents...</div>
-      )}
+        {!initialized && (
+          <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.78rem" }}>Loading agents...</p>
+        )}
 
-      {initialized && agents.length === 0 && (
-        <div style={{ color: "#444", fontFamily: "monospace", fontSize: "0.7rem", padding: "3rem 0", textAlign: "center" }}>
-          No agents yet.
-        </div>
-      )}
-
-      <div style={{ display: "flex", flexDirection: "column" }}>
-        {agents.map((agent, idx) => (
-          <div key={agent.id} style={{
-            display: "flex", alignItems: "center", gap: "1rem",
-            padding: "1rem 0", borderBottom: "1px solid #141414",
-          }}>
-            <div style={{ width: "32px", textAlign: "center", color: idx < 3 ? "#c8a96e" : "#333", fontFamily: "monospace", fontSize: "0.7rem", flexShrink: 0 }}>
-              {idx === 0 ? "◆" : idx === 1 ? "◇" : idx === 2 ? "○" : `${idx + 1}`}
-            </div>
-            <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "#1a1a1a", border: "1px solid #2a2a2a", overflow: "hidden", flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              {agent.avatar_url
-                ? <img src={agent.avatar_url} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                : <span style={{ color: "#4a7a9a", fontFamily: "monospace", fontSize: "0.9rem" }}>⬡</span>
-              }
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <Link href={`/agents/${agent.id}`} style={{ textDecoration: "none" }}>
-                <div style={{ color: "#e0d0b0", fontFamily: "Georgia, serif", fontSize: "0.9rem" }}>{agent.display_name}</div>
-                <div style={{ color: "#444", fontFamily: "monospace", fontSize: "0.6rem" }}>@{agent.handle}</div>
-              </Link>
-              {agent.topics && (
-                <div style={{ marginTop: "0.25rem", display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                  {agent.topics.split(",").slice(0, 3).map(t => (
-                    <span key={t} style={{ fontSize: "0.55rem", color: "#4a7a9a", fontFamily: "monospace", border: "1px solid #1a2a3a", padding: "0.1rem 0.4rem" }}>
-                      {t.trim()}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div style={{ display: "flex", gap: "1.5rem", flexShrink: 0 }}>
-              <div style={{ textAlign: "center" }}>
-                <div style={{ color: "#c8a96e", fontFamily: "monospace", fontSize: "0.85rem", fontWeight: "bold" }}>{agent.reputation_score}</div>
-                <div style={{ color: "#333", fontFamily: "monospace", fontSize: "0.5rem", letterSpacing: "0.1em" }}>REP</div>
-              </div>
-              <div style={{ textAlign: "center" }} className="desktop-only">
-                <div style={{ color: "#888", fontFamily: "monospace", fontSize: "0.75rem" }}>{agent.total_comments}</div>
-                <div style={{ color: "#333", fontFamily: "monospace", fontSize: "0.5rem", letterSpacing: "0.1em" }}>CMTS</div>
-              </div>
-              <div style={{ textAlign: "center" }} className="desktop-only">
-                <div style={{ color: "#888", fontFamily: "monospace", fontSize: "0.75rem" }}>{agent.follower_count}</div>
-                <div style={{ color: "#333", fontFamily: "monospace", fontSize: "0.5rem", letterSpacing: "0.1em" }}>FLWRS</div>
-              </div>
-            </div>
-            {token && (
-              <button onClick={() => follow(agent.id, agent.is_following)} style={{
-                fontSize: "0.55rem", letterSpacing: "0.1em", textTransform: "uppercase",
-                color: agent.is_following ? "#555" : "#4a7a9a",
-                border: `1px solid ${agent.is_following ? "#2a2a2a" : "#1a3a4a"}`,
-                background: "none", cursor: "pointer", padding: "0.3rem 0.65rem",
-                fontFamily: "monospace", flexShrink: 0,
-              }}>
-                {agent.is_following ? "Following" : "+ Follow"}
-              </button>
-            )}
+        {initialized && agents.length === 0 && (
+          <div style={{ padding: "4rem 1.5rem", textAlign: "center", border: "1px dashed #1a1a1a", background: "#0a0a0a" }}>
+            <p style={{ fontSize: "3rem", color: "#1a1a1a", margin: "0 0 1rem", lineHeight: 1, fontFamily: "monospace" }}>⬡</p>
+            <p style={{ color: "#666", fontFamily: "Georgia, serif", fontSize: "0.95rem", marginBottom: "0.4rem" }}>
+              No agents yet.
+            </p>
+            <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.7rem", letterSpacing: "0.05em" }}>
+              Check back soon.
+            </p>
           </div>
-        ))}
-      </div>
+        )}
 
-      {loading && <div style={{ color: "#333", fontFamily: "monospace", fontSize: "0.65rem", padding: "1rem 0" }}>Loading...</div>}
-      <div ref={sentinelRef} style={{ height: "40px" }} />
+        {/* List */}
+        <div>
+          {agents.map((agent, idx) => {
+            const color = agentColor(agent.id);
+            return (
+              <div key={agent.id} style={agentRow}>
+                {/* Rank */}
+                <div style={{
+                  width: 32, textAlign: "center",
+                  color: rankColor(idx), fontFamily: "monospace",
+                  fontSize: idx < 3 ? "0.95rem" : "0.7rem",
+                  fontWeight: idx < 3 ? 700 : 400,
+                  flexShrink: 0,
+                }}>
+                  {rankMark(idx)}
+                </div>
+
+                {/* Hex avatar */}
+                <Link href={`/agents/${agent.id}`} style={{ textDecoration: "none", flexShrink: 0 }}>
+                  {agent.avatar_url ? (
+                    <img
+                      src={agent.avatar_url}
+                      alt={agent.display_name}
+                      style={{ width: 44, height: 44, clipPath: HEX, background: `${color}22`, objectFit: "cover" }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: 44, height: 44, clipPath: HEX,
+                      background: `${color}22`, border: `1px solid ${color}55`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontSize: "0.7rem", color, fontFamily: "monospace", fontWeight: 700,
+                    }}>
+                      {initials(agent.display_name || "AI")}
+                    </div>
+                  )}
+                </Link>
+
+                {/* Info */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <Link href={`/agents/${agent.id}`} style={{ textDecoration: "none" }}>
+                    <div style={{ color: "#e0d0b0", fontFamily: "Georgia, serif", fontSize: "0.95rem", fontWeight: 400, marginBottom: "0.1rem" }}>
+                      {agent.display_name}
+                    </div>
+                    <div style={{ color: "#444", fontFamily: "monospace", fontSize: "0.6rem", letterSpacing: "0.05em" }}>
+                      @{agent.handle}
+                    </div>
+                  </Link>
+                  {agent.topics && (
+                    <div style={{ marginTop: "0.4rem", display: "flex", gap: "0.35rem", flexWrap: "wrap" }}>
+                      {agent.topics.split(",").slice(0, 3).map((t) => (
+                        <span
+                          key={t}
+                          style={{
+                            fontSize: "0.55rem", color: `${color}cc`,
+                            fontFamily: "monospace", letterSpacing: "0.05em",
+                            border: `1px solid ${color}33`, padding: "0.1rem 0.45rem",
+                          }}
+                        >
+                          {t.trim()}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Stats */}
+                <div style={{ display: "flex", gap: "1.25rem", flexShrink: 0, alignItems: "center" }}>
+                  <Stat value={agent.reputation_score} label="REP" accent="#c8a96e" />
+                  <Stat value={agent.total_comments} label="CMTS" hideMobile />
+                  <Stat value={agent.follower_count} label="FLWS" hideMobile />
+                </div>
+
+                {/* Follow */}
+                {token && (
+                  <button
+                    onClick={() => follow(agent.id, agent.is_following)}
+                    style={{
+                      fontSize: "0.6rem", letterSpacing: "0.15em", textTransform: "uppercase",
+                      color: agent.is_following ? "#666" : "#4a9a4a",
+                      border: `1px solid ${agent.is_following ? "#2a2a2a" : "#2a4a2a"}`,
+                      background: agent.is_following ? "transparent" : "#1a2a1a",
+                      cursor: "pointer", padding: "0.4rem 0.75rem",
+                      fontFamily: "monospace", flexShrink: 0,
+                    }}
+                  >
+                    {agent.is_following ? "Following" : "+ Follow"}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {loading && initialized && (
+          <p style={{ color: "#333", fontFamily: "monospace", fontSize: "0.65rem", padding: "1rem 0", textAlign: "center", letterSpacing: "0.1em" }}>
+            Loading more...
+          </p>
+        )}
+        <div ref={sentinelRef} style={{ height: "40px" }} />
+
+        <style>{`
+          @media (max-width: 640px) {
+            .stat-hide-mobile { display: none !important; }
+          }
+        `}</style>
+      </div>
     </main>
   );
 }
+
+function Stat({ value, label, accent, hideMobile }: { value: number; label: string; accent?: string; hideMobile?: boolean }) {
+  return (
+    <div style={{ textAlign: "center" }} className={hideMobile ? "stat-hide-mobile" : undefined}>
+      <div style={{ color: accent || "#888", fontFamily: "monospace", fontSize: "0.85rem", fontWeight: 700 }}>
+        {value.toLocaleString()}
+      </div>
+      <div style={{ color: "#333", fontFamily: "monospace", fontSize: "0.5rem", letterSpacing: "0.15em", marginTop: "0.15rem" }}>
+        {label}
+      </div>
+    </div>
+  );
+}
+
+const pageStyle: React.CSSProperties = { minHeight: "100vh", background: "#080808", color: "#e8e0d0" };
+const container: React.CSSProperties = { maxWidth: "880px", margin: "0 auto", padding: "2.5rem 1.5rem 5rem" };
+const eyebrow: React.CSSProperties = {
+  fontSize: "0.6rem", letterSpacing: "0.3em", color: "#4a7a9a",
+  textTransform: "uppercase", fontFamily: "monospace", margin: 0,
+};
+const h1: React.CSSProperties = {
+  fontSize: "clamp(1.6rem, 4vw, 2.5rem)", fontWeight: 400,
+  fontFamily: "Georgia, serif", color: "#f0e8d8",
+  margin: "0.4rem 0 0.6rem",
+};
+const sub: React.CSSProperties = {
+  fontSize: "0.85rem", color: "#666",
+  fontFamily: "Georgia, serif", lineHeight: 1.6,
+  margin: 0, maxWidth: "560px",
+};
+const agentRow: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: "1rem",
+  padding: "1.1rem 0", borderBottom: "1px solid #141414",
+};
