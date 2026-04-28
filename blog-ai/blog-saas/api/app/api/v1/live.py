@@ -5,6 +5,9 @@ import os
 import time
 import random
 import string
+import json
+import asyncio
+import secrets
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -12,8 +15,6 @@ from app.core.db import get_db, SessionLocal
 from app.core.deps import get_current_user
 from app.models.user import User
 from typing import Optional
-import json
-import asyncio
 
 router = APIRouter()
 
@@ -26,13 +27,20 @@ def _gen_room_name() -> str:
     return "scouta-" + "".join(random.choices(string.ascii_lowercase + string.digits, k=8))
 
 
-def _create_livekit_token(room_name: str, participant_name: str, can_publish: bool = False) -> str:
+def _make_identity(user_id: int) -> str:
+    """Unique LiveKit identity per session — prevents collisions when the
+    same user is connected from multiple devices."""
+    return f"u{user_id}_{secrets.token_hex(3)}"
+
+
+def _create_livekit_token(room_name: str, identity: str, display_name: str = None, can_publish: bool = False) -> str:
     """Generate a LiveKit JWT token."""
+    display = display_name or identity
     try:
         from livekit.api import AccessToken, VideoGrants
         token = AccessToken(LIVEKIT_API_KEY, LIVEKIT_API_SECRET)
-        token.with_identity(participant_name)
-        token.with_name(participant_name)
+        token.with_identity(identity)
+        token.with_name(display)
         token.with_grants(VideoGrants(
             room_join=True,
             room=room_name,
@@ -41,18 +49,17 @@ def _create_livekit_token(room_name: str, participant_name: str, can_publish: bo
             can_publish_data=True,
         ))
         return token.to_jwt()
-    except Exception as e:
-        # Fallback: manual JWT
-        import hmac, hashlib, base64
-        header = base64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT"}').rstrip(b'=').decode()
+    except Exception:
+        import hmac, hashlib, base64 as b64
+        header = b64.urlsafe_b64encode(b'{"alg":"HS256","typ":"JWT"}').rstrip(b'=').decode()
         payload = {
             "iss": LIVEKIT_API_KEY,
-            "sub": participant_name,
+            "sub": identity,
+            "name": display,
             "iat": int(time.time()),
             "exp": int(time.time()) + 3600 * 6,
             "video": {"room": room_name, "roomJoin": True, "canPublish": can_publish, "canSubscribe": True}
         }
-        import base64 as b64
         payload_b64 = b64.urlsafe_b64encode(json.dumps(payload).encode()).rstrip(b'=').decode()
         sig_input = f"{header}.{payload_b64}"
         sig = hmac.new(LIVEKIT_API_SECRET.encode(), sig_input.encode(), hashlib.sha256).digest()
@@ -90,7 +97,7 @@ def start_live(
 
     # Private room settings
     is_private = payload.get("is_private", False)
-    access_type = payload.get("access_type", "public")  # public, password, invite_only, paid
+    access_type = payload.get("access_type", "public")
     entry_coin_cost = int(payload.get("entry_coin_cost", 0))
     max_viewer_limit = int(payload.get("max_viewer_limit", 0))
     password = payload.get("password", "")
@@ -100,7 +107,6 @@ def start_live(
         import hashlib
         password_hash = hashlib.sha256(password.encode()).hexdigest()
 
-    # Save to DB
     db.execute(text(
         "INSERT INTO live_streams (room_name, title, host_user_id, org_id, description, status, "
         "is_private, password_hash, access_type, entry_coin_cost, max_viewer_limit) "
@@ -108,12 +114,18 @@ def start_live(
         ":is_private, :pw_hash, :access_type, :entry_cost, :max_limit)"
     ), {
         "room": room_name, "title": title, "uid": user.id, "desc": description,
-        "is_private": is_private, "pw_hash": password_hash, "access_type": access_type if is_private else "public",
+        "is_private": is_private, "pw_hash": password_hash,
+        "access_type": access_type if is_private else "public",
         "entry_cost": entry_coin_cost if is_private else 0, "max_limit": max_viewer_limit,
     })
     db.commit()
 
-    token = _create_livekit_token(room_name, user.display_name or user.username or f"user_{user.id}", can_publish=True)
+    token = _create_livekit_token(
+        room_name,
+        _make_identity(user.id),
+        user.display_name or user.username or f"user_{user.id}",
+        can_publish=True,
+    )
 
     return {
         "room_name": room_name,
@@ -142,8 +154,12 @@ def join_live(
     if stream.status != "live":
         raise HTTPException(status_code=400, detail="Stream has ended")
 
-    # Host always has access
-    if stream.host_user_id != user.id and stream.is_private:
+    # Block host from joining their own stream as viewer (LiveKit identity collision)
+    if stream.host_user_id == user.id:
+        raise HTTPException(status_code=409, detail="already_broadcasting")
+
+    # Private room access checks (host case already returned above)
+    if stream.is_private:
         from app.models.room_access import RoomAccess
 
         # Check max viewer limit
@@ -178,10 +194,8 @@ def join_live(
                     wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user.id).first()
                     if not wallet or wallet.balance < cost:
                         raise HTTPException(status_code=402, detail=f"paid_entry:{cost}")
-                    # Deduct coins
                     wallet.balance -= cost
                     wallet.lifetime_spent += cost
-                    # Credit host
                     host_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == stream.host_user_id).first()
                     if not host_wallet:
                         host_wallet = CoinWallet(user_id=stream.host_user_id, balance=0)
@@ -227,9 +241,13 @@ def join_live(
                 db.add(RoomAccess(room_name=room_name, user_id=user.id, access_type="vip"))
                 db.commit()
 
-    token = _create_livekit_token(room_name, user.display_name or user.username or f"user_{user.id}", can_publish=False)
+    token = _create_livekit_token(
+        room_name,
+        _make_identity(user.id),
+        user.display_name or user.username or f"user_{user.id}",
+        can_publish=False,
+    )
 
-    # Update viewer count
     db.execute(text("UPDATE live_streams SET viewer_count = viewer_count + 1 WHERE room_name=:room"), {"room": room_name})
     db.commit()
 
@@ -257,14 +275,18 @@ def invite_to_live(
     if not invitee:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Also grant room access for private rooms
     from app.models.room_access import RoomAccess
     existing = db.query(RoomAccess).filter(RoomAccess.room_name == room_name, RoomAccess.user_id == invitee.id).first()
     if not existing:
         db.add(RoomAccess(room_name=room_name, user_id=invitee.id, access_type="invited"))
         db.commit()
 
-    token = _create_livekit_token(room_name, invitee.display_name or invitee.username, can_publish=True)
+    token = _create_livekit_token(
+        room_name,
+        _make_identity(invitee.id),
+        invitee.display_name or invitee.username,
+        can_publish=True,
+    )
     return {"token": token, "livekit_url": LIVEKIT_URL, "invited_user": invitee_username}
 
 
@@ -280,7 +302,6 @@ def grant_access(
     if not username:
         raise HTTPException(status_code=400, detail="username required")
 
-    # Verify caller is host
     stream = db.execute(
         text("SELECT host_user_id FROM live_streams WHERE room_name=:room AND status='live'"),
         {"room": room_name}
@@ -312,9 +333,7 @@ async def end_live(
         "UPDATE live_streams SET status='ended', ended_at=NOW() WHERE room_name=:room"
     ), {"room": room_name})
     db.commit()
-    # Broadcast stream ended to all viewers
     if room_name in _room_connections:
-        import asyncio
         ended_msg = json.dumps({"type": "stream_ended", "message": "Stream has ended"})
         async def _broadcast_ended():
             for ws in list(_room_connections.get(room_name, [])):
@@ -343,9 +362,8 @@ def join_live_anon(room_name: str, db: Session = Depends(get_db)):
     if stream.is_private:
         raise HTTPException(status_code=403, detail="Private room — sign in to join")
 
-    import random, string
     anon_name = "viewer_" + "".join(random.choices(string.ascii_lowercase, k=6))
-    token = _create_livekit_token(room_name, anon_name, can_publish=False)
+    token = _create_livekit_token(room_name, anon_name, anon_name, can_publish=False)
     db.execute(text("UPDATE live_streams SET viewer_count = viewer_count + 1 WHERE room_name=:room"), {"room": room_name})
     db.commit()
     return {"token": token, "livekit_url": LIVEKIT_URL, "title": stream.title}
@@ -362,10 +380,8 @@ def block_from_live(
     username = payload.get("username")
     if not username:
         raise HTTPException(status_code=400, detail="username required")
-    # Broadcast block to room — viewer will be disconnected
     if room_name in _room_connections:
         block_msg = json.dumps({"type": "blocked", "username": username})
-        # Store blocked users per room (in memory)
         if not hasattr(_room_connections, "_blocked"):
             _room_connections["_blocked"] = {}
         _room_connections["_blocked"][room_name] = _room_connections.get("_blocked_" + room_name, set())
@@ -388,7 +404,6 @@ async def request_join(
     if not stream:
         raise HTTPException(status_code=404, detail="Stream not found")
 
-    # Broadcast join request to host via WebSocket
     request_msg = json.dumps({
         "type": "join_request",
         "username": user.username,
@@ -396,10 +411,8 @@ async def request_join(
         "user_id": user.id,
         "room_name": room_name,
     })
-    # Store request for polling
     if room_name not in _join_requests:
         _join_requests[room_name] = []
-    # Avoid duplicates
     existing = [r for r in _join_requests[room_name] if r["username"] != user.username]
     _join_requests[room_name] = existing + [{"username": user.username, "display_name": user.display_name or user.username, "user_id": user.id}]
 
@@ -423,11 +436,7 @@ async def accept_join(
     accept = payload.get("accept", True)
 
     if not accept:
-        # Broadcast rejection
-        reject_msg = json.dumps({
-            "type": "join_rejected",
-            "username": username,
-        })
+        reject_msg = json.dumps({"type": "join_rejected", "username": username})
         if room_name in _join_requests:
             _join_requests[room_name] = [r for r in _join_requests[room_name] if r["username"] != username]
         for ws in list(_room_connections.get(room_name, [])):
@@ -437,14 +446,17 @@ async def accept_join(
                 pass
         return {"ok": True, "accepted": False}
 
-    # Generate publisher token for the invitee
     invitee = db.query(User).filter(User.username == username).first()
     if not invitee:
         raise HTTPException(status_code=404, detail="User not found")
 
-    token = _create_livekit_token(room_name, invitee.display_name or invitee.username, can_publish=True)
+    token = _create_livekit_token(
+        room_name,
+        _make_identity(invitee.id),
+        invitee.display_name or invitee.username,
+        can_publish=True,
+    )
 
-    # Broadcast accepted with token
     accept_msg = json.dumps({
         "type": "join_accepted",
         "username": username,
@@ -497,7 +509,6 @@ async def leave_live(
             await ws.send_text(leave_msg)
         except Exception:
             pass
-    # Update viewer count
     db.execute(text("UPDATE live_streams SET viewer_count = GREATEST(viewer_count - 1, 0) WHERE room_name=:room"), {"room": room_name})
     db.commit()
     return {"ok": True}
@@ -543,12 +554,10 @@ async def send_gift(
     if not gift_id:
         raise HTTPException(status_code=400, detail="gift_id required")
 
-    # Validate gift exists
     gift = db.query(GiftCatalog).filter(GiftCatalog.id == gift_id).first()
     if not gift:
         raise HTTPException(status_code=404, detail="Gift not found")
 
-    # Validate stream is live and get host
     stream = db.execute(
         text("SELECT id, host_user_id, status FROM live_streams WHERE room_name=:room"),
         {"room": room_name}
@@ -560,29 +569,25 @@ async def send_gift(
 
     host_user_id = stream.host_user_id
 
-    # Check sender balance with row-level locking to prevent race conditions
     sender_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user.id).with_for_update().first()
     if not sender_wallet or sender_wallet.balance < gift.coin_cost:
         raise HTTPException(status_code=402, detail="Insufficient coins")
 
-    # Get or create host wallet with locking
     host_wallet = db.query(CoinWallet).filter(CoinWallet.user_id == host_user_id).with_for_update().first()
     if not host_wallet:
         host_wallet = CoinWallet(user_id=host_user_id, balance=0)
         db.add(host_wallet)
         db.flush()
 
-    # Atomic transfer with 80/20 commission split
     PLATFORM_FEE = 0.20
     fee_amount = max(1, int(gift.coin_cost * PLATFORM_FEE)) if gift.coin_cost >= 5 else 0
     host_amount = gift.coin_cost - fee_amount
 
     sender_wallet.balance -= gift.coin_cost
     sender_wallet.lifetime_spent += gift.coin_cost
-    host_wallet.withdrawable_balance += host_amount  # host earns 80% as withdrawable
+    host_wallet.withdrawable_balance += host_amount
     host_wallet.lifetime_earned += host_amount
 
-    # Record gift send
     gift_send = GiftSend(
         stream_room_name=room_name,
         sender_user_id=user.id,
@@ -591,9 +596,8 @@ async def send_gift(
         coin_amount=gift.coin_cost,
     )
     db.add(gift_send)
-    db.flush()  # get gift_send.id
+    db.flush()
 
-    # Record platform earnings
     from app.models.platform_earnings import PlatformEarnings
     db.add(PlatformEarnings(
         stream_room_name=room_name,
@@ -603,7 +607,6 @@ async def send_gift(
         host_amount=host_amount,
     ))
 
-    # Record transactions
     db.add(CoinTransaction(
         user_id=user.id,
         amount=-gift.coin_cost,
@@ -620,7 +623,6 @@ async def send_gift(
     ))
     db.commit()
 
-    # Broadcast gift to all viewers via WebSocket
     sender_name = user.display_name or user.username or f"user_{user.id}"
     gift_msg = json.dumps({
         "type": "gift",
@@ -710,7 +712,6 @@ async def live_chat_ws(websocket: WebSocket, room_name: str):
         _room_connections[room_name] = []
     _room_connections[room_name].append(websocket)
 
-    # Start AI agent commenter if first connection
     if len(_room_connections[room_name]) == 1:
         asyncio.create_task(_ai_agent_loop(room_name))
 
@@ -718,7 +719,6 @@ async def live_chat_ws(websocket: WebSocket, room_name: str):
         while True:
             data = await websocket.receive_text()
             msg = json.loads(data)
-            # Broadcast to all in room
             db = SessionLocal()
             try:
                 db.execute(text(
@@ -783,7 +783,6 @@ async def _ai_agent_loop(room_name: str):
 
         db = SessionLocal()
         try:
-            # Check stream still live
             still_live = db.execute(
                 text("SELECT status FROM live_streams WHERE room_name=:room"),
                 {"room": room_name}
@@ -791,7 +790,6 @@ async def _ai_agent_loop(room_name: str):
             if not still_live or still_live[0] != "live":
                 break
 
-            # Pick random agent
             if not agents:
                 continue
             agent = random.choice(agents)
@@ -804,14 +802,12 @@ async def _ai_agent_loop(room_name: str):
             except Exception:
                 continue
 
-            # Save to DB
             db.execute(text(
                 "INSERT INTO live_chat (room_name, message, is_agent, agent_name) "
                 "VALUES (:room, :msg, TRUE, :aname)"
             ), {"room": room_name, "msg": comment, "aname": agent.display_name})
             db.commit()
 
-            # Broadcast
             broadcast = json.dumps({
                 "type": "chat",
                 "username": agent.handle,
