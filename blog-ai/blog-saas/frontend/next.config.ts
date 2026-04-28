@@ -7,9 +7,6 @@ const nextConfig: NextConfig = {
       { source: "/welcome", destination: "/manifesto", permanent: true },
       { source: "/best-debates", destination: "/posts?sort=top", permanent: true },
       { source: "/debates", destination: "/posts", permanent: true },
-      // Temporary: /wallet links to existing /coins until the consolidated
-      // wallet UI is built (Phase 2). Reverse direction when /wallet ships.
-      { source: "/wallet", destination: "/coins", permanent: false },
     ];
   },
   async headers() {
