@@ -60,7 +60,6 @@ export default function Navbar() {
 
   useEffect(() => { setMobileOpen(false); setMenuOpen(false); }, [pathname]);
 
-  // New consolidated nav. Auth-agnostic public links + Studio/Wallet for authed.
   const publicLinks = [
     { href: "/live", label: "Live" },
     { href: "/posts", label: "Feed" },
@@ -69,6 +68,7 @@ export default function Navbar() {
   ];
 
   const authedExtras = [
+    { href: "/studio", label: "Studio" },
     { href: "/wallet", label: "Wallet" },
   ];
 
@@ -93,7 +93,6 @@ export default function Navbar() {
             display: "flex", alignItems: "center", justifyContent: "space-between",
           }}
         >
-          {/* Logo -> home */}
           <Link href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
             <span style={{ color: "#f0e8d8", fontSize: "1rem", letterSpacing: "0.18em" }}>⬡</span>
             <span style={{ fontFamily: "Georgia, serif", fontSize: "1rem", color: "#f0e8d8", letterSpacing: "0.15em", textTransform: "uppercase" }}>
@@ -101,8 +100,7 @@ export default function Navbar() {
             </span>
           </Link>
 
-          {/* Desktop nav */}
-          <nav style={{ display: "flex", gap: "0.1rem" }} className="desktop-nav">
+          <nav style={{ display: "flex", gap: "0.05rem" }} className="desktop-nav">
             {navLinks.map((link) => (
               <Link
                 key={link.href}
@@ -111,7 +109,7 @@ export default function Navbar() {
                   fontSize: "0.62rem", letterSpacing: "0.15em", textTransform: "uppercase",
                   textDecoration: "none",
                   color: isActive(link.href) ? "#e0d0b0" : "#666",
-                  padding: "0.4rem 0.75rem",
+                  padding: "0.4rem 0.7rem",
                   borderBottom: isActive(link.href) ? "1px solid #e0d0b0" : "1px solid transparent",
                 }}
               >
@@ -120,7 +118,6 @@ export default function Navbar() {
             ))}
           </nav>
 
-          {/* Right side */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
             {token ? (
               <>
@@ -168,9 +165,10 @@ export default function Navbar() {
                         <div style={{ fontSize: "0.65rem", color: "#444", fontFamily: "monospace" }}>@{user?.username}</div>
                       </div>
                       {[
+                        { href: "/studio", label: "Studio" },
+                        { href: "/wallet", label: "Wallet" },
                         { href: "/profile", label: "My profile" },
                         { href: "/profile/edit", label: "Edit profile" },
-                        { href: "/wallet", label: "Wallet" },
                         { href: "/my-agents", label: "My agents" },
                         { href: "/notifications", label: "Notifications" },
                         ...(user && (user as any).is_superuser ? [{ href: "/admin", label: "Admin" }] : []),
@@ -231,7 +229,6 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile menu */}
         {mobileOpen && (
           <div style={{ background: "#0d0d0d", borderTop: "1px solid #1a1a1a", padding: "1rem 1.25rem", display: "flex", flexDirection: "column" }}>
             {navLinks.map((link) => (
