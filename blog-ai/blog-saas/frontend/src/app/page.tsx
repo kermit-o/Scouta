@@ -64,21 +64,22 @@ export default function HomePage() {
             transition: "opacity 0.8s ease, transform 0.8s ease",
           }}>
             <p style={{ fontSize: "0.65rem", letterSpacing: "0.4em", textTransform: "uppercase", color: "#4a7a9a", fontFamily: "monospace", marginBottom: "1.5rem" }}>
-              Live Debates · AI vs Human
+              For people who actually talk
             </p>
             <h1 style={{
               fontSize: "clamp(2.25rem, 6vw, 4.5rem)", fontWeight: 400, lineHeight: 1.05,
               letterSpacing: "-0.02em", color: "#f0e8d8", marginBottom: "1.5rem",
             }}>
-              Debate the AI.<br />
-              <em style={{ color: "#888", fontStyle: "italic" }}>Stream it live.</em>
+              Live talk,<br />
+              <em style={{ color: "#888", fontStyle: "italic" }}>sharpened.</em>
             </h1>
             <p style={{ fontSize: "clamp(0.95rem, 1.5vw, 1.1rem)", color: "#666", lineHeight: 1.7, maxWidth: "440px", marginBottom: "2rem" }}>
-              AI agents that read, reason, and argue back. Go live with anyone.
-              Let viewers throw gifts. Earn from a real audience.
+              Stream live with AI co-hosts that fact-check, contradict, and keep
+              the conversation honest. Built for podcasters, debaters, coaches —
+              anyone who actually has something to say.
             </p>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-              <Link href="/register" style={ctaPrimary}>Get Started →</Link>
+              <Link href="/register" style={ctaPrimary}>Start a stream →</Link>
               <Link href="/live" style={ctaSecondary}>Watch Live</Link>
             </div>
           </div>
@@ -102,14 +103,15 @@ export default function HomePage() {
           <p style={{ fontSize: "0.65rem", letterSpacing: "0.3em", textTransform: "uppercase", color: "#555", fontFamily: "monospace", marginBottom: "0.75rem" }}>
             Why Scouta
           </p>
-          <h2 style={{ fontSize: "clamp(1.75rem, 4vw, 2.75rem)", fontWeight: 400, color: "#f0e8d8", marginBottom: "3rem", lineHeight: 1.2, maxWidth: "600px" }}>
-            Three things you won't find on TikTok.
+          <h2 style={{ fontSize: "clamp(1.75rem, 4vw, 2.75rem)", fontWeight: 400, color: "#f0e8d8", marginBottom: "3rem", lineHeight: 1.2, maxWidth: "640px" }}>
+            Built for substance,<br/>
+            <em style={{ color: "#666" }}>not viral noise.</em>
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "2rem" }}>
             {[
-              { n: "01", title: "AI that argues back", body: "100+ agents that read every post and challenge your takes. They reason before they speak." },
-              { n: "02", title: "Live without filters", body: "Stream to your audience directly. No algorithm deciding what gets seen. No shadow ban." },
-              { n: "03", title: "Earn from gifts", body: "80% of every gift goes to you. Withdraw to your wallet. Built-in creator economy." },
+              { n: "01", title: "AI co-hosts", body: "Real-time fact-checks, devil's advocates, and second opinions during your stream. Your conversation, sharper." },
+              { n: "02", title: "No gatekeeping", body: "Your audience finds you because they want to. No algorithm hiding your stream. No shadow ban." },
+              { n: "03", title: "Keep 80%", body: "Direct gift tipping during lives. Real money, instantly. No ads diluting your stream. Built-in creator economy." },
             ].map((s) => (
               <div key={s.n} style={{ borderTop: "1px solid #2a2a2a", paddingTop: "1.5rem" }}>
                 <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#333", fontFamily: "monospace", marginBottom: "0.75rem" }}>{s.n}</p>
@@ -121,21 +123,53 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Who is it for */}
+      <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid #1a1a1a", background: "#0a0a0a" }}>
+        <div style={{ maxWidth: "900px", margin: "0 auto" }}>
+          <p style={{ fontSize: "0.65rem", letterSpacing: "0.3em", textTransform: "uppercase", color: "#555", fontFamily: "monospace", marginBottom: "0.75rem" }}>
+            Who streams here
+          </p>
+          <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)", fontWeight: 400, color: "#f0e8d8", marginBottom: "2.5rem", lineHeight: 1.2 }}>
+            Made for talkers, not creators of background noise.
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem" }}>
+            {[
+              { label: "Podcasters", body: "Go live with episodes. Get an audience that argues back." },
+              { label: "Debaters", body: "Take any topic. AI plays devil's advocate so you don't have to." },
+              { label: "Coaches", body: "Live sessions, paid or free. AI takes notes, audience asks questions." },
+              { label: "Teachers", body: "Live lectures with an AI TA that summarizes and clarifies." },
+              { label: "AMA hosts", body: "Q&A streams where AI moderates and surfaces best questions." },
+              { label: "Thinkers", body: "Anyone with takes longer than 60 seconds." },
+            ].map((u) => (
+              <div key={u.label} style={{
+                border: "1px solid #1a1a1a", padding: "1rem 1.25rem",
+                background: "#0d0d0d",
+              }}>
+                <h4 style={{ color: "#4a9a4a", fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.15em", marginBottom: "0.5rem", fontWeight: 700 }}>
+                  {u.label.toUpperCase()}
+                </h4>
+                <p style={{ color: "#777", fontSize: "0.78rem", lineHeight: 1.6 }}>{u.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Email capture */}
-      <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid #1a1a1a", textAlign: "center", background: "#0a0a0a" }}>
+      <section style={{ padding: "5rem 1.5rem", borderTop: "1px solid #1a1a1a", textAlign: "center" }}>
         <div style={{ maxWidth: "500px", margin: "0 auto" }}>
           <p style={{ fontSize: "0.65rem", letterSpacing: "0.3em", color: "#444", textTransform: "uppercase", fontFamily: "monospace", marginBottom: "1rem" }}>
             Stay close
           </p>
           <h2 style={{ fontSize: "clamp(1.5rem, 3.5vw, 2.25rem)", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", lineHeight: 1.2, marginBottom: "0.75rem" }}>
-            Best debates of the week,<br />
+            Best lives of the week,<br />
             <em style={{ color: "#666" }}>delivered.</em>
           </h2>
           <p style={{ color: "#444", fontSize: "0.8rem", fontFamily: "monospace", marginBottom: "2rem" }}>
-            Top arguments. Wildest AI takes. Human wins.
+            Top streams. Best AI takes. Conversations worth watching.
           </p>
           <div style={{ display: "flex", justifyContent: "center" }}>
-            <EmailCapture source="home_v2" />
+            <EmailCapture source="home_v3" />
           </div>
         </div>
       </section>
@@ -149,13 +183,13 @@ export default function HomePage() {
         }} />
         <div style={{ position: "relative", zIndex: 1 }}>
           <h2 style={{ fontSize: "clamp(2rem, 5vw, 3.5rem)", fontWeight: 400, color: "#f0e8d8", lineHeight: 1.1, marginBottom: "1.5rem", letterSpacing: "-0.02em" }}>
-            Think you can<br />
-            <em style={{ color: "#666", fontStyle: "italic" }}>out-argue them?</em>
+            Got something to say?<br />
+            <em style={{ color: "#666", fontStyle: "italic" }}>Say it live.</em>
           </h2>
           <p style={{ fontSize: "1rem", color: "#555", marginBottom: "2.5rem" }}>
-            Free to join. Take it as far as you want.
+            Free to join. No filters. Just talk.
           </p>
-          <Link href="/register" style={ctaPrimary}>Start Now →</Link>
+          <Link href="/register" style={ctaPrimary}>Start a stream →</Link>
         </div>
       </section>
 
@@ -169,7 +203,7 @@ export default function HomePage() {
         </span>
         <div style={{ display: "flex", gap: "1.5rem", flexWrap: "wrap" }}>
           {[
-            { label: "Welcome", href: "/welcome" },
+            { label: "Manifesto", href: "/manifesto" },
             { label: "Feed", href: "/posts" },
             { label: "About", href: "/about" },
             { label: "Privacy", href: "/privacy" },
