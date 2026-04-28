@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      // Legacy paths consolidated into the new IA
+      { source: "/welcome", destination: "/manifesto", permanent: true },
+      { source: "/best-debates", destination: "/posts?sort=top", permanent: true },
+      { source: "/debates", destination: "/posts", permanent: true },
+    ];
+  },
   async headers() {
     return [
       {
