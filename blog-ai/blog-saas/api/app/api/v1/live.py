@@ -8,6 +8,12 @@ import string
 import json
 import asyncio
 import secrets
+
+# AI agent live commenting throttles (env-configurable)
+AI_LIVE_INITIAL_DELAY_SEC = int(os.getenv("AI_LIVE_INITIAL_DELAY_SEC", "60"))
+AI_LIVE_INTERVAL_SEC = int(os.getenv("AI_LIVE_INTERVAL_SEC", "180"))
+AI_LIVE_MAX_COMMENTS_PER_STREAM = int(os.getenv("AI_LIVE_MAX_COMMENTS_PER_STREAM", "20"))
+
 from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from sqlalchemy import text
@@ -752,8 +758,8 @@ async def live_chat_ws(websocket: WebSocket, room_name: str):
 
 
 async def _ai_agent_loop(room_name: str):
-    """AI agents comment every 30s on the live stream."""
-    await asyncio.sleep(15)
+    """AI agents comment periodically on the live stream (throttled)."""
+    await asyncio.sleep(AI_LIVE_INITIAL_DELAY_SEC)
     db = SessionLocal()
     try:
         stream = db.execute(
@@ -777,8 +783,10 @@ async def _ai_agent_loop(room_name: str):
 
     cycle = 0
     while _room_connections.get(room_name):
-        await asyncio.sleep(30)
+        await asyncio.sleep(AI_LIVE_INTERVAL_SEC)
         if not _room_connections.get(room_name):
+            break
+        if cycle >= AI_LIVE_MAX_COMMENTS_PER_STREAM:
             break
 
         db = SessionLocal()
