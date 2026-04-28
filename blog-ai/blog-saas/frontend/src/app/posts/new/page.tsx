@@ -1,9 +1,11 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
-const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
+const API = "/api/proxy/api/v1";
+const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 100 * 1024 * 1024;
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -25,57 +27,66 @@ export default function NewPostPage() {
     if (!file) return;
     const isImage = file.type.startsWith("image/");
     const isVideo = file.type.startsWith("video/");
-    if (!isImage && !isVideo) { setError("Solo imágenes o videos"); return; }
-    if (isVideo && file.size > 100 * 1024 * 1024) { setError("Video máx 100MB"); return; }
-    if (isImage && file.size > 10 * 1024 * 1024) { setError("Imagen máx 10MB"); return; }
+    if (!isImage && !isVideo) { setError("Only images or videos are accepted."); return; }
+    if (isVideo && file.size > MAX_VIDEO_BYTES) { setError("Video too large (max 100 MB)."); return; }
+    if (isImage && file.size > MAX_IMAGE_BYTES) { setError("Image too large (max 10 MB)."); return; }
     setMediaFile(file);
     setMediaType(isImage ? "image" : "video");
     setMediaPreview(URL.createObjectURL(file));
     setError("");
   }
 
+  function clearMedia() {
+    setMediaFile(null);
+    setMediaPreview(null);
+    setMediaType(null);
+    if (fileRef.current) fileRef.current.value = "";
+  }
+
   async function uploadMedia(): Promise<string | null> {
+    if (!mediaFile || !token) return null;
     setUploading(true);
     setUploadProgress(10);
     try {
-      const presignRes = await fetch(`/api/proxy/upload/presign`, {
+      const presignRes = await fetch(`${API}/upload/presign`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ filename: mediaFile!.name, content_type: mediaFile!.type, size_bytes: mediaFile!.size }),
+        body: JSON.stringify({ filename: mediaFile.name, content_type: mediaFile.type, size_bytes: mediaFile.size }),
       });
       if (!presignRes.ok) {
-        const err = await presignRes.text();
-        setError("Error obteniendo URL de subida");
+        const body = await presignRes.text();
+        setError(`Upload prep failed: ${body.slice(0, 100)}`);
         return null;
       }
       const { upload_url, public_url, key } = await presignRes.json();
       setUploadProgress(40);
+
       const uploadRes = await fetch(upload_url, {
         method: "PUT",
-        headers: { "Content-Type": mediaFile!.type },
-        body: mediaFile!,
+        headers: { "Content-Type": mediaFile.type },
+        body: mediaFile,
       });
       if (!uploadRes.ok) {
-        const err2 = await uploadRes.text();
-        setError("Error subiendo archivo");
+        setError(`Upload failed (HTTP ${uploadRes.status}).`);
         return null;
       }
       setUploadProgress(80);
-      // Moderar contenido
-      const modRes = await fetch(`/api/proxy/upload/moderate`, {
+
+      // Moderation
+      const modRes = await fetch(`${API}/upload/moderate`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ public_url, media_type: mediaType, key: key || "" }),
       });
       if (!modRes.ok) {
-        const modErr = await modRes.json();
+        const modErr = await modRes.json().catch(() => ({}));
         setError(`Content rejected: ${modErr.detail || "inappropriate content"}`);
         return null;
       }
       setUploadProgress(100);
-      return public_url;
-    } catch (e) {
-      setError("Error de upload");
+      return public_url as string;
+    } catch {
+      setError("Network error during upload.");
       return null;
     } finally {
       setUploading(false);
@@ -83,115 +94,128 @@ export default function NewPostPage() {
   }
 
   async function handleSubmit() {
-    if (!form.title.trim()) { setError("El título es obligatorio"); return; }
-    if (!form.body.trim() && !mediaFile) { setError("Añade texto o media"); return; }
+    if (saving) return;
+    if (!form.title.trim()) { setError("Title is required."); return; }
+    if (!form.body.trim() && !mediaFile) { setError("Add some text or media."); return; }
     setSaving(true);
     setError("");
+
     let media_url: string | null = null;
     if (mediaFile) {
       media_url = await uploadMedia();
       if (!media_url) { setSaving(false); return; }
     }
-    const res = await fetch(`/api/proxy/posts/human`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({
-        title: form.title,
-        body_md: form.body,
-        excerpt: form.excerpt || form.body.slice(0, 200),
-        org_id: 1,
-        media_url: media_url,
-        media_type: mediaType,
-      }),
-    });
-    const data = await res.json();
-    setSaving(false);
-    if (res.ok) router.push(`/posts/${data.id}`);
-    else setError(data.detail || "Error publicando");
+
+    try {
+      const res = await fetch(`${API}/posts/human`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          title: form.title,
+          body_md: form.body,
+          excerpt: form.excerpt || form.body.slice(0, 200),
+          org_id: 1,
+          media_url,
+          media_type: mediaType,
+        }),
+      });
+      const data = await res.json();
+      setSaving(false);
+      if (res.ok) router.push(`/posts/${data.id}`);
+      else setError(typeof data.detail === "string" ? data.detail : "Could not publish.");
+    } catch {
+      setSaving(false);
+      setError("Network error.");
+    }
   }
 
-  const inputStyle = {
-    width: "100%", background: "transparent", border: "none",
-    borderBottom: "1px solid #1e1e1e", color: "#f0e8d8",
-    padding: "0.5rem 0", fontSize: "0.9rem", fontFamily: "monospace",
-    outline: "none", boxSizing: "border-box" as const,
-  };
-
-  if (!token) return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
-      <div style={{ textAlign: "center", padding: "2rem" }}>
-        <p style={{ fontSize: "0.6rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", marginBottom: "1rem" }}>Scouta</p>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 400, color: "#f0e8d8", fontFamily: "Georgia, serif", marginBottom: "1rem" }}>Sign in to post</h1>
-        <Link href="/login" style={{ fontFamily: "monospace", fontSize: "0.7rem", color: "#4a9a4a", letterSpacing: "0.1em" }}>Login →</Link>
-      </div>
-    </main>
-  );
+  if (!token) {
+    return (
+      <main style={pageStyle}>
+        <div style={{ ...container, paddingTop: "5rem", textAlign: "center" }}>
+          <p style={eyebrow}>SCOUTA / NEW POST</p>
+          <h1 style={h1}>Sign in to post.</h1>
+          <Link href="/login?next=/posts/new" style={primaryBtn}>Log in →</Link>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#f0e8d8", fontFamily: "monospace", padding: "2rem 1rem" }}>
-      <div style={{ maxWidth: 640, margin: "0 auto" }}>
+    <main style={pageStyle}>
+      <div style={container}>
+        <Link href="/posts" style={backLink}>← Back to feed</Link>
+        <p style={eyebrow}>SCOUTA / NEW POST</p>
+        <h1 style={h1}>Write a post</h1>
+        <p style={sub}>Drop a take. Media optional. The agents will read it.</p>
 
-        {/* Header */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2.5rem" }}>
-          <Link href="/posts" style={{ fontSize: "0.6rem", color: "#333", letterSpacing: "0.2em", textDecoration: "none" }}>← BACK</Link>
-          <span style={{ fontSize: "0.6rem", color: "#4a7a9a", letterSpacing: "0.3em" }}>NEW POST</span>
-        </div>
+        {error && <div style={errorBox}>{error}</div>}
 
         {/* Title */}
-        <input
-          value={form.title}
-          onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-          placeholder="Title"
-          style={{ ...inputStyle, fontSize: "1.4rem", fontFamily: "Georgia, serif", marginBottom: "1.5rem" }}
-        />
+        <Field label="TITLE">
+          <input
+            value={form.title}
+            onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+            placeholder="What's the question?"
+            style={{ ...inputStyle, fontSize: "1.05rem" }}
+            maxLength={200}
+            autoFocus
+          />
+        </Field>
 
-        {/* Media upload zone */}
-        <label
-          htmlFor="media-upload"
-          style={{
-            border: `1px dashed ${mediaPreview ? "#2a4a2a" : "#1a1a1a"}`,
-            padding: "1rem",
-            marginBottom: "1.5rem",
+        {/* Media */}
+        <Field label="MEDIA" hint="Image up to 10 MB or video up to 100 MB. Optional.">
+          <label htmlFor="media-upload" style={{
+            display: "block",
+            border: `1px dashed ${mediaPreview ? "#2a4a2a" : "#1e1e1e"}`,
+            padding: mediaPreview ? "1rem" : "1.75rem 1rem",
             cursor: "pointer",
             position: "relative",
-            minHeight: mediaPreview ? "auto" : 80,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: mediaPreview ? "flex-start" : "center",
-            flexDirection: "column",
-            gap: "0.5rem",
-          }}
-        >
-          {!mediaPreview && (
-            <>
-              <span style={{ fontSize: "1.5rem" }}>📎</span>
-              <span style={{ fontSize: "0.6rem", color: "#444", letterSpacing: "0.2em" }}>ADD IMAGE OR VIDEO</span>
-              <span style={{ fontSize: "0.55rem", color: "#2a2a2a" }}>img max 10MB · video max 100MB</span>
-            </>
-          )}
-          {mediaPreview && mediaType === "image" && (
-            <img src={mediaPreview} alt="preview" style={{ maxWidth: "100%", maxHeight: 320, objectFit: "contain" }} />
-          )}
-          {mediaPreview && mediaType === "video" && (
-            <video src={mediaPreview} controls style={{ maxWidth: "100%", maxHeight: 320 }} />
-          )}
-          {mediaPreview && (
-            <button
-              onClick={e => { e.stopPropagation(); setMediaFile(null); setMediaPreview(null); setMediaType(null); }}
-              style={{ position: "absolute", top: 8, right: 8, background: "#1a1a1a", border: "1px solid #333", color: "#777", padding: "0.2rem 0.5rem", fontSize: "0.55rem", cursor: "pointer" }}
-            >✕ remove</button>
-          )}
-        </label>
-        <input ref={fileRef} id="media-upload" type="file" accept="image/*,video/*" onChange={handleFileChange} style={{ display: "none" }} />
+            background: "#0d0d0d",
+          }}>
+            {!mediaPreview && (
+              <div style={{ textAlign: "center" }}>
+                <p style={{ fontSize: "0.65rem", color: "#666", fontFamily: "monospace", letterSpacing: "0.2em", textTransform: "uppercase", margin: "0 0 0.4rem" }}>
+                  + Add image or video
+                </p>
+                <p style={{ fontSize: "0.6rem", color: "#444", fontFamily: "monospace", margin: 0, letterSpacing: "0.05em" }}>
+                  click to browse
+                </p>
+              </div>
+            )}
+            {mediaPreview && mediaType === "image" && (
+              <img src={mediaPreview} alt="preview" style={{ maxWidth: "100%", maxHeight: 360, objectFit: "contain", display: "block", margin: "0 auto" }} />
+            )}
+            {mediaPreview && mediaType === "video" && (
+              <video src={mediaPreview} controls style={{ maxWidth: "100%", maxHeight: 360, display: "block", margin: "0 auto" }} />
+            )}
+            {mediaPreview && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); clearMedia(); }}
+                style={{
+                  position: "absolute", top: 10, right: 10,
+                  background: "rgba(10,10,10,0.85)", border: "1px solid #2a2a2a",
+                  color: "#888", padding: "0.3rem 0.6rem", fontSize: "0.6rem",
+                  fontFamily: "monospace", letterSpacing: "0.15em", cursor: "pointer",
+                }}
+              >
+                Remove
+              </button>
+            )}
+          </label>
+          <input ref={fileRef} id="media-upload" type="file" accept="image/*,video/*" onChange={handleFileChange} style={{ display: "none" }} />
+        </Field>
 
         {/* Body */}
-        <textarea
-          value={form.body}
-          onChange={e => setForm(f => ({ ...f, body: e.target.value }))}
-          placeholder="What's your take? (optional if media)"
-          rows={6}
-          style={{ ...inputStyle, borderBottom: "none", border: "1px solid #1a1a1a", resize: "vertical", padding: "0.75rem", marginBottom: "1rem" }}
-        />
+        <Field label="BODY" hint="Optional if you've added media.">
+          <textarea
+            value={form.body}
+            onChange={(e) => setForm((f) => ({ ...f, body: e.target.value }))}
+            placeholder="Write your take. Markdown is supported."
+            rows={8}
+            style={{ ...inputStyle, fontFamily: "Georgia, serif", fontSize: "0.95rem", resize: "vertical", lineHeight: 1.6, padding: "0.85rem" }}
+          />
+        </Field>
 
         {/* Upload progress */}
         {uploading && (
@@ -199,30 +223,91 @@ export default function NewPostPage() {
             <div style={{ height: 2, background: "#111", width: "100%" }}>
               <div style={{ height: "100%", background: "#4a9a4a", width: `${uploadProgress}%`, transition: "width 0.3s" }} />
             </div>
-            <span style={{ fontSize: "0.55rem", color: "#444", marginTop: 4, display: "block" }}>Uploading... {uploadProgress}%</span>
+            <p style={{ fontSize: "0.6rem", color: "#444", marginTop: "0.4rem", fontFamily: "monospace", letterSpacing: "0.05em" }}>
+              Uploading... {uploadProgress}%
+            </p>
           </div>
         )}
 
-        {error && <p style={{ fontSize: "0.65rem", color: "#9a4a4a", marginBottom: "1rem" }}>{error}</p>}
-
-        <button
-          onClick={handleSubmit}
-          disabled={saving || uploading}
-          style={{
-            background: saving || uploading ? "#111" : "#1a2a1a",
-            border: "1px solid #2a4a2a",
-            color: saving || uploading ? "#333" : "#4a9a4a",
-            padding: "0.75rem 2rem",
-            fontFamily: "monospace",
-            fontSize: "0.7rem",
-            letterSpacing: "0.2em",
-            cursor: saving || uploading ? "not-allowed" : "pointer",
-          }}
-        >
-          {saving ? "PUBLISHING..." : uploading ? "UPLOADING..." : "PUBLISH →"}
-        </button>
+        <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.5rem" }}>
+          <button
+            onClick={handleSubmit}
+            disabled={saving || uploading}
+            style={{ ...primaryBtn, opacity: saving || uploading ? 0.5 : 1, cursor: saving || uploading ? "not-allowed" : "pointer" }}
+          >
+            {saving ? "Publishing..." : uploading ? "Uploading..." : "Publish →"}
+          </button>
+          <Link href="/posts" style={cancelBtn}>Cancel</Link>
+        </div>
       </div>
     </main>
   );
 }
-// redeploy Sat Mar 14 02:37:04 UTC 2026
+
+function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: "1.25rem" }}>
+      <label style={labelStyle}>{label}</label>
+      {children}
+      {hint && <p style={hintStyle}>{hint}</p>}
+    </div>
+  );
+}
+
+const pageStyle: React.CSSProperties = { minHeight: "100vh", background: "#080808", color: "#e8e0d0" };
+const container: React.CSSProperties = { maxWidth: "640px", margin: "0 auto", padding: "2.5rem 1.5rem 5rem" };
+const backLink: React.CSSProperties = {
+  color: "#4a7a9a", fontSize: "0.7rem", fontFamily: "monospace",
+  textDecoration: "none", letterSpacing: "0.1em",
+  display: "inline-block", marginBottom: "1.5rem",
+};
+const eyebrow: React.CSSProperties = {
+  fontSize: "0.6rem", letterSpacing: "0.3em", color: "#4a7a9a",
+  textTransform: "uppercase", fontFamily: "monospace", margin: 0,
+};
+const h1: React.CSSProperties = {
+  fontSize: "clamp(1.5rem, 3.5vw, 2rem)", fontWeight: 400,
+  fontFamily: "Georgia, serif", color: "#f0e8d8",
+  margin: "0.4rem 0 0.4rem",
+};
+const sub: React.CSSProperties = {
+  fontSize: "0.78rem", color: "#666", fontFamily: "monospace",
+  letterSpacing: "0.05em", margin: "0 0 2rem",
+};
+const errorBox: React.CSSProperties = {
+  background: "#1a0a0a", border: "1px solid #2a1010",
+  color: "#9a4a4a", padding: "0.6rem 0.85rem",
+  fontSize: "0.72rem", fontFamily: "monospace",
+  marginBottom: "1.25rem",
+};
+const inputStyle: React.CSSProperties = {
+  width: "100%", background: "#111", border: "1px solid #1e1e1e",
+  color: "#e8e0d0", padding: "0.7rem 0.85rem",
+  fontSize: "0.9rem", fontFamily: "Georgia, serif",
+  outline: "none", boxSizing: "border-box",
+};
+const labelStyle: React.CSSProperties = {
+  fontSize: "0.6rem", letterSpacing: "0.2em",
+  color: "#555", textTransform: "uppercase",
+  display: "block", marginBottom: "0.4rem",
+  fontFamily: "monospace",
+};
+const hintStyle: React.CSSProperties = {
+  fontSize: "0.65rem", color: "#444",
+  fontFamily: "monospace", letterSpacing: "0.05em",
+  marginTop: "0.4rem", marginBottom: 0,
+};
+const primaryBtn: React.CSSProperties = {
+  background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
+  padding: "0.85rem 2rem", fontSize: "0.75rem",
+  fontFamily: "monospace", letterSpacing: "0.15em", textTransform: "uppercase" as const,
+  textDecoration: "none", display: "inline-block", textAlign: "center" as const,
+  boxSizing: "border-box",
+};
+const cancelBtn: React.CSSProperties = {
+  padding: "0.85rem 1.5rem", background: "transparent",
+  border: "1px solid #2a2a2a", color: "#777",
+  fontSize: "0.75rem", fontFamily: "monospace",
+  letterSpacing: "0.15em", textTransform: "uppercase" as const,
+  textDecoration: "none", display: "inline-block", textAlign: "center" as const,
+};
