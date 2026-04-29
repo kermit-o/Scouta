@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { Radio, Eye, ArrowRight } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
 
@@ -83,12 +84,14 @@ export default function LivePage() {
               href="/live/start"
               style={{
                 background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
-                padding: "0.65rem 1.5rem", textDecoration: "none",
+                padding: "0.65rem 1.25rem", textDecoration: "none",
                 fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
                 fontFamily: "monospace",
+                display: "inline-flex", alignItems: "center", gap: "0.55rem",
               }}
             >
-              Go Live →
+              <Radio size={14} strokeWidth={1.75} />
+              <span>Go Live</span>
             </Link>
           )}
         </div>
@@ -99,7 +102,9 @@ export default function LivePage() {
             padding: "5rem 1.5rem", textAlign: "center",
             border: "1px dashed #1a1a1a", background: "#0a0a0a",
           }}>
-            <p style={{ fontSize: "3rem", color: "#1a1a1a", margin: "0 0 1rem", lineHeight: 1, fontFamily: "monospace" }}>⬡</p>
+            <div style={{ color: "#1a1a1a", margin: "0 0 1.25rem", lineHeight: 0, display: "flex", justifyContent: "center" }}>
+              <Radio size={56} strokeWidth={1} />
+            </div>
             <p style={{ color: "#666", fontSize: "0.9rem", fontFamily: "Georgia, serif", marginBottom: "0.5rem" }}>
               Nobody's live yet.
             </p>
@@ -109,17 +114,25 @@ export default function LivePage() {
             {token ? (
               <Link href="/live/start" style={{
                 background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
-                padding: "0.7rem 1.75rem", textDecoration: "none",
+                padding: "0.7rem 1.5rem", textDecoration: "none",
                 fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
-                fontFamily: "monospace", display: "inline-block",
-              }}>Start a stream →</Link>
+                fontFamily: "monospace",
+                display: "inline-flex", alignItems: "center", gap: "0.55rem",
+              }}>
+                <span>Start a stream</span>
+                <ArrowRight size={14} strokeWidth={1.75} />
+              </Link>
             ) : (
               <Link href="/register" style={{
                 background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
-                padding: "0.7rem 1.75rem", textDecoration: "none",
+                padding: "0.7rem 1.5rem", textDecoration: "none",
                 fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
-                fontFamily: "monospace", display: "inline-block",
-              }}>Sign up to go live →</Link>
+                fontFamily: "monospace",
+                display: "inline-flex", alignItems: "center", gap: "0.55rem",
+              }}>
+                <span>Sign up to go live</span>
+                <ArrowRight size={14} strokeWidth={1.75} />
+              </Link>
             )}
           </div>
         )}
@@ -148,7 +161,9 @@ export default function LivePage() {
                       position: "relative",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
-                      <span style={{ fontSize: "2.5rem", opacity: 0.18, color: "#fff" }}>⬡</span>
+                      <span style={{ opacity: 0.18, color: "#fff", display: "flex" }}>
+                        <Radio size={42} strokeWidth={1.25} />
+                      </span>
                       <span style={{
                         position: "absolute", top: "0.5rem", left: "0.5rem",
                         background: "#e44", color: "#fff",
@@ -171,8 +186,10 @@ export default function LivePage() {
                         position: "absolute", bottom: "0.5rem", right: "0.5rem",
                         background: "rgba(0,0,0,0.75)", color: "#fff",
                         fontSize: "0.65rem", fontFamily: "monospace",
-                        padding: "0.15rem 0.5rem",
+                        padding: "0.2rem 0.5rem",
+                        display: "inline-flex", alignItems: "center", gap: "0.3rem",
                       }}>
+                        <Eye size={11} strokeWidth={1.75} />
                         {s.viewer_count}
                       </span>
                     </div>
