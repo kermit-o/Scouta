@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, ArrowRight, CheckCircle2, Banknote, Building2, Wallet as WalletIcon, Loader2 } from "lucide-react";
 
 const API = "/api/proxy/api/v1";
 
@@ -89,7 +90,10 @@ export default function WithdrawPage() {
         <div style={{ ...container, paddingTop: "5rem", textAlign: "center" }}>
           <p style={eyebrow}>SCOUTA / WALLET / WITHDRAW</p>
           <h1 style={h1}>Sign in to withdraw.</h1>
-          <Link href="/login?next=/wallet/withdraw" style={primaryBtn}>Log in →</Link>
+          <Link href="/login?next=/wallet/withdraw" style={primaryBtn}>
+            <span>Log in</span>
+            <ArrowRight size={14} strokeWidth={1.75} />
+          </Link>
         </div>
       </main>
     );
@@ -100,6 +104,9 @@ export default function WithdrawPage() {
       <main style={pageStyle}>
         <div style={{ ...container, paddingTop: "4rem", textAlign: "center" }}>
           <p style={eyebrow}>SCOUTA / WALLET / WITHDRAW</p>
+          <div style={{ color: "#4a9a4a", display: "flex", justifyContent: "center", margin: "1rem 0 0.5rem" }}>
+            <CheckCircle2 size={56} strokeWidth={1.25} />
+          </div>
           <h1 style={h1}>Request received.</h1>
           <p style={{ color: "#888", fontFamily: "Georgia, serif", fontSize: "0.95rem", lineHeight: 1.6, marginBottom: "0.6rem", maxWidth: "440px", marginLeft: "auto", marginRight: "auto" }}>
             We'll process your withdrawal within {PROCESSING_DAYS}.
@@ -107,7 +114,10 @@ export default function WithdrawPage() {
           <p style={{ color: "#555", fontFamily: "monospace", fontSize: "0.7rem", letterSpacing: "0.05em", marginBottom: "2rem" }}>
             You'll get an email confirmation once funds are sent.
           </p>
-          <Link href="/wallet" style={primaryBtn}>Back to wallet</Link>
+          <Link href="/wallet" style={primaryBtn}>
+            <ArrowLeft size={14} strokeWidth={1.75} />
+            <span>Back to wallet</span>
+          </Link>
         </div>
       </main>
     );
@@ -119,7 +129,10 @@ export default function WithdrawPage() {
   return (
     <main style={pageStyle}>
       <div style={container}>
-        <Link href="/wallet" style={backLink}>← Back to wallet</Link>
+        <Link href="/wallet" style={backLink}>
+          <ArrowLeft size={12} strokeWidth={1.75} />
+          <span>Back to wallet</span>
+        </Link>
         <p style={eyebrow}>SCOUTA / WALLET / WITHDRAW</p>
         <h1 style={h1}>Withdraw earnings</h1>
         <p style={sub}>
@@ -129,7 +142,10 @@ export default function WithdrawPage() {
 
         {/* Balance */}
         <div style={statRow}>
-          <div style={{ flex: 1 }}>
+          <div style={{ position: "relative", flex: 1 }}>
+            <div style={{ position: "absolute", top: 0, right: balance && balance.lifetime_earned > 0 ? "auto" : 0, color: "#4a9a4a44", display: "flex" }}>
+              <Banknote size={18} strokeWidth={1.5} />
+            </div>
             <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", margin: 0 }}>WITHDRAWABLE</p>
             <p style={{ fontSize: "1.8rem", fontFamily: "monospace", color: "#4a9a4a", fontWeight: 700, margin: "0.4rem 0 0", lineHeight: 1 }}>
               {withdrawable.toLocaleString()}
@@ -137,8 +153,11 @@ export default function WithdrawPage() {
             <p style={{ fontSize: "0.6rem", color: "#444", fontFamily: "monospace", letterSpacing: "0.15em", margin: "0.3rem 0 0" }}>COINS</p>
           </div>
           {balance && balance.lifetime_earned > 0 && (
-            <div style={{ textAlign: "right" }}>
-              <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", margin: 0 }}>LIFETIME</p>
+            <div style={{ position: "relative", textAlign: "right" }}>
+              <div style={{ position: "absolute", top: 0, right: 0, color: "#88888844", display: "flex" }}>
+                <WalletIcon size={16} strokeWidth={1.5} />
+              </div>
+              <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", margin: 0, paddingRight: "1.5rem" }}>LIFETIME</p>
               <p style={{ fontSize: "1.1rem", fontFamily: "monospace", color: "#888", margin: "0.4rem 0 0", lineHeight: 1 }}>
                 {balance.lifetime_earned.toLocaleString()}
               </p>
@@ -176,8 +195,8 @@ export default function WithdrawPage() {
 
             <Field label="METHOD">
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
-                <MethodOption value="paypal" label="PayPal" desc="To your PayPal email" active={method === "paypal"} onClick={() => setMethod("paypal")} />
-                <MethodOption value="bank" label="Bank transfer" desc="IBAN / SWIFT" active={method === "bank"} onClick={() => setMethod("bank")} />
+                <MethodOption icon={WalletIcon} label="PayPal" desc="To your PayPal email" active={method === "paypal"} onClick={() => setMethod("paypal")} />
+                <MethodOption icon={Building2} label="Bank transfer" desc="IBAN / SWIFT" active={method === "bank"} onClick={() => setMethod("bank")} />
               </div>
             </Field>
 
@@ -209,7 +228,17 @@ export default function WithdrawPage() {
               disabled={submitting}
               style={{ ...primaryBtn, width: "100%", opacity: submitting ? 0.5 : 1, cursor: submitting ? "not-allowed" : "pointer", marginTop: "0.5rem" }}
             >
-              {submitting ? "Submitting..." : "Request withdrawal →"}
+              {submitting ? (
+                <>
+                  <Loader2 size={14} strokeWidth={2} style={{ animation: "spin 1s linear infinite" }} />
+                  <span>Submitting...</span>
+                </>
+              ) : (
+                <>
+                  <span>Request withdrawal</span>
+                  <ArrowRight size={14} strokeWidth={1.75} />
+                </>
+              )}
             </button>
 
             <p style={fineprint}>
@@ -219,6 +248,7 @@ export default function WithdrawPage() {
           </>
         )}
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </main>
   );
 }
@@ -233,7 +263,7 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
   );
 }
 
-function MethodOption({ value, label, desc, active, onClick }: { value: string; label: string; desc: string; active: boolean; onClick: () => void }) {
+function MethodOption({ icon: Icon, label, desc, active, onClick }: { icon: typeof Building2; label: string; desc: string; active: boolean; onClick: () => void }) {
   return (
     <button
       onClick={onClick}
@@ -248,8 +278,11 @@ function MethodOption({ value, label, desc, active, onClick }: { value: string; 
         fontSize: "0.78rem",
       }}
     >
-      <div style={{ fontWeight: 700, letterSpacing: "0.05em" }}>{label}</div>
-      <div style={{ fontSize: "0.65rem", color: active ? "#4a9a4a99" : "#555", marginTop: "0.25rem", letterSpacing: "0.05em" }}>{desc}</div>
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: 700, letterSpacing: "0.05em" }}>
+        <Icon size={14} strokeWidth={1.75} />
+        <span>{label}</span>
+      </div>
+      <div style={{ fontSize: "0.65rem", color: active ? "#4a9a4a99" : "#555", marginTop: "0.25rem", marginLeft: "1.4rem", letterSpacing: "0.05em" }}>{desc}</div>
     </button>
   );
 }
@@ -259,7 +292,8 @@ const container: React.CSSProperties = { maxWidth: "560px", margin: "0 auto", pa
 const backLink: React.CSSProperties = {
   color: "#4a7a9a", fontSize: "0.7rem", fontFamily: "monospace",
   textDecoration: "none", letterSpacing: "0.1em",
-  display: "inline-block", marginBottom: "1.5rem",
+  display: "inline-flex", alignItems: "center", gap: "0.4rem",
+  marginBottom: "1.5rem",
 };
 const eyebrow: React.CSSProperties = {
   fontSize: "0.6rem", letterSpacing: "0.3em", color: "#4a7a9a",
@@ -276,7 +310,7 @@ const sub: React.CSSProperties = {
   margin: "0 0 2rem",
 };
 const statRow: React.CSSProperties = {
-  display: "flex", justifyContent: "space-between",
+  display: "flex", justifyContent: "space-between", gap: "1.5rem",
   background: "#0d0d0d", border: "1px solid #1a1a1a",
   padding: "1.25rem 1.25rem 1.1rem", marginBottom: "2rem",
 };
@@ -311,7 +345,9 @@ const primaryBtn: React.CSSProperties = {
   background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
   padding: "0.85rem 2rem", fontSize: "0.78rem",
   fontFamily: "monospace", letterSpacing: "0.15em", textTransform: "uppercase" as const,
-  textDecoration: "none", display: "inline-block", textAlign: "center" as const,
+  textDecoration: "none",
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+  textAlign: "center" as const,
   boxSizing: "border-box",
 };
 const fineprint: React.CSSProperties = {
