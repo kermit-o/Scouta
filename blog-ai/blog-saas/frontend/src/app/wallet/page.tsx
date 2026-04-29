@@ -1,7 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import {
+  Coins, Wallet as WalletIcon, ArrowDownToLine, ArrowUpFromLine,
+  Plus, Banknote, Gift, ShoppingCart, ArrowRightLeft, type LucideIcon,
+} from "lucide-react";
 
 interface Balance {
   balance: number;
@@ -46,7 +50,7 @@ export default function WalletPage() {
           <p style={{ color: "#888", marginBottom: "1rem", fontFamily: "monospace", fontSize: "0.85rem" }}>
             Log in to see your wallet.
           </p>
-          <Link href="/login" style={primaryBtn}>Log in →</Link>
+          <Link href="/login" style={primaryBtn}>Log in</Link>
         </div>
       </main>
     );
@@ -70,26 +74,29 @@ export default function WalletPage() {
 
         {!loading && (
           <>
-            {/* Balance + Withdrawable */}
             <div style={{
               display: "grid",
               gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
               gap: "1rem",
               marginBottom: "2rem",
             }}>
-              <Card label="BALANCE" value={balance?.balance ?? 0} accent="#c8a96e" suffix="coins" big />
-              <Card label="WITHDRAWABLE" value={balance?.withdrawable_balance ?? 0} accent="#4a9a4a" suffix="coins" />
-              <Card label="LIFETIME EARNED" value={balance?.lifetime_earned ?? 0} accent="#4a7a9a" suffix="coins" />
-              <Card label="LIFETIME SPENT" value={balance?.lifetime_spent ?? 0} accent="#666" suffix="coins" />
+              <Card icon={Coins} label="BALANCE" value={balance?.balance ?? 0} accent="#c8a96e" suffix="coins" big />
+              <Card icon={WalletIcon} label="WITHDRAWABLE" value={balance?.withdrawable_balance ?? 0} accent="#4a9a4a" suffix="coins" />
+              <Card icon={ArrowDownToLine} label="LIFETIME EARNED" value={balance?.lifetime_earned ?? 0} accent="#4a7a9a" suffix="coins" />
+              <Card icon={ArrowUpFromLine} label="LIFETIME SPENT" value={balance?.lifetime_spent ?? 0} accent="#666" suffix="coins" />
             </div>
 
-            {/* Actions */}
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "2.5rem" }}>
-              <Link href="/wallet/buy" style={ctaPrimary}>Buy coins →</Link>
-              <Link href="/wallet/withdraw" style={ctaSecondary}>Withdraw earnings</Link>
+              <Link href="/wallet/buy" style={ctaPrimary}>
+                <Plus size={14} strokeWidth={1.75} />
+                Buy coins
+              </Link>
+              <Link href="/wallet/withdraw" style={ctaSecondary}>
+                <Banknote size={14} strokeWidth={1.5} />
+                Withdraw earnings
+              </Link>
             </div>
 
-            {/* Transactions */}
             <div style={{ paddingBottom: "1rem", borderBottom: "1px solid #141414", marginBottom: "1rem" }}>
               <p style={eyebrow}>RECENT ACTIVITY</p>
               <h2 style={{ fontSize: "1.5rem", fontWeight: 400, fontFamily: "Georgia, serif", margin: "0.4rem 0 0", color: "#f0e8d8" }}>
@@ -106,25 +113,37 @@ export default function WalletPage() {
               </div>
             ) : (
               <div>
-                {txs.map((t) => (
-                  <div key={t.id} style={txRow}>
-                    <div style={{ minWidth: 0, flex: 1 }}>
-                      <div style={{ color: "#e0d0b0", fontSize: "0.82rem", fontFamily: "Georgia, serif", marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {t.description || labelType(t.type)}
+                {txs.map((t) => {
+                  const Icon = txIcon(t.type);
+                  return (
+                    <div key={t.id} style={txRow}>
+                      <div style={{
+                        width: 32, height: 32, flexShrink: 0,
+                        borderRadius: "50%", background: "#0d0d0d",
+                        border: "1px solid #1a1a1a",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        color: t.amount >= 0 ? "#4a9a4a88" : "#9a6a4a88",
+                      }}>
+                        <Icon size={14} strokeWidth={1.5} />
                       </div>
-                      <div style={{ color: "#444", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>
-                        {labelType(t.type)} · {formatDate(t.created_at)}
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ color: "#e0d0b0", fontSize: "0.82rem", fontFamily: "Georgia, serif", marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {t.description || labelType(t.type)}
+                        </div>
+                        <div style={{ color: "#444", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+                          {labelType(t.type)} · {formatDate(t.created_at)}
+                        </div>
+                      </div>
+                      <div style={{
+                        fontSize: "0.95rem", fontFamily: "monospace", fontWeight: 700,
+                        color: t.amount >= 0 ? "#4a9a4a" : "#9a6a4a",
+                        whiteSpace: "nowrap", marginLeft: "1rem",
+                      }}>
+                        {t.amount >= 0 ? "+" : ""}{t.amount}
                       </div>
                     </div>
-                    <div style={{
-                      fontSize: "0.95rem", fontFamily: "monospace", fontWeight: 700,
-                      color: t.amount >= 0 ? "#4a9a4a" : "#9a6a4a",
-                      whiteSpace: "nowrap", marginLeft: "1rem",
-                    }}>
-                      {t.amount >= 0 ? "+" : ""}{t.amount}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </>
@@ -134,12 +153,16 @@ export default function WalletPage() {
   );
 }
 
-function Card({ label, value, accent, suffix, big }: { label: string; value: number; accent: string; suffix?: string; big?: boolean }) {
+function Card({ icon: Icon, label, value, accent, suffix, big }: { icon: LucideIcon; label: string; value: number; accent: string; suffix?: string; big?: boolean }) {
   return (
     <div style={{
       background: "#0d0d0d", border: "1px solid #1a1a1a",
       padding: "1.25rem 1.25rem 1.1rem",
+      position: "relative",
     }}>
+      <div style={{ position: "absolute", top: "1rem", right: "1rem", color: `${accent}66` }}>
+        <Icon size={18} strokeWidth={1.5} />
+      </div>
       <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", margin: "0 0 0.6rem" }}>{label}</p>
       <p style={{
         fontSize: big ? "2.25rem" : "1.6rem", fontFamily: "monospace",
@@ -154,6 +177,18 @@ function Card({ label, value, accent, suffix, big }: { label: string; value: num
       )}
     </div>
   );
+}
+
+function txIcon(type: string): LucideIcon {
+  switch (type) {
+    case "purchase": return ShoppingCart;
+    case "gift_sent":
+    case "gift_received": return Gift;
+    case "room_entry": return Banknote;
+    case "withdrawal": return Banknote;
+    case "subscription": return ArrowRightLeft;
+    default: return ArrowRightLeft;
+  }
 }
 
 function labelType(t: string): string {
@@ -189,26 +224,28 @@ const container: React.CSSProperties = { maxWidth: "880px", margin: "0 auto", pa
 const eyebrow: React.CSSProperties = { fontSize: "0.6rem", letterSpacing: "0.3em", color: "#4a7a9a", textTransform: "uppercase", fontFamily: "monospace", margin: 0 };
 const h1: React.CSSProperties = { fontSize: "clamp(1.6rem, 4vw, 2.5rem)", fontWeight: 400, fontFamily: "Georgia, serif", margin: "0.4rem 0 0" };
 const ctaPrimary: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: "0.45rem",
   background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
-  padding: "0.7rem 1.5rem", textDecoration: "none",
-  fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
+  padding: "0.7rem 1.4rem", textDecoration: "none",
+  fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase" as const,
   fontFamily: "monospace",
 };
 const ctaSecondary: React.CSSProperties = {
+  display: "inline-flex", alignItems: "center", gap: "0.45rem",
   background: "transparent", border: "1px solid #2a2a2a", color: "#888",
-  padding: "0.7rem 1.5rem", textDecoration: "none",
-  fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
+  padding: "0.7rem 1.4rem", textDecoration: "none",
+  fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase" as const,
   fontFamily: "monospace",
 };
 const primaryBtn: React.CSSProperties = {
   background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
   padding: "0.75rem 1.75rem", textDecoration: "none",
   fontFamily: "monospace", fontSize: "0.75rem", letterSpacing: "0.15em",
-  textTransform: "uppercase", display: "inline-block",
+  textTransform: "uppercase" as const, display: "inline-block",
 };
 const txRow: React.CSSProperties = {
-  display: "flex", justifyContent: "space-between", alignItems: "center",
-  padding: "0.85rem 0", borderBottom: "1px solid #141414",
+  display: "flex", alignItems: "center", gap: "0.85rem",
+  padding: "0.75rem 0", borderBottom: "1px solid #141414",
 };
 const emptyBox: React.CSSProperties = {
   textAlign: "center", padding: "3rem 1.5rem",
