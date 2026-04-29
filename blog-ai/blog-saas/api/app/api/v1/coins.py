@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
 from app.core.config import settings
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_superuser
 from app.models.user import User
 from app.models.coin_wallet import CoinWallet
 from app.models.coin_transaction import CoinTransaction
@@ -277,6 +277,146 @@ def list_withdrawals(
         }
         for r in rows
     ]
+
+
+# ─── ADMIN: GET /coins/admin/withdrawals ─────────────────────────────────────
+@router.get("/admin/withdrawals")
+def admin_list_withdrawals(
+    status: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+    _: User = Depends(require_superuser),
+    db: Session = Depends(get_db),
+):
+    """List all withdrawal requests (optionally filtered by status), with user info hydrated."""
+    from app.models.withdrawal_request import WithdrawalRequest
+
+    q = db.query(WithdrawalRequest).order_by(WithdrawalRequest.created_at.desc())
+    if status:
+        q = q.filter(WithdrawalRequest.status == status)
+    rows = q.offset(offset).limit(min(limit, 200)).all()
+
+    user_ids = {r.user_id for r in rows}
+    users = (
+        {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()}
+        if user_ids
+        else {}
+    )
+
+    def user_info(uid: int):
+        u = users.get(uid)
+        if not u:
+            return {"id": uid, "username": None, "email": None, "display_name": None}
+        return {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "display_name": u.display_name,
+        }
+
+    return [
+        {
+            "id": r.id,
+            "user": user_info(r.user_id),
+            "amount_coins": r.amount_coins,
+            "amount_cents": r.amount_cents,
+            "amount_usd": f"${r.amount_cents / 100:.2f}",
+            "status": r.status,
+            "method": r.payout_method,
+            "payout_details": r.payout_details,
+            "failure_reason": r.failure_reason,
+            "external_reference": r.stripe_transfer_id,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "completed_at": r.completed_at.isoformat() if r.completed_at else None,
+        }
+        for r in rows
+    ]
+
+
+# ─── ADMIN: POST /coins/admin/withdrawals/{id}/approve ───────────────────────
+@router.post("/admin/withdrawals/{withdrawal_id}/approve")
+def admin_approve_withdrawal(
+    withdrawal_id: int,
+    body: dict | None = None,
+    _: User = Depends(require_superuser),
+    db: Session = Depends(get_db),
+):
+    """
+    Mark a withdrawal as completed after a manual payout (PayPal/bank wire).
+    Coins were already deducted at request time, so this just records completion.
+    Body: { reference?: str } — optional external txn id (PayPal, bank ref).
+    """
+    from app.models.withdrawal_request import WithdrawalRequest
+    from datetime import datetime, timezone
+
+    w = db.get(WithdrawalRequest, withdrawal_id)
+    if not w:
+        raise HTTPException(404, "Withdrawal not found")
+    if w.status != "pending":
+        raise HTTPException(400, f"Cannot approve withdrawal in status '{w.status}'")
+
+    reference = (body or {}).get("reference") if body else None
+
+    w.status = "completed"
+    w.completed_at = datetime.now(timezone.utc)
+    if reference:
+        # Reuse the column to store any external payout reference (PayPal txn id, bank ref).
+        w.stripe_transfer_id = str(reference)[:200]
+    db.commit()
+
+    return {
+        "ok": True,
+        "id": w.id,
+        "status": w.status,
+        "completed_at": w.completed_at.isoformat(),
+        "external_reference": w.stripe_transfer_id,
+    }
+
+
+# ─── ADMIN: POST /coins/admin/withdrawals/{id}/reject ────────────────────────
+@router.post("/admin/withdrawals/{withdrawal_id}/reject")
+def admin_reject_withdrawal(
+    withdrawal_id: int,
+    body: dict,
+    _: User = Depends(require_superuser),
+    db: Session = Depends(get_db),
+):
+    """
+    Reject a withdrawal, refund the coins to the user's withdrawable_balance,
+    and record the reason. Body: { reason: str }
+    """
+    from app.models.withdrawal_request import WithdrawalRequest
+
+    w = db.get(WithdrawalRequest, withdrawal_id)
+    if not w:
+        raise HTTPException(404, "Withdrawal not found")
+    if w.status != "pending":
+        raise HTTPException(400, f"Cannot reject withdrawal in status '{w.status}'")
+
+    reason = (body.get("reason") or "").strip()
+    if not reason:
+        raise HTTPException(400, "Rejection reason required")
+
+    wallet = _get_or_create_wallet(db, w.user_id)
+    wallet.withdrawable_balance += w.amount_coins
+
+    w.status = "failed"
+    w.failure_reason = reason[:1000]
+
+    db.add(CoinTransaction(
+        user_id=w.user_id,
+        amount=w.amount_coins,
+        type="refund",
+        description=f"Withdrawal rejected: {reason[:200]}",
+    ))
+    db.commit()
+
+    return {
+        "ok": True,
+        "id": w.id,
+        "status": w.status,
+        "refunded_coins": w.amount_coins,
+    }
 
 
 # ─── Stripe Connect ──────────────────────────────────────────────────────────
