@@ -64,15 +64,6 @@ export default function WithdrawPage() {
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        // 404 = endpoint not implemented yet — fall back to mailto
-        if (res.status === 404) {
-          const subject = encodeURIComponent("Withdrawal request");
-          const body = encodeURIComponent(
-            `Amount: ${amt} coins\nMethod: ${method}\nDetails: ${details}\n\nUser: see auth header`
-          );
-          window.location.href = `mailto:hello@scouta.co?subject=${subject}&body=${body}`;
-          return;
-        }
         setError(typeof data.detail === "string" ? data.detail : "Withdrawal request failed.");
         setSubmitting(false);
         return;
