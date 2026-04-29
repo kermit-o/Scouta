@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { Eye, Radio } from "lucide-react";
 
 interface Stream {
   room_name: string;
@@ -79,9 +80,10 @@ export default function LiveNowGrid() {
                   alignItems: "center",
                   justifyContent: "center",
                   position: "relative",
+                  color: "#222",
                 }}
               >
-                <span style={{ fontSize: "2.5rem", opacity: 0.2 }}>⬡</span>
+                <Radio size={48} strokeWidth={1.25} />
                 <span
                   style={{
                     position: "absolute",
@@ -92,7 +94,7 @@ export default function LiveNowGrid() {
                     fontSize: "0.55rem",
                     fontFamily: "monospace",
                     letterSpacing: "0.2em",
-                    padding: "0.15rem 0.5rem",
+                    padding: "0.18rem 0.55rem",
                     fontWeight: 700,
                   }}
                 >
@@ -107,9 +109,13 @@ export default function LiveNowGrid() {
                     color: "#fff",
                     fontSize: "0.65rem",
                     fontFamily: "monospace",
-                    padding: "0.15rem 0.45rem",
+                    padding: "0.2rem 0.5rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.3rem",
                   }}
                 >
+                  <Eye size={11} strokeWidth={1.75} />
                   {s.viewer_count}
                 </span>
               </div>
