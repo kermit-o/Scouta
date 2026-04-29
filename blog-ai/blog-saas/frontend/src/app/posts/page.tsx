@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Post, getPosts } from "@/lib/api";
 import HashtagRow from "@/components/HashtagRow";
 import TimeAgo from "@/components/TimeAgo";
+import { MessageCircle, ArrowBigUp, Play, Volume2, VolumeX, PenLine } from "lucide-react";
 
 const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
@@ -110,12 +111,14 @@ function FeedContent() {
             {tag ? `#${tag}` : "The feed"}
           </h1>
           <Link href="/posts/new" style={{
+            display: "inline-flex", alignItems: "center", gap: "0.4rem",
             background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
-            padding: "0.55rem 1.25rem", textDecoration: "none",
+            padding: "0.55rem 1.1rem", textDecoration: "none",
             fontSize: "0.7rem", letterSpacing: "0.15em", textTransform: "uppercase",
             fontFamily: "monospace",
           }}>
-            + Write
+            <PenLine size={14} strokeWidth={1.5} />
+            Write
           </Link>
         </div>
       </div>
@@ -147,14 +150,12 @@ function FeedContent() {
         })}
       </div>
 
-      {/* Loading initial */}
       {loading && (
         <div style={{ textAlign: "center", padding: "3rem", color: "#444", fontFamily: "monospace", fontSize: "0.75rem" }}>
           Loading...
         </div>
       )}
 
-      {/* Empty */}
       {!loading && posts.length === 0 && (
         <div style={{
           padding: "5rem 1.5rem", textAlign: "center",
@@ -170,7 +171,6 @@ function FeedContent() {
         </div>
       )}
 
-      {/* Posts */}
       {posts.map((post: Post) => (
         <article key={post.id} style={{ paddingBottom: "1.75rem", marginBottom: "1.75rem", borderBottom: "1px solid #1a1a1a" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
@@ -241,17 +241,18 @@ function FeedContent() {
           )}
 
           <div style={{ display: "flex", gap: "1.25rem", alignItems: "center" }}>
-            <Link href={`/posts/${post.id}`} style={{ fontSize: "0.7rem", color: "#555", textDecoration: "none", fontFamily: "monospace", letterSpacing: "0.05em" }}>
-              {post.comment_count ?? 0} {post.comment_count === 1 ? "comment" : "comments"}
+            <Link href={`/posts/${post.id}`} style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem", fontSize: "0.7rem", color: "#666", textDecoration: "none", fontFamily: "monospace", letterSpacing: "0.05em" }}>
+              <MessageCircle size={13} strokeWidth={1.5} />
+              {post.comment_count ?? 0}
             </Link>
-            <span style={{ fontSize: "0.7rem", color: "#444", fontFamily: "monospace" }}>
-              ↑ {post.upvote_count ?? 0}
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem", fontSize: "0.7rem", color: "#555", fontFamily: "monospace" }}>
+              <ArrowBigUp size={14} strokeWidth={1.5} />
+              {post.upvote_count ?? 0}
             </span>
           </div>
         </article>
       ))}
 
-      {/* Infinite scroll sentinel */}
       <div ref={sentinelRef} style={{ height: "80px", display: "flex", alignItems: "center", justifyContent: "center" }}>
         {loadingMore && <span style={{ color: "#444", fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>Loading more...</span>}
         {!hasMore && posts.length > 0 && (
@@ -301,16 +302,16 @@ function VideoCard({ src, title }: { src: string; title: string }) {
       />
       <button
         onClick={() => setMuted((m) => !m)}
+        title={muted ? "Unmute" : "Mute"}
         style={{
           position: "absolute", bottom: 12, right: 12,
           background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.15)",
-          color: "#fff", borderRadius: 4, padding: "0.35rem 0.6rem",
-          cursor: "pointer", fontSize: "0.65rem", fontFamily: "monospace",
-          letterSpacing: "0.1em", backdropFilter: "blur(4px)",
+          color: "#fff", borderRadius: 999, padding: "0.45rem",
+          cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+          backdropFilter: "blur(4px)",
         }}
-        title={muted ? "Unmute" : "Mute"}
       >
-        {muted ? "MUTED" : "ON"}
+        {muted ? <VolumeX size={16} strokeWidth={1.75} /> : <Volume2 size={16} strokeWidth={1.75} />}
       </button>
       {!playing && (
         <div style={{
@@ -322,8 +323,9 @@ function VideoCard({ src, title }: { src: string; title: string }) {
             width: 56, height: 56, borderRadius: "50%",
             background: "rgba(0,0,0,0.55)", border: "1px solid rgba(255,255,255,0.2)",
             display: "flex", alignItems: "center", justifyContent: "center",
+            color: "#fff",
           }}>
-            <span style={{ color: "#fff", fontSize: "1.4rem", marginLeft: 4 }}>▶</span>
+            <Play size={22} strokeWidth={1.75} fill="currentColor" />
           </div>
         </div>
       )}
