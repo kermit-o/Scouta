@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import { Bot, Crown, Medal, Award, UserPlus, UserCheck, type LucideIcon } from "lucide-react";
 
 interface Agent {
   id: number;
@@ -27,11 +28,11 @@ function initials(name: string): string {
   return name.split(" ").map((w) => w[0]).join("").slice(0, 2).toUpperCase();
 }
 
-function rankMark(idx: number): string {
-  if (idx === 0) return "◆";
-  if (idx === 1) return "◇";
-  if (idx === 2) return "○";
-  return String(idx + 1);
+function rankIcon(idx: number): LucideIcon | null {
+  if (idx === 0) return Crown;
+  if (idx === 1) return Medal;
+  if (idx === 2) return Award;
+  return null;
 }
 
 function rankColor(idx: number): string {
@@ -124,7 +125,9 @@ export default function AgentsPage() {
 
         {initialized && agents.length === 0 && (
           <div style={{ padding: "4rem 1.5rem", textAlign: "center", border: "1px dashed #1a1a1a", background: "#0a0a0a" }}>
-            <p style={{ fontSize: "3rem", color: "#1a1a1a", margin: "0 0 1rem", lineHeight: 1, fontFamily: "monospace" }}>⬡</p>
+            <div style={{ color: "#1a1a1a", margin: "0 0 1.25rem", display: "flex", justifyContent: "center" }}>
+              <Bot size={48} strokeWidth={1} />
+            </div>
             <p style={{ color: "#666", fontFamily: "Georgia, serif", fontSize: "0.95rem", marginBottom: "0.4rem" }}>
               No agents yet.
             </p>
@@ -138,17 +141,18 @@ export default function AgentsPage() {
         <div>
           {agents.map((agent, idx) => {
             const color = agentColor(agent.id);
+            const RankIcon = rankIcon(idx);
             return (
               <div key={agent.id} style={agentRow}>
                 {/* Rank */}
                 <div style={{
-                  width: 32, textAlign: "center",
+                  width: 32,
+                  display: "flex", alignItems: "center", justifyContent: "center",
                   color: rankColor(idx), fontFamily: "monospace",
-                  fontSize: idx < 3 ? "0.95rem" : "0.7rem",
-                  fontWeight: idx < 3 ? 700 : 400,
+                  fontSize: "0.75rem", fontWeight: 700,
                   flexShrink: 0,
                 }}>
-                  {rankMark(idx)}
+                  {RankIcon ? <RankIcon size={18} strokeWidth={1.75} /> : <span>{idx + 1}</span>}
                 </div>
 
                 {/* Hex avatar */}
@@ -215,11 +219,22 @@ export default function AgentsPage() {
                       color: agent.is_following ? "#666" : "#4a9a4a",
                       border: `1px solid ${agent.is_following ? "#2a2a2a" : "#2a4a2a"}`,
                       background: agent.is_following ? "transparent" : "#1a2a1a",
-                      cursor: "pointer", padding: "0.4rem 0.75rem",
+                      cursor: "pointer", padding: "0.4rem 0.7rem",
                       fontFamily: "monospace", flexShrink: 0,
+                      display: "inline-flex", alignItems: "center", gap: "0.4rem",
                     }}
                   >
-                    {agent.is_following ? "Following" : "+ Follow"}
+                    {agent.is_following ? (
+                      <>
+                        <UserCheck size={11} strokeWidth={1.75} />
+                        <span>Following</span>
+                      </>
+                    ) : (
+                      <>
+                        <UserPlus size={11} strokeWidth={1.75} />
+                        <span>Follow</span>
+                      </>
+                    )}
                   </button>
                 )}
               </div>
