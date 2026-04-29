@@ -1,5 +1,5 @@
 """
-Coin wallet — balance, purchase via Stripe, transaction history
+Coin wallet — balance, purchase via Stripe, transaction history, withdrawals
 """
 import stripe
 from fastapi import APIRouter, Depends, HTTPException
@@ -20,6 +20,9 @@ COIN_PACKAGES = {
     "pack_500": (500, 399),      # 500 coins = $3.99
     "pack_2000": (2000, 1499),   # 2000 coins = $14.99
 }
+
+MIN_WITHDRAWAL_COINS = 500
+ALLOWED_PAYOUT_METHODS = {"paypal", "bank"}
 
 
 def get_db():
@@ -49,6 +52,7 @@ def get_balance(
     wallet = _get_or_create_wallet(db, current_user.id)
     return {
         "balance": wallet.balance,
+        "withdrawable_balance": wallet.withdrawable_balance,
         "lifetime_earned": wallet.lifetime_earned,
         "lifetime_spent": wallet.lifetime_spent,
     }
@@ -175,25 +179,34 @@ def request_withdrawal(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Request payout via Stripe Connect. Min 500 coins."""
-    amount_coins = int(body.get("amount_coins", 0))
-    if amount_coins < 500:
-        raise HTTPException(400, "Minimum withdrawal is 500 coins")
+    """
+    Record a withdrawal request for manual processing (5–7 business days).
+
+    Accepts:
+      { amount, method, payout_details }
+      method in {"paypal", "bank"}
+      payout_details: paypal email, or bank account holder + IBAN + SWIFT
+
+    `amount_coins` is also accepted as a backwards-compatible alias for `amount`.
+    """
+    amount_coins = int(body.get("amount") or body.get("amount_coins") or 0)
+    method = (body.get("method") or "").strip().lower()
+    payout_details = (body.get("payout_details") or "").strip()
+
+    if amount_coins < MIN_WITHDRAWAL_COINS:
+        raise HTTPException(400, f"Minimum withdrawal is {MIN_WITHDRAWAL_COINS} coins")
+    if method not in ALLOWED_PAYOUT_METHODS:
+        raise HTTPException(400, f"Invalid method. Options: {sorted(ALLOWED_PAYOUT_METHODS)}")
+    if not payout_details:
+        raise HTTPException(400, "Payout details required (PayPal email or bank account details)")
 
     wallet = _get_or_create_wallet(db, current_user.id)
     if wallet.withdrawable_balance < amount_coins:
         raise HTTPException(400, "Insufficient withdrawable balance")
 
-    # Check user has Stripe Connect account
-    if not current_user.stripe_customer_id:
-        raise HTTPException(400, "Connect your bank account first via /coins/connect-account")
-
-    # Convert coins to cents (100 coins = $0.99 → 1 coin ≈ 0.99 cents)
-    amount_cents = int(amount_coins * 0.99)
-
     from app.models.withdrawal_request import WithdrawalRequest
 
-    # Check no pending withdrawal
+    # Block double-submit while a previous one is still pending
     pending = db.query(WithdrawalRequest).filter(
         WithdrawalRequest.user_id == current_user.id,
         WithdrawalRequest.status.in_(["pending", "processing"]),
@@ -201,7 +214,10 @@ def request_withdrawal(
     if pending:
         raise HTTPException(400, "You already have a pending withdrawal")
 
-    # Deduct from withdrawable balance
+    # 100 coins = $0.99 → 1 coin ≈ 0.99 cents
+    amount_cents = int(amount_coins * 0.99)
+
+    # Reserve the coins immediately. If an admin rejects later, refund explicitly.
     wallet.withdrawable_balance -= amount_coins
 
     withdrawal = WithdrawalRequest(
@@ -209,6 +225,8 @@ def request_withdrawal(
         amount_coins=amount_coins,
         amount_cents=amount_cents,
         status="pending",
+        payout_method=method,
+        payout_details=payout_details,
     )
     db.add(withdrawal)
 
@@ -216,43 +234,19 @@ def request_withdrawal(
         user_id=current_user.id,
         amount=-amount_coins,
         type="withdrawal",
-        description=f"Withdrawal of {amount_coins} coins (${amount_cents / 100:.2f})",
+        description=f"Withdrawal requested ({method}, {amount_coins} coins ≈ ${amount_cents / 100:.2f})",
     ))
     db.commit()
-
-    # Process payout via Stripe Connect
-    try:
-        stripe.api_key = settings.STRIPE_SECRET_KEY
-        transfer = stripe.Transfer.create(
-            amount=amount_cents,
-            currency="usd",
-            destination=current_user.stripe_customer_id,
-            metadata={"user_id": str(current_user.id), "withdrawal_id": str(withdrawal.id)},
-        )
-        withdrawal.stripe_transfer_id = transfer.id
-        withdrawal.status = "completed"
-        from datetime import datetime, timezone
-        withdrawal.completed_at = datetime.now(timezone.utc)
-        db.commit()
-    except Exception as e:
-        withdrawal.status = "failed"
-        withdrawal.failure_reason = str(e)
-        # Refund the coins
-        wallet.withdrawable_balance += amount_coins
-        db.add(CoinTransaction(
-            user_id=current_user.id,
-            amount=amount_coins,
-            type="refund",
-            description=f"Withdrawal failed: {str(e)[:100]}",
-        ))
-        db.commit()
-        raise HTTPException(500, f"Payout failed: {str(e)[:100]}")
+    db.refresh(withdrawal)
 
     return {
         "ok": True,
+        "id": withdrawal.id,
+        "status": "pending",
         "amount_coins": amount_coins,
         "amount_usd": f"${amount_cents / 100:.2f}",
-        "status": withdrawal.status,
+        "method": method,
+        "processing_days": "5-7",
     }
 
 
@@ -277,6 +271,7 @@ def list_withdrawals(
             "amount_coins": r.amount_coins,
             "amount_cents": r.amount_cents,
             "status": r.status,
+            "method": r.payout_method,
             "created_at": r.created_at.isoformat() if r.created_at else None,
             "completed_at": r.completed_at.isoformat() if r.completed_at else None,
         }
