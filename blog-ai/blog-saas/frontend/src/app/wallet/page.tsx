@@ -1,10 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
   Coins, Wallet as WalletIcon, ArrowDownToLine, ArrowUpFromLine,
-  Plus, Banknote, Gift, ShoppingCart, ArrowRightLeft, type LucideIcon,
+  Plus, Banknote, Gift, ShoppingCart, ArrowRightLeft, CheckCircle2, X,
+  type LucideIcon,
 } from "lucide-react";
 
 interface Balance {
@@ -25,23 +27,60 @@ interface Transaction {
 const API = "/api/proxy/api/v1";
 
 export default function WalletPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { token, user, isLoaded } = useAuth();
   const [balance, setBalance] = useState<Balance | null>(null);
   const [txs, setTxs] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [purchaseBanner, setPurchaseBanner] = useState<{ coins: number } | null>(null);
+
+  // Detect ?purchase=success&coins=N from Stripe Checkout success_url redirect.
+  // Webhook may take 1-3s after redirect — poll balance for up to 15s if banner is visible.
+  useEffect(() => {
+    if (!searchParams) return;
+    const purchase = searchParams.get("purchase");
+    const coins = parseInt(searchParams.get("coins") || "0", 10);
+    if (purchase === "success" && coins > 0) {
+      setPurchaseBanner({ coins });
+    }
+  }, [searchParams]);
+
+  const loadBalance = React.useCallback(async () => {
+    if (!token) return;
+    const headers = { Authorization: `Bearer ${token}` };
+    const [bal, txsRes] = await Promise.all([
+      fetch(`${API}/coins/balance`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+      fetch(`${API}/coins/transactions?limit=25`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
+    ]);
+    if (bal) setBalance(bal);
+    if (txsRes && Array.isArray(txsRes.transactions)) setTxs(txsRes.transactions);
+  }, [token]);
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
-    const headers = { Authorization: `Bearer ${token}` };
-    Promise.all([
-      fetch(`${API}/coins/balance`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-      fetch(`${API}/coins/transactions?limit=25`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
-    ]).then(([bal, txsRes]) => {
-      if (bal) setBalance(bal);
-      if (txsRes && Array.isArray(txsRes.transactions)) setTxs(txsRes.transactions);
-      setLoading(false);
-    });
-  }, [token]);
+    loadBalance().then(() => setLoading(false));
+  }, [token, loadBalance]);
+
+  // Poll balance for up to 15s after a successful purchase, in case the
+  // Stripe webhook hasn't credited yet by the time the redirect lands.
+  useEffect(() => {
+    if (!purchaseBanner || !token) return;
+    let attempts = 0;
+    const initialBalance = balance?.balance ?? 0;
+    const interval = setInterval(async () => {
+      attempts++;
+      await loadBalance();
+      if (attempts >= 8) clearInterval(interval); // ~16s
+    }, 2000);
+    return () => clearInterval(interval);
+  }, [purchaseBanner, token, loadBalance]);
+
+  function dismissBanner() {
+    setPurchaseBanner(null);
+    // Clear the query params so refresh doesn't re-show the banner.
+    router.replace("/wallet");
+  }
 
   if (isLoaded && !token) {
     return (
@@ -59,6 +98,53 @@ export default function WalletPage() {
   return (
     <main style={pageStyle}>
       <div style={container}>
+        {/* Purchase success banner */}
+        {purchaseBanner && (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.85rem",
+            background: "#0e1f0e",
+            border: "1px solid #1f3a1f",
+            padding: "0.85rem 1.1rem",
+            marginBottom: "1.5rem",
+          }}>
+            <div style={{ color: "#4a9a4a", display: "flex", flexShrink: 0 }}>
+              <CheckCircle2 size={20} strokeWidth={1.5} />
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p style={{
+                color: "#9ad29a",
+                fontFamily: "Georgia, serif",
+                fontSize: "0.9rem",
+                margin: 0,
+              }}>
+                Payment received. {purchaseBanner.coins.toLocaleString()} coins added to your wallet.
+              </p>
+              <p style={{
+                color: "#4a7a4a",
+                fontFamily: "monospace",
+                fontSize: "0.6rem",
+                letterSpacing: "0.05em",
+                margin: "0.25rem 0 0",
+              }}>
+                If your balance hasn't updated yet, refresh in a few seconds.
+              </p>
+            </div>
+            <button
+              onClick={dismissBanner}
+              aria-label="Dismiss"
+              style={{
+                background: "none", border: "none",
+                color: "#4a7a4a", cursor: "pointer",
+                display: "flex", padding: "0.25rem",
+              }}
+            >
+              <X size={16} strokeWidth={1.5} />
+            </button>
+          </div>
+        )}
+
         {/* Header */}
         <div style={{ marginBottom: "2rem", paddingBottom: "1.25rem", borderBottom: "1px solid #141414" }}>
           <p style={eyebrow}>SCOUTA / WALLET</p>
