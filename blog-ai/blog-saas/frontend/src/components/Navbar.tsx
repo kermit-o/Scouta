@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import NotificationBell from "./NotificationBell";
+import { Search, MessageSquare, Menu, X, PenLine } from "lucide-react";
 
 function MessageBell() {
   const { token } = useAuth();
@@ -20,12 +21,10 @@ function MessageBell() {
   }, [token]);
   if (!token) return null;
   return (
-    <a href="/messages" style={{ position: "relative", textDecoration: "none", display: "flex", alignItems: "center", padding: "0 0.25rem" }} title="Messages">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-      </svg>
+    <a href="/messages" style={{ position: "relative", textDecoration: "none", display: "flex", alignItems: "center", padding: "0 0.4rem", color: "#888" }} title="Messages">
+      <MessageSquare size={18} strokeWidth={1.5} />
       {unread > 0 && (
-        <span style={{ position: "absolute", top: "-4px", right: "-4px", background: "#4a9a4a", color: "#0a0a0a", fontSize: "0.5rem", width: "14px", height: "14px", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
+        <span style={{ position: "absolute", top: "-4px", right: "0px", background: "#4a9a4a", color: "#0a0a0a", fontSize: "0.5rem", minWidth: "14px", height: "14px", borderRadius: "999px", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace", padding: "0 4px" }}>
           {unread > 9 ? "9+" : unread}
         </span>
       )}
@@ -35,11 +34,8 @@ function MessageBell() {
 
 function SearchIcon() {
   return (
-    <a href="/search" style={{ textDecoration: "none", display: "flex", alignItems: "center", color: "#666", padding: "0 0.25rem" }} title="Search">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-        <circle cx="11" cy="11" r="8" />
-        <path d="m21 21-4.35-4.35" />
-      </svg>
+    <a href="/search" style={{ textDecoration: "none", display: "flex", alignItems: "center", color: "#888", padding: "0 0.4rem" }} title="Search">
+      <Search size={16} strokeWidth={1.5} />
     </a>
   );
 }
@@ -118,19 +114,22 @@ export default function Navbar() {
             ))}
           </nav>
 
-          <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
             {token ? (
               <>
                 <Link
                   href="/posts/new"
                   className="desktop-only"
+                  title="Write a post"
                   style={{
+                    display: "flex", alignItems: "center", gap: "0.4rem",
                     fontSize: "0.6rem", letterSpacing: "0.12em", textTransform: "uppercase",
-                    color: "#c8a96e", textDecoration: "none", padding: "0.3rem 0.65rem",
+                    color: "#c8a96e", textDecoration: "none", padding: "0.3rem 0.7rem",
                     border: "1px solid #3a2a10",
                   }}
                 >
-                  + Write
+                  <PenLine size={12} strokeWidth={1.75} />
+                  Write
                 </Link>
                 <SearchIcon />
                 <MessageBell />
@@ -212,7 +211,7 @@ export default function Navbar() {
                   href="/register"
                   style={{ fontSize: "0.65rem", letterSpacing: "0.1em", textTransform: "uppercase", color: "#4a9a4a", textDecoration: "none", padding: "0.4rem 0.85rem", border: "1px solid #2a4a2a", background: "#1a2a1a" }}
                 >
-                  Join →
+                  Join
                 </Link>
               </div>
             )}
@@ -220,11 +219,10 @@ export default function Navbar() {
             <button
               onClick={() => setMobileOpen(!mobileOpen)}
               className="mobile-only"
-              style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", display: "flex", flexDirection: "column", gap: "4px" }}
+              aria-label={mobileOpen ? "Close menu" : "Open menu"}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "0.35rem", color: "#888", display: "flex", alignItems: "center", justifyContent: "center" }}
             >
-              <span style={{ width: 20, height: 1.5, background: mobileOpen ? "#888" : "#666", display: "block", transition: "0.2s", transform: mobileOpen ? "rotate(45deg) translate(4px, 4px)" : "none" }} />
-              <span style={{ width: 20, height: 1.5, background: "#666", display: "block", opacity: mobileOpen ? 0 : 1, transition: "0.2s" }} />
-              <span style={{ width: 20, height: 1.5, background: mobileOpen ? "#888" : "#666", display: "block", transition: "0.2s", transform: mobileOpen ? "rotate(-45deg) translate(4px, -4px)" : "none" }} />
+              {mobileOpen ? <X size={20} strokeWidth={1.5} /> : <Menu size={20} strokeWidth={1.5} />}
             </button>
           </div>
         </div>
@@ -262,7 +260,7 @@ export default function Navbar() {
             ) : (
               <>
                 <Link href="/login" style={mobileLinkMuted}>Login</Link>
-                <Link href="/register" style={mobileLinkAccent("#4a9a4a")}>Join →</Link>
+                <Link href="/register" style={mobileLinkAccent("#4a9a4a")}>Join</Link>
               </>
             )}
           </div>
