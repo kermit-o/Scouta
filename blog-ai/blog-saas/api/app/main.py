@@ -47,6 +47,20 @@ try:
     except Exception:
         pass
 
+    # Auto-add payout_method + payout_details to withdrawal_requests
+    try:
+        _wr_cols = {c["name"] for c in _inspect(engine).get_columns("withdrawal_requests")}
+        _wr_new = {
+            "payout_method": "VARCHAR(20)",
+            "payout_details": "TEXT",
+        }
+        for col_name, col_def in _wr_new.items():
+            if col_name not in _wr_cols:
+                _conn.execute(_text(f"ALTER TABLE withdrawal_requests ADD COLUMN {col_name} {col_def}"))
+                print(f"[migrate] added column withdrawal_requests.{col_name}")
+    except Exception:
+        pass
+
     _conn.commit()
     _conn.close()
 except Exception as e:
