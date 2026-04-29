@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
-import Navbar from "@/components/Navbar";
+import DesktopRail from "@/components/DesktopRail";
+import MobileTopBar from "@/components/MobileTopBar";
+import MobileTabBar from "@/components/MobileTabBar";
 
 const TITLE = "Scouta — Live talk, sharpened";
 const DESCRIPTION =
@@ -50,11 +52,27 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, padding: 0 }}>
+      <body style={{ margin: 0, padding: 0, background: "#080808" }}>
         <AuthProvider>
-          <Navbar />
-          {children}
+          <DesktopRail />
+          <MobileTopBar />
+          <main className="scouta-shell">
+            {children}
+          </main>
+          <MobileTabBar />
         </AuthProvider>
+        <style>{`
+          .scouta-shell {
+            min-height: 100vh;
+            padding-bottom: 60px;
+          }
+          @media (min-width: 720px) {
+            .scouta-shell {
+              padding-left: 240px;
+              padding-bottom: 0;
+            }
+          }
+        `}</style>
       </body>
     </html>
   );
