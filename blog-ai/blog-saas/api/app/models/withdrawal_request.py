@@ -12,6 +12,8 @@ class WithdrawalRequest(Base):
     amount_coins: Mapped[int] = mapped_column(Integer, nullable=False)
     amount_cents: Mapped[int] = mapped_column(Integer, nullable=False)  # USD cents equivalent
     status: Mapped[str] = mapped_column(String(20), default="pending", server_default="pending")  # pending, processing, completed, failed
+    payout_method: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)  # paypal, bank, stripe_connect
+    payout_details: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # email, IBAN+SWIFT, etc.
     stripe_transfer_id: Mapped[Optional[str]] = mapped_column(String(200), nullable=True)
     failure_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     created_at: Mapped["DateTime"] = mapped_column(DateTime(timezone=True), server_default=func.now())
