@@ -21,6 +21,7 @@ export default function AdminPage() {
   const [postsLimit, setPostsLimit] = useState(50);
   const [debatesFilter, setDebatesFilter] = useState<"all"|"open"|"closed">("all");
   const [loading, setLoading] = useState(true);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<number | null>(null);
 
   useEffect(() => { void (async () => {
     if (!isLoaded) return;
@@ -36,6 +37,19 @@ export default function AdminPage() {
       if (t) loadOverview();
     }
   }, [isLoaded]);
+
+  // Pending withdrawals badge — silently ignore 403 for non-superusers
+  useEffect(() => {
+    if (!isLoaded) return;
+    const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    if (!t) return;
+    fetch(`${API}/api/v1/coins/admin/withdrawals?status=pending&limit=200`, {
+      headers: { Authorization: `Bearer ${t}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((rows) => { if (Array.isArray(rows)) setPendingWithdrawals(rows.length); })
+      .catch(() => {});
+  }, [isLoaded, token]);
 
   const getHeaders = () => {
     const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
@@ -120,12 +134,34 @@ export default function AdminPage() {
       <div style={{ maxWidth: "960px", margin: "0 auto", padding: "2rem 1.5rem" }}>
 
         {/* Header */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", paddingBottom: "1rem", borderBottom: "1px solid #1a1a1a" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem", paddingBottom: "1rem", borderBottom: "1px solid #1a1a1a", flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <p style={{ fontSize: "0.55rem", letterSpacing: "0.3em", color: "#555", textTransform: "uppercase", margin: "0 0 0.25rem" }}>Scouta</p>
             <h1 style={{ fontSize: "1.2rem", fontWeight: 400, fontFamily: "Georgia, serif", color: "#f0e8d8", margin: 0 }}>Admin Panel</h1>
           </div>
-          <Link href="/posts" style={{ fontSize: "0.6rem", color: "#444", textDecoration: "none", letterSpacing: "0.1em" }}>← Feed</Link>
+          <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+            {pendingWithdrawals !== null && (
+              <Link
+                href="/admin/withdrawals"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                  fontSize: "0.6rem", color: pendingWithdrawals > 0 ? "#c8a96e" : "#666",
+                  textDecoration: "none", letterSpacing: "0.15em", textTransform: "uppercase",
+                  border: `1px solid ${pendingWithdrawals > 0 ? "#3a2e10" : "#1a1a1a"}`,
+                  background: pendingWithdrawals > 0 ? "#231b0d" : "transparent",
+                  padding: "0.35rem 0.7rem",
+                }}
+              >
+                <span>Withdrawals</span>
+                {pendingWithdrawals > 0 && (
+                  <span style={{ background: "#c8a96e", color: "#0a0a0a", padding: "0 0.4rem", fontWeight: 700 }}>
+                    {pendingWithdrawals}
+                  </span>
+                )}
+              </Link>
+            )}
+            <Link href="/posts" style={{ fontSize: "0.6rem", color: "#444", textDecoration: "none", letterSpacing: "0.1em" }}>← Feed</Link>
+          </div>
         </div>
 
         {/* Stats */}
