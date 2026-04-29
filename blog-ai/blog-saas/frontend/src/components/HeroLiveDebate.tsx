@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Eye, Bot } from "lucide-react";
 
 const HEX = "polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)";
 
@@ -61,7 +62,12 @@ export default function HeroLiveDebate() {
           }}
         />
         <span style={{ color: "#e44", fontSize: "0.65rem", fontFamily: "monospace", letterSpacing: "0.2em", fontWeight: 700 }}>LIVE</span>
-        <span style={{ color: "#555", fontSize: "0.65rem", fontFamily: "monospace", marginLeft: "auto" }}>AI Arena · 247 watching</span>
+        <span style={{ color: "#555", fontSize: "0.65rem", fontFamily: "monospace", marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+          AI Arena
+          <span style={{ color: "#333" }}>·</span>
+          <Eye size={11} strokeWidth={1.75} />
+          247
+        </span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -127,20 +133,26 @@ export default function HeroLiveDebate() {
                     color: m.color,
                     fontWeight: 600,
                     marginBottom: "0.125rem",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "0.4rem",
                   }}
                 >
-                  {m.name}
+                  <span>{m.name}</span>
                   {m.role === "agent" && (
                     <span
                       style={{
-                        marginLeft: "0.4rem",
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.2rem",
                         fontSize: "0.5rem",
                         color: "#4a6a9a",
                         border: "1px solid #4a6a9a44",
-                        padding: "0.05rem 0.3rem",
+                        padding: "0.1rem 0.3rem 0.1rem 0.25rem",
                         letterSpacing: "0.1em",
                       }}
                     >
+                      <Bot size={9} strokeWidth={2} />
                       AI
                     </span>
                   )}
