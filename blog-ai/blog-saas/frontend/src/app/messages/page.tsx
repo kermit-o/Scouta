@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Send, ArrowLeft, ArrowRight, MessageSquare } from "lucide-react";
 
 const API = "/api/proxy/api/v1";
 const QUICK_EMOJIS = ["🙂", "👍", "🔥", "💯", "❤️", "👏", "🤝", "👀", "🚀", "💪"];
@@ -142,7 +143,10 @@ export default function MessagesPage() {
         <div style={{ ...emptyContainer }}>
           <p style={eyebrow}>SCOUTA / MESSAGES</p>
           <h1 style={h1}>Sign in to read messages.</h1>
-          <Link href="/login?next=/messages" style={primaryBtn}>Log in →</Link>
+          <Link href="/login?next=/messages" style={primaryBtn}>
+            <span>Log in</span>
+            <ArrowRight size={14} strokeWidth={1.75} />
+          </Link>
         </div>
       </main>
     );
@@ -278,7 +282,9 @@ export default function MessagesPage() {
         <section className="msg-main" style={{ flex: 1, display: "flex", flexDirection: "column", background: "#0a0a0a" }}>
           {!activeConv ? (
             <div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "2rem" }}>
-              <p style={{ fontSize: "3rem", color: "#1a1a1a", margin: "0 0 1rem", lineHeight: 1, fontFamily: "monospace" }}>⬡</p>
+              <div style={{ color: "#1a1a1a", margin: "0 0 1.25rem", lineHeight: 0 }}>
+                <MessageSquare size={56} strokeWidth={1} />
+              </div>
               <p style={{ color: "#666", fontFamily: "Georgia, serif", fontSize: "0.95rem", margin: "0 0 0.4rem" }}>
                 Pick a conversation.
               </p>
@@ -293,14 +299,15 @@ export default function MessagesPage() {
                 <button
                   onClick={() => setActiveConv(null)}
                   className="msg-back"
+                  aria-label="Back"
                   style={{
                     background: "none", border: "none", color: "#666",
                     cursor: "pointer", padding: 0,
-                    fontSize: "0.75rem", fontFamily: "monospace",
-                    letterSpacing: "0.1em", marginRight: "0.25rem",
+                    display: "flex", alignItems: "center",
+                    marginRight: "0.25rem",
                   }}
                 >
-                  ←
+                  <ArrowLeft size={18} strokeWidth={1.5} />
                 </button>
                 {activeConv.other_user?.avatar_url ? (
                   <img src={activeConv.other_user.avatar_url} alt="" style={{ width: 32, height: 32, borderRadius: "50%", objectFit: "cover", flexShrink: 0 }} />
@@ -399,16 +406,18 @@ export default function MessagesPage() {
                   <button
                     onClick={sendMessage}
                     disabled={!body.trim()}
+                    aria-label="Send message"
                     style={{
                       width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
                       background: !body.trim() ? "#0d0d0d" : "#1a2a1a",
                       border: `1px solid ${!body.trim() ? "#1a1a1a" : "#2a4a2a"}`,
                       color: !body.trim() ? "#333" : "#4a9a4a",
                       cursor: !body.trim() ? "not-allowed" : "pointer",
-                      fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      transition: "background 120ms ease, color 120ms ease, border-color 120ms ease",
                     }}
                   >
-                    ↑
+                    <Send size={16} strokeWidth={1.75} style={{ marginLeft: "-1px" }} />
                   </button>
                 </div>
               </div>
@@ -441,7 +450,7 @@ function MobileVisibilityFix({ activeConv }: { activeConv: Conversation | null }
       if (activeConv) {
         sidebar.style.display = "none";
         main.style.display = "flex";
-        back.forEach((b) => (b.style.display = "inline-block"));
+        back.forEach((b) => (b.style.display = "flex"));
       } else {
         sidebar.style.display = "flex";
         main.style.display = "none";
@@ -489,7 +498,7 @@ const primaryBtn: React.CSSProperties = {
   padding: "0.85rem 2rem", textDecoration: "none",
   fontSize: "0.78rem", fontFamily: "monospace",
   letterSpacing: "0.15em", textTransform: "uppercase" as const,
-  display: "inline-block",
+  display: "inline-flex", alignItems: "center", gap: "0.5rem",
 };
 const searchInput: React.CSSProperties = {
   width: "100%", background: "#111", border: "1px solid #1e1e1e",
