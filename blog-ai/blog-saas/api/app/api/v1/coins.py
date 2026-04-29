@@ -1,8 +1,9 @@
 """
-Coin wallet — balance, purchase via Stripe, transaction history, withdrawals
+Coin wallet — balance, purchase via Stripe Checkout, transaction history, withdrawals
 """
+import os
 import stripe
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
@@ -23,6 +24,9 @@ COIN_PACKAGES = {
 
 MIN_WITHDRAWAL_COINS = 500
 ALLOWED_PAYOUT_METHODS = {"paypal", "bank"}
+
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://scouta.co").rstrip("/")
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "")
 
 
 def get_db():
@@ -74,7 +78,16 @@ def purchase_coins(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Create a Stripe PaymentIntent for a coin package."""
+    """
+    Create a Stripe Checkout Session for a coin package.
+    Returns { checkout_url } — frontend redirects to it. Coins are credited
+    asynchronously via the /stripe-webhook handler when payment completes.
+
+    NOTE: We use customer_email (not customer=stripe_customer_id) on purpose.
+    The User.stripe_customer_id column is shared with Stripe Connect Account IDs
+    in /connect-account, so reusing it here would crash for hosts who onboarded
+    payouts before purchasing. Stripe will dedupe customers by email server-side.
+    """
     package_id = body.get("package_id")
     if package_id not in COIN_PACKAGES:
         raise HTTPException(400, f"Invalid package_id. Options: {list(COIN_PACKAGES.keys())}")
@@ -82,34 +95,130 @@ def purchase_coins(
     coins, price_cents = COIN_PACKAGES[package_id]
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
-    # Ensure Stripe customer exists
-    if not current_user.stripe_customer_id:
-        customer = stripe.Customer.create(
-            email=current_user.email,
-            name=current_user.display_name or current_user.username or current_user.email,
-            metadata={"user_id": str(current_user.id)},
+    try:
+        session = stripe.checkout.Session.create(
+            mode="payment",
+            customer_email=current_user.email,
+            line_items=[{
+                "price_data": {
+                    "currency": "usd",
+                    "product_data": {
+                        "name": f"{coins} Scouta coins",
+                        "description": "Use coins to send gifts and unlock paid lives.",
+                    },
+                    "unit_amount": price_cents,
+                },
+                "quantity": 1,
+            }],
+            metadata={
+                "type": "coin_purchase",
+                "user_id": str(current_user.id),
+                "coin_amount": str(coins),
+                "package_id": package_id,
+            },
+            payment_intent_data={
+                "metadata": {
+                    "type": "coin_purchase",
+                    "user_id": str(current_user.id),
+                    "coin_amount": str(coins),
+                    "package_id": package_id,
+                },
+            },
+            success_url=f"{FRONTEND_URL}/wallet?purchase=success&coins={coins}",
+            cancel_url=f"{FRONTEND_URL}/wallet/buy?cancelled=1",
         )
-        current_user.stripe_customer_id = customer.id
-        db.commit()
-
-    # Create PaymentIntent with coin metadata
-    intent = stripe.PaymentIntent.create(
-        amount=price_cents,
-        currency="usd",
-        customer=current_user.stripe_customer_id,
-        metadata={
-            "type": "coin_purchase",
-            "user_id": str(current_user.id),
-            "coin_amount": str(coins),
-            "package_id": package_id,
-        },
-    )
+    except stripe.error.StripeError as e:
+        raise HTTPException(502, f"Stripe error: {e.user_message or str(e)}")
 
     return {
-        "client_secret": intent.client_secret,
-        "publishable_key": settings.STRIPE_PUBLISHABLE_KEY,
+        "checkout_url": session.url,
+        "session_id": session.id,
         "coins": coins,
         "price_cents": price_cents,
+    }
+
+
+# ─── POST /coins/stripe-webhook ──────────────────────────────────────────────
+@router.post("/stripe-webhook")
+async def stripe_webhook(
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """
+    Stripe webhook endpoint. Receives checkout.session.completed events and
+    credits coins to the user's wallet.
+
+    Configure in Stripe dashboard:
+      Endpoint: https://<your-api>/api/v1/coins/stripe-webhook
+      Events:   checkout.session.completed
+      Set STRIPE_WEBHOOK_SECRET env var to the signing secret shown.
+    """
+    if not STRIPE_WEBHOOK_SECRET:
+        raise HTTPException(500, "Webhook secret not configured (STRIPE_WEBHOOK_SECRET)")
+
+    payload = await request.body()
+    sig_header = request.headers.get("stripe-signature", "")
+
+    try:
+        event = stripe.Webhook.construct_event(
+            payload, sig_header, STRIPE_WEBHOOK_SECRET
+        )
+    except ValueError:
+        raise HTTPException(400, "Invalid payload")
+    except stripe.error.SignatureVerificationError:
+        raise HTTPException(400, "Invalid signature")
+
+    if event["type"] != "checkout.session.completed":
+        # We don't care about other events for now
+        return {"received": True, "ignored": True}
+
+    session = event["data"]["object"]
+    metadata = session.get("metadata") or {}
+    if metadata.get("type") != "coin_purchase":
+        return {"received": True, "ignored": True}
+
+    user_id_str = metadata.get("user_id")
+    coin_amount_str = metadata.get("coin_amount")
+    if not user_id_str or not coin_amount_str:
+        return {"received": True, "ignored": True, "reason": "missing metadata"}
+
+    try:
+        user_id = int(user_id_str)
+        coin_amount = int(coin_amount_str)
+    except ValueError:
+        return {"received": True, "ignored": True, "reason": "bad metadata"}
+
+    # Idempotency: if we've already credited this session, return early.
+    # Stripe may retry the webhook on transient failures.
+    existing = db.query(CoinTransaction).filter(
+        CoinTransaction.reference_id == session["id"],
+        CoinTransaction.type == "purchase",
+    ).first()
+    if existing:
+        return {"received": True, "already_credited": True}
+
+    user = db.get(User, user_id)
+    if not user:
+        return {"received": True, "ignored": True, "reason": "user not found"}
+
+    wallet = _get_or_create_wallet(db, user_id)
+    wallet.balance += coin_amount
+
+    amount_cents = session.get("amount_total") or 0
+    db.add(CoinTransaction(
+        user_id=user_id,
+        amount=coin_amount,
+        type="purchase",
+        description=f"Purchased {coin_amount} coins (${amount_cents / 100:.2f})",
+        reference_id=session["id"],
+    ))
+    db.commit()
+
+    return {
+        "received": True,
+        "credited": True,
+        "user_id": user_id,
+        "coins": coin_amount,
     }
 
 
@@ -419,7 +528,7 @@ def admin_reject_withdrawal(
     }
 
 
-# ─── Stripe Connect ──────────────────────────────────────────────────────────
+# ─── Stripe Connect (legacy — manual withdrawal flow doesn't use this) ───────
 @router.post("/connect-account")
 def create_connect_account(
     current_user: User = Depends(get_current_user),
@@ -461,8 +570,8 @@ def get_connect_link(
     stripe.api_key = settings.STRIPE_SECRET_KEY
     link = stripe.AccountLink.create(
         account=current_user.stripe_customer_id,
-        refresh_url="https://scouta.co/profile",
-        return_url="https://scouta.co/profile?stripe_connected=1",
+        refresh_url=f"{FRONTEND_URL}/profile",
+        return_url=f"{FRONTEND_URL}/profile?stripe_connected=1",
         type="account_onboarding",
     )
     return {"url": link.url}
