@@ -2,6 +2,11 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
+import {
+  TrendingUp, Wallet as WalletIcon, FileText, Users,
+  Radio, PenLine, ArrowRight, Gift, Crown,
+  History, Scissors, type LucideIcon,
+} from "lucide-react";
 
 const API = "/api/proxy/api/v1";
 
@@ -91,7 +96,10 @@ export default function StudioPage() {
           <p style={{ color: "#888", marginBottom: "1rem", fontFamily: "monospace", fontSize: "0.85rem" }}>
             Studio is for logged-in creators.
           </p>
-          <Link href="/login" style={primaryBtn}>Log in →</Link>
+          <Link href="/login" style={primaryBtn}>
+            <span>Log in</span>
+            <ArrowRight size={14} strokeWidth={1.75} />
+          </Link>
         </div>
       </main>
     );
@@ -111,8 +119,14 @@ export default function StudioPage() {
               </p>
             </div>
             <div style={{ display: "flex", gap: "0.6rem", flexWrap: "wrap" }}>
-              <Link href="/live/start" style={ctaPrimary}>Go Live →</Link>
-              <Link href="/posts/new" style={ctaSecondary}>+ Write</Link>
+              <Link href="/live/start" style={ctaPrimary}>
+                <Radio size={14} strokeWidth={1.75} />
+                <span>Go Live</span>
+              </Link>
+              <Link href="/posts/new" style={ctaSecondary}>
+                <PenLine size={14} strokeWidth={1.75} />
+                <span>Write</span>
+              </Link>
             </div>
           </div>
         </div>
@@ -130,10 +144,10 @@ export default function StudioPage() {
               gap: "0.875rem",
               marginBottom: "2.5rem",
             }}>
-              <Stat label="EARNED ALL TIME" value={balance?.lifetime_earned ?? earnings?.all_time ?? 0} accent="#4a9a4a" suffix="coins" />
-              <Stat label="WITHDRAWABLE" value={balance?.withdrawable_balance ?? 0} accent="#c8a96e" suffix="coins" />
-              <Stat label="POSTS" value={profile?.post_count ?? 0} accent="#4a7a9a" />
-              <Stat label="FOLLOWERS" value={profile?.follower_count ?? 0} accent="#9a6a4a" />
+              <Stat icon={TrendingUp} label="EARNED ALL TIME" value={balance?.lifetime_earned ?? earnings?.all_time ?? 0} accent="#4a9a4a" suffix="coins" />
+              <Stat icon={WalletIcon} label="WITHDRAWABLE" value={balance?.withdrawable_balance ?? 0} accent="#c8a96e" suffix="coins" />
+              <Stat icon={FileText} label="POSTS" value={profile?.post_count ?? 0} accent="#4a7a9a" />
+              <Stat icon={Users} label="FOLLOWERS" value={profile?.follower_count ?? 0} accent="#9a6a4a" />
             </div>
 
             {/* Earnings split */}
@@ -141,16 +155,17 @@ export default function StudioPage() {
               <div style={{ marginBottom: "2.5rem", paddingBottom: "1.5rem", borderBottom: "1px solid #141414" }}>
                 <p style={eyebrow}>EARNINGS</p>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.875rem", marginTop: "0.75rem" }}>
-                  <Stat label="THIS WEEK" value={earnings.this_week ?? 0} accent="#4a9a4a" suffix="coins" small />
-                  <Stat label="THIS MONTH" value={earnings.this_month ?? 0} accent="#4a9a4a" suffix="coins" small />
-                  <Stat label="ALL TIME" value={earnings.all_time ?? balance?.lifetime_earned ?? 0} accent="#4a9a4a" suffix="coins" small />
+                  <Stat icon={TrendingUp} label="THIS WEEK" value={earnings.this_week ?? 0} accent="#4a9a4a" suffix="coins" small />
+                  <Stat icon={TrendingUp} label="THIS MONTH" value={earnings.this_month ?? 0} accent="#4a9a4a" suffix="coins" small />
+                  <Stat icon={TrendingUp} label="ALL TIME" value={earnings.all_time ?? balance?.lifetime_earned ?? 0} accent="#4a9a4a" suffix="coins" small />
                 </div>
                 <Link href="/wallet" style={{
-                  display: "inline-block", marginTop: "1rem",
+                  display: "inline-flex", alignItems: "center", gap: "0.45rem", marginTop: "1rem",
                   fontSize: "0.7rem", color: "#4a7a9a", textDecoration: "none",
                   fontFamily: "monospace", letterSpacing: "0.1em",
                 }}>
-                  Manage wallet & withdraw →
+                  <span>Manage wallet &amp; withdraw</span>
+                  <ArrowRight size={12} strokeWidth={1.75} />
                 </Link>
               </div>
             )}
@@ -166,20 +181,23 @@ export default function StudioPage() {
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
                         <span style={{
                           width: 24, height: 24, borderRadius: "50%",
-                          background: "#1a1a1a", color: "#888",
+                          background: i === 0 ? "#231b0d" : "#1a1a1a",
+                          color: i === 0 ? "#c8a96e" : "#888",
+                          border: i === 0 ? "1px solid #3a2e10" : "none",
                           display: "flex", alignItems: "center", justifyContent: "center",
                           fontSize: "0.7rem", fontFamily: "monospace", fontWeight: 700,
                           flexShrink: 0,
                         }}>
-                          {i + 1}
+                          {i === 0 ? <Crown size={12} strokeWidth={1.75} /> : i + 1}
                         </span>
                         <span style={{ color: "#e0d0b0", fontFamily: "Georgia, serif", fontSize: "0.9rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                           {fan.name}
                         </span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "1rem", flexShrink: 0 }}>
-                        <span style={{ color: "#444", fontSize: "0.65rem", fontFamily: "monospace" }}>
-                          {fan.gifts} {fan.gifts === 1 ? "gift" : "gifts"}
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem", color: "#444", fontSize: "0.65rem", fontFamily: "monospace" }}>
+                          <Gift size={11} strokeWidth={1.75} />
+                          {fan.gifts}
                         </span>
                         <span style={{ color: "#c8a96e", fontSize: "0.85rem", fontFamily: "monospace", fontWeight: 700, minWidth: "60px", textAlign: "right" }}>
                           {fan.coins.toLocaleString()}
@@ -194,17 +212,27 @@ export default function StudioPage() {
             {/* Recent gifts */}
             <Section title="Recent gifts" subtitle="Last gifts received">
               {recentGifts.length === 0 ? (
-                <Empty body="No gifts received yet." sub="Stream live and let viewers send gifts." cta={{ href: "/live/start", label: "Start a stream" }} />
+                <Empty body="No gifts received yet." sub="Stream live and let viewers send gifts." cta={{ href: "/live/start", label: "Start a stream", icon: Radio }} />
               ) : (
                 <div>
                   {recentGifts.map(t => (
                     <div key={t.id} style={txRow}>
-                      <div style={{ minWidth: 0, flex: 1 }}>
-                        <div style={{ color: "#e0d0b0", fontFamily: "Georgia, serif", fontSize: "0.85rem", marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {t.description}
-                        </div>
-                        <div style={{ color: "#444", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>
-                          {formatDate(t.created_at)}
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flex: 1, minWidth: 0 }}>
+                        <span style={{
+                          width: 28, height: 28, borderRadius: "50%",
+                          background: "#1a1f0d", border: "1px solid #2a3a10",
+                          color: "#c8a96e", flexShrink: 0,
+                          display: "flex", alignItems: "center", justifyContent: "center",
+                        }}>
+                          <Gift size={13} strokeWidth={1.75} />
+                        </span>
+                        <div style={{ minWidth: 0, flex: 1 }}>
+                          <div style={{ color: "#e0d0b0", fontFamily: "Georgia, serif", fontSize: "0.85rem", marginBottom: "0.2rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {t.description}
+                          </div>
+                          <div style={{ color: "#444", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em" }}>
+                            {formatDate(t.created_at)}
+                          </div>
                         </div>
                       </div>
                       <div style={{ color: "#4a9a4a", fontSize: "0.95rem", fontFamily: "monospace", fontWeight: 700, marginLeft: "1rem", whiteSpace: "nowrap" }}>
@@ -220,15 +248,21 @@ export default function StudioPage() {
             <Section title="Coming soon" subtitle="">
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.875rem" }}>
                 {[
-                  { title: "Stream history", body: "Past streams with peak viewers, duration, and gifts per session." },
-                  { title: "Audience growth", body: "Follower trend, retention, and best-performing content." },
-                  { title: "Clip studio", body: "Auto-generated highlights from your live streams." },
-                ].map((c) => (
-                  <div key={c.title} style={comingCard}>
-                    <p style={{ color: "#888", fontSize: "0.85rem", fontFamily: "Georgia, serif", margin: "0 0 0.4rem" }}>{c.title}</p>
-                    <p style={{ color: "#555", fontSize: "0.7rem", fontFamily: "monospace", lineHeight: 1.55, margin: 0 }}>{c.body}</p>
-                  </div>
-                ))}
+                  { icon: History, title: "Stream history", body: "Past streams with peak viewers, duration, and gifts per session." },
+                  { icon: TrendingUp, title: "Audience growth", body: "Follower trend, retention, and best-performing content." },
+                  { icon: Scissors, title: "Clip studio", body: "Auto-generated highlights from your live streams." },
+                ].map((c) => {
+                  const Icon = c.icon;
+                  return (
+                    <div key={c.title} style={comingCard}>
+                      <div style={{ color: "#444", marginBottom: "0.55rem", display: "flex" }}>
+                        <Icon size={16} strokeWidth={1.5} />
+                      </div>
+                      <p style={{ color: "#888", fontSize: "0.85rem", fontFamily: "Georgia, serif", margin: "0 0 0.4rem" }}>{c.title}</p>
+                      <p style={{ color: "#555", fontSize: "0.7rem", fontFamily: "monospace", lineHeight: 1.55, margin: 0 }}>{c.body}</p>
+                    </div>
+                  );
+                })}
               </div>
             </Section>
           </>
@@ -238,9 +272,12 @@ export default function StudioPage() {
   );
 }
 
-function Stat({ label, value, accent, suffix, small }: { label: string; value: number; accent: string; suffix?: string; small?: boolean }) {
+function Stat({ icon: Icon, label, value, accent, suffix, small }: { icon: LucideIcon; label: string; value: number; accent: string; suffix?: string; small?: boolean }) {
   return (
-    <div style={{ background: "#0d0d0d", border: "1px solid #1a1a1a", padding: "1.1rem 1.1rem 1rem" }}>
+    <div style={{ position: "relative", background: "#0d0d0d", border: "1px solid #1a1a1a", padding: "1.1rem 1.1rem 1rem" }}>
+      <div style={{ position: "absolute", top: "0.85rem", right: "0.9rem", color: `${accent}55`, display: "flex" }}>
+        <Icon size={16} strokeWidth={1.5} />
+      </div>
       <p style={{ fontSize: "0.55rem", letterSpacing: "0.25em", color: "#555", fontFamily: "monospace", margin: "0 0 0.55rem" }}>{label}</p>
       <p style={{
         fontSize: small ? "1.4rem" : "1.75rem", fontFamily: "monospace",
@@ -269,14 +306,20 @@ function Section({ title, subtitle, children }: { title: string; subtitle?: stri
   );
 }
 
-function Empty({ body, sub, cta }: { body: string; sub: string; cta?: { href: string; label: string } }) {
+function Empty({ body, sub, cta }: { body: string; sub: string; cta?: { href: string; label: string; icon?: LucideIcon } }) {
+  const Icon = cta?.icon;
   return (
     <div style={{ padding: "2.5rem 1.5rem", textAlign: "center", border: "1px dashed #1a1a1a", background: "#0a0a0a" }}>
       <p style={{ color: "#777", fontSize: "0.85rem", fontFamily: "Georgia, serif", marginBottom: "0.4rem" }}>{body}</p>
       <p style={{ color: "#444", fontSize: "0.7rem", fontFamily: "monospace", letterSpacing: "0.05em", marginBottom: cta ? "1rem" : 0 }}>
         {sub}
       </p>
-      {cta && <Link href={cta.href} style={ctaPrimary}>{cta.label}</Link>}
+      {cta && (
+        <Link href={cta.href} style={ctaPrimary}>
+          {Icon && <Icon size={14} strokeWidth={1.75} />}
+          <span>{cta.label}</span>
+        </Link>
+      )}
     </div>
   );
 }
@@ -299,15 +342,17 @@ const eyebrow: React.CSSProperties = { fontSize: "0.6rem", letterSpacing: "0.3em
 const h1: React.CSSProperties = { fontSize: "clamp(1.6rem, 4vw, 2.5rem)", fontWeight: 400, fontFamily: "Georgia, serif", margin: "0.4rem 0 0" };
 const ctaPrimary: React.CSSProperties = {
   background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a",
-  padding: "0.65rem 1.4rem", textDecoration: "none",
+  padding: "0.65rem 1.2rem", textDecoration: "none",
   fontSize: "0.7rem", letterSpacing: "0.15em", textTransform: "uppercase",
-  fontFamily: "monospace", display: "inline-block",
+  fontFamily: "monospace",
+  display: "inline-flex", alignItems: "center", gap: "0.5rem",
 };
 const ctaSecondary: React.CSSProperties = {
   background: "transparent", border: "1px solid #2a2a2a", color: "#888",
-  padding: "0.65rem 1.4rem", textDecoration: "none",
+  padding: "0.65rem 1.2rem", textDecoration: "none",
   fontSize: "0.7rem", letterSpacing: "0.15em", textTransform: "uppercase",
-  fontFamily: "monospace", display: "inline-block",
+  fontFamily: "monospace",
+  display: "inline-flex", alignItems: "center", gap: "0.5rem",
 };
 const primaryBtn = ctaPrimary;
 const fanRow: React.CSSProperties = {
