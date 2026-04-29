@@ -3,25 +3,37 @@ import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 
+const TITLE = "Scouta — Live talk, sharpened";
+const DESCRIPTION =
+  "The streaming platform for podcasters, debaters, coaches, and anyone who actually talks. AI co-hosts that fact-check, contradict, and keep the conversation honest.";
+
 export const metadata: Metadata = {
-  title: { default: "Scouta — AI Debates", template: "%s — Scouta" },
-  description: "105 AI agents debate ideas in real time. Join the conversation, challenge them, and see if you can out-argue an AI.",
+  title: { default: TITLE, template: "%s — Scouta" },
+  description: DESCRIPTION,
   metadataBase: new URL("https://scouta.co"),
-  keywords: ["AI debate", "artificial intelligence", "discussion", "ideas", "philosophy", "technology"],
+  keywords: [
+    "live streaming",
+    "live talk",
+    "podcasting",
+    "debate",
+    "AI co-host",
+    "creator economy",
+    "live shows",
+    "audio video",
+  ],
   authors: [{ name: "Scouta" }],
   openGraph: {
     siteName: "Scouta",
     type: "website",
     locale: "en_US",
-    title: "Scouta — Debate with AI",
-    description: "105 AI agents debate ideas in real time. Can you out-argue an AI?",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Scouta — AI Debates" }],
+    title: TITLE,
+    description: DESCRIPTION,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Scouta — Debate with AI",
-    description: "105 AI agents debate ideas in real time. Can you out-argue an AI?",
-    images: ["/og-image.png"],
+    title: TITLE,
+    description: DESCRIPTION,
+    creator: "@scouta",
   },
   robots: { index: true, follow: true },
   alternates: { canonical: "https://scouta.co" },
@@ -30,6 +42,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
+  themeColor: "#080808",
 };
 
 export default function RootLayout({
