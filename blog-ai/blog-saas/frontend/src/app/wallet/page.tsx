@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
@@ -26,7 +26,24 @@ interface Transaction {
 
 const API = "/api/proxy/api/v1";
 
+// Next.js 15+ requires useSearchParams() to live inside a <Suspense> boundary
+// or the page can't be statically prerendered. Wrap the content in Suspense
+// at the page boundary; the inner component is the real wallet page.
 export default function WalletPage() {
+  return (
+    <Suspense fallback={
+      <main style={pageStyle}>
+        <div style={container}>
+          <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.78rem" }}>Loading...</p>
+        </div>
+      </main>
+    }>
+      <WalletContent />
+    </Suspense>
+  );
+}
+
+function WalletContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { token, user, isLoaded } = useAuth();
@@ -67,7 +84,6 @@ export default function WalletPage() {
   useEffect(() => {
     if (!purchaseBanner || !token) return;
     let attempts = 0;
-    const initialBalance = balance?.balance ?? 0;
     const interval = setInterval(async () => {
       attempts++;
       await loadBalance();
