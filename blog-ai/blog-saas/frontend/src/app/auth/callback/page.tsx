@@ -1,10 +1,12 @@
 "use client";
 import { useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 function AuthCallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
+  const { login } = useAuth();
 
   useEffect(() => {
     const token = params.get("token");
@@ -14,22 +16,24 @@ function AuthCallbackContent() {
     const avatar_url = params.get("avatar_url");
 
     if (token) {
-      // Guardar directamente en localStorage sin depender del context
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify({
-        id: user_id,
-        username,
-        display_name,
-        avatar_url,
-      }));
-      // Cookie para SSR
+      // Push the token through the AuthContext so React state updates
+      // synchronously. Previously we wrote localStorage and did a hard
+      // window.location.href = "/posts", which made the destination page
+      // mount with `useAuth().token === null` for one render — its first
+      // fetch fired without Authorization and got 401.
+      login(token, {
+        id: user_id ?? "",
+        username: username ?? "",
+        display_name: display_name ?? "",
+        avatar_url: avatar_url ?? "",
+      });
+      // Cookie for SSR-rendered routes that read auth_token.
       document.cookie = `auth_token=${token}; path=/; SameSite=Strict; max-age=604800`;
-      // Redirigir
-      window.location.href = "/posts";
+      router.replace("/posts");
     } else {
-      window.location.href = "/login?error=google_failed";
+      router.replace("/login?error=google_failed");
     }
-  }, [params, router]);
+  }, [params, router, login]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
