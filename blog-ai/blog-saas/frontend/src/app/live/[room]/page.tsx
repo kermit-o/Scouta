@@ -72,6 +72,32 @@ function LiveRoomContent() {
   const [roomPassword, setRoomPassword] = useState("");
   const [accessError, setAccessError] = useState("");
 
+  // Auto-end the stream when the original host closes the tab or navigates
+  // away. Without this, the live_streams row stays status='live' forever —
+  // a zombie that shows up in /live with a placeholder card and no video.
+  // fetch + keepalive lets the request survive the unload in modern browsers
+  // (Chrome 73+, Firefox 117+, Safari 16.4+).
+  useEffect(() => {
+    if (!isOriginalHost || !token || typeof window === "undefined") return;
+    const endStreamBeacon = () => {
+      try {
+        fetch(`/api/proxy/live/${room}/end`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          keepalive: true,
+        });
+      } catch {
+        // best-effort — server-side cleanup will catch it eventually
+      }
+    };
+    window.addEventListener("beforeunload", endStreamBeacon);
+    window.addEventListener("pagehide", endStreamBeacon);
+    return () => {
+      window.removeEventListener("beforeunload", endStreamBeacon);
+      window.removeEventListener("pagehide", endStreamBeacon);
+    };
+  }, [isOriginalHost, room, token]);
+
   // Fetch coin balance
   useEffect(() => {
     if (!token) return;
