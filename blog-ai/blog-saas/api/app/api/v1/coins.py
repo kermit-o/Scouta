@@ -1,6 +1,7 @@
 """
 Coin wallet — balance, purchase via Stripe Checkout, transaction history, withdrawals
 """
+import json
 import os
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -159,8 +160,11 @@ async def stripe_webhook(
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
 
+    # Verify signature only — discard the StripeObject and parse the raw payload
+    # ourselves below. Stripe SDK 9+ StripeObjects no longer inherit from dict,
+    # so .get() on them raises AttributeError. Plain json.loads avoids the trap.
     try:
-        event = stripe.Webhook.construct_event(
+        stripe.Webhook.construct_event(
             payload, sig_header, STRIPE_WEBHOOK_SECRET
         )
     except ValueError:
@@ -168,16 +172,12 @@ async def stripe_webhook(
     except stripe.error.SignatureVerificationError:
         raise HTTPException(400, "Invalid signature")
 
-    if event["type"] != "checkout.session.completed":
-        # We don't care about other events for now
+    event = json.loads(payload)
+
+    if event.get("type") != "checkout.session.completed":
         return {"received": True, "ignored": True}
 
-    session = event["data"]["object"]
-    # Stripe SDK 8+ StripeObjects no longer inherit from dict, so .get() raises
-    # AttributeError. Convert to a plain dict for safe access.
-    if hasattr(session, "to_dict_recursive"):
-        session = session.to_dict_recursive()
-
+    session = (event.get("data") or {}).get("object") or {}
     metadata = session.get("metadata") or {}
     if metadata.get("type") != "coin_purchase":
         return {"received": True, "ignored": True}
