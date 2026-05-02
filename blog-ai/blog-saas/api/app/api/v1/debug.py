@@ -1,7 +1,29 @@
-from fastapi import APIRouter
+"""
+Debug helpers — protected behind require_superuser.
+
+Every endpoint here either inspects internals, runs DB writes, or burns
+LLM quota. They were originally one-off helpers exposed without auth, which
+was a privilege escalation risk (anyone could call /debug/seed-agents,
+/debug/create-tables, /debug/test-media-write to write to the DB).
+"""
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 import os
 
-router = APIRouter(tags=["debug"])
+from app.core.db import SessionLocal
+from app.core.deps import require_superuser
+from app.models.user import User
+
+router = APIRouter(tags=["debug"], dependencies=[Depends(require_superuser)])
+
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 
 @router.get("/debug/llm-test")
 def test_llm():
@@ -27,6 +49,7 @@ def test_llm():
         result["status"] = "disabled"
     return result
 
+
 @router.post("/debug/create-tables")
 def create_tables():
     from app.core.db import Base, engine
@@ -39,10 +62,8 @@ def create_tables():
 
 
 @router.post("/debug/seed-agents")
-def seed_agents():
-    from app.core.db import SessionLocal
+def seed_agents(db: Session = Depends(get_db)):
     from app.models.agent_profile import AgentProfile
-    db = SessionLocal()
     new_agents = [
         {"display_name": "Geopolitics Realist", "handle": "realpol", "style": "cold", "persona_seed": "Only power matters. Alliances shift, empires fall, ideology is cope.", "topics": "geopolitics,china,usa,russia,multipolar", "risk_level": 2},
         {"display_name": "BRICS Accelerationist", "handle": "brics_chad", "style": "strategic", "persona_seed": "The West is declining. Multipolar world + AGI = new world order.", "topics": "geopolitics,brics,dedollarization,eurasia", "risk_level": 3},
@@ -66,7 +87,6 @@ def seed_agents():
             db.add(AgentProfile(org_id=1, is_public=True, is_enabled=True, avatar_url="", bio="", **a))
             added += 1
     db.commit()
-    db.close()
     return {"added": added}
 
 
@@ -78,32 +98,32 @@ def media_version():
     src = inspect.getsource(create_human_post)
     has_media = "media_url" in src
     return {"has_media_fix": has_media, "version": "2026-03-15"}
-# force redeploy 1773534020
+
 
 @router.post("/debug/test-media-write")
-def test_media_write(db = __import__("fastapi", fromlist=["Depends"]).Depends(__import__("app.core.db", fromlist=["get_db"]).get_db)):
+def test_media_write(db: Session = Depends(get_db)):
     """Test escribir media_url directamente en DB"""
     from sqlalchemy import text
-    # Ver columnas de posts
     result = db.execute(text("SELECT column_name FROM information_schema.columns WHERE table_name='posts' AND column_name LIKE 'media%'"))
     cols = [row[0] for row in result]
-    # Intentar update en post existente
     try:
         db.execute(text("UPDATE posts SET media_url='https://test.r2.dev/test.mp4', media_type='video' WHERE id=985"))
         db.commit()
         updated = True
+        error = None
     except Exception as e:
         updated = False
         error = str(e)
-    # Verificar
     result2 = db.execute(text("SELECT media_url, media_type FROM posts WHERE id=985"))
     row = result2.fetchone()
     return {
         "media_columns_exist": cols,
         "update_success": updated,
+        "error": error,
         "post_985_media_url": row[0] if row else None,
         "post_985_media_type": row[1] if row else None,
     }
+
 
 @router.get("/debug/check-post-model")
 def check_post_model():
