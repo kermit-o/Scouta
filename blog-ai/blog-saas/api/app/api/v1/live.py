@@ -39,6 +39,30 @@ def _make_identity(user_id: int) -> str:
     return f"u{user_id}_{secrets.token_hex(3)}"
 
 
+def _safe_int(value, default: int = 0) -> int:
+    """Coerce a payload value to int without crashing on null / strings /
+    bools. Used for client-supplied numeric fields where FastAPI hasn't
+    validated the shape (we accept `dict` payloads here)."""
+    try:
+        if value is None or value is False:
+            return default
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _require_host(db: Session, room_name: str, user_id: int):
+    """Raise 403 unless the caller is the original host of the live stream."""
+    stream = db.execute(
+        text("SELECT host_user_id FROM live_streams WHERE room_name=:room"),
+        {"room": room_name},
+    ).first()
+    if not stream:
+        raise HTTPException(status_code=404, detail="Stream not found")
+    if stream.host_user_id != user_id:
+        raise HTTPException(status_code=403, detail="Only the host can do that")
+
+
 def _create_livekit_token(room_name: str, identity: str, display_name: str = None, can_publish: bool = False) -> str:
     """Generate a LiveKit JWT token."""
     display = display_name or identity
@@ -77,6 +101,8 @@ def _create_livekit_token(room_name: str, identity: str, display_name: str = Non
 _room_connections: dict[str, list[WebSocket]] = {}
 # ── Pending join requests per room ────────────────────────────────────
 _join_requests: dict[str, list[dict]] = {}
+# ── Blocked usernames per room (in-memory, lost on restart) ───────────
+_blocked_per_room: dict[str, set[str]] = {}
 
 
 @router.post("/live/start")
@@ -101,12 +127,12 @@ def start_live(
 
     room_name = _gen_room_name()
 
-    # Private room settings
-    is_private = payload.get("is_private", False)
+    # Private room settings — payload values are user-supplied so coerce safely.
+    is_private = bool(payload.get("is_private", False))
     access_type = payload.get("access_type", "public")
-    entry_coin_cost = int(payload.get("entry_coin_cost", 0))
-    max_viewer_limit = int(payload.get("max_viewer_limit", 0))
-    password = payload.get("password", "")
+    entry_coin_cost = _safe_int(payload.get("entry_coin_cost"), 0)
+    max_viewer_limit = _safe_int(payload.get("max_viewer_limit"), 0)
+    password = payload.get("password", "") or ""
 
     password_hash = None
     if is_private and access_type == "password" and password:
@@ -334,7 +360,8 @@ async def end_live(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """End a live stream."""
+    """End a live stream — host only."""
+    _require_host(db, room_name, user.id)
     db.execute(text(
         "UPDATE live_streams SET status='ended', ended_at=NOW() WHERE room_name=:room"
     ), {"room": room_name})
@@ -376,23 +403,25 @@ def join_live_anon(room_name: str, db: Session = Depends(get_db)):
 
 
 @router.post("/live/{room_name}/block")
-def block_from_live(
+async def block_from_live(
     room_name: str,
     payload: dict,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """Host blocks a user from the live chat."""
+    """Host blocks a user from the live chat. Mutes them via WS broadcast and
+    drops their messages in the chat WS handler (see _is_blocked check)."""
+    _require_host(db, room_name, user.id)
     username = payload.get("username")
     if not username:
         raise HTTPException(status_code=400, detail="username required")
-    if room_name in _room_connections:
-        block_msg = json.dumps({"type": "blocked", "username": username})
-        if not hasattr(_room_connections, "_blocked"):
-            _room_connections["_blocked"] = {}
-        _room_connections["_blocked"][room_name] = _room_connections.get("_blocked_" + room_name, set())
-        _room_connections["_blocked_" + room_name] = _room_connections.get("_blocked_" + room_name, set())
-        _room_connections["_blocked_" + room_name].add(username)
+    _blocked_per_room.setdefault(room_name, set()).add(username)
+    block_msg = json.dumps({"type": "blocked", "username": username})
+    for ws in list(_room_connections.get(room_name, [])):
+        try:
+            await ws.send_text(block_msg)
+        except Exception:
+            pass
     return {"ok": True, "blocked": username}
 
 
@@ -438,6 +467,7 @@ async def accept_join(
     user: User = Depends(get_current_user),
 ):
     """Host accepts a join request — returns publisher token for the requester."""
+    _require_host(db, room_name, user.id)
     username = payload.get("username")
     accept = payload.get("accept", True)
 
@@ -488,6 +518,7 @@ async def kick_from_live(
     user: User = Depends(get_current_user),
 ):
     """Host kicks a co-host from the live."""
+    _require_host(db, room_name, user.id)
     username = payload.get("username")
     kick_msg = json.dumps({"type": "kicked", "username": username})
     for ws in list(_room_connections.get(room_name, [])):
@@ -527,6 +558,7 @@ def get_join_requests(
     db: Session = Depends(get_db),
 ):
     """Host polls for pending join requests."""
+    _require_host(db, room_name, user.id)
     requests = _join_requests.get(room_name, [])
     return {"requests": requests}
 
@@ -725,12 +757,16 @@ async def live_chat_ws(websocket: WebSocket, room_name: str):
         while True:
             data = await websocket.receive_text()
             msg = json.loads(data)
+            sender_username = msg.get("username")
+            # Drop messages from blocked users (host called /block on them).
+            if sender_username and sender_username in _blocked_per_room.get(room_name, set()):
+                continue
             db = SessionLocal()
             try:
                 db.execute(text(
                     "INSERT INTO live_chat (room_name, user_id, username, display_name, message) "
                     "VALUES (:room, :uid, :uname, :dname, :msg)"
-                ), {"room": room_name, "uid": msg.get("user_id"), "uname": msg.get("username"),
+                ), {"room": room_name, "uid": msg.get("user_id"), "uname": sender_username,
                     "dname": msg.get("display_name"), "msg": msg.get("message", "")})
                 db.commit()
             finally:
@@ -738,7 +774,7 @@ async def live_chat_ws(websocket: WebSocket, room_name: str):
 
             broadcast = json.dumps({
                 "type": "chat",
-                "username": msg.get("username"),
+                "username": sender_username,
                 "display_name": msg.get("display_name"),
                 "message": msg.get("message"),
                 "is_agent": False,
