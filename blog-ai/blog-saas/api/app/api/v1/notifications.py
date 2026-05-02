@@ -30,6 +30,21 @@ def list_notifications(
     }
 
 
+# Lightweight badge endpoint — used by the nav (DesktopRail, MobileTopBar).
+# Was missing entirely, causing repeated 404s in production logs.
+@router.get("/notifications/unread-count")
+def unread_count(
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    from sqlalchemy import text
+    row = db.execute(
+        text("SELECT COUNT(*) FROM notifications WHERE user_id=:uid AND read=0"),
+        {"uid": user.id},
+    ).scalar()
+    return {"unread": int(row or 0)}
+
+
 @router.post("/notifications/read-all")
 def mark_all_read(
     db: Session = Depends(get_db),
