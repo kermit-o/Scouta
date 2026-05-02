@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState, useRef, useMemo } from "react";
+import { Suspense, useEffect, useState, useRef, useMemo } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import Link from "next/link";
@@ -25,7 +25,22 @@ interface ChatMessage {
 }
 
 
+// Next.js 15+ requires useSearchParams()/useParams() to live inside a <Suspense>
+// boundary or static prerender fails. The inner LiveRoomContent holds the real
+// page logic; this wrapper just exists to satisfy the boundary requirement.
 export default function LiveRoomPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ height: "100vh", background: "#080808", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ color: "#444", fontFamily: "monospace", fontSize: "0.7rem", letterSpacing: "0.2em" }}>CONNECTING...</p>
+      </div>
+    }>
+      <LiveRoomContent />
+    </Suspense>
+  );
+}
+
+function LiveRoomContent() {
   const { room } = useParams();
   const searchParams = useSearchParams();
   const { token, user } = useAuth();
