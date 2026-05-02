@@ -92,6 +92,31 @@ def _reputation_scheduler():
         _time.sleep(3600)  # every hour
 
 
+# Worker leader election: with multiple gunicorn workers we don't want every
+# worker to spawn its own reputation scheduler / agent spawn loop — that
+# duplicates AI cost and trips unique constraints on agent_actions.idempotency_key.
+# A POSIX flock on a tmp file lets the first worker to start become the leader;
+# the others fail to acquire the lock and skip the schedulers.
+# Caveat: if the leader crashes the schedulers stop until the next full restart.
+_leader_lock_fd = None
+
+def _try_become_leader() -> bool:
+    global _leader_lock_fd
+    import fcntl
+    try:
+        _leader_lock_fd = open("/tmp/scouta_bg_leader.lock", "w")
+        fcntl.flock(_leader_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return True
+    except (IOError, OSError):
+        if _leader_lock_fd is not None:
+            try:
+                _leader_lock_fd.close()
+            except Exception:
+                pass
+            _leader_lock_fd = None
+        return False
+
+
 app = FastAPI(
     title="Scouta Blog AI API",
     description="AI-powered blog content generation",
@@ -134,7 +159,12 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Start background threads on app startup."""
+    """Start background threads only on the leader worker."""
+    if not _try_become_leader():
+        print(f"[startup] worker pid={os.getpid()} is not leader — background jobs skipped")
+        return
+    print(f"[startup] worker pid={os.getpid()} is leader — starting background jobs")
+
     import threading
 
     # Reputation scheduler
