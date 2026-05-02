@@ -1,6 +1,7 @@
 """
 Billing endpoints — Stripe Elements + Webhooks
 """
+import json
 import stripe
 import traceback as tb
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
@@ -166,25 +167,35 @@ async def stripe_webhook(
     stripe_signature: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
+    """
+    Handles subscription lifecycle events. Verifies signature, then parses
+    the payload as plain JSON to avoid Stripe SDK 9+ StripeObject .get() trap.
+    """
     s = get_stripe()
     payload = await request.body()
     try:
-        event = s.Webhook.construct_event(
+        s.Webhook.construct_event(
             payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET
         )
     except stripe.error.SignatureVerificationError:
         raise HTTPException(400, "Invalid signature")
+    except ValueError:
+        raise HTTPException(400, "Invalid payload")
 
-    if event["type"] == "invoice.payment_succeeded":
-        _handle_payment_succeeded(event["data"]["object"], db)
-    elif event["type"] in ("customer.subscription.deleted", "invoice.payment_failed"):
-        _handle_subscription_ended(event["data"]["object"], db)
-    elif event["type"] == "payment_intent.succeeded":
-        _handle_coin_purchase(event["data"]["object"], db)
+    event = json.loads(payload)
+    event_type = event.get("type")
+    obj = (event.get("data") or {}).get("object") or {}
+
+    if event_type == "invoice.payment_succeeded":
+        _handle_payment_succeeded(obj, db)
+    elif event_type in ("customer.subscription.deleted", "invoice.payment_failed"):
+        _handle_subscription_ended(obj, db)
+    elif event_type == "payment_intent.succeeded":
+        _handle_coin_purchase(obj, db)
     return {"ok": True}
 
 
-def _handle_payment_succeeded(invoice, db: Session):
+def _handle_payment_succeeded(invoice: dict, db: Session):
     stripe_sub_id = invoice.get("subscription")
     customer_id = invoice.get("customer")
     if not stripe_sub_id:
@@ -194,7 +205,12 @@ def _handle_payment_succeeded(invoice, db: Session):
         return
     s = get_stripe()
     stripe_sub = s.Subscription.retrieve(stripe_sub_id)
-    plan_id = int(stripe_sub.metadata.get("plan_id", 2))
+    # StripeObject metadata doesn't expose .get() in SDK 9+; use bracket access
+    # with try/except so missing/malformed metadata defaults to plan_id=2 (creator).
+    try:
+        plan_id = int(stripe_sub["metadata"]["plan_id"])
+    except (KeyError, TypeError, ValueError):
+        plan_id = 2
     from datetime import datetime, timezone
     period_end = datetime.fromtimestamp(stripe_sub.current_period_end, tz=timezone.utc)
     sub = db.query(Subscription).filter(Subscription.user_id == user.id).first()
@@ -234,7 +250,7 @@ def _handle_payment_succeeded(invoice, db: Session):
         print(f"[email] subscription confirmation failed: {e}")
 
 
-def _handle_subscription_ended(obj, db: Session):
+def _handle_subscription_ended(obj: dict, db: Session):
     stripe_sub_id = obj.get("id") or obj.get("subscription")
     if not stripe_sub_id:
         return
@@ -254,9 +270,10 @@ def _handle_subscription_ended(obj, db: Session):
                     org.subscription_status = "free"
         db.commit()
 
-def _handle_coin_purchase(payment_intent, db: Session):
+
+def _handle_coin_purchase(payment_intent: dict, db: Session):
     """Credit coins to user wallet after successful Stripe payment."""
-    metadata = payment_intent.get("metadata", {})
+    metadata = payment_intent.get("metadata") or {}
     if metadata.get("type") != "coin_purchase":
         return  # Not a coin purchase, skip
 
@@ -302,26 +319,3 @@ def _handle_coin_purchase(payment_intent, db: Session):
     db.add(txn)
     db.commit()
     print(f"[coins] credited {coin_amount} coins to user {user_id} (payment {payment_id})")
-
-
-@router.post("/fix-org-member")
-def fix_org_member(
-    current_user=Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """One-time fix: ensure current user has org_member record."""
-    from app.models.org_member import OrgMember
-    from app.models.org import Org
-    org = db.query(Org).first()
-    if not org:
-        return {"error": "no org found"}
-    existing = db.query(OrgMember).filter(
-        OrgMember.user_id == current_user.id,
-        OrgMember.org_id == org.id,
-    ).first()
-    if existing:
-        return {"status": "already exists", "org_id": org.id, "role": existing.role}
-    member = OrgMember(org_id=org.id, user_id=current_user.id, role="owner")
-    db.add(member)
-    db.commit()
-    return {"status": "created", "org_id": org.id, "role": "owner"}
