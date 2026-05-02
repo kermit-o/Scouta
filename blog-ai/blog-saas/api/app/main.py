@@ -160,6 +160,12 @@ app.add_middleware(
 @app.on_event("startup")
 async def startup_event():
     """Start background threads only on the leader worker."""
+    # Kill switch for the schedulers — set ENABLE_BG_JOBS=false on Railway
+    # to stop the spawn_loop / reputation_job without redeploying. Useful
+    # when LLM providers are out of credit and logs are being spammed.
+    if os.getenv("ENABLE_BG_JOBS", "true").strip().lower() in ("0", "false", "no", "off"):
+        print("[startup] ENABLE_BG_JOBS is off — background jobs skipped")
+        return
     if not _try_become_leader():
         print(f"[startup] worker pid={os.getpid()} is not leader — background jobs skipped")
         return
