@@ -45,6 +45,29 @@ export default function StartLivePage() {
     setSubmitting(true);
     setError("");
 
+    // Check camera + mic BEFORE creating the live_streams row — otherwise a
+    // device without a camera (or with permissions denied) leaves a zombie
+    // row marked status='live' that nobody can publish to and only the host
+    // can end. Stop the tracks immediately; the actual broadcast happens
+    // inside LiveKitRoom on the next page.
+    try {
+      const probe = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      probe.getTracks().forEach((t) => t.stop());
+    } catch (err: unknown) {
+      const name = (err as { name?: string })?.name || "";
+      let msg = "No camera or microphone available. Use a device with both to go live.";
+      if (name === "NotAllowedError" || name === "SecurityError") {
+        msg = "Camera/mic access denied. Enable permissions in your browser and try again.";
+      } else if (name === "NotFoundError" || name === "OverconstrainedError") {
+        msg = "No camera or microphone detected on this device.";
+      } else if (name === "NotReadableError") {
+        msg = "Camera or microphone is already in use by another app.";
+      }
+      setError(msg);
+      setSubmitting(false);
+      return;
+    }
+
     const body: Record<string, unknown> = {
       title: title.trim(),
       description: description.trim(),
