@@ -173,6 +173,11 @@ async def stripe_webhook(
         return {"received": True, "ignored": True}
 
     session = event["data"]["object"]
+    # Stripe SDK 8+ StripeObjects no longer inherit from dict, so .get() raises
+    # AttributeError. Convert to a plain dict for safe access.
+    if hasattr(session, "to_dict_recursive"):
+        session = session.to_dict_recursive()
+
     metadata = session.get("metadata") or {}
     if metadata.get("type") != "coin_purchase":
         return {"received": True, "ignored": True}
