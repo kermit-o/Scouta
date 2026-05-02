@@ -10,7 +10,7 @@ import GiftAnimation from "./GiftAnimation";
 const LivePlayer = dynamic(() => import("./LivePlayer"), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
-const LIVEKIT_URL = "wss://scouta-pi70lg8z.livekit.cloud";
+const LIVEKIT_URL = process.env.NEXT_PUBLIC_LIVEKIT_URL || "wss://scouta-pi70lg8z.livekit.cloud";
 
 // Dynamic imports — no SSR
 const LiveKitRoom = dynamic(() => import("@livekit/components-react").then(m => ({ default: m.LiveKitRoom })), { ssr: false });
@@ -44,8 +44,15 @@ function LiveRoomContent() {
   const { room } = useParams();
   const searchParams = useSearchParams();
   const { token, user } = useAuth();
-  const isHost = searchParams.get("host") === "1";
+  // host=1 in the URL means "you should publish to LiveKit" — set by both the
+  // original host (created the room) and accepted co-hosts (joined via invite).
+  // The discriminator is the `token` query param: co-hosts arrive with a
+  // pre-issued LiveKit token from the join_accepted message; the original host
+  // does not.
   const preToken = searchParams.get("token");
+  const isHost = searchParams.get("host") === "1";
+  const isCoHost = isHost && preToken !== null;
+  const isOriginalHost = isHost && !preToken;
 
   const [livekitToken, setLivekitToken] = useState<string | null>(preToken);
   const [streamTitle, setStreamTitle] = useState("");
@@ -64,7 +71,6 @@ function LiveRoomContent() {
   const [accessBlock, setAccessBlock] = useState<string | null>(null); // password_required, invite_only, paid_entry:N, room_full
   const [roomPassword, setRoomPassword] = useState("");
   const [accessError, setAccessError] = useState("");
-  const isCoHost = !isHost && searchParams.get('token') !== null && searchParams.get('host') === '1';
 
   // Fetch coin balance
   useEffect(() => {
@@ -122,7 +128,8 @@ function LiveRoomContent() {
   useEffect(() => {
     const handler = (e: any) => {
       const msg = e.detail;
-      if (msg.type === 'join_request' && isHost) {
+      // Only the original host approves/rejects join requests; co-hosts skip.
+      if (msg.type === 'join_request' && isOriginalHost) {
         setJoinRequests(prev => prev.find((r: any) => r.username === msg.username) ? prev : [...prev, { username: msg.username, display_name: msg.display_name, user_id: msg.user_id }]);
       } else if (msg.type === 'join_accepted' && msg.username === (user as any)?.username) {
         // Join as co-host
@@ -140,7 +147,7 @@ function LiveRoomContent() {
     };
     window.addEventListener('live_ws_message', handler);
     return () => window.removeEventListener('live_ws_message', handler);
-  }, [isHost, room, user]);
+  }, [isOriginalHost, room, user]);
 
   // Poll viewer count
   useEffect(() => {
@@ -346,7 +353,7 @@ function LiveRoomContent() {
         <h2 style={{ fontSize: "0.9rem", fontWeight: 400, fontFamily: "Georgia, serif", color: "#f0e8d8", margin: 0, flex: 1 }}>{streamTitle || `Room: ${room}`}</h2>
         <span style={{ fontSize: "0.6rem", color: "#444", fontFamily: "monospace" }}>{viewerCount} viewers</span>
         {token && <span style={{ fontSize: "0.6rem", color: "#9a6a4a", fontFamily: "monospace" }}>🪙 {coinBalance.toLocaleString()}</span>}
-        {isHost && (
+        {isOriginalHost && (
           <>
             <button
               onClick={() => setShowInvite(s => !s)}
@@ -386,7 +393,7 @@ function LiveRoomContent() {
         )}
 
         {/* Invite modal */}
-        {showInvite && isHost && (
+        {showInvite && isOriginalHost && (
           <div style={{ position: "absolute", top: 60, right: 12, background: "#0e0e0e", border: "1px solid #1a1a1a", padding: "1rem", zIndex: 40, width: 240 }}>
             <p style={{ fontSize: "0.6rem", color: "#555", fontFamily: "monospace", margin: "0 0 0.75rem", letterSpacing: "0.1em" }}>INVITE TO LIVE</p>
             {inviteSent ? (
@@ -447,7 +454,7 @@ function LiveRoomContent() {
         </div>
 
         {/* Host join request notifications */}
-        {isHost && joinRequests.length > 0 && (
+        {isOriginalHost && joinRequests.length > 0 && (
           <div style={{ position: "absolute", top: 60, right: 12, display: "flex", flexDirection: "column", gap: "0.5rem", zIndex: 50 }}>
             {joinRequests.map(req => (
               <div key={req.username} style={{ background: "rgba(8,8,8,0.95)", border: "1px solid #1a1a1a", padding: "0.75rem 1rem", display: "flex", alignItems: "center", gap: "0.75rem", minWidth: 240 }}>
