@@ -71,7 +71,8 @@ function WalletContent() {
       fetch(`${API}/coins/transactions?limit=25`, { headers }).then(r => r.ok ? r.json() : null).catch(() => null),
     ]);
     if (bal) setBalance(bal);
-    if (txsRes && Array.isArray(txsRes.transactions)) setTxs(txsRes.transactions);
+    // Backend returns a plain array, not { transactions: [...] }
+    if (Array.isArray(txsRes)) setTxs(txsRes);
   }, [token]);
 
   useEffect(() => {
