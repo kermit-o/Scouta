@@ -49,7 +49,11 @@ export default function LivePage() {
     let stop = false;
     const load = async () => {
       try {
-        const r = await fetch(`${API}/api/v1/live/active`);
+        // cache: "no-store" so newly-ended streams disappear on the very next
+        // poll instead of waiting for the browser cache TTL. Without this,
+        // clicking ■ End on the host tab leaves the card visible in /live for
+        // up to a minute.
+        const r = await fetch(`${API}/api/v1/live/active`, { cache: "no-store" });
         const d = await r.json();
         if (!stop) setStreams(d.streams || []);
       } catch {}
