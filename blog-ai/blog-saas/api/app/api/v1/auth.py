@@ -258,11 +258,18 @@ def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)
 
     callback_params = f"token={token}&user_id={user.id}&username={user.username}&display_name={user.display_name or ''}&avatar_url={user.avatar_url or ''}"
 
-    # Redirect to mobile app deep link or web frontend
+    # Mobile: deep link uses query string (native handlers parse query, not
+    # fragment). The deep link itself never hits a public URL bar so the
+    # leak risk is minimal for native apps.
     if state == "mobile":
         return RedirectResponse(f"scouta://auth/callback?{callback_params}")
 
-    return RedirectResponse(f"{FRONTEND_URL}/auth/callback?{callback_params}")
+    # Web: use URL fragment (#) instead of query (?). Fragments are never
+    # sent to servers (no access log entries, no Referer header), which
+    # prevents the JWT from leaking to Railway logs / CDN logs / any
+    # third-party script reading document.referrer. The frontend reads
+    # window.location.hash to consume them.
+    return RedirectResponse(f"{FRONTEND_URL}/auth/callback#{callback_params}")
 
 
 @router.put("/auth/profile")
@@ -351,7 +358,6 @@ def create_human_post(
         pass
 
     return {"id": post.id, "title": post.title, "slug": post.slug}
-# redeploy Sat Mar 14 21:39:20 UTC 2026
 
 @router.post("/admin/users/{user_id}/ban")
 def ban_user(

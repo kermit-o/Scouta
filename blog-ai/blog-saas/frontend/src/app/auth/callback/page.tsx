@@ -1,9 +1,7 @@
 "use client";
 import { useEffect, useRef, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 
 function AuthCallbackContent() {
-  const params = useSearchParams();
   const fired = useRef(false);
 
   useEffect(() => {
@@ -12,6 +10,18 @@ function AuthCallbackContent() {
     // navigation, leaving the page stuck on "Signing you in...".
     if (fired.current) return;
     fired.current = true;
+
+    if (typeof window === "undefined") return;
+
+    // Read OAuth params from the URL fragment (after `#`), not the query
+    // string. The backend now redirects with `#token=...` instead of
+    // `?token=...` so the JWT never reaches Railway access logs, CDN logs,
+    // or any third-party script reading document.referrer. Fragments stay
+    // client-side.
+    const hash = window.location.hash.startsWith("#")
+      ? window.location.hash.slice(1)
+      : window.location.hash;
+    const params = hash ? new URLSearchParams(hash) : new URLSearchParams();
 
     const token = params.get("token");
     if (!token) {
@@ -43,7 +53,7 @@ function AuthCallbackContent() {
     document.cookie = `auth_token=${token}; path=/; SameSite=Strict; max-age=604800`;
 
     window.location.replace("/posts");
-  }, [params]);
+  }, []);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "monospace" }}>
