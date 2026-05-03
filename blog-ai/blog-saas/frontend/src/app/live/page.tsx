@@ -17,6 +17,7 @@ interface Stream {
   is_private?: boolean;
   access_type?: string;
   entry_coin_cost?: number;
+  thumbnail_url?: string | null;
 }
 
 function timeAgo(dateStr: string) {
@@ -157,13 +158,25 @@ export default function LivePage() {
                     {/* Thumb */}
                     <div style={{
                       aspectRatio: "16/9",
-                      background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)",
+                      background: s.thumbnail_url ? "#000" : "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)",
                       position: "relative",
                       display: "flex", alignItems: "center", justifyContent: "center",
+                      overflow: "hidden",
                     }}>
-                      <span style={{ opacity: 0.18, color: "#fff", display: "flex" }}>
-                        <Radio size={42} strokeWidth={1.25} />
-                      </span>
+                      {s.thumbnail_url ? (
+                        // Real frame — captured by the host every ~30s. Cache-busted
+                        // server-side via ?t= so we always show the freshest one.
+                        <img
+                          src={s.thumbnail_url}
+                          alt=""
+                          loading="lazy"
+                          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                        />
+                      ) : (
+                        <span style={{ opacity: 0.18, color: "#fff", display: "flex" }}>
+                          <Radio size={42} strokeWidth={1.25} />
+                        </span>
+                      )}
                       <span style={{
                         position: "absolute", top: "0.5rem", left: "0.5rem",
                         background: "#e44", color: "#fff",
