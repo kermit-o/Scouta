@@ -8,7 +8,9 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from app.core.db import SessionLocal
+from app.core.config import settings
 from app.models.user import User
+
 # =========================
 # Password hashing (stable)
 # =========================
@@ -51,24 +53,34 @@ def verify_and_update_password(plain_password: str, hashed_password: str) -> tup
 # =========================
 # JWT
 # =========================
-def _jwt_secret_key() -> str:
-    key = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY")
-    if not key or key in ("dev-secret", "development-secret-key-change-in-production"):
-        import warnings
-        warnings.warn("JWT_SECRET_KEY not set! Using insecure default. Set JWT_SECRET_KEY in environment.", stacklevel=2)
-        return "INSECURE-SET-JWT-SECRET-KEY-IN-ENV"
-    return key
+# Resolve the secret once at module load instead of on every token operation.
+# Order of precedence:
+#   1. JWT_SECRET_KEY (preferred, explicit)
+#   2. SECRET_KEY (legacy compat — older deploys still use this name)
+#   3. INSECURE fallback that loudly warns at import time. Tokens signed with
+#      this default are trivially forgeable, so a missing env var is treated
+#      as a deploy-blocking misconfiguration that nonetheless lets the app
+#      boot so health checks don't 500 and you can fix the env on Railway.
+_INSECURE_DEV_DEFAULTS = {
+    "",
+    "dev-secret",
+    "development-secret-key-change-in-production",
+    "INSECURE-SET-JWT-SECRET-KEY-IN-ENV",
+}
+_RAW_SECRET = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY") or ""
+if _RAW_SECRET in _INSECURE_DEV_DEFAULTS:
+    print(
+        "[security] !!! JWT_SECRET_KEY is not set in the environment. "
+        "Tokens are being signed with an INSECURE fallback. "
+        "Set JWT_SECRET_KEY on Railway and redeploy."
+    )
+    JWT_SECRET = "INSECURE-SET-JWT-SECRET-KEY-IN-ENV"
+else:
+    JWT_SECRET = _RAW_SECRET
 
-def _jwt_algorithm() -> str:
-    return os.getenv("JWT_ALGORITHM", "HS256")
+JWT_ALGORITHM = settings.JWT_ALGORITHM
+ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 
-ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "10080"))  # 7 días
-
-def _get_secret() -> str:
-    return _jwt_secret_key()
-
-def _get_algorithm() -> str:
-    return os.getenv("JWT_ALGORITHM", "HS256")
 
 def create_access_token(
     subject: str,
@@ -79,14 +91,15 @@ def create_access_token(
     payload: dict[str, Any] = {"sub": subject, "exp": expire}
     if extra:
         payload.update(extra)
-    return jwt.encode(payload, _jwt_secret_key(), algorithm=_jwt_algorithm())
-
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
 def decode_token(token: str) -> dict[str, Any]:
-    return jwt.decode(token, _jwt_secret_key(), algorithms=[_jwt_algorithm()])
+    return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+
 
 bearer_scheme = HTTPBearer()
+
 
 def get_db():
     db = SessionLocal()
@@ -94,6 +107,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme),
