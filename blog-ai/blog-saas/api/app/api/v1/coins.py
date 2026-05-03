@@ -5,6 +5,7 @@ import json
 import os
 import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
+from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Session
 
 from app.core.db import SessionLocal
@@ -193,10 +194,21 @@ async def stripe_webhook(
     except ValueError:
         return {"received": True, "ignored": True, "reason": "bad metadata"}
 
+    session_id = session.get("id") or ""
+
+    # Transaction-scoped advisory lock keyed by the Stripe session id.
+    # Without this, two gunicorn workers processing the same retried webhook
+    # in parallel could both pass the `existing` check before either commits,
+    # crediting the user twice. The lock is auto-released on commit/rollback.
+    db.execute(
+        sql_text("SELECT pg_advisory_xact_lock(hashtext(:k))"),
+        {"k": session_id},
+    )
+
     # Idempotency: if we've already credited this session, return early.
     # Stripe may retry the webhook on transient failures.
     existing = db.query(CoinTransaction).filter(
-        CoinTransaction.reference_id == session["id"],
+        CoinTransaction.reference_id == session_id,
         CoinTransaction.type == "purchase",
     ).first()
     if existing:
@@ -215,7 +227,7 @@ async def stripe_webhook(
         amount=coin_amount,
         type="purchase",
         description=f"Purchased {coin_amount} coins (${amount_cents / 100:.2f})",
-        reference_id=session["id"],
+        reference_id=session_id,
     ))
     db.commit()
 
@@ -543,12 +555,14 @@ def create_connect_account(
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
     if current_user.stripe_customer_id:
-        # Check if it's already a Connect account
+        # Check if it's already a Connect account. Use bracket access — Stripe
+        # SDK 9+ StripeObjects no longer expose dict.get(); .get() raises
+        # AttributeError. __getitem__ still works because StripeObject keeps it.
         try:
             acct = stripe.Account.retrieve(current_user.stripe_customer_id)
-            if acct.get("type") == "express":
+            if acct["type"] == "express":
                 return {"ok": True, "account_id": current_user.stripe_customer_id, "already_exists": True}
-        except Exception:
+        except (KeyError, AttributeError, Exception):
             pass
 
     account = stripe.Account.create(
