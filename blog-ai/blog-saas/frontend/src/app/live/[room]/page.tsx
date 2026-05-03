@@ -45,14 +45,15 @@ function LiveRoomContent() {
   const searchParams = useSearchParams();
   const { token, user } = useAuth();
   // host=1 in the URL means "you should publish to LiveKit" — set by both the
-  // original host (created the room) and accepted co-hosts (joined via invite).
-  // The discriminator is the `token` query param: co-hosts arrive with a
-  // pre-issued LiveKit token from the join_accepted message; the original host
-  // does not.
+  // original host (created the room via /live/start) and accepted co-hosts
+  // (joined via the join_accepted WS message). Both URLs look identical
+  // (`?token=X&host=1`), so we need an extra flag to discriminate.
+  // /live/start adds `&starter=1` on its redirect; co-host invites don't.
   const preToken = searchParams.get("token");
   const isHost = searchParams.get("host") === "1";
-  const isCoHost = isHost && preToken !== null;
-  const isOriginalHost = isHost && !preToken;
+  const isStarter = searchParams.get("starter") === "1";
+  const isOriginalHost = isHost && isStarter;
+  const isCoHost = isHost && !isStarter;
 
   const [livekitToken, setLivekitToken] = useState<string | null>(preToken);
   const [streamTitle, setStreamTitle] = useState("");
@@ -157,7 +158,7 @@ function LiveRoomContent() {
       if (msg.type === 'join_request' && isOriginalHost) {
         setJoinRequests(prev => prev.find((r: any) => r.username === msg.username) ? prev : [...prev, { username: msg.username, display_name: msg.display_name, user_id: msg.user_id }]);
       } else if (msg.type === 'join_accepted' && msg.username === (user as any)?.username) {
-        // Join as co-host
+        // Join as co-host (no &starter=1 — that's reserved for the room creator)
         const newUrl = `/live/${msg.room_name || room}?token=${encodeURIComponent(msg.token)}&host=1`;
         window.location.href = newUrl;
       } else if (msg.type === 'join_rejected' && msg.username === (user as any)?.username) {
