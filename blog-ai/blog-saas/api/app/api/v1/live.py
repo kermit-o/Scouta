@@ -14,7 +14,7 @@ AI_LIVE_INITIAL_DELAY_SEC = int(os.getenv("AI_LIVE_INITIAL_DELAY_SEC", "60"))
 AI_LIVE_INTERVAL_SEC = int(os.getenv("AI_LIVE_INTERVAL_SEC", "180"))
 AI_LIVE_MAX_COMMENTS_PER_STREAM = int(os.getenv("AI_LIVE_MAX_COMMENTS_PER_STREAM", "20"))
 
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.db import get_db, SessionLocal
@@ -563,6 +563,56 @@ def get_join_requests(
     return {"requests": requests}
 
 
+# ── Thumbnail capture ────────────────────────────────────────────────────────
+
+@router.post("/live/{room_name}/thumbnail")
+async def upload_thumbnail(
+    room_name: str,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Upload a thumbnail JPEG for a live stream — host only.
+
+    The host's frontend captures a frame from its local <video> every ~30s
+    and POSTs the raw JPEG bytes here. We overwrite a single key per room
+    in R2 and store a cache-busted URL so the /live list refreshes without
+    serving stale browser cache hits.
+    """
+    _require_host(db, room_name, user.id)
+
+    body = await request.body()
+    if not body or len(body) < 200:
+        raise HTTPException(status_code=400, detail="Empty thumbnail")
+    if len(body) > 200 * 1024:  # 200KB max — JPEG quality 0.7 at 320×180 is well under this
+        raise HTTPException(status_code=400, detail="Thumbnail too large (max 200KB)")
+
+    from app.api.v1.upload import get_s3, R2_BUCKET, R2_PUBLIC_URL
+    if not R2_PUBLIC_URL:
+        raise HTTPException(status_code=503, detail="R2 not configured (R2_PUBLIC_URL missing)")
+
+    key = f"thumbnails/live_{room_name}.jpg"
+    try:
+        s3 = get_s3()
+        s3.put_object(
+            Bucket=R2_BUCKET,
+            Key=key,
+            Body=body,
+            ContentType="image/jpeg",
+            CacheControl="public, max-age=30",
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"R2 error: {e}")
+
+    public_url = f"{R2_PUBLIC_URL}/{key}?t={int(time.time())}"
+    db.execute(
+        text("UPDATE live_streams SET thumbnail_url=:url WHERE room_name=:room"),
+        {"url": public_url, "room": room_name},
+    )
+    db.commit()
+    return {"ok": True, "thumbnail_url": public_url}
+
+
 # ── Gift system ──────────────────────────────────────────────────────────────
 
 @router.get("/live/gifts/catalog")
@@ -709,7 +759,8 @@ def list_active_streams(db: Session = Depends(get_db)):
     """List all active live streams (public + private with badge)."""
     rows = db.execute(text(
         "SELECT ls.room_name, ls.title, ls.viewer_count, ls.started_at, ls.description, "
-        "u.username, u.display_name, ls.is_private, ls.access_type, ls.entry_coin_cost "
+        "u.username, u.display_name, ls.is_private, ls.access_type, ls.entry_coin_cost, "
+        "ls.thumbnail_url "
         "FROM live_streams ls JOIN users u ON ls.host_user_id = u.id "
         "WHERE ls.status = 'live' ORDER BY ls.viewer_count DESC LIMIT 20"
     )).fetchall()
@@ -723,6 +774,9 @@ def list_active_streams(db: Session = Depends(get_db)):
             "is_private": bool(r[7]),
             "access_type": r[8] or "public",
             "entry_coin_cost": r[9] or 0,
+            # Hide thumbnail of private streams from anonymous /live feed —
+            # otherwise paid/invite-only previews leak to people who haven't paid.
+            "thumbnail_url": r[10] if not r[7] else None,
         }
         for r in rows
     ]}
