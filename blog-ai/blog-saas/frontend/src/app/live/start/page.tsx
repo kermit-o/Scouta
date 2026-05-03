@@ -96,7 +96,11 @@ export default function StartLivePage() {
       return;
     }
 
-    router.push(`/live/${data.room_name}?token=${data.token}&host=1`);
+    // starter=1 marks this tab as the original host (creator of the stream),
+    // not a co-host who arrived via join_accepted. The room page uses this
+    // flag to decide who sees the End/Invite buttons and who runs the
+    // thumbnail capture loop. Co-host invitations don't add starter=1.
+    router.push(`/live/${data.room_name}?token=${data.token}&host=1&starter=1`);
   }
 
   const canSubmit = !!title.trim() && !submitting && (!isPrivate || accessType !== "password" || !!password.trim());
