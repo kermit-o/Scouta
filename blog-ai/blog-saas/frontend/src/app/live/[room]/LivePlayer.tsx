@@ -7,13 +7,18 @@ interface Props {
   serverUrl: string;
   isHost: boolean;
   hostName?: string;
+  /** Room name + auth bearer token — only set when this player is the original host;
+   *  used to upload periodic thumbnail frames so the /live feed shows real video. */
+  roomName?: string;
+  authToken?: string | null;
 }
 
-const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName }: Props) {
+const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName, roomName, authToken }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const roomRef = useRef<Room | null>(null);
+  const localVideoRef = useRef<HTMLVideoElement | null>(null);
 
-  function attachVideoTrack(track: any, participantName?: string) {
+  function attachVideoTrack(track: any, participantName?: string, isLocal = false) {
     if (!containerRef.current) return;
     // Check if track already attached
     const existingId = `track-${track.sid || Math.random()}`;
@@ -28,6 +33,8 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
     el.autoplay = true;
     el.playsInline = true;
     el.muted = isHost;
+
+    if (isLocal) localVideoRef.current = el;
 
     const label = document.createElement("div");
     label.style.cssText = "position:absolute;bottom:8px;left:8px;font-size:0.6rem;color:#fff;font-family:monospace;background:rgba(0,0,0,0.6);padding:2px 6px;border-radius:2px;";
@@ -50,6 +57,8 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
     if (roomRef.current) return;
     const room = new Room({ adaptiveStream: true, dynacast: true });
     roomRef.current = room;
+    let thumbnailInterval: ReturnType<typeof setInterval> | null = null;
+    let firstThumbTimeout: ReturnType<typeof setTimeout> | null = null;
 
     room.on(RoomEvent.TrackSubscribed, (track: any, pub: any, participant: any) => {
       if (track.kind === Track.Kind.Video) attachVideoTrack(track, participant?.name || participant?.identity);
@@ -98,7 +107,9 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
       if (isHost) {
         await room.localParticipant.enableCameraAndMicrophone();
         room.localParticipant.trackPublications.forEach((pub) => {
-          if (pub.track && pub.kind === Track.Kind.Video) attachVideoTrack(pub.track, room.localParticipant.name);
+          if (pub.track && pub.kind === Track.Kind.Video) {
+            attachVideoTrack(pub.track, room.localParticipant.name, true);
+          }
         });
         document.addEventListener("visibilitychange", () => {
           try {
@@ -106,6 +117,41 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
             room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify({ type: msg })), { reliable: true });
           } catch {}
         });
+
+        // Periodic thumbnail capture — host only. Captures the local video into
+        // a 320×180 JPEG and POSTs to the backend so /live shows real frames.
+        if (roomName && authToken) {
+          const captureAndUpload = () => {
+            const v = localVideoRef.current;
+            if (!v || v.videoWidth === 0 || v.readyState < 2) return;
+            const canvas = document.createElement("canvas");
+            canvas.width = 320;
+            canvas.height = 180;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+            try {
+              ctx.drawImage(v, 0, 0, 320, 180);
+            } catch {
+              // CORS or video not ready — skip this tick
+              return;
+            }
+            canvas.toBlob((blob) => {
+              if (!blob) return;
+              fetch(`/api/proxy/live/${roomName}/thumbnail`, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "image/jpeg",
+                  Authorization: `Bearer ${authToken}`,
+                },
+                body: blob,
+              }).catch(() => {});
+            }, "image/jpeg", 0.7);
+          };
+          // First capture after 5s (give the camera time to produce frames),
+          // then every 30s for the rest of the stream.
+          firstThumbTimeout = setTimeout(captureAndUpload, 5000);
+          thumbnailInterval = setInterval(captureAndUpload, 30000);
+        }
       } else {
         // Attach existing tracks immediately
         room.remoteParticipants.forEach((p) => {
@@ -119,7 +165,12 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
       }
     }).catch(console.error);
 
-    return () => { room.disconnect(); roomRef.current = null; };
+    return () => {
+      if (firstThumbTimeout) clearTimeout(firstThumbTimeout);
+      if (thumbnailInterval) clearInterval(thumbnailInterval);
+      room.disconnect();
+      roomRef.current = null;
+    };
   }, []);
 
   return (
