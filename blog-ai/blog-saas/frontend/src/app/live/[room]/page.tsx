@@ -405,6 +405,8 @@ function LiveRoomContent() {
             token={livekitToken}
             serverUrl={LIVEKIT_URL}
             isHost={isHost}
+            roomName={isOriginalHost ? (room as string) : undefined}
+            authToken={isOriginalHost ? token : undefined}
           />
         )}
 
