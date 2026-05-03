@@ -34,6 +34,7 @@ try:
         "access_type": "VARCHAR(20) DEFAULT 'public'",
         "entry_coin_cost": "INTEGER DEFAULT 0",
         "max_viewer_limit": "INTEGER DEFAULT 0",
+        "thumbnail_url": "TEXT",
     }
     for col_name, col_def in _new_cols.items():
         if col_name not in _existing_cols:
