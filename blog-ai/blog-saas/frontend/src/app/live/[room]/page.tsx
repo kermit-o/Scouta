@@ -72,14 +72,17 @@ function LiveRoomContent() {
   const [roomPassword, setRoomPassword] = useState("");
   const [accessError, setAccessError] = useState("");
 
-  // Auto-end the stream when the original host closes the tab or navigates
-  // away. Without this, the live_streams row stays status='live' forever —
-  // a zombie that shows up in /live with a placeholder card and no video.
-  // fetch + keepalive lets the request survive the unload in modern browsers
-  // (Chrome 73+, Firefox 117+, Safari 16.4+).
+  // Auto-end the stream when the original host's tab is actually being unloaded.
+  // Earlier version listened to `beforeunload` too, which fired on every internal
+  // refresh and even on browser bfcache restoration — that ended live streams the
+  // host hadn't actually closed (spectators saw the stream disappear).
+  // Now: only `pagehide` with persisted=false (true persisted=bfcache; the host
+  // may come back). Internal Next.js Link navigation doesn't fire pagehide at
+  // all, so clicking the SCOUTA logo no longer kills the stream either.
   useEffect(() => {
     if (!isOriginalHost || !token || typeof window === "undefined") return;
-    const endStreamBeacon = () => {
+    const handler = (event: PageTransitionEvent) => {
+      if (event.persisted) return;
       try {
         fetch(`/api/proxy/live/${room}/end`, {
           method: "POST",
@@ -90,12 +93,8 @@ function LiveRoomContent() {
         // best-effort — server-side cleanup will catch it eventually
       }
     };
-    window.addEventListener("beforeunload", endStreamBeacon);
-    window.addEventListener("pagehide", endStreamBeacon);
-    return () => {
-      window.removeEventListener("beforeunload", endStreamBeacon);
-      window.removeEventListener("pagehide", endStreamBeacon);
-    };
+    window.addEventListener("pagehide", handler);
+    return () => window.removeEventListener("pagehide", handler);
   }, [isOriginalHost, room, token]);
 
   // Fetch coin balance
