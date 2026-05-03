@@ -123,28 +123,51 @@ const LivePlayer = memo(function LivePlayer({ token, serverUrl, isHost, hostName
         if (roomName && authToken) {
           const captureAndUpload = () => {
             const v = localVideoRef.current;
-            if (!v || v.videoWidth === 0 || v.readyState < 2) return;
+            if (!v) {
+              console.warn("[thumbnail] no local video element yet — skip");
+              return;
+            }
+            if (v.videoWidth === 0 || v.readyState < 2) {
+              console.warn(`[thumbnail] video not ready — skip (w=${v.videoWidth} state=${v.readyState})`);
+              return;
+            }
             const canvas = document.createElement("canvas");
             canvas.width = 320;
             canvas.height = 180;
             const ctx = canvas.getContext("2d");
-            if (!ctx) return;
-            try {
-              ctx.drawImage(v, 0, 0, 320, 180);
-            } catch {
-              // CORS or video not ready — skip this tick
+            if (!ctx) {
+              console.warn("[thumbnail] canvas ctx unavailable — skip");
               return;
             }
-            canvas.toBlob((blob) => {
-              if (!blob) return;
-              fetch(`/api/proxy/live/${roomName}/thumbnail`, {
-                method: "POST",
-                headers: {
-                  "Content-Type": "image/jpeg",
-                  Authorization: `Bearer ${authToken}`,
-                },
-                body: blob,
-              }).catch(() => {});
+            try {
+              ctx.drawImage(v, 0, 0, 320, 180);
+            } catch (err) {
+              console.warn("[thumbnail] drawImage failed (CORS?):", err);
+              return;
+            }
+            canvas.toBlob(async (blob) => {
+              if (!blob) {
+                console.warn("[thumbnail] toBlob produced null");
+                return;
+              }
+              try {
+                const r = await fetch(`/api/proxy/live/${roomName}/thumbnail`, {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "image/jpeg",
+                    Authorization: `Bearer ${authToken}`,
+                  },
+                  body: blob,
+                });
+                if (!r.ok) {
+                  const body = await r.text().catch(() => "<empty>");
+                  console.warn(`[thumbnail] upload returned ${r.status}: ${body.slice(0, 200)}`);
+                } else {
+                  console.log(`[thumbnail] uploaded (${Math.round(blob.size / 1024)}KB)`);
+                }
+              } catch (err) {
+                console.warn("[thumbnail] upload error:", err);
+              }
             }, "image/jpeg", 0.7);
           };
           // First capture after 5s (give the camera time to produce frames),
