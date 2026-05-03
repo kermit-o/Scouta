@@ -1,28 +1,60 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.db import get_db
-from typing import Optional
+from app.core.security import decode_token
 
 router = APIRouter()
+
+
+def _try_user_id_from_request(request: Request) -> int | None:
+    """Extract user_id from a Bearer token if present. Returns None for
+    anonymous callers — video views are public stats so we don't reject."""
+    auth = request.headers.get("authorization", "")
+    if not auth.startswith("Bearer "):
+        return None
+    try:
+        payload = decode_token(auth[7:])
+        sub = payload.get("sub")
+        return int(sub) if sub else None
+    except Exception:
+        return None
+
 
 @router.post("/videos/{post_id}/view")
 def record_view(
     post_id: int,
     payload: dict,
+    request: Request,
     db: Session = Depends(get_db),
 ):
     """
     Record a video view with watch time.
-    payload: { user_id?, session_id?, watch_seconds, completed }
+
+    Authenticated callers: the JWT subject is used as user_id (the request
+    body's user_id field is ignored to prevent stat manipulation).
+    Anonymous callers: must supply a session_id in the body, used as the
+    deduplication key.
     """
-    user_id = payload.get("user_id")
-    session_id = payload.get("session_id")
-    watch_seconds = int(payload.get("watch_seconds", 0))
+    # Trust the token, never the payload — the previous version accepted
+    # `user_id` from the body, letting any anonymous caller inflate any
+    # other user's view count.
+    user_id = _try_user_id_from_request(request)
+    session_id = (payload.get("session_id") or "").strip()[:100] or None
+
+    if not user_id and not session_id:
+        raise HTTPException(status_code=400, detail="session_id required for anonymous views")
+
+    # Clamp watch_seconds — a malicious client could send 999999 to skew
+    # avg_watch_seconds in stats. Cap at 24h.
+    try:
+        watch_seconds = int(payload.get("watch_seconds", 0))
+    except (TypeError, ValueError):
+        watch_seconds = 0
+    watch_seconds = max(0, min(watch_seconds, 86400))
     completed = bool(payload.get("completed", False))
 
     try:
-        # Upsert — si ya existe para este user/session, actualizar si es mayor
         if user_id:
             existing = db.execute(
                 text("SELECT id, watch_seconds FROM video_views WHERE post_id=:pid AND user_id=:uid"),
@@ -32,10 +64,9 @@ def record_view(
             existing = db.execute(
                 text("SELECT id, watch_seconds FROM video_views WHERE post_id=:pid AND session_id=:sid"),
                 {"pid": post_id, "sid": session_id}
-            ).first() if session_id else None
+            ).first()
 
         if existing:
-            # Solo actualizar si watch_seconds es mayor
             if watch_seconds > existing.watch_seconds:
                 db.execute(
                     text("UPDATE video_views SET watch_seconds=:ws, completed=:c, updated_at=NOW() WHERE id=:id"),
@@ -49,7 +80,11 @@ def record_view(
         db.commit()
         return {"ok": True}
     except Exception as e:
-        return {"ok": False, "error": str(e)}
+        # Don't leak internal error details (was returning str(e) — exposed
+        # SQL fragments and column names). Log server-side instead.
+        db.rollback()
+        print(f"[video_views] record_view error post_id={post_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not record view")
 
 
 @router.get("/videos/{post_id}/stats")
@@ -58,7 +93,7 @@ def video_stats(post_id: int, db: Session = Depends(get_db)):
     try:
         stats = db.execute(
             text("""
-                SELECT 
+                SELECT
                     COUNT(*) as total_views,
                     COUNT(DISTINCT COALESCE(user_id::text, session_id)) as unique_views,
                     AVG(watch_seconds) as avg_watch_seconds,
@@ -75,4 +110,5 @@ def video_stats(post_id: int, db: Session = Depends(get_db)):
             "completions": stats[3] or 0,
         }
     except Exception as e:
-        return {"post_id": post_id, "error": str(e)}
+        print(f"[video_views] stats error post_id={post_id}: {e}")
+        raise HTTPException(status_code=500, detail="Could not load stats")
