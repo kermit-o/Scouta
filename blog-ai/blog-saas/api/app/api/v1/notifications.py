@@ -38,8 +38,10 @@ def unread_count(
     user: User = Depends(get_current_user),
 ):
     from sqlalchemy import text
+    # `read` is BOOLEAN in Postgres — comparing to integer 0/1 errors with
+    # "operator does not exist: boolean = integer". Use false/true literals.
     row = db.execute(
-        text("SELECT COUNT(*) FROM notifications WHERE user_id=:uid AND read=0"),
+        text("SELECT COUNT(*) FROM notifications WHERE user_id=:uid AND read=false"),
         {"uid": user.id},
     ).scalar()
     return {"unread": int(row or 0)}
@@ -51,6 +53,6 @@ def mark_all_read(
     user: User = Depends(get_current_user),
 ):
     from sqlalchemy import text
-    db.execute(text("UPDATE notifications SET read=1 WHERE user_id=:uid"), {"uid": user.id})
+    db.execute(text("UPDATE notifications SET read=true WHERE user_id=:uid"), {"uid": user.id})
     db.commit()
     return {"ok": True}
