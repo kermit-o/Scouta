@@ -169,8 +169,11 @@ async def stripe_webhook(
     s = get_stripe()
     payload = await request.body()
     try:
+        # Live mode: each Stripe webhook endpoint has its own signing secret.
+        # Use the billing-specific one (falls back to the shared one when unset
+        # — see app/core/config.py — so test mode keeps working).
         s.Webhook.construct_event(
-            payload, stripe_signature, settings.STRIPE_WEBHOOK_SECRET
+            payload, stripe_signature, settings.STRIPE_BILLING_WEBHOOK_SECRET
         )
     except stripe.error.SignatureVerificationError:
         raise HTTPException(400, "Invalid signature")

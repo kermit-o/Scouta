@@ -21,7 +21,11 @@ class Settings:
     DEEPSEEK_API_KEY: str = ""
     STRIPE_SECRET_KEY: str = ""
     STRIPE_PUBLISHABLE_KEY: str = ""
-    STRIPE_WEBHOOK_SECRET: str = ""
+    STRIPE_WEBHOOK_SECRET: str = ""             # signs /coins/stripe-webhook deliveries
+    STRIPE_BILLING_WEBHOOK_SECRET: str = ""     # signs /billing/webhook deliveries
+    # ^ In live mode each Stripe webhook endpoint has its own signing secret;
+    # in test mode you can set just STRIPE_WEBHOOK_SECRET and we fall back to
+    # it for billing too. See docs/STRIPE_LIVE_MIGRATION.md.
 
     def __init__(self):
         # Intentar cargar desde .env si existe
@@ -37,6 +41,12 @@ class Settings:
             self.STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", self.STRIPE_SECRET_KEY)
             self.STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY", self.STRIPE_PUBLISHABLE_KEY)
             self.STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", self.STRIPE_WEBHOOK_SECRET)
+            # If the dedicated billing secret isn't set, fall back to the shared one
+            # so test mode (single Stripe endpoint) keeps working without churn.
+            self.STRIPE_BILLING_WEBHOOK_SECRET = (
+                os.getenv("STRIPE_BILLING_WEBHOOK_SECRET")
+                or self.STRIPE_WEBHOOK_SECRET
+            )
         except ImportError:
             pass  # Sin dotenv, usar valores por defecto
 
