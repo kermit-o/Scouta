@@ -62,48 +62,10 @@ from app.api.v1 import agent_posts
 # Crear tablas si no existen
 Base.metadata.create_all(bind=engine, checkfirst=True)
 
-# Auto-add missing columns to live_streams (for Railway where Alembic isn't run manually)
-try:
-    from sqlalchemy import text as _text, inspect as _inspect
-    _conn = engine.connect()
-    _existing_cols = {c["name"] for c in _inspect(engine).get_columns("live_streams")}
-    _new_cols = {
-        "is_private": "BOOLEAN DEFAULT FALSE",
-        "password_hash": "VARCHAR(255)",
-        "access_type": "VARCHAR(20) DEFAULT 'public'",
-        "entry_coin_cost": "INTEGER DEFAULT 0",
-        "max_viewer_limit": "INTEGER DEFAULT 0",
-        "thumbnail_url": "TEXT",
-    }
-    for col_name, col_def in _new_cols.items():
-        if col_name not in _existing_cols:
-            _conn.execute(_text(f"ALTER TABLE live_streams ADD COLUMN {col_name} {col_def}"))
-            print(f"[migrate] added column live_streams.{col_name}")
-    try:
-        _cw_cols = {c["name"] for c in _inspect(engine).get_columns("coin_wallets")}
-        if "withdrawable_balance" not in _cw_cols:
-            _conn.execute(_text("ALTER TABLE coin_wallets ADD COLUMN withdrawable_balance INTEGER DEFAULT 0"))
-            print("[migrate] added column coin_wallets.withdrawable_balance")
-    except Exception:
-        pass
-
-    try:
-        _wr_cols = {c["name"] for c in _inspect(engine).get_columns("withdrawal_requests")}
-        _wr_new = {
-            "payout_method": "VARCHAR(20)",
-            "payout_details": "TEXT",
-        }
-        for col_name, col_def in _wr_new.items():
-            if col_name not in _wr_cols:
-                _conn.execute(_text(f"ALTER TABLE withdrawal_requests ADD COLUMN {col_name} {col_def}"))
-                print(f"[migrate] added column withdrawal_requests.{col_name}")
-    except Exception:
-        pass
-
-    _conn.commit()
-    _conn.close()
-except Exception as e:
-    print(f"[migrate] auto-migration skipped: {e}")
+# Schema changes are now managed by Alembic. The hand-rolled `[migrate] ADD
+# COLUMN` block that lived here was retired in May 2026 once Alembic was
+# stamped to m20260504_baseline_drift on prod. Do NOT add raw ALTER TABLEs
+# back here — write a migration in alembic/versions/ instead.
 
 try:
     from app.models.gift import seed_gift_catalog
