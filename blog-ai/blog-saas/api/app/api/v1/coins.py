@@ -7,28 +7,21 @@ import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Session
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.core.db import SessionLocal
 from app.core.config import settings
 from app.core.deps import get_current_user, require_superuser
+from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.coin_wallet import CoinWallet
 from app.models.coin_transaction import CoinTransaction
 
 router = APIRouter(prefix="/coins", tags=["coins"])
 
-# Per-IP rate limiter for the endpoints in this module that hit Stripe or
-# write financial state. The default 60/min from main.py applies to GETs
-# (balance, transactions, packages) that don't override.
-limiter = Limiter(key_func=get_remote_address)
-
-# Coin packages: {package_id: (coins, price_cents)}
 COIN_PACKAGES = {
-    "pack_100": (100, 99),       # 100 coins = $0.99
-    "pack_500": (500, 399),      # 500 coins = $3.99
-    "pack_2000": (2000, 1499),   # 2000 coins = $14.99
+    "pack_100": (100, 99),
+    "pack_500": (500, 399),
+    "pack_2000": (2000, 1499),
 }
 
 MIN_WITHDRAWAL_COINS = 500
@@ -56,7 +49,6 @@ def _get_or_create_wallet(db: Session, user_id: int) -> CoinWallet:
     return wallet
 
 
-# ─── GET /coins/balance ──────────────────────────────────────────────────────
 @router.get("/balance")
 def get_balance(
     current_user: User = Depends(get_current_user),
@@ -71,7 +63,6 @@ def get_balance(
     }
 
 
-# ─── GET /coins/packages ─────────────────────────────────────────────────────
 @router.get("/packages")
 def list_packages():
     return [
@@ -80,7 +71,6 @@ def list_packages():
     ]
 
 
-# ─── POST /coins/purchase ────────────────────────────────────────────────────
 @router.post("/purchase")
 @limiter.limit("5/minute")
 def purchase_coins(
@@ -149,30 +139,19 @@ def purchase_coins(
     }
 
 
-# ─── POST /coins/stripe-webhook ──────────────────────────────────────────────
 @router.post("/stripe-webhook")
 async def stripe_webhook(
     request: Request,
     db: Session = Depends(get_db),
 ):
-    """
-    Stripe webhook endpoint. Receives checkout.session.completed events and
-    credits coins to the user's wallet.
-
-    Configure in Stripe dashboard:
-      Endpoint: https://<your-api>/api/v1/coins/stripe-webhook
-      Events:   checkout.session.completed
-      Set STRIPE_WEBHOOK_SECRET env var to the signing secret shown.
-    """
+    """Stripe webhook endpoint. Receives checkout.session.completed events and
+    credits coins to the user's wallet."""
     if not STRIPE_WEBHOOK_SECRET:
         raise HTTPException(500, "Webhook secret not configured (STRIPE_WEBHOOK_SECRET)")
 
     payload = await request.body()
     sig_header = request.headers.get("stripe-signature", "")
 
-    # Verify signature only — discard the StripeObject and parse the raw payload
-    # ourselves below. Stripe SDK 9+ StripeObjects no longer inherit from dict,
-    # so .get() on them raises AttributeError. Plain json.loads avoids the trap.
     try:
         stripe.Webhook.construct_event(
             payload, sig_header, STRIPE_WEBHOOK_SECRET
@@ -206,16 +185,11 @@ async def stripe_webhook(
     session_id = session.get("id") or ""
 
     # Transaction-scoped advisory lock keyed by the Stripe session id.
-    # Without this, two gunicorn workers processing the same retried webhook
-    # in parallel could both pass the `existing` check before either commits,
-    # crediting the user twice. The lock is auto-released on commit/rollback.
     db.execute(
         sql_text("SELECT pg_advisory_xact_lock(hashtext(:k))"),
         {"k": session_id},
     )
 
-    # Idempotency: if we've already credited this session, return early.
-    # Stripe may retry the webhook on transient failures.
     existing = db.query(CoinTransaction).filter(
         CoinTransaction.reference_id == session_id,
         CoinTransaction.type == "purchase",
@@ -248,7 +222,6 @@ async def stripe_webhook(
     }
 
 
-# ─── GET /coins/transactions ─────────────────────────────────────────────────
 @router.get("/transactions")
 def list_transactions(
     limit: int = 20,
@@ -277,7 +250,6 @@ def list_transactions(
     ]
 
 
-# ─── GET /coins/earnings ─────────────────────────────────────────────────────
 @router.get("/earnings")
 def get_earnings(
     current_user: User = Depends(get_current_user),
@@ -307,7 +279,6 @@ def get_earnings(
     }
 
 
-# ─── POST /coins/withdraw ────────────────────────────────────────────────────
 @router.post("/withdraw")
 @limiter.limit("3/minute")
 def request_withdrawal(
@@ -316,16 +287,7 @@ def request_withdrawal(
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """
-    Record a withdrawal request for manual processing (5–7 business days).
-
-    Accepts:
-      { amount, method, payout_details }
-      method in {"paypal", "bank"}
-      payout_details: paypal email, or bank account holder + IBAN + SWIFT
-
-    `amount_coins` is also accepted as a backwards-compatible alias for `amount`.
-    """
+    """Record a withdrawal request for manual processing (5–7 business days)."""
     amount_coins = int(body.get("amount") or body.get("amount_coins") or 0)
     method = (body.get("method") or "").strip().lower()
     payout_details = (body.get("payout_details") or "").strip()
@@ -343,7 +305,6 @@ def request_withdrawal(
 
     from app.models.withdrawal_request import WithdrawalRequest
 
-    # Block double-submit while a previous one is still pending
     pending = db.query(WithdrawalRequest).filter(
         WithdrawalRequest.user_id == current_user.id,
         WithdrawalRequest.status.in_(["pending", "processing"]),
@@ -351,10 +312,7 @@ def request_withdrawal(
     if pending:
         raise HTTPException(400, "You already have a pending withdrawal")
 
-    # 100 coins = $0.99 → 1 coin ≈ 0.99 cents
     amount_cents = int(amount_coins * 0.99)
-
-    # Reserve the coins immediately. If an admin rejects later, refund explicitly.
     wallet.withdrawable_balance -= amount_coins
 
     withdrawal = WithdrawalRequest(
@@ -387,7 +345,6 @@ def request_withdrawal(
     }
 
 
-# ─── GET /coins/withdrawals ──────────────────────────────────────────────────
 @router.get("/withdrawals")
 def list_withdrawals(
     limit: int = 20,
@@ -416,7 +373,6 @@ def list_withdrawals(
     ]
 
 
-# ─── ADMIN: GET /coins/admin/withdrawals ─────────────────────────────────────
 @router.get("/admin/withdrawals")
 def admin_list_withdrawals(
     status: str | None = None,
@@ -470,7 +426,6 @@ def admin_list_withdrawals(
     ]
 
 
-# ─── ADMIN: POST /coins/admin/withdrawals/{id}/approve ───────────────────────
 @router.post("/admin/withdrawals/{withdrawal_id}/approve")
 def admin_approve_withdrawal(
     withdrawal_id: int,
@@ -478,11 +433,6 @@ def admin_approve_withdrawal(
     _: User = Depends(require_superuser),
     db: Session = Depends(get_db),
 ):
-    """
-    Mark a withdrawal as completed after a manual payout (PayPal/bank wire).
-    Coins were already deducted at request time, so this just records completion.
-    Body: { reference?: str } — optional external txn id (PayPal, bank ref).
-    """
     from app.models.withdrawal_request import WithdrawalRequest
     from datetime import datetime, timezone
 
@@ -497,7 +447,6 @@ def admin_approve_withdrawal(
     w.status = "completed"
     w.completed_at = datetime.now(timezone.utc)
     if reference:
-        # Reuse the column to store any external payout reference (PayPal txn id, bank ref).
         w.stripe_transfer_id = str(reference)[:200]
     db.commit()
 
@@ -510,7 +459,6 @@ def admin_approve_withdrawal(
     }
 
 
-# ─── ADMIN: POST /coins/admin/withdrawals/{id}/reject ────────────────────────
 @router.post("/admin/withdrawals/{withdrawal_id}/reject")
 def admin_reject_withdrawal(
     withdrawal_id: int,
@@ -518,10 +466,6 @@ def admin_reject_withdrawal(
     _: User = Depends(require_superuser),
     db: Session = Depends(get_db),
 ):
-    """
-    Reject a withdrawal, refund the coins to the user's withdrawable_balance,
-    and record the reason. Body: { reason: str }
-    """
     from app.models.withdrawal_request import WithdrawalRequest
 
     w = db.get(WithdrawalRequest, withdrawal_id)
@@ -556,7 +500,6 @@ def admin_reject_withdrawal(
     }
 
 
-# ─── Stripe Connect (legacy — manual withdrawal flow doesn't use this) ───────
 @router.post("/connect-account")
 def create_connect_account(
     current_user: User = Depends(get_current_user),
@@ -566,9 +509,6 @@ def create_connect_account(
     stripe.api_key = settings.STRIPE_SECRET_KEY
 
     if current_user.stripe_customer_id:
-        # Check if it's already a Connect account. Use bracket access — Stripe
-        # SDK 9+ StripeObjects no longer expose dict.get(); .get() raises
-        # AttributeError. __getitem__ still works because StripeObject keeps it.
         try:
             acct = stripe.Account.retrieve(current_user.stripe_customer_id)
             if acct["type"] == "express":

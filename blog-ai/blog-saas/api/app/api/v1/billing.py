@@ -7,23 +7,17 @@ import traceback as tb
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 from typing import Optional
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.core.db import SessionLocal
 from app.core.config import settings
 from app.core.deps import get_current_user
+from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.plan import Plan
 from app.models.subscription import Subscription
 from app.models.org import Org
 
 router = APIRouter(prefix="/billing", tags=["billing"])
-
-# Per-IP rate limiter for the few endpoints in this module that hit the
-# Stripe API or write to subscription state. The default 60/min from
-# main.py applies to GETs that don't override.
-limiter = Limiter(key_func=get_remote_address)
 
 def get_db():
     db = SessionLocal()
@@ -37,7 +31,6 @@ def get_stripe():
     return stripe
 
 
-# ─── GET /billing/diag ───────────────────────────────────────────────────────
 @router.get("/diag")
 def billing_diag():
     import os
@@ -50,7 +43,6 @@ def billing_diag():
     }
 
 
-# ─── GET /billing/plans ───────────────────────────────────────────────────────
 @router.get("/plans")
 def list_plans(db: Session = Depends(get_db)):
     plans = db.query(Plan).order_by(Plan.price_cents).all()
@@ -68,7 +60,6 @@ def list_plans(db: Session = Depends(get_db)):
     ]
 
 
-# ─── GET /billing/me ──────────────────────────────────────────────────────────
 @router.get("/me")
 def my_billing(
     current_user: User = Depends(get_current_user),
@@ -89,7 +80,6 @@ def my_billing(
     }
 
 
-# ─── POST /billing/create-payment-intent ─────────────────────────────────────
 @router.post("/create-payment-intent")
 @limiter.limit("5/minute")
 def create_payment_intent(
@@ -123,12 +113,10 @@ def create_payment_intent(
             payment_settings={"save_default_payment_method": "on_subscription"},
             metadata={"user_id": str(current_user.id), "plan_id": str(plan_id)},
         )
-        # Obtener invoice y luego payment intent por separado
         invoice_id = subscription.latest_invoice
         if hasattr(invoice_id, "id"):
             invoice_id = invoice_id.id
         invoice = s.Invoice.retrieve(str(invoice_id))
-        # Buscar payment intent asociado al invoice
         pi_list = s.PaymentIntent.list(customer=customer.id, limit=5)
         client_secret = None
         for pi in pi_list.data:
@@ -147,13 +135,10 @@ def create_payment_intent(
     except HTTPException:
         raise
     except Exception as e:
-        # Don't echo the internal traceback to the caller — was leaking
-        # SQLAlchemy/Stripe SDK frames. Keep it server-side only.
         print(f"[billing] create-payment-intent error user={current_user.id}: {e}\n{tb.format_exc()}")
         raise HTTPException(502, detail="Stripe error — please try again")
 
 
-# ─── POST /billing/cancel ─────────────────────────────────────────────────────
 @router.post("/cancel")
 def cancel_subscription(
     current_user: User = Depends(get_current_user),
@@ -172,17 +157,13 @@ def cancel_subscription(
     return {"ok": True, "message": "Suscripción cancelada al final del período"}
 
 
-# ─── POST /billing/webhook ────────────────────────────────────────────────────
 @router.post("/webhook")
 async def stripe_webhook(
     request: Request,
     stripe_signature: Optional[str] = Header(None),
     db: Session = Depends(get_db),
 ):
-    """
-    Handles subscription lifecycle events. Verifies signature, then parses
-    the payload as plain JSON to avoid Stripe SDK 9+ StripeObject .get() trap.
-    """
+    """Subscription lifecycle events."""
     s = get_stripe()
     payload = await request.body()
     try:
@@ -217,8 +198,6 @@ def _handle_payment_succeeded(invoice: dict, db: Session):
         return
     s = get_stripe()
     stripe_sub = s.Subscription.retrieve(stripe_sub_id)
-    # StripeObject metadata doesn't expose .get() in SDK 9+; use bracket access
-    # with try/except so missing/malformed metadata defaults to plan_id=2 (creator).
     try:
         plan_id = int(stripe_sub["metadata"]["plan_id"])
     except (KeyError, TypeError, ValueError):
@@ -248,7 +227,6 @@ def _handle_payment_succeeded(invoice: dict, db: Session):
             org.plan_id = plan_id
             org.subscription_status = "active"
     db.commit()
-    # Send subscription confirmation email
     try:
         from app.services.email_service import send_subscription_confirmation
         plan = db.query(Plan).filter(Plan.id == plan_id).first()
@@ -287,7 +265,7 @@ def _handle_coin_purchase(payment_intent: dict, db: Session):
     """Credit coins to user wallet after successful Stripe payment."""
     metadata = payment_intent.get("metadata") or {}
     if metadata.get("type") != "coin_purchase":
-        return  # Not a coin purchase, skip
+        return
 
     user_id = metadata.get("user_id")
     coin_amount = metadata.get("coin_amount")
@@ -301,7 +279,6 @@ def _handle_coin_purchase(payment_intent: dict, db: Session):
     from app.models.coin_wallet import CoinWallet
     from app.models.coin_transaction import CoinTransaction
 
-    # Check for duplicate (idempotency)
     existing = db.query(CoinTransaction).filter(
         CoinTransaction.reference_id == payment_id,
         CoinTransaction.type == "purchase",
@@ -309,18 +286,15 @@ def _handle_coin_purchase(payment_intent: dict, db: Session):
     if existing:
         return
 
-    # Get or create wallet
     wallet = db.query(CoinWallet).filter(CoinWallet.user_id == user_id).first()
     if not wallet:
         wallet = CoinWallet(user_id=user_id, balance=0)
         db.add(wallet)
         db.flush()
 
-    # Add coins to existing balance
     wallet.balance += coin_amount
     wallet.lifetime_earned += coin_amount
 
-    # Record transaction
     txn = CoinTransaction(
         user_id=user_id,
         amount=coin_amount,
