@@ -308,8 +308,10 @@ def update_profile(
 
 
 @router.post("/posts/human")
+@limiter.limit("30/hour")
 def create_human_post(
     payload: dict,
+    request: Request,
     db: Session = Depends(get_db),
     user: User = Depends(__import__("app.core.deps", fromlist=["get_current_user"]).get_current_user),
 ):
