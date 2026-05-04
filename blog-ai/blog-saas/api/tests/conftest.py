@@ -94,6 +94,42 @@ def client(db_session):
 
 
 @pytest.fixture
+def make_wallet(db_session):
+    """Factory for seeding a CoinWallet row with arbitrary balances."""
+    session, _ = db_session
+
+    def _make(
+        user_id: int,
+        balance: int = 0,
+        withdrawable_balance: int = 0,
+        lifetime_earned: int = 0,
+        lifetime_spent: int = 0,
+    ):
+        from app.models.coin_wallet import CoinWallet
+        existing = session.query(CoinWallet).filter_by(user_id=user_id).first()
+        if existing:
+            existing.balance = balance
+            existing.withdrawable_balance = withdrawable_balance
+            existing.lifetime_earned = lifetime_earned
+            existing.lifetime_spent = lifetime_spent
+            session.commit()
+            return existing
+        wallet = CoinWallet(
+            user_id=user_id,
+            balance=balance,
+            withdrawable_balance=withdrawable_balance,
+            lifetime_earned=lifetime_earned,
+            lifetime_spent=lifetime_spent,
+        )
+        session.add(wallet)
+        session.commit()
+        session.refresh(wallet)
+        return wallet
+
+    return _make
+
+
+@pytest.fixture
 def make_user(db_session):
     """Factory for creating a User row in the test DB.
     Returns a callable; defaults to verified, non-banned. Override via kwargs."""
