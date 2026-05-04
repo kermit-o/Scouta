@@ -15,17 +15,13 @@ if _SENTRY_DSN:
             dsn=_SENTRY_DSN,
             environment=_os.getenv("SENTRY_ENVIRONMENT", "production"),
             release=_os.getenv("SENTRY_RELEASE") or _os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:7] or None,
-            # Trace 10% of requests by default. Override via env if you want
-            # full traces during incident debugging.
             traces_sample_rate=float(_os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
-            # Send PII by default = OFF. The SDK adds ip + user-agent only.
             send_default_pii=False,
             integrations=[
                 StarletteIntegration(transaction_style="endpoint"),
                 FastApiIntegration(transaction_style="endpoint"),
                 SqlalchemyIntegration(),
             ],
-            # Don't capture rate-limit 429s as errors — they're expected.
             ignore_errors=["RateLimitExceeded"],
         )
         print(f"[sentry] initialized (env={_os.getenv('SENTRY_ENVIRONMENT', 'production')})")
@@ -50,6 +46,7 @@ import uvicorn
 
 from app.core.db import SessionLocal, engine, Base
 from app.core.deps import require_superuser
+from app.core.rate_limit import limiter
 from app.models.post import Post
 from app.models.user import User
 from app.models.org import Org
@@ -77,7 +74,6 @@ try:
         if col_name not in _existing_cols:
             _conn.execute(_text(f"ALTER TABLE live_streams ADD COLUMN {col_name} {col_def}"))
             print(f"[migrate] added column live_streams.{col_name}")
-    # Auto-add withdrawable_balance to coin_wallets
     try:
         _cw_cols = {c["name"] for c in _inspect(engine).get_columns("coin_wallets")}
         if "withdrawable_balance" not in _cw_cols:
@@ -86,7 +82,6 @@ try:
     except Exception:
         pass
 
-    # Auto-add payout_method + payout_details to withdrawal_requests
     try:
         _wr_cols = {c["name"] for c in _inspect(engine).get_columns("withdrawal_requests")}
         _wr_new = {
@@ -105,7 +100,6 @@ try:
 except Exception as e:
     print(f"[migrate] auto-migration skipped: {e}")
 
-# Seed gift catalog
 try:
     from app.models.gift import seed_gift_catalog
     _seed_db = SessionLocal()
@@ -118,8 +112,6 @@ import threading
 import time as _time
 
 def _reputation_scheduler():
-    """Runs reputation recalc every hour."""
-    # Wait 30s after startup before first run
     _time.sleep(30)
     while True:
         try:
@@ -127,15 +119,9 @@ def _reputation_scheduler():
             run_reputation_job()
         except Exception as e:
             print(f"[reputation_job] error: {e}")
-        _time.sleep(3600)  # every hour
+        _time.sleep(3600)
 
 
-# Worker leader election: with multiple gunicorn workers we don't want every
-# worker to spawn its own reputation scheduler / agent spawn loop — that
-# duplicates AI cost and trips unique constraints on agent_actions.idempotency_key.
-# A POSIX flock on a tmp file lets the first worker to start become the leader;
-# the others fail to acquire the lock and skip the schedulers.
-# Caveat: if the leader crashes the schedulers stop until the next full restart.
 _leader_lock_fd = None
 
 def _try_become_leader() -> bool:
@@ -161,14 +147,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Rate limiting
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
+# Rate limiting wired to the SHARED Limiter from app.core.rate_limit. The
+# decorator enforcement uses limiter._storage; the middleware applies the
+# default_limits to every route; the exception handler converts
+# RateLimitExceeded → 429.
+from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+app.add_middleware(SlowAPIMiddleware)
 
 app.include_router(api_router, prefix="/api/v1")
 
@@ -199,10 +188,6 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    """Start background threads only on the leader worker."""
-    # Kill switch for the schedulers — set ENABLE_BG_JOBS=false on Railway
-    # to stop the spawn_loop / reputation_job without redeploying. Useful
-    # when LLM providers are out of credit and logs are being spammed.
     if _os.getenv("ENABLE_BG_JOBS", "true").strip().lower() in ("0", "false", "no", "off"):
         print("[startup] ENABLE_BG_JOBS is off — background jobs skipped")
         return
@@ -213,12 +198,10 @@ async def startup_event():
 
     import threading
 
-    # Reputation scheduler
     t1 = threading.Thread(target=_reputation_scheduler, daemon=True)
     t1.start()
     print("[startup] reputation scheduler started")
 
-    # Spawn loop
     def _spawn_loop():
         import time as _t
         _t.sleep(15)
@@ -232,7 +215,6 @@ async def startup_event():
     t2.start()
     print("[startup] spawn loop started")
 
-# Dependency
 def get_db():
     db = SessionLocal()
     try:
@@ -240,17 +222,6 @@ def get_db():
     finally:
         db.close()
 
-# ---------------------------------------------------------------------------
-# Health checks
-# ---------------------------------------------------------------------------
-# /health        — LIVENESS. Always 200 if the process is alive. Used by
-#                  Railway to decide whether to restart the container.
-#                  Must NOT depend on DB or external services — we don't want
-#                  a transient DB blip to trigger a restart loop.
-# /health/ready  — READINESS. Verifies DB is reachable. Returns 503 if not
-#                  so a load balancer can drain traffic. Use this from
-#                  uptime monitors and any orchestrator that supports
-#                  readiness probes.
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "scouta-api"}
@@ -265,15 +236,12 @@ async def health_ready():
             conn.execute(_hr_text("SELECT 1"))
         return {"ready": True, "db": "ok"}
     except Exception as e:
-        # Don't echo the full error to clients (could leak DSN fragments);
-        # log it and return a generic indicator.
         print(f"[health/ready] db check failed: {e}")
         return JSONResponse(
             status_code=503,
             content={"ready": False, "db": "down"},
         )
 
-# ROOT
 @app.get("/")
 async def root():
     return {
@@ -288,19 +256,14 @@ async def root():
         }
     }
 
-# SIMPLE AUTH (como funcionaba antes)
 from fastapi.security import OAuth2PasswordRequestForm
 
-# Manually trigger an AI agent to publish a post. Costs LLM quota,
-# so it's gated behind require_superuser to prevent random callers
-# from burning DeepSeek/Qwen credits.
 @app.post("/api/v1/orgs/{org_id}/generate-post")
 async def generate_post(
     org_id: int,
     db: Session = Depends(get_db),
     _: User = Depends(require_superuser),
 ):
-    """Generar post con DeepSeek (admin only)."""
     try:
         import random
         from app.services.agent_post_generator import generate_post_for_agent
@@ -354,12 +317,8 @@ async def get_trending_tags(org_id: int, db: Session = Depends(get_db)):
     return [{"tag": r[0], "count": r[1]} for r in rows]
 
 
-# Public feed of an org. Status param is ignored — always returns published
-# posts only, otherwise an unauthenticated caller could pass ?status=draft
-# and read unpublished content.
 @app.get("/api/v1/orgs/{org_id}/posts")
 async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50, tag: str = None, sort: str = "recent"):
-    """Obtener posts publicados de una organización (público, solo published)."""
     from sqlalchemy import text as _text
     status = "published"
     if tag:
@@ -441,7 +400,6 @@ async def get_posts(org_id: int, db: Session = Depends(get_db), limit: int = 50,
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 
-# auth_router ya incluido en api_router — eliminado duplicado
 app.include_router(spawn_router, prefix="/api/v1")
 from app.api.v1.debug import router as debug_router
 app.include_router(debug_router, prefix="/api/v1")

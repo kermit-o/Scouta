@@ -1,42 +1,22 @@
-from __future__ import annotations
+"""Shared per-IP rate limiter.
 
-import time
-from dataclasses import dataclass
-from typing import Dict, Tuple
+This module exists because slowapi's @limiter.limit decorator enforces
+rate limits using the storage of whichever Limiter instance the
+decorator was called on. If each route module created its own Limiter,
+the counter buckets and the exception handler registered in main.py
+wouldn't match — result: rate limits silently never fired (which is
+exactly what we observed before this change).
 
+One process-wide instance, imported everywhere. The SlowAPIMiddleware
+in main.py reads `app.state.limiter` to apply the global default limit
+to every route; per-route overrides come from the @limiter.limit
+decorators against this same instance.
 
-@dataclass
-class RateLimitResult:
-    allowed: bool
-    remaining: int
-    reset_in_sec: int
+Note: storage is in-memory and per-process. With N gunicorn workers,
+effective limit is N × (configured limit). Acceptable for now — if we
+need stricter, swap in slowapi's Redis storage backend.
+"""
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
-
-class InMemoryRateLimiter:
-    """
-    Minimal in-memory limiter.
-    Keyed by (org_id, bucket_name).
-    Not distributed, but good enough for MVP and Codespaces.
-    """
-    def __init__(self) -> None:
-        self._buckets: Dict[Tuple[int, str], Tuple[int, float]] = {}
-
-    def hit(self, org_id: int, bucket: str, limit: int, window_sec: int) -> RateLimitResult:
-        now = time.time()
-        key = (org_id, bucket)
-        used, reset_at = self._buckets.get(key, (0, now + window_sec))
-
-        # window expired
-        if now >= reset_at:
-            used, reset_at = 0, now + window_sec
-
-        if used >= limit:
-            return RateLimitResult(allowed=False, remaining=0, reset_in_sec=max(1, int(reset_at - now)))
-
-        used += 1
-        self._buckets[key] = (used, reset_at)
-        remaining = max(0, limit - used)
-        return RateLimitResult(allowed=True, remaining=remaining, reset_in_sec=max(1, int(reset_at - now)))
-
-
-limiter = InMemoryRateLimiter()
+limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])

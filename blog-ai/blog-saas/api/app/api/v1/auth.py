@@ -4,14 +4,12 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from app.core.deps import get_db
 from app.core.security import hash_password, verify_and_update_password, create_access_token
+from app.core.rate_limit import limiter
 from app.models.user import User
 from app.api.v1.schemas.auth import RegisterIn, LoginIn, TokenOut
 from app.services.email_service import send_verification_email
 from app.services.turnstile import verify_turnstile
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
-limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(tags=["auth"])
 
 def _ensure_org_member(db, user_id: int, org_id: int = 1):
@@ -51,7 +49,6 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
     db.commit()
     db.refresh(user)
     _ensure_org_member(db, user.id)
-    # Send welcome email
     try:
         from app.services.email_service import send_welcome_email, send_admin_notification
         send_welcome_email(user.email, user.username or user.display_name or 'friend')
@@ -133,7 +130,6 @@ def me(
 def forgot_password(payload: dict, request: Request, db: Session = Depends(get_db)):
     email = payload.get("email", "")
     user = db.query(User).filter(User.email == email).one_or_none()
-    # Siempre responder igual para no revelar si el email existe
     if user:
         token = secrets.token_urlsafe(32)
         user.verification_token = token
@@ -200,7 +196,6 @@ def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)
     """Callback de Google OAuth"""
     from fastapi.responses import RedirectResponse
 
-    # Intercambiar code por token
     token_res = httpx.post("https://oauth2.googleapis.com/token", data={
         "code": code,
         "client_id": GOOGLE_CLIENT_ID,
@@ -213,7 +208,6 @@ def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)
     if not access_token_google:
         return RedirectResponse(f"{FRONTEND_URL}/login?error=google_failed")
 
-    # Obtener info del usuario
     user_info = httpx.get("https://www.googleapis.com/oauth2/v2/userinfo",
         headers={"Authorization": f"Bearer {access_token_google}"}
     ).json()
@@ -225,7 +219,6 @@ def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)
     if not email:
         return RedirectResponse(f"{FRONTEND_URL}/login?error=no_email")
 
-    # Buscar o crear usuario
     user = db.query(User).filter(User.email == email).one_or_none()
     if not user:
         import re
@@ -248,7 +241,6 @@ def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)
         db.commit()
         db.refresh(user)
     else:
-        # Actualizar avatar si cambió
         if picture and not user.avatar_url:
             user.avatar_url = picture
             db.add(user)
@@ -258,17 +250,9 @@ def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)
 
     callback_params = f"token={token}&user_id={user.id}&username={user.username}&display_name={user.display_name or ''}&avatar_url={user.avatar_url or ''}"
 
-    # Mobile: deep link uses query string (native handlers parse query, not
-    # fragment). The deep link itself never hits a public URL bar so the
-    # leak risk is minimal for native apps.
     if state == "mobile":
         return RedirectResponse(f"scouta://auth/callback?{callback_params}")
 
-    # Web: use URL fragment (#) instead of query (?). Fragments are never
-    # sent to servers (no access log entries, no Referer header), which
-    # prevents the JWT from leaking to Railway logs / CDN logs / any
-    # third-party script reading document.referrer. The frontend reads
-    # window.location.hash to consume them.
     return RedirectResponse(f"{FRONTEND_URL}/auth/callback#{callback_params}")
 
 
@@ -282,7 +266,6 @@ def update_profile(
     allowed = ["display_name", "bio", "avatar_url", "interests", "website", "location", "username"]
     for field in allowed:
         if field in payload and payload[field] is not None:
-            # Verificar username único
             if field == "username":
                 existing = db.query(User).filter(
                     User.username == payload[field],
@@ -331,7 +314,6 @@ def create_human_post(
     if not body_md and not media_url:
         raise HTTPException(status_code=400, detail="Body or media is required")
 
-    # Generar slug
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:80]
     slug = f"{slug}-{int(time.time())}"
 
@@ -352,7 +334,6 @@ def create_human_post(
     db.add(post)
     db.commit()
     db.refresh(post)
-    # Extraer tags
     try:
         from app.services.tag_extractor import save_tags_for_post
         save_tags_for_post(db, post.id, post.title, post.body_md)
