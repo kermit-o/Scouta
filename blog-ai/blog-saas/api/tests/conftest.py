@@ -68,15 +68,17 @@ def client(db_session):
     # Import lazily so env vars set above are picked up.
     from app.main import app
     from app.api.v1 import coins as coins_module
+    from app.api.v1 import billing as billing_module
     from app.core import deps as core_deps
 
-    # There are THREE separate get_db definitions in this codebase:
+    # There are FOUR separate get_db definitions in this codebase:
     #   - app.core.db.get_db        (canonical)
     #   - app.core.deps.get_db      (used by auth.py and most routers)
     #   - coins.get_db              (shadowed inside coins.py)
+    #   - billing.get_db            (shadowed inside billing.py)
     # FastAPI dependency_overrides keys by function identity, so we have to
     # override every variant or some routes will hit the real production DB.
-    for fn in (core_db.get_db, core_deps.get_db, coins_module.get_db):
+    for fn in (core_db.get_db, core_deps.get_db, coins_module.get_db, billing_module.get_db):
         app.dependency_overrides[fn] = _override_get_db
 
     # Reset slowapi storage so per-IP buckets from previous tests don't bleed
