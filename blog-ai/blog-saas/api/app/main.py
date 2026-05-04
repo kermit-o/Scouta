@@ -41,6 +41,7 @@ from app.api.v1.auth import router as auth_router
 FastAPI app - VERSIÓN SIMPLE QUE FUNCIONA
 """
 from fastapi import FastAPI
+from fastapi.responses import JSONResponse
 from app.api.v1.api import api_router
 from fastapi import Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -239,10 +240,38 @@ def get_db():
     finally:
         db.close()
 
-# HEALTH CHECK (siempre funciona)
+# ---------------------------------------------------------------------------
+# Health checks
+# ---------------------------------------------------------------------------
+# /health        — LIVENESS. Always 200 if the process is alive. Used by
+#                  Railway to decide whether to restart the container.
+#                  Must NOT depend on DB or external services — we don't want
+#                  a transient DB blip to trigger a restart loop.
+# /health/ready  — READINESS. Verifies DB is reachable. Returns 503 if not
+#                  so a load balancer can drain traffic. Use this from
+#                  uptime monitors and any orchestrator that supports
+#                  readiness probes.
 @app.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "scouta-api"}
+
+
+@app.get("/health/ready")
+async def health_ready():
+    """Readiness probe — fails fast (503) if the database is unreachable."""
+    from sqlalchemy import text as _hr_text
+    try:
+        with engine.connect() as conn:
+            conn.execute(_hr_text("SELECT 1"))
+        return {"ready": True, "db": "ok"}
+    except Exception as e:
+        # Don't echo the full error to clients (could leak DSN fragments);
+        # log it and return a generic indicator.
+        print(f"[health/ready] db check failed: {e}")
+        return JSONResponse(
+            status_code=503,
+            content={"ready": False, "db": "down"},
+        )
 
 # ROOT
 @app.get("/")
@@ -252,6 +281,7 @@ async def root():
         "version": "1.0.0",
         "endpoints": {
             "health": "/health",
+            "ready": "/health/ready",
             "docs": "/docs",
             "login": "/api/v1/auth/login",
             "generate_post": "/api/v1/orgs/{org_id}/generate-post"

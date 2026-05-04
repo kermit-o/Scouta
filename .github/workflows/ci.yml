@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend syntax check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Cheapest possible smoke test: compile every .py file. Catches
+      # SyntaxError, broken indentation, typos in imports of stdlib /
+      # builtins. Doesn't catch runtime issues (missing 3rd-party packages,
+      # bad SQL, etc) — those need actual integration tests, which we'll
+      # add in a follow-up. Compileall has zero install cost so it runs
+      # in seconds.
+      - name: Compile all Python files
+        working-directory: blog-ai/blog-saas/api
+        run: python -m compileall -q app
+
+  frontend:
+    name: Frontend lint + build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install dependencies
+        working-directory: blog-ai/blog-saas/frontend
+        # Prefer ci (uses lockfile, fails on drift). Fall back to install
+        # if no lockfile exists yet.
+        run: npm ci || npm install
+      - name: Lint
+        working-directory: blog-ai/blog-saas/frontend
+        # --if-present so this is a no-op if package.json doesn't define
+        # a lint script. Doesn't fail CI when it's missing.
+        run: npm run lint --if-present
+      - name: Build
+        working-directory: blog-ai/blog-saas/frontend
+        env:
+          # Stub values — the real ones are only on Railway. The build
+          # itself just needs them to be present so Next.js doesn't
+          # error during static prerender.
+          NEXT_PUBLIC_API_URL: https://api.scouta.co
+          NEXT_PUBLIC_LIVEKIT_URL: wss://example.livekit.cloud
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: pk_test_stub
+          NEXT_PUBLIC_TURNSTILE_SITE_KEY: 1x00000000000000000000AA
+        run: npm run build
