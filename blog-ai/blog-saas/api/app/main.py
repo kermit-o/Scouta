@@ -1,3 +1,39 @@
+# Sentry initialization MUST run before the FastAPI app is created so the
+# SDK can wrap Starlette/FastAPI handlers. We do it at the very top of
+# the module, before any other app imports, then proceed with the rest.
+import os as _os
+
+_SENTRY_DSN = _os.getenv("SENTRY_DSN", "").strip()
+if _SENTRY_DSN:
+    try:
+        import sentry_sdk
+        from sentry_sdk.integrations.fastapi import FastApiIntegration
+        from sentry_sdk.integrations.starlette import StarletteIntegration
+        from sentry_sdk.integrations.sqlalchemy import SqlalchemyIntegration
+
+        sentry_sdk.init(
+            dsn=_SENTRY_DSN,
+            environment=_os.getenv("SENTRY_ENVIRONMENT", "production"),
+            release=_os.getenv("SENTRY_RELEASE") or _os.getenv("RAILWAY_GIT_COMMIT_SHA", "")[:7] or None,
+            # Trace 10% of requests by default. Override via env if you want
+            # full traces during incident debugging.
+            traces_sample_rate=float(_os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")),
+            # Send PII by default = OFF. The SDK adds ip + user-agent only.
+            send_default_pii=False,
+            integrations=[
+                StarletteIntegration(transaction_style="endpoint"),
+                FastApiIntegration(transaction_style="endpoint"),
+                SqlalchemyIntegration(),
+            ],
+            # Don't capture rate-limit 429s as errors — they're expected.
+            ignore_errors=["RateLimitExceeded"],
+        )
+        print(f"[sentry] initialized (env={_os.getenv('SENTRY_ENVIRONMENT', 'production')})")
+    except Exception as _e:
+        print(f"[sentry] init failed: {_e}")
+else:
+    print("[sentry] SENTRY_DSN not set — error reporting disabled")
+
 from app.api.v1.spawn import router as spawn_router
 from app.api.v1.auth import router as auth_router
 
@@ -140,10 +176,12 @@ import os
 
 ALLOWED_ORIGINS = [
     o.strip()
-    for o in os.getenv(
+    for o in _os.getenv(
         "ALLOWED_ORIGINS",
         "http://localhost:3000,"
-        "https://serene-eagerness-production.up.railway.app",
+        "https://serene-eagerness-production.up.railway.app,"
+        "https://scouta.co,"
+        "https://www.scouta.co",
     ).split(",")
     if o.strip()
 ]
@@ -164,13 +202,13 @@ async def startup_event():
     # Kill switch for the schedulers — set ENABLE_BG_JOBS=false on Railway
     # to stop the spawn_loop / reputation_job without redeploying. Useful
     # when LLM providers are out of credit and logs are being spammed.
-    if os.getenv("ENABLE_BG_JOBS", "true").strip().lower() in ("0", "false", "no", "off"):
+    if _os.getenv("ENABLE_BG_JOBS", "true").strip().lower() in ("0", "false", "no", "off"):
         print("[startup] ENABLE_BG_JOBS is off — background jobs skipped")
         return
     if not _try_become_leader():
-        print(f"[startup] worker pid={os.getpid()} is not leader — background jobs skipped")
+        print(f"[startup] worker pid={_os.getpid()} is not leader — background jobs skipped")
         return
-    print(f"[startup] worker pid={os.getpid()} is leader — starting background jobs")
+    print(f"[startup] worker pid={_os.getpid()} is leader — starting background jobs")
 
     import threading
 
