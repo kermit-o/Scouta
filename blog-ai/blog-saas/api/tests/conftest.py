@@ -130,6 +130,44 @@ def make_wallet(db_session):
 
 
 @pytest.fixture
+def make_stream(db_session):
+    """Seed a LiveStream row."""
+    session, _ = db_session
+
+    def _make(
+        room_name: str,
+        host_user_id: int,
+        status: str = "live",
+        title: str = "demo",
+        is_private: bool = False,
+        access_type: str = "public",
+        password_hash: str | None = None,
+        entry_coin_cost: int = 0,
+        max_viewer_limit: int = 0,
+        viewer_count: int = 0,
+    ):
+        from app.models.live_stream import LiveStream
+        s = LiveStream(
+            room_name=room_name,
+            title=title,
+            host_user_id=host_user_id,
+            status=status,
+            is_private=is_private,
+            access_type=access_type,
+            password_hash=password_hash,
+            entry_coin_cost=entry_coin_cost,
+            max_viewer_limit=max_viewer_limit,
+            viewer_count=viewer_count,
+        )
+        session.add(s)
+        session.commit()
+        session.refresh(s)
+        return s
+
+    return _make
+
+
+@pytest.fixture
 def make_user(db_session):
     """Factory for creating a User row in the test DB.
     Returns a callable; defaults to verified, non-banned. Override via kwargs."""

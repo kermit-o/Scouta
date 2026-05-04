@@ -47,26 +47,6 @@ def make_gift(db_session):
     return _make
 
 
-@pytest.fixture
-def make_stream(db_session):
-    """Seed a LiveStream owned by host_user_id."""
-    session, _ = db_session
-
-    def _make(room_name: str, host_user_id: int, status: str = "live", title: str = "demo"):
-        s = LiveStream(
-            room_name=room_name,
-            title=title,
-            host_user_id=host_user_id,
-            status=status,
-        )
-        session.add(s)
-        session.commit()
-        session.refresh(s)
-        return s
-
-    return _make
-
-
 # ---------- Catalog ----------
 
 def test_catalog_lists_gifts_publicly(client, make_gift):
