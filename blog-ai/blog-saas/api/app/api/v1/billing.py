@@ -7,6 +7,8 @@ import traceback as tb
 from fastapi import APIRouter, Depends, HTTPException, Request, Header
 from sqlalchemy.orm import Session
 from typing import Optional
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.core.db import SessionLocal
 from app.core.config import settings
@@ -17,6 +19,11 @@ from app.models.subscription import Subscription
 from app.models.org import Org
 
 router = APIRouter(prefix="/billing", tags=["billing"])
+
+# Per-IP rate limiter for the few endpoints in this module that hit the
+# Stripe API or write to subscription state. The default 60/min from
+# main.py applies to GETs that don't override.
+limiter = Limiter(key_func=get_remote_address)
 
 def get_db():
     db = SessionLocal()
@@ -84,8 +91,10 @@ def my_billing(
 
 # ─── POST /billing/create-payment-intent ─────────────────────────────────────
 @router.post("/create-payment-intent")
+@limiter.limit("5/minute")
 def create_payment_intent(
     body: dict,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -138,7 +147,10 @@ def create_payment_intent(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(500, detail=f"Stripe error: {str(e)} | {tb.format_exc()}")
+        # Don't echo the internal traceback to the caller — was leaking
+        # SQLAlchemy/Stripe SDK frames. Keep it server-side only.
+        print(f"[billing] create-payment-intent error user={current_user.id}: {e}\n{tb.format_exc()}")
+        raise HTTPException(502, detail="Stripe error — please try again")
 
 
 # ─── POST /billing/cancel ─────────────────────────────────────────────────────
