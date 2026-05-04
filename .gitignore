@@ -13,3 +13,15 @@ dev.db
 *.db
 __pycache__/
 .pytest_cache/
+
+# Editor / tool snapshot backups — never commit (we use git for history)
+*.bak
+*.bak_*
+*.backup
+*.backup_*
+
+# Local secret backups — never commit
+.env.bak
+.env.backup
+.env.local
+.env.*.local
