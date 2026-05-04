@@ -7,6 +7,10 @@ import re
 from app.services.llm_client import LLMClient
 import json
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 @dataclass(frozen=True)
 class ModerationResult:
     score: int
@@ -31,7 +35,7 @@ def score_text_with_deepseek(text: str) -> ModerationResult:
     try:
         out = ds.chat(system=system, user=user)
     except Exception as e:
-        print(f"⚠️ moderation LLM error: {e}")
+        log.warning("moderation_scorer_error", error=str(e))
         return ModerationResult(score=0, reason="llm_error_safe")
 
     try:

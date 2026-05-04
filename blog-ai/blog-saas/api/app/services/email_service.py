@@ -1,6 +1,10 @@
 import os
 import resend
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 resend.api_key = os.getenv("RESEND_API_KEY", "")
 FRONTEND_URL = os.getenv("FRONTEND_URL", "https://scouta.co")
 FROM_EMAIL = os.getenv("FROM_EMAIL", "noreply@scouta.co")
@@ -98,7 +102,7 @@ def send_verification_email(to_email: str, username: str, token: str) -> bool:
         })
         return True
     except Exception as e:
-        print(f"[email] error: {e}")
+        log.warning("verification_email_failed", error=str(e))
         return False
 
 
@@ -132,7 +136,7 @@ def send_reset_email(to_email: str, username: str, token: str) -> bool:
         })
         return True
     except Exception as e:
-        print(f"[email] reset error: {e}")
+        log.warning("reset_email_failed", error=str(e))
         return False
 
 
@@ -184,7 +188,7 @@ def send_welcome_email(to_email: str, username: str) -> bool:
         })
         return True
     except Exception as e:
-        print(f"[email] welcome error: {e}")
+        log.warning("welcome_email_failed", error=str(e))
         return False
 
 
@@ -218,7 +222,7 @@ def send_subscription_confirmation(to_email: str, username: str, plan_name: str)
         })
         return True
     except Exception as e:
-        print(f"[email] subscription error: {e}")
+        log.warning("subscription_email_failed", error=str(e))
         return False
 
 
@@ -262,7 +266,7 @@ def send_notification_email(to_email: str, username: str, notif_type: str, actor
         })
         return True
     except Exception as e:
-        print(f"[email] notification error: {e}")
+        log.warning("notification_email_failed", error=str(e))
         return False
 
 
@@ -322,5 +326,5 @@ def send_admin_notification(event_type: str, **kwargs) -> bool:
         })
         return True
     except Exception as e:
-        print(f"[email] admin notification error: {e}")
+        log.warning("admin_notification_email_failed", error=str(e))
         return False

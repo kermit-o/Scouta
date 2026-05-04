@@ -12,6 +12,9 @@ from app.models.post import Post
 from app.models.org_settings import OrgSettings
 from app.services.action_spawner import spawn_actions_for_post
 from app.services.news_post_generator import generate_news_post
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
 
 
 @dataclass
@@ -159,18 +162,16 @@ def _tick() -> None:
             STATE.spawns += spawned
 
         # Generar post de noticias cada ~3 ticks (33% probabilidad)
-        print(f"[tick] ticks={STATE.ticks} — intentando generar post")
+        log.debug("scheduler_tick", ticks=STATE.ticks)
         if random.random() < 0.33:
             try:
                 result = generate_news_post(db, org_id=org_id)
                 if result:
-                    print(f"[news_post] OK: {result.get('title','')[:50]}")
+                    log.info("news_post_generated", title=result.get("title", "")[:50])
                 else:
-                    print("[news_post] returned None")
+                    log.warning("news_post_skipped", reason="generator returned None")
             except Exception as ne:
-                import traceback
-                print(f"[news_post] ERROR: {ne}")
-                print(traceback.format_exc()[:500])
+                log.exception("news_post_error", error=str(ne))
 
         _mark_tick()
 

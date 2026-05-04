@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.deps import get_current_user
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
 from app.models.comment import Comment
 from app.models.post import Post
 from app.models.user import User
@@ -187,9 +190,9 @@ def create_comment(
                             post_url=post_url,
                         )
                 except Exception as email_err:
-                    print("[email] reply notification failed:", email_err)
+                    log.warning("reply_notification_email_failed", error=str(email_err))
         except Exception as e:
-            print("[notifications] insert failed:", e)
+            log.warning("reply_notification_insert_failed", error=str(e))
 
     return _comment_dict(comment, user)
 
@@ -257,7 +260,7 @@ def vote_comment(
             })
             db.commit()
     except Exception as e:
-            print("[notifications] insert failed:", e)
+            log.warning("comment_vote_notification_failed", error=str(e))
 
     return {"action": action, "upvotes": ups, "downvotes": downs}
 

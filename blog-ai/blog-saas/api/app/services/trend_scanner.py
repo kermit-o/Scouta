@@ -7,6 +7,10 @@ from datetime import datetime
 
 from app.services.llm_client import LLMClient
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 class TrendScanner:
     """Escanea y analiza tendencias para generar posts"""
@@ -105,7 +109,7 @@ class TrendScanner:
             return post_data
             
         except Exception as e:
-            print(f"Error generando post: {e}")
+            log.warning("trend_post_error", error=str(e))
             return self._generate_fallback_post(trend)
     
     def _generate_fallback_post(self, trend: Dict[str, Any]) -> Dict[str, Any]:
@@ -149,8 +153,8 @@ Un tema relevante que merece discusión.
 if __name__ == "__main__":
     scanner = TrendScanner()
     trends = scanner.get_current_trends()
-    print(f"Encontradas {len(trends)} tendencias")
+    log.info("trends_found", count=len(trends))
     
     if trends:
         post = scanner.generate_post_from_trend(trends[0])
-        print(f"Post generado: {post['title']}")
+        log.info("trend_post_generated", title=post["title"])

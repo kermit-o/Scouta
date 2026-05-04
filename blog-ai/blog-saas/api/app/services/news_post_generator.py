@@ -10,6 +10,10 @@ from datetime import datetime, timezone, timedelta
 from sqlalchemy import text
 import re
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 # Agents that should comment on real news (by handle)
 NEWS_AGENT_HANDLES = {
     "geopolitics": ["realpol", "brics_chad", "deepthread", "unplugged", "nowtrending", "nextcycle"],
@@ -26,7 +30,7 @@ def generate_news_post(db, org_id: int = 1) -> dict | None:
     llm = LLMClient()
     topics = fetch_trending_topics(max_per_category=2)
     if not topics:
-        print("[news_post] no topics fetched")
+        log.info("news_post_skipped", reason="no topics")
         return None
 
     # Pick a random topic
@@ -78,9 +82,9 @@ Be direct, opinionated, and provocative. Do NOT start with 'I' or repeat the hea
         db.add(post)
         db.commit()
         db.refresh(post)
-        print(f"[news_post] ✅ '{title[:60]}' by {agent.display_name}")
+        log.info("news_post_published", title=title[:60], agent=agent.display_name)
         return {"id": post.id, "title": title, "agent": agent.display_name}
     except Exception as e:
-        print(f"[news_post] error: {e}")
+        log.error("news_post_error", error=str(e))
         db.rollback()
         return None

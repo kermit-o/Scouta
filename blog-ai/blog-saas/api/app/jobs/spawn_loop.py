@@ -21,6 +21,9 @@ except Exception:
     HAS_NEWS = False
 from app.services.agent_selector import select_agent_for_post, select_agents_for_debate
 from app.services.human_reply_spawner import spawn_agent_replies_to_human
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
 
 SLEEP_SECONDS  = int(os.getenv("SPAWN_LOOP_SECONDS", "60"))
 ORG_ID         = int(os.getenv("SPAWN_LOOP_ORG_ID", "1"))
@@ -125,11 +128,16 @@ def agent_vote_comments(db, org_id: int, post_id: int) -> None:
 
     if votes_added:
         db.commit()
-        print(f"[vote_loop] post_id={post_id} votes={votes_added}")
+        log.info("vote_loop_added", post_id=post_id, votes=votes_added)
 
 
 def main() -> None:
-    print(f"[spawn_loop] org_id={ORG_ID} every={SLEEP_SECONDS}s agents_per_post={AGENTS_PER_POST}")
+    log.info(
+        "spawn_loop_started",
+        org_id=ORG_ID,
+        sleep_seconds=SLEEP_SECONDS,
+        agents_per_post=AGENTS_PER_POST,
+    )
 
     last_post_time = 0
 
@@ -153,9 +161,9 @@ def main() -> None:
                             publish=True, source="auto"
                         )
                         last_post_time = _time.time()
-                        print(f"[post_gen] agent={agent.handle} title={post.title[:60]}")
+                        log.info("post_generated", agent=agent.handle, post_id=post.id, title=post.title[:60])
                 except Exception as pe:
-                    print(f"[post_gen] error: {repr(pe)}")
+                    log.error("post_gen_error", error=repr(pe))
 
             # 1. Debates en posts recientes
             posts = (
@@ -188,15 +196,15 @@ def main() -> None:
                             p.debate_status = "open"
                             db.add(p)
                             db.commit()
-                        print(f"[debate_loop] post_id={p.id} agents={agent_ids} comments={len(comments)}")
+                        log.info("debate_spawned", post_id=p.id, agents=agent_ids, comments=len(comments))
                 except Exception as de:
-                    print(f"[debate_loop] post_id={p.id} error: {repr(de)}")
+                    log.error("debate_loop_error", post_id=p.id, error=repr(de))
 
                 # 2. Agentes votan comentarios existentes
                 try:
                     agent_vote_comments(db, ORG_ID, p.id)
                 except Exception as ve:
-                    print(f"[vote_loop] post_id={p.id} error: {repr(ve)}")
+                    log.error("vote_loop_error", post_id=p.id, error=repr(ve))
 
             # 3. Responder a comentarios humanos recientes
             cutoff = datetime.now(timezone.utc) - timedelta(minutes=10)
@@ -235,12 +243,12 @@ def main() -> None:
                             max_replies=2,
                         )
                         if replies:
-                            print(f"[human_reply_loop] comment={hc.id} replies={len(replies)}")
+                            log.info("human_reply_spawned", comment_id=hc.id, replies=len(replies))
                     except Exception as e:
-                        print(f"[human_reply_loop] comment={hc.id} error: {repr(e)}")
+                        log.error("human_reply_error", comment_id=hc.id, error=repr(e))
 
         except Exception as e:
-            print(f"[spawn_loop] error: {repr(e)}")
+            log.error("spawn_loop_error", error=repr(e))
         finally:
             db.close()
 

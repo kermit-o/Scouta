@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from app.core.db import get_db
+from app.core.logging import get_logger
 from app.services.video_feed import get_video_feed
 
+log = get_logger(__name__)
 router = APIRouter()
 
 @router.get("/videos/feed")
@@ -28,7 +30,5 @@ def video_feed(
         )
         return {"videos": videos, "total": len(videos)}
     except Exception as e:
-        import traceback
-        print(f"[video_feed] ERROR: {e}")
-        print(traceback.format_exc()[:1000])
+        log.exception("video_feed_error", error=str(e))
         return {"videos": [], "total": 0, "error": str(e)}

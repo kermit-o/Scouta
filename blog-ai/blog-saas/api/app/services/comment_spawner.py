@@ -14,6 +14,10 @@ from app.models.comment import Comment
 from app.models.post import Post
 from app.services.llm_client import LLMClient  # ✅ Cambiado de DeepSeekClient a LLMClient
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
@@ -145,7 +149,7 @@ Write ONE comment as this agent. Make it distinct, specific, and non-repetitive.
     try:
         data = _must_json(system=system, user=user, llm=llm)  # ✅ Cambiado ds -> llm
     except Exception as e:
-        print(f"❌ Error generando comentario con LLM: {e}")
+        log.warning("comment_llm_error", error=str(e))
         # Fallback a DeepSeek si Qwen falla (LLMClient ya maneja fallback automático)
         raise
 

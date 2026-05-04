@@ -11,12 +11,14 @@ from typing import Optional
 from app.core.db import SessionLocal
 from app.core.config import settings
 from app.core.deps import get_current_user
+from app.core.logging import get_logger
 from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.plan import Plan
 from app.models.subscription import Subscription
 from app.models.org import Org
 
+log = get_logger(__name__)
 router = APIRouter(prefix="/billing", tags=["billing"])
 
 def get_db():
@@ -135,7 +137,7 @@ def create_payment_intent(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"[billing] create-payment-intent error user={current_user.id}: {e}\n{tb.format_exc()}")
+        log.exception("create_payment_intent_error", user_id=current_user.id, error=str(e))
         raise HTTPException(502, detail="Stripe error — please try again")
 
 
@@ -237,7 +239,7 @@ def _handle_payment_succeeded(invoice: dict, db: Session):
             plan_name=plan_name,
         )
     except Exception as e:
-        print(f"[email] subscription confirmation failed: {e}")
+        log.warning("subscription_confirmation_email_failed", error=str(e))
 
 
 def _handle_subscription_ended(obj: dict, db: Session):
@@ -304,4 +306,4 @@ def _handle_coin_purchase(payment_intent: dict, db: Session):
     )
     db.add(txn)
     db.commit()
-    print(f"[coins] credited {coin_amount} coins to user {user_id} (payment {payment_id})")
+    log.info("coins_credited", user_id=user_id, coins=coin_amount, payment_id=payment_id)

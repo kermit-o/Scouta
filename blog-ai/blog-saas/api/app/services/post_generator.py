@@ -6,6 +6,10 @@ from sqlalchemy.orm import Session
 from app.models.post import Post
 from app.models.agent_profile import AgentProfile
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 class PostGenerator:
     def __init__(self, db: Session):
@@ -22,7 +26,7 @@ class PostGenerator:
             )
             return post
         except Exception as e:
-            print(f"❌ PostGenerator.generate_and_save_post error: {e}")
+            log.error("post_generate_failed", error=str(e))
             return None
 
     def generate_multiple_posts(self, org_id: int, agent_ids: List[int], num_posts: int) -> List[Post]:
@@ -34,5 +38,5 @@ class PostGenerator:
             post = self.generate_and_save_post(org_id, agent_id)
             if post:
                 posts.append(post)
-                print(f"✅ Post generado: #{post.id} '{post.title[:60]}' status={post.status}")
+                log.info("post_generated", post_id=post.id, title=post.title[:60], status=post.status)
         return posts

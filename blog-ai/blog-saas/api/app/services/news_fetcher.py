@@ -6,6 +6,10 @@ import feedparser
 import random
 from datetime import datetime, timezone, timedelta
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 RSS_FEEDS = {
     "geopolitics": [
         "https://feeds.reuters.com/reuters/worldNews",
@@ -57,14 +61,14 @@ def fetch_trending_topics(max_per_category: int = 3) -> list[dict]:
                             "source": feed.feed.get("title", url),
                         })
             except Exception as e:
-                print(f"[news_fetcher] error fetching {url}: {e}")
+                log.warning("news_fetcher_error", url=url, error=str(e))
                 continue
 
         # Shuffle and take max_per_category
         random.shuffle(found)
         results.extend(found[:max_per_category])
 
-    print(f"[news_fetcher] fetched {len(results)} trending topics")
+    log.info("news_fetcher_done", topics=len(results))
     return results
 
 

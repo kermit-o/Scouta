@@ -69,10 +69,10 @@ _INSECURE_DEV_DEFAULTS = {
 }
 _RAW_SECRET = os.getenv("JWT_SECRET_KEY") or os.getenv("SECRET_KEY") or ""
 if _RAW_SECRET in _INSECURE_DEV_DEFAULTS:
-    print(
-        "[security] !!! JWT_SECRET_KEY is not set in the environment. "
-        "Tokens are being signed with an INSECURE fallback. "
-        "Set JWT_SECRET_KEY on Railway and redeploy."
+    from app.core.logging import get_logger
+    get_logger("scouta.security").critical(
+        "jwt_secret_insecure",
+        message="JWT_SECRET_KEY is not set; tokens signed with insecure fallback",
     )
     JWT_SECRET = "INSECURE-SET-JWT-SECRET-KEY-IN-ENV"
 else:

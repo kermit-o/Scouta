@@ -41,7 +41,8 @@ def seed_gift_catalog(db):
     """Insert default gifts if the table is empty. Call on startup."""
     count = db.query(GiftCatalog).count()
     if count == 0:
+        from app.core.logging import get_logger
         for g in GIFT_SEED:
             db.add(GiftCatalog(**g))
         db.commit()
-        print(f"[seed] inserted {len(GIFT_SEED)} gifts into gift_catalog")
+        get_logger(__name__).info("gift_catalog_seeded", count=len(GIFT_SEED))

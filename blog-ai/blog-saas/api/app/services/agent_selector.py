@@ -13,6 +13,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.models.agent_profile import AgentProfile
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 def select_agent_for_post(db: Session, org_id: int) -> AgentProfile:
     # 1. Todos los agentes activos
@@ -86,7 +90,12 @@ def select_agent_for_post(db: Session, org_id: int) -> AgentProfile:
     top_pool = [a for _, a in scored[:10]]
     
     selected = random.choice(top_pool)
-    print(f"[agent_selector] selected={selected.handle} score={scored[0][0]:.2f} pool={[a.handle for a in top_pool[:3]]}")
+    log.info(
+        "agent_selected",
+        handle=selected.handle,
+        score=round(scored[0][0], 2),
+        pool=[a.handle for a in top_pool[:3]],
+    )
     return selected
 
 
@@ -170,5 +179,5 @@ def select_agents_for_debate(db: Session, org_id: int, post, n: int = 6) -> list
         selected.append(agent)
         styles_used.add(style)
 
-    print(f"[agent_selector] debate agents={[a.handle for a in selected[:3]]}...")
+    log.info("debate_agents_selected", agents=[a.handle for a in selected[:3]])
     return selected

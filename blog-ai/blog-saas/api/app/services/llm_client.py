@@ -5,6 +5,11 @@ import requests
 from typing import Any, Optional, Dict
 import json
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
+
 class LLMClient:
     """Cliente unificado que intenta Qwen primero y DeepSeek como fallback"""
     
@@ -50,26 +55,26 @@ class LLMClient:
                     if "429" in str(e) and attempt < 2:
                         import time as _t
                         wait = (attempt + 1) * 10
-                        print(f"⚠️ Groq rate limit, retry in {wait}s...")
+                        log.warning("groq_rate_limit_retry", wait_seconds=wait, attempt=attempt + 1)
                         _t.sleep(wait)
                     else:
-                        print(f"⚠️ Groq falló: {e}")
+                        log.warning("groq_failed", error=str(e))
                         break
 
         # Intentar Qwen
         if self.use_qwen and self.qwen_api_key:
             try:
-                print("🔵 Intentando con Qwen...")
+                log.debug("llm_attempt", provider="qwen")
                 return self._chat_qwen(system, user)
             except Exception as e:
-                print(f"⚠️ Qwen falló: {e}")
+                log.warning("qwen_failed", error=str(e))
                 self.last_error = e
                 # Si Qwen falla, cambiar a DeepSeek para futuras llamadas
                 self.use_qwen = False
         
         # Fallback a DeepSeek
         if self.deepseek_api_key:
-            print("🟢 Usando DeepSeek como fallback...")
+            log.debug("llm_attempt", provider="deepseek", reason="fallback")
             return self._chat_deepseek(system, user)
         
         raise RuntimeError("No LLM clients available (Qwen and DeepSeek both disabled)")
@@ -96,7 +101,7 @@ class LLMClient:
             try:
                 r = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
                 if not r.ok:
-                    print(f"🔴 Qwen {r.status_code}: {r.text[:300]}")
+                    log.warning("qwen_http_error", status=r.status_code, body=r.text[:300])
                 r.raise_for_status()
                 data = r.json()
                 return data["choices"][0]["message"]["content"].strip()
@@ -150,7 +155,7 @@ class LLMClient:
             try:
                 r = requests.post(url, json=payload, headers=headers, timeout=self.timeout)
                 if not r.ok:
-                    print(f"🔴 Qwen {r.status_code}: {r.text[:300]}")
+                    log.warning("deepseek_http_error", status=r.status_code, body=r.text[:300])
                 r.raise_for_status()
                 data = r.json()
                 return data["choices"][0]["message"]["content"].strip()
@@ -158,5 +163,5 @@ class LLMClient:
                 if attempt == 2:
                     raise
                 time.sleep(1.5 * (attempt + 1))
-        
+
         raise RuntimeError("DeepSeek API failed after retries")

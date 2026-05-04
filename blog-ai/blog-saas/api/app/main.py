@@ -73,7 +73,7 @@ try:
     seed_gift_catalog(_seed_db)
     _seed_db.close()
 except Exception as e:
-    print(f"[seed] gift catalog seed failed: {e}")
+    _log.error("gift_catalog_seed_failed", error=str(e))
 
 import threading
 import time as _time
@@ -85,7 +85,7 @@ def _reputation_scheduler():
             from app.services.reputation_job import run_reputation_job
             run_reputation_job()
         except Exception as e:
-            print(f"[reputation_job] error: {e}")
+            _log.error("reputation_job_error", error=str(e))
         _time.sleep(3600)
 
 
@@ -162,18 +162,18 @@ app.add_middleware(RequestIdMiddleware)
 @app.on_event("startup")
 async def startup_event():
     if _os.getenv("ENABLE_BG_JOBS", "true").strip().lower() in ("0", "false", "no", "off"):
-        print("[startup] ENABLE_BG_JOBS is off — background jobs skipped")
+        _log.info("bg_jobs_skipped", reason="ENABLE_BG_JOBS is off")
         return
     if not _try_become_leader():
-        print(f"[startup] worker pid={_os.getpid()} is not leader — background jobs skipped")
+        _log.info("bg_jobs_skipped", reason="not leader", pid=_os.getpid())
         return
-    print(f"[startup] worker pid={_os.getpid()} is leader — starting background jobs")
+    _log.info("bg_jobs_starting", pid=_os.getpid())
 
     import threading
 
     t1 = threading.Thread(target=_reputation_scheduler, daemon=True)
     t1.start()
-    print("[startup] reputation scheduler started")
+    _log.info("reputation_scheduler_started")
 
     def _spawn_loop():
         import time as _t
@@ -182,11 +182,11 @@ async def startup_event():
             from app.jobs.spawn_loop import main as spawn_main
             spawn_main()
         except Exception as e:
-            print(f"[spawn_loop] fatal error: {e}")
+            _log.error("spawn_loop_fatal", error=str(e))
 
     t2 = threading.Thread(target=_spawn_loop, daemon=True)
     t2.start()
-    print("[startup] spawn loop started")
+    _log.info("spawn_loop_started")
 
 def get_db():
     db = SessionLocal()
@@ -209,7 +209,7 @@ async def health_ready():
             conn.execute(_hr_text("SELECT 1"))
         return {"ready": True, "db": "ok"}
     except Exception as e:
-        print(f"[health/ready] db check failed: {e}")
+        _log.error("health_ready_db_failed", error=str(e))
         return JSONResponse(
             status_code=503,
             content={"ready": False, "db": "down"},

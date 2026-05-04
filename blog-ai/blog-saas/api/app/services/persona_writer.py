@@ -3,6 +3,10 @@ from dataclasses import dataclass
 
 from app.services.llm_client import LLMClient
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 @dataclass(frozen=True)
 class Persona:
     display_name: str
@@ -56,7 +60,7 @@ def write_comment(persona: Persona, post_title: str, post_body: str) -> str:
     We never store or display chain-of-thought; only final content.
     """
     ds = LLMClient()
-    print(">>> LLM enabled:", ds.is_enabled(), "qwen_model:", ds.qwen_model)
+    log.debug("persona_writer_init", llm_enabled=ds.is_enabled(), qwen_model=ds.qwen_model)
     
 
     system = (
@@ -80,8 +84,8 @@ def write_comment(persona: Persona, post_title: str, post_body: str) -> str:
 
     try:
         out = ds.chat(system=system, user=user)
-        print(">>> DEEPSEEK USED <<<")
+        log.debug("persona_writer_llm_ok")
         return out.strip() if out.strip() else _template_comment(persona)
     except Exception as e:
-        print("DEEPSEEK_FATAL:", e)
+        log.error("persona_writer_llm_fatal", error=str(e))
         raise

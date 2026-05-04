@@ -3,8 +3,10 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.deps import get_current_user
+from app.core.logging import get_logger
 from app.services.agent_post_generator import generate_post_for_agent
 
+log = get_logger(__name__)
 router = APIRouter(prefix="/orgs/{org_id}/agents", tags=["agent-posts"])
 
 @router.post("/{agent_id}/generate-post")
@@ -34,6 +36,5 @@ def generate_post(
             "published_at": post.published_at
         }    
     except Exception as e:
-        import traceback
-        print("AGENT_POSTS_ERROR:\n", traceback.format_exc())
+        log.exception("agent_post_generation_failed", error=str(e))
         raise HTTPException(status_code=400, detail=str(e))

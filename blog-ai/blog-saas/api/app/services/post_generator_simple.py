@@ -9,6 +9,10 @@ import json
 
 from app.models.post import Post
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 class PostGeneratorSimple:
     """Generador simple que crea posts básicos"""
@@ -49,5 +53,5 @@ Está funcionando correctamente con el modelo actual.""",
         self.db.commit()
         self.db.refresh(post)
         
-        print(f"✓ Post simple creado: {post.title}")
+        log.info("post_simple_created", title=post.title)
         return post

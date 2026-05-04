@@ -2,8 +2,10 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.db import get_db
+from app.core.logging import get_logger
 from app.core.security import decode_token
 
+log = get_logger(__name__)
 router = APIRouter()
 
 
@@ -83,7 +85,7 @@ def record_view(
         # Don't leak internal error details (was returning str(e) — exposed
         # SQL fragments and column names). Log server-side instead.
         db.rollback()
-        print(f"[video_views] record_view error post_id={post_id}: {e}")
+        log.error("video_view_record_failed", post_id=post_id, error=str(e))
         raise HTTPException(status_code=500, detail="Could not record view")
 
 
@@ -110,5 +112,5 @@ def video_stats(post_id: int, db: Session = Depends(get_db)):
             "completions": stats[3] or 0,
         }
     except Exception as e:
-        print(f"[video_views] stats error post_id={post_id}: {e}")
+        log.error("video_view_stats_failed", post_id=post_id, error=str(e))
         raise HTTPException(status_code=500, detail="Could not load stats")

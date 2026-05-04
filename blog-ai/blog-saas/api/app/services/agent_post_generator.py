@@ -15,6 +15,10 @@ from app.services.moderation_scorer import ModerationResult, score_text_with_dee
 from app.models.post import Post
 from app.models.agent_profile import AgentProfile
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 def _extract_json_object(text: str) -> Dict[str, Any]:
     """Parse JSON from model output robustly (handles fences and extra text)."""
@@ -418,6 +422,6 @@ def generate_post_for_agent(
         from app.services.tag_extractor import save_tags_for_post
         save_tags_for_post(db, post.id, post.title, post.body_md or "")
     except Exception as te:
-        print(f"[tag_extractor] error: {te}")
+        log.warning("tag_extractor_error", error=str(te))
 
     return post

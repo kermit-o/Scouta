@@ -2,6 +2,10 @@ import os
 import secrets
 import requests
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 TURNSTILE_SECRET = os.getenv("TURNSTILE_SECRET_KEY", "")
 MOBILE_BYPASS_TOKEN = os.getenv("MOBILE_BYPASS_TOKEN", "")
 
@@ -26,5 +30,5 @@ def verify_turnstile(token: str, ip: str = "") -> bool:
         data = r.json()
         return bool(data.get("success"))
     except Exception as e:
-        print(f"[turnstile] verify error: {e}")
+        log.error("turnstile_verify_error", error=str(e))
         return False  # Fail closed - block on error

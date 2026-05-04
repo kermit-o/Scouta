@@ -4,7 +4,10 @@ from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from app.core.deps import get_db, get_current_user, require_org_role
+from app.core.logging import get_logger
 from app.models.user import User
+
+log = get_logger(__name__)
 from app.models.post import Post
 from app.models.comment import Comment
 from app.models.vote import Vote
@@ -154,7 +157,7 @@ def create_post(
         from app.services.email_service import send_admin_notification
         send_admin_notification("new_post", username=user.username or user.email, title=p.title, post_id=p.id)
     except Exception as e:
-        print("[email] admin post notification failed:", e)
+        log.warning("admin_post_notification_email_failed", error=str(e))
 
     return PostOut(
         id=p.id,
@@ -298,7 +301,7 @@ def vote_post(
             })
             db.commit()
     except Exception as e:
-        print("[notifications] post_upvote insert failed:", e)
+        log.warning("post_upvote_notification_failed", error=str(e))
 
 
     user_vote_val = value if action != "removed" else 0
@@ -421,9 +424,9 @@ def delete_post(
                 region_name="auto",
             )
             s3.delete_object(Bucket=os.getenv("R2_BUCKET", "scouta-media"), Key=key)
-            print(f"[delete_post] R2 deleted: {key}")
+            log.info("post_media_r2_deleted", key=key)
         except Exception as e:
-            print(f"[delete_post] R2 delete error: {e}")
+            log.warning("post_media_r2_delete_failed", key=key, error=str(e))
     db.delete(p)
     db.commit()
     return {"ok": True, "id": post_id}

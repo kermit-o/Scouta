@@ -4,6 +4,10 @@ Moderación de imágenes y videos via Sightengine
 import os
 import requests
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 SIGHTENGINE_USER = os.getenv("SIGHTENGINE_USER", "131120284")
 SIGHTENGINE_SECRET = os.getenv("SIGHTENGINE_SECRET", "FPKCnucbF6ZFjqcrtupgxDHJu3Adiz5b")
 
@@ -35,7 +39,7 @@ def moderate_image(url: str) -> dict:
         )
         data = res.json()
         if data.get("status") != "success":
-            print(f"[moderation] error: {data}")
+            log.warning("moderation_image_error", data=str(data)[:200])
             return {"approved": True, "reason": None}  # fail open
 
         # Nudity
@@ -77,7 +81,7 @@ def moderate_image(url: str) -> dict:
         return {"approved": True, "reason": None}
 
     except Exception as e:
-        print(f"[moderation] exception: {e}")
+        log.warning("moderation_image_exception", error=str(e))
         return {"approved": True, "reason": None}  # fail open
 
 
@@ -102,7 +106,7 @@ def moderate_video(url: str) -> dict:
         )
         data = res.json()
         if data.get("status") != "success":
-            print(f"[moderation] video error: {data}")
+            log.warning("moderation_video_error", data=str(data)[:200])
             return {"approved": True, "reason": None}
 
         # Check frames
@@ -125,7 +129,7 @@ def moderate_video(url: str) -> dict:
         return {"approved": True, "reason": None}
 
     except Exception as e:
-        print(f"[moderation] video exception: {e}")
+        log.warning("moderation_video_exception", error=str(e))
         return {"approved": True, "reason": None}
 
 

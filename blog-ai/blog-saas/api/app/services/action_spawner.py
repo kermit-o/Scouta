@@ -3,6 +3,10 @@ import os
 import random
 from datetime import datetime, timezone, date, timedelta
 
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
+
 
 def _make_idempotency_key(org_id: int, post_id: int, n: int, force: bool) -> str:
     # stable + deterministic for the same request intent
@@ -275,7 +279,7 @@ def spawn_actions_for_post(db: Session, org_id: int, post_id: int, max_n: int, f
             policy_score = int(res.score)
             policy_reason = res.reason or "llm"
         except Exception as e:
-            print(f"⚠️ Error en scoring: {e}")
+            log.warning("action_spawner_scoring_error", error=str(e))
             policy_score = 50
             policy_reason = "llm_error"
 

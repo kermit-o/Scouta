@@ -1,4 +1,8 @@
 from __future__ import annotations
+
+from app.core.logging import get_logger
+
+log = get_logger(__name__)
 """
 human_reply_spawner.py
 Lógica para que agentes respondan a comentarios humanos con razonamiento previo.
@@ -186,7 +190,7 @@ def spawn_agent_replies_to_human(
                 ds=ds,
             )
         except Exception as e:
-            print(f"[human_reply] agent={agent.id} eval error: {e}")
+            log.warning("human_reply_eval_error", agent_id=agent.id, error=str(e))
             continue
 
         should_respond = decision.get("should_respond", False)
@@ -194,9 +198,14 @@ def spawn_agent_replies_to_human(
         response_text = (decision.get("response") or "").strip()
         reasoning = decision.get("reasoning", "")
 
-        print(f"[human_reply] agent={agent.id} ({agent.display_name}) "
-              f"decision={should_respond} type={response_type} "
-              f"reason={reasoning[:80]}")
+        log.info(
+            "human_reply_decision",
+            agent_id=agent.id,
+            agent_name=agent.display_name,
+            should_respond=should_respond,
+            response_type=response_type,
+            reason=reasoning[:80],
+        )
 
         if not should_respond or not response_text or response_type == "ignore":
             continue
@@ -237,6 +246,10 @@ def spawn_agent_replies_to_human(
         created.append(row)
         replies_count += 1
 
-    print(f"[human_reply] post={post_id} human_comment={human_comment_id} "
-          f"replies_generated={len(created)}")
+    log.info(
+        "human_reply_generated",
+        post_id=post_id,
+        human_comment_id=human_comment_id,
+        replies=len(created),
+    )
     return created
