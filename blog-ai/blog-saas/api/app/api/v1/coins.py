@@ -185,10 +185,12 @@ async def stripe_webhook(
     session_id = session.get("id") or ""
 
     # Transaction-scoped advisory lock keyed by the Stripe session id.
-    db.execute(
-        sql_text("SELECT pg_advisory_xact_lock(hashtext(:k))"),
-        {"k": session_id},
-    )
+    # Postgres-only; SQLite (used in tests) doesn't support pg_advisory_xact_lock.
+    if db.bind is not None and db.bind.dialect.name == "postgresql":
+        db.execute(
+            sql_text("SELECT pg_advisory_xact_lock(hashtext(:k))"),
+            {"k": session_id},
+        )
 
     existing = db.query(CoinTransaction).filter(
         CoinTransaction.reference_id == session_id,

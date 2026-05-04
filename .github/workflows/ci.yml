@@ -21,13 +21,31 @@ jobs:
           python-version: "3.12"
       # Cheapest possible smoke test: compile every .py file. Catches
       # SyntaxError, broken indentation, typos in imports of stdlib /
-      # builtins. Doesn't catch runtime issues (missing 3rd-party packages,
-      # bad SQL, etc) — those need actual integration tests, which we'll
-      # add in a follow-up. Compileall has zero install cost so it runs
-      # in seconds.
+      # builtins.
       - name: Compile all Python files
         working-directory: blog-ai/blog-saas/api
         run: python -m compileall -q app
+
+      - name: Install runtime + test deps
+        working-directory: blog-ai/blog-saas/api
+        run: |
+          python -m pip install --upgrade pip
+          # Skip feedparser (sgmllib3k) — not used by tested paths and fails to
+          # build wheels on Python 3.12. Everything else from prod requirements
+          # plus pytest.
+          grep -v '^feedparser' requirements.txt > /tmp/req-ci.txt
+          pip install -r /tmp/req-ci.txt
+          pip install pytest pytest-asyncio
+
+      - name: Run pytest
+        working-directory: blog-ai/blog-saas/api
+        env:
+          DATABASE_URL: sqlite:///:memory:
+          JWT_SECRET_KEY: ci-test-secret-not-for-prod
+          STRIPE_SECRET_KEY: sk_test_dummy
+          STRIPE_WEBHOOK_SECRET: whsec_test_dummy
+          FRONTEND_URL: http://localhost:3000
+        run: pytest -q
 
   frontend:
     name: Frontend lint + build
