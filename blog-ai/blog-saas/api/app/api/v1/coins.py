@@ -7,6 +7,8 @@ import stripe
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import text as sql_text
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.core.db import SessionLocal
 from app.core.config import settings
@@ -16,6 +18,11 @@ from app.models.coin_wallet import CoinWallet
 from app.models.coin_transaction import CoinTransaction
 
 router = APIRouter(prefix="/coins", tags=["coins"])
+
+# Per-IP rate limiter for the endpoints in this module that hit Stripe or
+# write financial state. The default 60/min from main.py applies to GETs
+# (balance, transactions, packages) that don't override.
+limiter = Limiter(key_func=get_remote_address)
 
 # Coin packages: {package_id: (coins, price_cents)}
 COIN_PACKAGES = {
@@ -75,8 +82,10 @@ def list_packages():
 
 # ─── POST /coins/purchase ────────────────────────────────────────────────────
 @router.post("/purchase")
+@limiter.limit("5/minute")
 def purchase_coins(
     body: dict,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -300,8 +309,10 @@ def get_earnings(
 
 # ─── POST /coins/withdraw ────────────────────────────────────────────────────
 @router.post("/withdraw")
+@limiter.limit("3/minute")
 def request_withdrawal(
     body: dict,
+    request: Request,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
