@@ -7,3 +7,9 @@ main
 test_qwen_client.py
 blog-ai/blog-saas/main
 node_modules/
+
+# Local SQLite dev DB — never commit (contains random local state, churns on every run)
+dev.db
+*.db
+__pycache__/
+.pytest_cache/
