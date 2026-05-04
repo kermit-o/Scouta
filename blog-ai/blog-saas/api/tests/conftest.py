@@ -68,13 +68,86 @@ def client(db_session):
     # Import lazily so env vars set above are picked up.
     from app.main import app
     from app.api.v1 import coins as coins_module
+    from app.core import deps as core_deps
 
-    # The coins module defines its own get_db that shadows the core one;
-    # override both to be safe.
-    app.dependency_overrides[core_db.get_db] = _override_get_db
-    app.dependency_overrides[coins_module.get_db] = _override_get_db
+    # There are THREE separate get_db definitions in this codebase:
+    #   - app.core.db.get_db        (canonical)
+    #   - app.core.deps.get_db      (used by auth.py and most routers)
+    #   - coins.get_db              (shadowed inside coins.py)
+    # FastAPI dependency_overrides keys by function identity, so we have to
+    # override every variant or some routes will hit the real production DB.
+    for fn in (core_db.get_db, core_deps.get_db, coins_module.get_db):
+        app.dependency_overrides[fn] = _override_get_db
+
+    # Reset slowapi storage so per-IP buckets from previous tests don't bleed
+    # over and turn assertions into 429s.
+    try:
+        from app.core.rate_limit import limiter as _slowapi_limiter
+        _slowapi_limiter.reset()
+    except Exception:
+        pass
 
     with TestClient(app) as c:
         yield c
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def make_user(db_session):
+    """Factory for creating a User row in the test DB.
+    Returns a callable; defaults to verified, non-banned. Override via kwargs."""
+    session, _ = db_session
+
+    def _make(
+        email: str = "user@example.com",
+        username: str = "user",
+        password_hash: str = "x",
+        is_verified: bool = True,
+        is_banned: bool = False,
+        **extra,
+    ):
+        from app.models.user import User
+        user = User(
+            email=email,
+            username=username,
+            password_hash=password_hash,
+            is_verified=is_verified,
+            is_banned=is_banned,
+            **extra,
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return user
+
+    return _make
+
+
+@pytest.fixture
+def auth_header():
+    """Mint a real JWT for a given user_id and return an Authorization header."""
+    from app.core.security import create_access_token
+
+    def _header(user_id: int) -> dict:
+        token = create_access_token(subject=str(user_id))
+        return {"Authorization": f"Bearer {token}"}
+
+    return _header
+
+
+@pytest.fixture(autouse=True)
+def _mute_outbound_email(monkeypatch):
+    """Stub all outbound email so tests don't hit Resend.
+
+    Applied to every test automatically — none of our tests want to send
+    real email. The stubs return None and are no-ops."""
+    import app.services.email_service as email_svc
+    for fn in (
+        "send_verification_email",
+        "send_welcome_email",
+        "send_admin_notification",
+        "send_reset_email",
+    ):
+        if hasattr(email_svc, fn):
+            monkeypatch.setattr(email_svc, fn, lambda *a, **kw: None)
