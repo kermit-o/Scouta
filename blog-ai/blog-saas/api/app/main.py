@@ -3,6 +3,11 @@
 # the module, before any other app imports, then proceed with the rest.
 import os as _os
 
+# Configure structured logging before anything else logs.
+from app.core.logging import configure_logging, get_logger
+configure_logging()
+_log = get_logger("scouta.boot")
+
 _SENTRY_DSN = _os.getenv("SENTRY_DSN", "").strip()
 if _SENTRY_DSN:
     try:
@@ -24,11 +29,11 @@ if _SENTRY_DSN:
             ],
             ignore_errors=["RateLimitExceeded"],
         )
-        print(f"[sentry] initialized (env={_os.getenv('SENTRY_ENVIRONMENT', 'production')})")
+        _log.info("sentry_initialized", environment=_os.getenv("SENTRY_ENVIRONMENT", "production"))
     except Exception as _e:
-        print(f"[sentry] init failed: {_e}")
+        _log.error("sentry_init_failed", error=str(_e))
 else:
-    print("[sentry] SENTRY_DSN not set — error reporting disabled")
+    _log.info("sentry_disabled", reason="SENTRY_DSN not set")
 
 from app.api.v1.spawn import router as spawn_router
 from app.api.v1.auth import router as auth_router
@@ -183,6 +188,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Request-id correlation: bound LAST so it runs FIRST (Starlette executes
+# middleware in reverse-add order). Every log emitted inside the request
+# inherits the bound contextvars (request_id, method, path).
+from app.core.middleware import RequestIdMiddleware
+app.add_middleware(RequestIdMiddleware)
 
 
 

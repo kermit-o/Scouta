@@ -11,11 +11,13 @@ from sqlalchemy.orm import Session
 from app.core.db import SessionLocal
 from app.core.config import settings
 from app.core.deps import get_current_user, require_superuser
+from app.core.logging import get_logger
 from app.core.rate_limit import limiter
 from app.models.user import User
 from app.models.coin_wallet import CoinWallet
 from app.models.coin_transaction import CoinTransaction
 
+log = get_logger(__name__)
 router = APIRouter(prefix="/coins", tags=["coins"])
 
 COIN_PACKAGES = {
@@ -157,29 +159,37 @@ async def stripe_webhook(
             payload, sig_header, STRIPE_WEBHOOK_SECRET
         )
     except ValueError:
+        log.warning("stripe_webhook_invalid_payload")
         raise HTTPException(400, "Invalid payload")
     except stripe.error.SignatureVerificationError:
+        log.warning("stripe_webhook_invalid_signature")
         raise HTTPException(400, "Invalid signature")
 
     event = json.loads(payload)
+    event_id = event.get("id")
+    event_type = event.get("type")
 
-    if event.get("type") != "checkout.session.completed":
+    if event_type != "checkout.session.completed":
+        log.info("stripe_webhook_ignored", event_id=event_id, event_type=event_type, reason="not_checkout")
         return {"received": True, "ignored": True}
 
     session = (event.get("data") or {}).get("object") or {}
     metadata = session.get("metadata") or {}
     if metadata.get("type") != "coin_purchase":
+        log.info("stripe_webhook_ignored", event_id=event_id, reason="not_coin_purchase", metadata_type=metadata.get("type"))
         return {"received": True, "ignored": True}
 
     user_id_str = metadata.get("user_id")
     coin_amount_str = metadata.get("coin_amount")
     if not user_id_str or not coin_amount_str:
+        log.warning("stripe_webhook_ignored", event_id=event_id, reason="missing_metadata")
         return {"received": True, "ignored": True, "reason": "missing metadata"}
 
     try:
         user_id = int(user_id_str)
         coin_amount = int(coin_amount_str)
     except ValueError:
+        log.warning("stripe_webhook_ignored", event_id=event_id, reason="bad_metadata", user_id=user_id_str, coin_amount=coin_amount_str)
         return {"received": True, "ignored": True, "reason": "bad metadata"}
 
     session_id = session.get("id") or ""
@@ -197,10 +207,12 @@ async def stripe_webhook(
         CoinTransaction.type == "purchase",
     ).first()
     if existing:
+        log.info("stripe_webhook_replay", event_id=event_id, session_id=session_id, user_id=user_id)
         return {"received": True, "already_credited": True}
 
     user = db.get(User, user_id)
     if not user:
+        log.warning("stripe_webhook_unknown_user", event_id=event_id, session_id=session_id, user_id=user_id)
         return {"received": True, "ignored": True, "reason": "user not found"}
 
     wallet = _get_or_create_wallet(db, user_id)
@@ -215,6 +227,15 @@ async def stripe_webhook(
         reference_id=session_id,
     ))
     db.commit()
+
+    log.info(
+        "stripe_webhook_credited",
+        event_id=event_id,
+        session_id=session_id,
+        user_id=user_id,
+        coins=coin_amount,
+        amount_cents=amount_cents,
+    )
 
     return {
         "received": True,
