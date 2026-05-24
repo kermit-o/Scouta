@@ -58,6 +58,9 @@ def register(payload: RegisterIn, request: Request, db: Session = Depends(get_db
 
     send_verification_email(payload.email, user.username, token)
 
+    from app.services.analytics import track_event
+    track_event(db, "user_registered", user_id=user.id, username=user.username, email=user.email)
+
     return {"message": "Registration successful. Please check your email to verify your account."}
 
 @router.get("/auth/verify")
@@ -99,6 +102,10 @@ def login(payload: LoginIn, request: Request, db: Session = Depends(get_db)) -> 
         db.add(user)
         db.commit()
     token = create_access_token(subject=str(user.id))
+
+    from app.services.analytics import track_event
+    track_event(db, "user_logged_in", user_id=user.id, username=user.username, alert=False)
+
     return TokenOut(
         access_token=token,
         user_id=user.id,

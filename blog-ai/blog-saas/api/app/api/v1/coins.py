@@ -237,6 +237,13 @@ async def stripe_webhook(
         amount_cents=amount_cents,
     )
 
+    from app.services.analytics import track_event
+    track_event(
+        db, "coins_purchased",
+        user_id=user_id, coins=coin_amount, amount_cents=amount_cents,
+        session_id=session_id,
+    )
+
     return {
         "received": True,
         "credited": True,
@@ -356,6 +363,13 @@ def request_withdrawal(
     ))
     db.commit()
     db.refresh(withdrawal)
+
+    from app.services.analytics import track_event
+    track_event(
+        db, "withdrawal_requested",
+        user_id=current_user.id, withdrawal_id=withdrawal.id,
+        amount_coins=amount_coins, amount_cents=amount_cents, method=method,
+    )
 
     return {
         "ok": True,

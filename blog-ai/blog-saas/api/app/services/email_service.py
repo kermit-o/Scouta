@@ -270,6 +270,43 @@ def send_notification_email(to_email: str, username: str, notif_type: str, actor
         return False
 
 
+def send_admin_alert(event_type: str, *, user_id=None, **properties) -> bool:
+    """Generic high-signal admin alert (revenue, withdrawals, subscriptions).
+
+    Unlike send_admin_notification (which has bespoke templates per type),
+    this renders any event + its properties into a simple monospace block.
+    Used by app.services.analytics.track_event for ALERTABLE_EVENTS."""
+    try:
+        admin_email = os.getenv("ALERT_EMAIL") or os.getenv("ADMIN_EMAIL", "outman@scouta.co")
+        if not admin_email:
+            return False
+
+        rows = "".join(
+            f'<tr><td style="padding:2px 12px 2px 0;color:#555;font-family:monospace;font-size:12px;">{k}</td>'
+            f'<td style="padding:2px 0;color:#999;font-family:monospace;font-size:12px;">{str(v)[:120]}</td></tr>'
+            for k, v in {"user_id": user_id, **properties}.items()
+        )
+        content = f"""
+        <p style="margin:0 0 8px;font-family:monospace;font-size:11px;letter-spacing:3px;color:#4a9a4a;text-transform:uppercase;">Alert</p>
+        <h1 style="margin:0 0 16px;font-size:24px;font-weight:400;color:#f0e8d8;">{event_type}</h1>
+        <table cellpadding="0" cellspacing="0" style="margin:8px 0;">{rows}</table>
+        <table cellpadding="0" cellspacing="0" style="margin:16px 0;">
+          <tr><td style="background:#111;border:1px solid #1a1a1a;">
+            <a href="{FRONTEND_URL}/admin" style="display:block;padding:10px 24px;font-family:monospace;font-size:11px;letter-spacing:2px;color:#555;text-decoration:none;">Ver en Admin →</a>
+          </td></tr>
+        </table>"""
+        resend.Emails.send({
+            "from": FROM_EMAIL,
+            "to": admin_email,
+            "subject": f"[Scouta] {event_type}",
+            "html": _base_template(content, "Automated alert — Scouta"),
+        })
+        return True
+    except Exception as e:
+        log.warning("admin_alert_email_failed", event_type=event_type, error=str(e))
+        return False
+
+
 def send_admin_notification(event_type: str, **kwargs) -> bool:
     """Notifica al admin sobre nuevo usuario, post o comentario."""
     try:

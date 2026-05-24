@@ -152,6 +152,13 @@ def start_live(
     })
     db.commit()
 
+    from app.services.analytics import track_event
+    track_event(
+        db, "live_started",
+        user_id=user.id, room=room_name, access_type=access_type if is_private else "public",
+        is_private=is_private, entry_coin_cost=entry_coin_cost if is_private else 0,
+    )
+
     token = _create_livekit_token(
         room_name,
         _make_identity(user.id),
@@ -282,6 +289,13 @@ def join_live(
 
     db.execute(text("UPDATE live_streams SET viewer_count = viewer_count + 1 WHERE room_name=:room"), {"room": room_name})
     db.commit()
+
+    from app.services.analytics import track_event
+    track_event(
+        db, "live_joined",
+        user_id=user.id, room=room_name,
+        access_type=stream.access_type if stream.is_private else "public",
+    )
 
     return {"token": token, "livekit_url": LIVEKIT_URL, "title": stream.title}
 
@@ -710,6 +724,13 @@ async def send_gift(
         description=f"Received {gift.name} from {user.display_name or user.username} ({host_amount} coins after 20% fee)",
     ))
     db.commit()
+
+    from app.services.analytics import track_event
+    track_event(
+        db, "gift_sent",
+        user_id=user.id, recipient_user_id=host_user_id, room=room_name,
+        gift_id=gift.id, coins=gift.coin_cost, host_amount=host_amount,
+    )
 
     sender_name = user.display_name or user.username or f"user_{user.id}"
     gift_msg = json.dumps({

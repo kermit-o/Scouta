@@ -244,6 +244,9 @@ def _handle_payment_succeeded(invoice: dict, db: Session):
     except Exception as e:
         log.warning("subscription_confirmation_email_failed", error=str(e))
 
+    from app.services.analytics import track_event
+    track_event(db, "subscription_activated", user_id=user.id, plan_id=plan_id)
+
 
 def _handle_subscription_ended(obj: dict, db: Session):
     stripe_sub_id = obj.get("id") or obj.get("subscription")
