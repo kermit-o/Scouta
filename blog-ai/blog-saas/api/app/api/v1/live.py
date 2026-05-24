@@ -18,7 +18,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSo
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.db import get_db, SessionLocal
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, require_superuser
 from app.models.user import User
 from typing import Optional
 
@@ -395,6 +395,44 @@ async def end_live(
         except Exception:
             del _room_connections[room_name]
     return {"ok": True}
+
+
+@router.post("/admin/live/{room_name}/end")
+async def admin_force_end_live(
+    room_name: str,
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_superuser),
+):
+    """Force-end a live stream regardless of who the host is. Emergency button
+    for stuck/orphaned streams. Also tears down the LiveKit room."""
+    from app.services.live_reconcile import force_end_stream
+    ended = await force_end_stream(db, room_name)
+    if not ended:
+        raise HTTPException(status_code=404, detail="No live stream with that room")
+    from app.services.analytics import track_event
+    track_event(db, "live_force_ended", user_id=admin.id, room=room_name, alert=False)
+    if room_name in _room_connections:
+        ended_msg = json.dumps({"type": "stream_ended", "message": "Stream has ended"})
+        for ws in list(_room_connections.get(room_name, [])):
+            try:
+                await ws.send_text(ended_msg)
+            except Exception:
+                pass
+        _room_connections.pop(room_name, None)
+    return {"ok": True, "room_name": room_name}
+
+
+@router.post("/admin/live/reconcile")
+async def admin_reconcile_lives(
+    db: Session = Depends(get_db),
+    admin: User = Depends(require_superuser),
+):
+    """Manually trigger LiveKit reconciliation — ends DB streams that LiveKit
+    no longer has an active broadcast for. Runs automatically every few
+    minutes too, but this lets an admin force a sweep on demand."""
+    from app.services.live_reconcile import reconcile_live_streams
+    result = await reconcile_live_streams(db)
+    return result
 
 
 @router.get("/live/{room_name}/join-anon")

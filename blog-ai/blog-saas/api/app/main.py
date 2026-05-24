@@ -89,6 +89,20 @@ def _reputation_scheduler():
         _time.sleep(3600)
 
 
+def _live_reconcile_scheduler():
+    interval = int(_os.getenv("LIVE_RECONCILE_INTERVAL_SEC", "180"))
+    _time.sleep(45)
+    while True:
+        try:
+            from app.services.live_reconcile import reconcile_live_streams_sync
+            result = reconcile_live_streams_sync()
+            if result.get("ended"):
+                _log.info("live_reconcile_swept", **result)
+        except Exception as e:
+            _log.error("live_reconcile_error", error=str(e))
+        _time.sleep(interval)
+
+
 _leader_lock_fd = None
 
 def _try_become_leader() -> bool:
@@ -174,6 +188,10 @@ async def startup_event():
     t1 = threading.Thread(target=_reputation_scheduler, daemon=True)
     t1.start()
     _log.info("reputation_scheduler_started")
+
+    t_live = threading.Thread(target=_live_reconcile_scheduler, daemon=True)
+    t_live.start()
+    _log.info("live_reconcile_scheduler_started")
 
     def _spawn_loop():
         import time as _t

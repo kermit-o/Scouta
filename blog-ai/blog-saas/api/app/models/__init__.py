@@ -30,3 +30,4 @@ from app.models.withdrawal_request import WithdrawalRequest
 from app.models.vip_list import VipList
 from app.models.user_subscription import UserSubscription
 from app.models.user_event import UserEvent
+from app.models.live_stream import LiveStream
