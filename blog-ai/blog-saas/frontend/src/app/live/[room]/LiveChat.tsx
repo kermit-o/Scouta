@@ -33,7 +33,11 @@ export default function LiveChat({ roomName, token, user, isHost, onBlock, block
       .then(r => r.json())
       .then(d => setChat(d.messages || []));
 
-    const wsUrl = `${API.replace("https://", "wss://").replace("http://", "ws://")}/api/v1/live/${roomName}/ws`;
+    // Pass the auth JWT so the server derives chat identity from the token
+    // (not from client-supplied fields) — prevents impersonation. Anonymous
+    // viewers connect without it: they receive messages but can't send.
+    const base = `${API.replace("https://", "wss://").replace("http://", "ws://")}/api/v1/live/${roomName}/ws`;
+    const wsUrl = token ? `${base}?token=${encodeURIComponent(token)}` : base;
     const ws = new WebSocket(wsUrl);
     wsRef.current = ws;
     ws.onmessage = (e) => {
@@ -48,7 +52,7 @@ export default function LiveChat({ roomName, token, user, isHost, onBlock, block
       }
     };
     return () => ws.close();
-  }, [roomName]);
+  }, [roomName, token]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -56,11 +60,9 @@ export default function LiveChat({ roomName, token, user, isHost, onBlock, block
 
   function sendMessage() {
     if (!message.trim() || !wsRef.current) return;
+    // Identity is derived server-side from the token; we only send the text.
     wsRef.current.send(JSON.stringify({
       type: "chat",
-      user_id: user?.id,
-      username: user?.username,
-      display_name: user?.display_name || user?.username,
       message: message.trim(),
     }));
     setMessage("");

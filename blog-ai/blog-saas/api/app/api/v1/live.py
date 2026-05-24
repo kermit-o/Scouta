@@ -99,10 +99,58 @@ def _create_livekit_token(room_name: str, identity: str, display_name: str = Non
 
 # ── WebSocket connections per room ────────────────────────────────────
 _room_connections: dict[str, list[WebSocket]] = {}
-# ── Pending join requests per room ────────────────────────────────────
-_join_requests: dict[str, list[dict]] = {}
-# ── Blocked usernames per room (in-memory, lost on restart) ───────────
+# ── Blocked usernames per room ────────────────────────────────────────
+# Write-through cache over the live_blocks table: hydrated from DB when a
+# room's first socket connects, kept warm by the /block endpoint. The DB is
+# the source of truth so blocks survive restarts; the cache keeps the
+# per-message check in the WS hot loop fast.
 _blocked_per_room: dict[str, set[str]] = {}
+
+
+def _hydrate_blocks(room_name: str) -> None:
+    """Load a room's blocked usernames from DB into the in-memory cache."""
+    db = SessionLocal()
+    try:
+        rows = db.execute(
+            text("SELECT username FROM live_blocks WHERE room_name=:room"),
+            {"room": room_name},
+        ).fetchall()
+        _blocked_per_room[room_name] = {r[0] for r in rows}
+    except Exception:
+        _blocked_per_room.setdefault(room_name, set())
+    finally:
+        db.close()
+
+
+def _ws_identity(websocket: WebSocket) -> Optional[dict]:
+    """Authenticate a WS connection from its ?token= query param.
+
+    Returns {id, username, display_name} for a valid token, else None
+    (anonymous: may receive broadcasts but may not send chat). Identity is
+    ALWAYS derived here from the signed token — never from client-supplied
+    message fields — which is what prevents chat impersonation.
+    """
+    token = websocket.query_params.get("token")
+    if not token:
+        return None
+    try:
+        from app.core.security import decode_token
+        payload = decode_token(token)
+        user_id = int(payload.get("sub"))
+    except Exception:
+        return None
+    db = SessionLocal()
+    try:
+        user = db.get(User, user_id)
+        if not user:
+            return None
+        return {
+            "id": user.id,
+            "username": user.username,
+            "display_name": user.display_name or user.username,
+        }
+    finally:
+        db.close()
 
 
 @router.post("/live/start")
@@ -467,13 +515,17 @@ async def block_from_live(
     username = payload.get("username")
     if not username:
         raise HTTPException(status_code=400, detail="username required")
+    # Durable: persist the block so it survives restarts, then warm the cache.
+    db.execute(
+        text(
+            "INSERT INTO live_blocks (room_name, username) VALUES (:room, :uname) "
+            "ON CONFLICT (room_name, username) DO NOTHING"
+        ),
+        {"room": room_name, "uname": username},
+    )
+    db.commit()
     _blocked_per_room.setdefault(room_name, set()).add(username)
-    block_msg = json.dumps({"type": "blocked", "username": username})
-    for ws in list(_room_connections.get(room_name, [])):
-        try:
-            await ws.send_text(block_msg)
-        except Exception:
-            pass
+    await _broadcast(room_name, {"type": "blocked", "username": username})
     return {"ok": True, "blocked": username}
 
 
@@ -491,23 +543,24 @@ async def request_join(
     if not stream:
         raise HTTPException(status_code=404, detail="Stream not found")
 
-    request_msg = json.dumps({
+    db.execute(
+        text(
+            "INSERT INTO live_join_requests (room_name, user_id, username, display_name) "
+            "VALUES (:room, :uid, :uname, :dname) "
+            "ON CONFLICT (room_name, user_id) DO UPDATE SET created_at = CURRENT_TIMESTAMP"
+        ),
+        {"room": room_name, "uid": user.id, "uname": user.username,
+         "dname": user.display_name or user.username},
+    )
+    db.commit()
+
+    await _broadcast(room_name, {
         "type": "join_request",
         "username": user.username,
         "display_name": user.display_name or user.username,
         "user_id": user.id,
         "room_name": room_name,
     })
-    if room_name not in _join_requests:
-        _join_requests[room_name] = []
-    existing = [r for r in _join_requests[room_name] if r["username"] != user.username]
-    _join_requests[room_name] = existing + [{"username": user.username, "display_name": user.display_name or user.username, "user_id": user.id}]
-
-    for ws in list(_room_connections.get(room_name, [])):
-        try:
-            await ws.send_text(request_msg)
-        except Exception:
-            pass
     return {"ok": True, "message": "Request sent to host"}
 
 
@@ -524,14 +577,12 @@ async def accept_join(
     accept = payload.get("accept", True)
 
     if not accept:
-        reject_msg = json.dumps({"type": "join_rejected", "username": username})
-        if room_name in _join_requests:
-            _join_requests[room_name] = [r for r in _join_requests[room_name] if r["username"] != username]
-        for ws in list(_room_connections.get(room_name, [])):
-            try:
-                await ws.send_text(reject_msg)
-            except Exception:
-                pass
+        db.execute(
+            text("DELETE FROM live_join_requests WHERE room_name=:room AND username=:uname"),
+            {"room": room_name, "uname": username},
+        )
+        db.commit()
+        await _broadcast(room_name, {"type": "join_rejected", "username": username})
         return {"ok": True, "accepted": False}
 
     invitee = db.query(User).filter(User.username == username).first()
@@ -545,20 +596,18 @@ async def accept_join(
         can_publish=True,
     )
 
-    accept_msg = json.dumps({
+    db.execute(
+        text("DELETE FROM live_join_requests WHERE room_name=:room AND username=:uname"),
+        {"room": room_name, "uname": username},
+    )
+    db.commit()
+    await _broadcast(room_name, {
         "type": "join_accepted",
         "username": username,
         "token": token,
         "livekit_url": LIVEKIT_URL,
         "room_name": room_name,
     })
-    if room_name in _join_requests:
-        _join_requests[room_name] = [r for r in _join_requests[room_name] if r["username"] != username]
-    for ws in list(_room_connections.get(room_name, [])):
-        try:
-            await ws.send_text(accept_msg)
-        except Exception:
-            pass
     return {"ok": True, "accepted": True, "token": token, "livekit_url": LIVEKIT_URL}
 
 
@@ -611,8 +660,16 @@ def get_join_requests(
 ):
     """Host polls for pending join requests."""
     _require_host(db, room_name, user.id)
-    requests = _join_requests.get(room_name, [])
-    return {"requests": requests}
+    rows = db.execute(
+        text(
+            "SELECT user_id, username, display_name FROM live_join_requests "
+            "WHERE room_name=:room ORDER BY created_at ASC"
+        ),
+        {"room": room_name},
+    ).fetchall()
+    return {"requests": [
+        {"user_id": r[0], "username": r[1], "display_name": r[2]} for r in rows
+    ]}
 
 
 # ── Thumbnail capture ────────────────────────────────────────────────────────
@@ -856,50 +913,83 @@ def get_chat_history(room_name: str, limit: int = 50, db: Session = Depends(get_
 
 
 # ── WebSocket chat ────────────────────────────────────────────────────
+async def _broadcast(room_name: str, payload: dict) -> None:
+    """Send a JSON payload to every socket in a room, pruning dead ones."""
+    data = json.dumps(payload)
+    dead = []
+    for ws in _room_connections.get(room_name, []):
+        try:
+            await ws.send_text(data)
+        except Exception:
+            dead.append(ws)
+    for ws in dead:
+        try:
+            _room_connections.get(room_name, []).remove(ws)
+        except ValueError:
+            pass
+
+
 @router.websocket("/live/{room_name}/ws")
 async def live_chat_ws(websocket: WebSocket, room_name: str):
     await websocket.accept()
+    # Identity is derived from the token, NOT from message payloads. Anonymous
+    # connections (no/invalid token) can receive broadcasts but cannot send.
+    identity = _ws_identity(websocket)
+
     if room_name not in _room_connections:
         _room_connections[room_name] = []
     _room_connections[room_name].append(websocket)
 
     if len(_room_connections[room_name]) == 1:
+        _hydrate_blocks(room_name)
         asyncio.create_task(_ai_agent_loop(room_name))
 
     try:
         while True:
             data = await websocket.receive_text()
-            msg = json.loads(data)
-            sender_username = msg.get("username")
-            # Drop messages from blocked users (host called /block on them).
-            if sender_username and sender_username in _blocked_per_room.get(room_name, set()):
+            try:
+                msg = json.loads(data)
+            except (ValueError, TypeError):
                 continue
+
+            if msg.get("type", "chat") != "chat":
+                continue  # reactions etc. handled via their own HTTP endpoints
+
+            # Anonymous viewers may watch but not chat.
+            if identity is None:
+                try:
+                    await websocket.send_text(json.dumps({"type": "error", "error": "auth_required"}))
+                except Exception:
+                    pass
+                continue
+
+            username = identity["username"]
+            display_name = identity["display_name"]
+            if username in _blocked_per_room.get(room_name, set()):
+                continue
+
+            message = str(msg.get("message", "")).strip()[:500]
+            if not message:
+                continue
+
             db = SessionLocal()
             try:
                 db.execute(text(
                     "INSERT INTO live_chat (room_name, user_id, username, display_name, message) "
                     "VALUES (:room, :uid, :uname, :dname, :msg)"
-                ), {"room": room_name, "uid": msg.get("user_id"), "uname": sender_username,
-                    "dname": msg.get("display_name"), "msg": msg.get("message", "")})
+                ), {"room": room_name, "uid": identity["id"], "uname": username,
+                    "dname": display_name, "msg": message})
                 db.commit()
             finally:
                 db.close()
 
-            broadcast = json.dumps({
+            await _broadcast(room_name, {
                 "type": "chat",
-                "username": sender_username,
-                "display_name": msg.get("display_name"),
-                "message": msg.get("message"),
+                "username": username,
+                "display_name": display_name,
+                "message": message,
                 "is_agent": False,
             })
-            dead = []
-            for ws in _room_connections.get(room_name, []):
-                try:
-                    await ws.send_text(broadcast)
-                except Exception:
-                    dead.append(ws)
-            for ws in dead:
-                _room_connections[room_name].remove(ws)
 
     except WebSocketDisconnect:
         if websocket in _room_connections.get(room_name, []):

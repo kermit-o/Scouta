@@ -58,8 +58,9 @@ def _http_url(url: str) -> str:
     return url.replace("wss://", "https://").replace("ws://", "http://")
 
 
-async def _active_livekit_rooms() -> dict[str, int]:
-    """Return {room_name: num_publishers} for rooms LiveKit currently knows.
+async def _active_livekit_rooms() -> dict[str, dict]:
+    """Return {room_name: {"publishers": int, "participants": int}} for rooms
+    LiveKit currently knows.
 
     Raises on any failure so the caller can decide to abort (and NOT end
     streams). A missing/empty result is only trusted when the call succeeds.
@@ -71,7 +72,10 @@ async def _active_livekit_rooms() -> dict[str, int]:
         res = await lkapi.room.list_rooms(api.ListRoomsRequest())
     finally:
         await lkapi.aclose()
-    return {r.name: r.num_publishers for r in res.rooms}
+    return {
+        r.name: {"publishers": r.num_publishers, "participants": r.num_participants}
+        for r in res.rooms
+    }
 
 
 async def reconcile_live_streams(db: Session | None = None) -> dict:
@@ -102,16 +106,27 @@ async def reconcile_live_streams(db: Session | None = None) -> dict:
 
         now = datetime.now(timezone.utc)
         orphans: list[str] = []
+        synced = 0
         for row in live_rows:
             room = row.room_name
+            info = active.get(room)
             started = _as_aware_dt(row.started_at)
-            # Respect grace period for freshly started streams.
-            if started is not None and now - started < timedelta(seconds=GRACE_SECONDS):
-                continue
-            publishers = active.get(room)
+            fresh = started is not None and now - started < timedelta(seconds=GRACE_SECONDS)
+
             # Orphan = LiveKit doesn't know the room, or nobody is publishing.
-            if publishers is None or publishers == 0:
-                orphans.append(room)
+            if (info is None or info["publishers"] == 0):
+                if not fresh:
+                    orphans.append(room)
+                continue
+
+            # Active room: self-heal viewer_count from LiveKit's truth.
+            # Viewers = participants minus broadcasters (host + co-hosts).
+            viewers = max(info["participants"] - info["publishers"], 0)
+            db.execute(
+                text("UPDATE live_streams SET viewer_count=:n WHERE room_name=:room AND status='live'"),
+                {"n": viewers, "room": room},
+            )
+            synced += 1
 
         if orphans:
             stmt = text(
@@ -119,10 +134,13 @@ async def reconcile_live_streams(db: Session | None = None) -> dict:
                 "WHERE room_name IN :rooms AND status='live'"
             ).bindparams(bindparam("rooms", expanding=True))
             db.execute(stmt, {"rooms": orphans})
-            db.commit()
+
+        db.commit()
+        if orphans:
             log.info("live_reconcile_ended", count=len(orphans), rooms=orphans)
 
-        return {"ended": len(orphans), "checked": len(live_rows), "rooms": orphans, "skipped": False}
+        return {"ended": len(orphans), "checked": len(live_rows), "synced": synced,
+                "rooms": orphans, "skipped": False}
     except Exception as e:
         try:
             db.rollback()

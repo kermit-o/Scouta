@@ -98,11 +98,34 @@ def test_reconcile_keeps_actively_publishing_stream(db_session, make_user, make_
     with patch.object(lr, "LIVEKIT_URL", "wss://x"), \
          patch.object(lr, "LIVEKIT_API_KEY", "k"), \
          patch.object(lr, "LIVEKIT_API_SECRET", "s"), \
-         patch.object(lr, "_active_livekit_rooms", AsyncMock(return_value={"scouta-active": 1})):
+         patch.object(lr, "_active_livekit_rooms",
+                      AsyncMock(return_value={"scouta-active": {"publishers": 1, "participants": 4}})):
         result = asyncio.run(lr.reconcile_live_streams(session))
 
     assert result["ended"] == 0
     assert _status(session, "scouta-active") == "live"
+
+
+def test_reconcile_syncs_viewer_count_from_livekit(db_session, make_user, make_stream):
+    session, _ = db_session
+    host = make_user(email="vc@example.com", username="vc")
+    make_stream("scouta-vc", host.id, status="live", viewer_count=999)  # stale count
+    _age_stream(session, "scouta-vc", 600)
+
+    # 1 publisher (host) + 6 participants → 5 viewers.
+    with patch.object(lr, "LIVEKIT_URL", "wss://x"), \
+         patch.object(lr, "LIVEKIT_API_KEY", "k"), \
+         patch.object(lr, "LIVEKIT_API_SECRET", "s"), \
+         patch.object(lr, "_active_livekit_rooms",
+                      AsyncMock(return_value={"scouta-vc": {"publishers": 1, "participants": 6}})):
+        result = asyncio.run(lr.reconcile_live_streams(session))
+
+    assert result["ended"] == 0
+    assert result["synced"] == 1
+    vc = session.execute(
+        text("SELECT viewer_count FROM live_streams WHERE room_name='scouta-vc'")
+    ).scalar()
+    assert vc == 5
 
 
 def test_reconcile_ends_room_with_zero_publishers(db_session, make_user, make_stream):
@@ -115,7 +138,8 @@ def test_reconcile_ends_room_with_zero_publishers(db_session, make_user, make_st
     with patch.object(lr, "LIVEKIT_URL", "wss://x"), \
          patch.object(lr, "LIVEKIT_API_KEY", "k"), \
          patch.object(lr, "LIVEKIT_API_SECRET", "s"), \
-         patch.object(lr, "_active_livekit_rooms", AsyncMock(return_value={"scouta-empty": 0})):
+         patch.object(lr, "_active_livekit_rooms",
+                      AsyncMock(return_value={"scouta-empty": {"publishers": 0, "participants": 2}})):
         result = asyncio.run(lr.reconcile_live_streams(session))
 
     assert result["ended"] == 1
