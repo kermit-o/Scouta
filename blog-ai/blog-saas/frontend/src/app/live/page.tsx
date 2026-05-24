@@ -99,6 +99,17 @@ export default function LivePage() {
               <span>Go Live</span>
             </Link>
           )}
+          <Link
+            href="/live/replays"
+            style={{
+              background: "#101010", border: "1px solid #1e1e1e", color: "#888",
+              padding: "0.65rem 1.25rem", textDecoration: "none",
+              fontSize: "0.72rem", letterSpacing: "0.15em", textTransform: "uppercase",
+              fontFamily: "monospace", marginLeft: "0.6rem",
+            }}
+          >
+            Replays
+          </Link>
         </div>
 
         {/* Empty state */}

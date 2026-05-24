@@ -189,7 +189,7 @@ def _ws_identity(websocket: WebSocket) -> Optional[dict]:
 
 
 @router.post("/live/start")
-def start_live(
+async def start_live(
     payload: dict,
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -246,6 +246,15 @@ def start_live(
     # going live. Public streams only (don't leak private streams to non-members).
     if not is_private:
         _notify_followers_live(db, user, room_name, title)
+
+    # Opt-in recording (VOD). Gated by LIVE_RECORDING_ENABLED + the host's
+    # explicit request. Best-effort: a recording failure never blocks going live.
+    if bool(payload.get("record", False)):
+        from app.services.live_recording import start_recording
+        try:
+            await start_recording(room_name, user.id, title)
+        except Exception as e:
+            log.warning("live_start_recording_error", room=room_name, error=str(e))
 
     token = _create_livekit_token(
         room_name,
@@ -468,6 +477,13 @@ async def end_live(
         "UPDATE live_streams SET status='ended', ended_at=NOW() WHERE room_name=:room"
     ), {"room": room_name})
     db.commit()
+
+    from app.services.live_recording import stop_recording
+    try:
+        await stop_recording(room_name)
+    except Exception as e:
+        log.warning("end_live_stop_recording_error", room=room_name, error=str(e))
+
     if room_name in _room_connections:
         ended_msg = json.dumps({"type": "stream_ended", "message": "Stream has ended"})
         async def _broadcast_ended():
@@ -790,6 +806,71 @@ async def send_reaction(
         "emoji": emoji,
         "username": user.username,
     })
+    return {"ok": True}
+
+
+# ── Recordings / Replay (VOD) ────────────────────────────────────────────────
+
+@router.get("/live/recordings")
+def list_recordings(
+    user_id: Optional[int] = None,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+):
+    """List ready (playable) recordings, newest first. Optional ?user_id= to
+    filter to one host's replays."""
+    limit = max(1, min(limit, 50))
+    sql = (
+        "SELECT r.id, r.room_name, r.title, r.playback_url, r.duration_seconds, "
+        "r.started_at, r.host_user_id, u.username, u.display_name "
+        "FROM live_recordings r JOIN users u ON r.host_user_id = u.id "
+        "WHERE r.status='ready' AND r.playback_url IS NOT NULL "
+    )
+    params: dict = {"limit": limit}
+    if user_id is not None:
+        sql += "AND r.host_user_id = :uid "
+        params["uid"] = user_id
+    sql += "ORDER BY r.started_at DESC LIMIT :limit"
+    rows = db.execute(text(sql), params).fetchall()
+    return {"recordings": [
+        {
+            "id": r[0], "room_name": r[1], "title": r[2], "playback_url": r[3],
+            "duration_seconds": r[4],
+            "started_at": r[5].isoformat() if hasattr(r[5], "isoformat") else r[5],
+            "host_user_id": r[6], "host_username": r[7], "host_display_name": r[8],
+        }
+        for r in rows
+    ]}
+
+
+@router.post("/live/egress-webhook")
+async def egress_webhook(request: Request):
+    """Receive LiveKit Egress webhooks. On egress_ended we promote the
+    recording to 'ready' with its R2 playback URL.
+
+    The body is verified with LiveKit's WebhookReceiver (signed with the API
+    key/secret), so this endpoint needs no other auth."""
+    body = await request.body()
+    auth = request.headers.get("Authorization", "")
+    try:
+        from livekit import api
+        receiver = api.WebhookReceiver(LIVEKIT_API_KEY, LIVEKIT_API_SECRET)
+        event = receiver.receive(body.decode("utf-8"), auth)
+    except Exception as e:
+        log.warning("egress_webhook_verify_failed", error=str(e))
+        raise HTTPException(status_code=401, detail="Invalid webhook signature")
+
+    if getattr(event, "event", "") in ("egress_ended", "egress_updated"):
+        info = getattr(event, "egress_info", None)
+        if info is not None and str(getattr(info, "status", "")).endswith("EGRESS_COMPLETE"):
+            from app.services.live_recording import mark_recording_ready
+            file_key, duration = None, None
+            results = list(getattr(info, "file_results", []) or [])
+            if results:
+                file_key = getattr(results[0], "filename", None) or None
+                dur_ns = getattr(results[0], "duration", 0) or 0
+                duration = int(dur_ns / 1_000_000_000) if dur_ns else None
+            mark_recording_ready(info.egress_id, file_key, duration)
     return {"ok": True}
 
 

@@ -26,6 +26,7 @@ export default function StartLivePage() {
   const [password, setPassword] = useState("");
   const [entryCost, setEntryCost] = useState("");
   const [maxViewers, setMaxViewers] = useState("");
+  const [record, setRecord] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -71,6 +72,7 @@ export default function StartLivePage() {
     const body: Record<string, unknown> = {
       title: title.trim(),
       description: description.trim(),
+      record,
     };
     if (isPrivate) {
       body.is_private = true;
@@ -214,6 +216,23 @@ export default function StartLivePage() {
               </div>
             </div>
           )}
+        </div>
+
+        <div style={privateBox}>
+          <label style={{ display: "flex", alignItems: "center", gap: "0.6rem", cursor: "pointer", padding: "0.85rem 1rem" }}>
+            <input
+              type="checkbox"
+              checked={record}
+              onChange={(e) => setRecord(e.target.checked)}
+              style={{ accentColor: "#9a4a4a" }}
+            />
+            <span style={{ fontSize: "0.78rem", color: "#f0e8d8", fontFamily: "monospace", letterSpacing: "0.05em" }}>
+              Record this stream
+            </span>
+            <span style={{ fontSize: "0.65rem", color: "#555", fontFamily: "monospace", marginLeft: "auto" }}>
+              Save a replay (VOD)
+            </span>
+          </label>
         </div>
 
         <button onClick={submit} disabled={!canSubmit} style={{ ...submitBtn, opacity: canSubmit ? 1 : 0.4, cursor: canSubmit ? "pointer" : "not-allowed" }}>
