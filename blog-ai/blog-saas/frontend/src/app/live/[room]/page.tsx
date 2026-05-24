@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import LiveChat from "./LiveChat";
 import GiftPanel from "./GiftPanel";
 import GiftAnimation from "./GiftAnimation";
+import ReactionOverlay from "./ReactionOverlay";
 const LivePlayer = dynamic(() => import("./LivePlayer"), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
@@ -195,6 +196,26 @@ function LiveRoomContent() {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     });
+  }
+
+  async function sendReaction() {
+    if (!token) return;  // anonymous viewers can't react
+    // The server broadcasts to every socket (including ours), so the heart
+    // appears via the same path everyone else sees it — no optimistic dupe.
+    await fetch(`/api/proxy/live/${room}/react`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emoji: "❤️" }),
+    });
+  }
+
+  async function shareStream() {
+    const url = typeof window !== "undefined" ? `${window.location.origin}/live/${room}` : "";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try { await navigator.share({ title: "Live on Scouta", url }); } catch { /* user cancelled */ }
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      try { await navigator.clipboard.writeText(url); alert("Link copied"); } catch { /* ignore */ }
+    }
   }
 
   async function handleJoinResponse(username: string, accept: boolean) {
@@ -446,6 +467,7 @@ function LiveRoomContent() {
 
         {/* Gift animations overlay */}
         <GiftAnimation />
+        <ReactionOverlay />
 
         {/* Chat overlay — TikTok style */}
         <LiveChat
@@ -459,8 +481,8 @@ function LiveRoomContent() {
 
         {/* Right action buttons */}
         <div style={{ position: "absolute", right: 12, bottom: 80, display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
-          <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
+          <button onClick={sendReaction} title="React" style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#ff4a6a", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
+          <button onClick={shareStream} title="Share" style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
           {!isHost && (
             <GiftPanel
               roomName={room as string}

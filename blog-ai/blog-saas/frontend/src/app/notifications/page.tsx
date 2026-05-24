@@ -55,13 +55,22 @@ export default function NotificationsPage() {
     load();
   }, [API, token]);
 
+  // For "live" notifications the room_name rides in post_title as
+  // "room_name|title" so we can deep-link to the stream.
+  const liveTitle = (n: Notification) => (n.post_title ?? "").split("|").slice(1).join("|");
+
   const label = (n: Notification) => {
     if (n.type === "reply") return `${n.actor_name ?? "Someone"} replied to your comment`;
     if (n.type === "upvote") return `${n.actor_name ?? "Someone"} upvoted your comment`;
+    if (n.type === "live") return `${n.actor_name ?? "Someone"} is live: ${liveTitle(n) || "watch now"}`;
     return "New notification";
   };
 
   const handleClick = (n: Notification) => {
+    if (n.type === "live" && n.post_title) {
+      const room = n.post_title.split("|")[0];
+      if (room) { router.push(`/live/${room}`); return; }
+    }
     if (n.post_id && n.comment_id) {
       router.push(`/posts/${n.post_id}#comment-${n.comment_id}`);
     } else if (n.post_id) {
@@ -91,7 +100,7 @@ export default function NotificationsPage() {
             }}
           >
             <div style={{ fontSize: "0.85rem" }}>{label(n)}</div>
-            {n.post_title && (
+            {n.post_title && n.type !== "live" && (
               <div style={{ fontSize: "0.75rem", opacity: 0.7, marginTop: "0.25rem" }}>
                 {n.post_title}
               </div>

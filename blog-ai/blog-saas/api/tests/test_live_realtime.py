@@ -46,6 +46,111 @@ BLOCK = "/api/v1/live/{room}/block"
 REQUEST_JOIN = "/api/v1/live/{room}/request-join"
 ACCEPT_JOIN = "/api/v1/live/{room}/accept-join"
 JOIN_REQUESTS = "/api/v1/live/{room}/join-requests"
+REACT = "/api/v1/live/{room}/react"
+
+
+# ---------- reactions (P2) ----------
+
+def test_reaction_requires_auth(client):
+    resp = client.post(REACT.format(room="any"), json={"emoji": "❤️"})
+    assert resp.status_code in (401, 403)
+
+
+def test_reaction_broadcasts_allowlisted_emoji(client, make_user, auth_header, monkeypatch):
+    captured = []
+
+    async def fake_broadcast(room, payload):
+        captured.append((room, payload))
+
+    monkeypatch.setattr(live_mod, "_broadcast", fake_broadcast)
+    reactor = make_user(email="rx@example.com", username="reactor")
+
+    resp = client.post(REACT.format(room="scouta-r"), json={"emoji": "🔥"}, headers=auth_header(reactor.id))
+    assert resp.status_code == 200
+    assert len(captured) == 1
+    room, payload = captured[0]
+    assert room == "scouta-r"
+    assert payload == {"type": "reaction", "emoji": "🔥", "username": "reactor"}
+
+
+def test_reaction_rejects_unlisted_emoji_falls_back(client, make_user, auth_header, monkeypatch):
+    captured = []
+
+    async def fake_broadcast(room, payload):
+        captured.append(payload)
+
+    monkeypatch.setattr(live_mod, "_broadcast", fake_broadcast)
+    reactor = make_user(email="rx2@example.com", username="reactor2")
+
+    # An arbitrary/unsafe string must not reach clients — falls back to ❤️.
+    resp = client.post(
+        REACT.format(room="scouta-r2"),
+        json={"emoji": "<script>alert(1)</script>"},
+        headers=auth_header(reactor.id),
+    )
+    assert resp.status_code == 200
+    assert captured[0]["emoji"] == "❤️"
+
+
+# ---------- go-live notifications (P2) ----------
+
+def _create_social_tables(session):
+    session.execute(text(
+        "CREATE TABLE IF NOT EXISTS follows ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, follower_id INTEGER, following_id INTEGER, "
+        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+    ))
+    session.execute(text(
+        "CREATE TABLE IF NOT EXISTS notifications ("
+        "id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, type TEXT, comment_id INTEGER, "
+        "actor_name TEXT, post_id INTEGER, post_title TEXT, read BOOLEAN DEFAULT 0, "
+        "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)"
+    ))
+    session.commit()
+
+
+def test_notify_followers_live_inserts_rows(db_session, make_user):
+    session, _ = db_session
+    _create_social_tables(session)
+    host = make_user(email="nh@example.com", username="nhost", display_name="N Host")
+    f1 = make_user(email="f1@example.com", username="f1")
+    f2 = make_user(email="f2@example.com", username="f2")
+    for f in (f1, f2):
+        session.execute(
+            text("INSERT INTO follows (follower_id, following_id) VALUES (:fid, :hid)"),
+            {"fid": f.id, "hid": host.id},
+        )
+    session.commit()
+
+    live_mod._notify_followers_live(session, host, "scouta-live", "My Show")
+
+    rows = session.execute(
+        text("SELECT user_id, type, actor_name, post_title FROM notifications WHERE type='live'")
+    ).fetchall()
+    assert len(rows) == 2
+    assert {r.user_id for r in rows} == {f1.id, f2.id}
+    assert all(r.actor_name == "N Host" for r in rows)
+    # room_name rides in post_title for deep-linking
+    assert all(r.post_title.startswith("scouta-live|") for r in rows)
+
+
+def test_notify_followers_live_no_followers_no_rows(db_session, make_user):
+    session, _ = db_session
+    _create_social_tables(session)
+    host = make_user(email="nh2@example.com", username="nhost2")
+
+    live_mod._notify_followers_live(session, host, "scouta-live2", "Empty")
+
+    count = session.execute(text("SELECT COUNT(*) FROM notifications")).scalar()
+    assert count == 0
+
+
+def test_notify_followers_live_never_raises(db_session, make_user):
+    """No follows table at all → must swallow the error, not raise."""
+    session, _ = db_session
+    host = make_user(email="nh3@example.com", username="nhost3")
+    # Intentionally do NOT create the tables.
+    live_mod._notify_followers_live(session, host, "scouta-live3", "X")  # must not raise
 
 
 # ---------- WS identity / anti-impersonation ----------

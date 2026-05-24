@@ -20,9 +20,11 @@ from sqlalchemy import text
 from app.core.db import get_db, SessionLocal
 from app.core.deps import get_current_user, require_superuser
 from app.models.user import User
+from app.core.logging import get_logger
 from typing import Optional
 
 router = APIRouter()
+log = get_logger(__name__)
 
 LIVEKIT_URL = os.getenv("LIVEKIT_URL", "")
 LIVEKIT_API_KEY = os.getenv("LIVEKIT_API_KEY", "")
@@ -49,6 +51,39 @@ def _safe_int(value, default: int = 0) -> int:
         return int(value)
     except (TypeError, ValueError):
         return default
+
+
+def _notify_followers_live(db: Session, host: User, room_name: str, title: str) -> None:
+    """Insert an in-app 'live' notification for each of the host's followers.
+
+    Best-effort: wrapped so a notification failure can't stop the host going
+    live. Uses the existing notifications table columns; the room_name rides
+    in post_title alongside the title so the bell can deep-link to the stream.
+    """
+    try:
+        followers = db.execute(
+            text("SELECT follower_id FROM follows WHERE following_id=:hid"),
+            {"hid": host.id},
+        ).fetchall()
+        if not followers:
+            return
+        actor = host.display_name or host.username or f"user_{host.id}"
+        for (follower_id,) in followers:
+            db.execute(
+                text(
+                    "INSERT INTO notifications (user_id, type, actor_name, post_id, post_title) "
+                    "VALUES (:uid, 'live', :actor, NULL, :title)"
+                ),
+                {"uid": follower_id, "actor": actor, "title": f"{room_name}|{title}"},
+            )
+        db.commit()
+        log.info("live_followers_notified", host_id=host.id, count=len(followers))
+    except Exception as e:
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        log.warning("live_followers_notify_failed", host_id=host.id, error=str(e))
 
 
 def _require_host(db: Session, room_name: str, user_id: int):
@@ -206,6 +241,11 @@ def start_live(
         user_id=user.id, room=room_name, access_type=access_type if is_private else "public",
         is_private=is_private, entry_coin_cost=entry_coin_cost if is_private else 0,
     )
+
+    # Notify followers that the host went live. Best-effort — must never break
+    # going live. Public streams only (don't leak private streams to non-members).
+    if not is_private:
+        _notify_followers_live(db, user, room_name, title)
 
     token = _create_livekit_token(
         room_name,
@@ -720,6 +760,37 @@ async def upload_thumbnail(
     )
     db.commit()
     return {"ok": True, "thumbnail_url": public_url}
+
+
+# ── Reactions (ephemeral floating hearts) ────────────────────────────────────
+
+# Allowlisted reaction emojis. Restricting the set keeps the WS payload safe
+# to render in the DOM (no arbitrary client-supplied strings) and keeps the
+# UI coherent. ❤️ is the default.
+_REACTION_EMOJIS = {"❤️", "😂", "😮", "😢", "👏", "🔥", "🎉", "💯"}
+
+
+@router.post("/live/{room_name}/react")
+async def send_reaction(
+    room_name: str,
+    payload: dict,
+    user: User = Depends(get_current_user),
+):
+    """Broadcast a floating reaction to everyone in the room.
+
+    Ephemeral by design — reactions are high-frequency and disposable, so we
+    don't persist them; we just fan them out over the WS for the float
+    animation. Identity comes from the authenticated user, never the payload.
+    """
+    emoji = payload.get("emoji", "❤️")
+    if emoji not in _REACTION_EMOJIS:
+        emoji = "❤️"
+    await _broadcast(room_name, {
+        "type": "reaction",
+        "emoji": emoji,
+        "username": user.username,
+    })
+    return {"ok": True}
 
 
 # ── Gift system ──────────────────────────────────────────────────────────────
