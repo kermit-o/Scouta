@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import LiveChat from "./LiveChat";
 import GiftPanel from "./GiftPanel";
 import GiftAnimation from "./GiftAnimation";
+import ReactionOverlay from "./ReactionOverlay";
 const LivePlayer = dynamic(() => import("./LivePlayer"), { ssr: false });
 
 const API = process.env.NEXT_PUBLIC_API_URL || "https://scouta-production.up.railway.app";
@@ -61,6 +62,14 @@ function LiveRoomContent() {
   const [ended, setEnded] = useState(false);
   const [blockedUsers, setBlockedUsers] = useState<Set<string>>(new Set());
   const [streamEnded, setStreamEnded] = useState(false);
+  // End-of-live viewer screen state (mirrors the mobile app's end screen).
+  const [hostUser, setHostUser] = useState<{ username: string; name: string } | null>(null);
+  const [rating, setRating] = useState(0);
+  const [followed, setFollowed] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  // Set once the stream has been seen in /live/active, so its later
+  // disappearance can be treated as a reliable "ended" signal for viewers.
+  const seenLiveRef = useRef(false);
   const [showInvite, setShowInvite] = useState(false);
   const [inviteUsername, setInviteUsername] = useState("");
   const [inviteSent, setInviteSent] = useState(false);
@@ -154,6 +163,12 @@ function LiveRoomContent() {
   useEffect(() => {
     const handler = (e: any) => {
       const msg = e.detail;
+      if (msg.type === 'stream_ended') {
+        // Host ended the live → show the end-of-live screen (viewers) rather
+        // than redirecting away. Original host/co-host already navigate on End.
+        if (!isHost) setStreamEnded(true);
+        return;
+      }
       // Only the original host approves/rejects join requests; co-hosts skip.
       if (msg.type === 'join_request' && isOriginalHost) {
         setJoinRequests(prev => prev.find((r: any) => r.username === msg.username) ? prev : [...prev, { username: msg.username, display_name: msg.display_name, user_id: msg.user_id }]);
@@ -173,7 +188,7 @@ function LiveRoomContent() {
     };
     window.addEventListener('live_ws_message', handler);
     return () => window.removeEventListener('live_ws_message', handler);
-  }, [isOriginalHost, room, user]);
+  }, [isOriginalHost, isHost, room, user]);
 
   // Poll viewer count
   useEffect(() => {
@@ -182,11 +197,21 @@ function LiveRoomContent() {
         .then(r => r.json())
         .then(d => {
           const s = (d.streams || []).find((s: any) => s.room_name === room);
-          if (s) setViewerCount(s.viewer_count);
-        });
+          if (s) {
+            seenLiveRef.current = true;
+            setViewerCount(s.viewer_count);
+            if (s.host_username) setHostUser(prev => prev || { username: s.host_username, name: s.host_display_name || s.host_username });
+          } else if (seenLiveRef.current && !isHost) {
+            // Was live and is now gone → it ended. Fallback for when the
+            // stream_ended WS broadcast is missed. Guarded by seenLiveRef so a
+            // startup race (not yet listed) can't end it prematurely.
+            setStreamEnded(true);
+          }
+        })
+        .catch(() => {});
     }, 10000);
     return () => clearInterval(iv);
-  }, [room]);
+  }, [room, isHost]);
 
   async function requestJoin() {
     if (!token) return;
@@ -195,6 +220,26 @@ function LiveRoomContent() {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     });
+  }
+
+  async function sendReaction() {
+    if (!token) return;  // anonymous viewers can't react
+    // The server broadcasts to every socket (including ours), so the heart
+    // appears via the same path everyone else sees it — no optimistic dupe.
+    await fetch(`/api/proxy/live/${room}/react`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ emoji: "❤️" }),
+    });
+  }
+
+  async function shareStream() {
+    const url = typeof window !== "undefined" ? `${window.location.origin}/live/${room}` : "";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try { await navigator.share({ title: "Live on Scouta", url }); } catch { /* user cancelled */ }
+    } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+      try { await navigator.clipboard.writeText(url); alert("Link copied"); } catch { /* ignore */ }
+    }
   }
 
   async function handleJoinResponse(username: string, accept: boolean) {
@@ -245,6 +290,23 @@ function LiveRoomContent() {
       headers: { Authorization: `Bearer ${token}` },
     });
     window.location.href = "/live";
+  }
+
+  // Follow the host from the end-of-live screen. Uses the same endpoint as the
+  // public profile page (returns { action, followers }).
+  async function followHost() {
+    if (!hostUser) return;
+    if (!token) { window.location.href = `/login?next=/live/${room}`; return; }
+    setFollowLoading(true);
+    try {
+      const res = await fetch(`/api/proxy/api/v1/u/${hostUser.username}/follow`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const d = await res.json();
+      setFollowed(d.action === "followed");
+    } catch { /* best-effort */ }
+    setFollowLoading(false);
   }
 
   if (ended) return (
@@ -410,13 +472,40 @@ function LiveRoomContent() {
           />
         )}
 
-        {/* Stream ended overlay */}
+        {/* Stream ended overlay — viewer end-of-live screen (mirrors mobile) */}
         {streamEnded && (
-          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.92)", gap: "1rem", zIndex: 50 }}>
+          <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.95)", gap: "0.75rem", zIndex: 60, padding: "1.5rem" }}>
             <div style={{ fontSize: "3rem" }}>📡</div>
-            <p style={{ color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: "1.25rem", margin: 0 }}>Stream has ended</p>
-            <p style={{ color: "#555", fontFamily: "monospace", fontSize: "0.65rem", margin: 0 }}>Thanks for watching</p>
-            <Link href="/live" style={{ color: "#4a7a9a", fontFamily: "monospace", fontSize: "0.7rem", marginTop: "0.5rem", border: "1px solid #4a7a9a", padding: "0.4rem 1rem" }}>← Back to Live</Link>
+            <p style={{ color: "#f0e8d8", fontFamily: "Georgia, serif", fontSize: "1.4rem", margin: 0 }}>Stream Ended</p>
+            <p style={{ color: "#888", fontFamily: "monospace", fontSize: "0.7rem", margin: 0, textAlign: "center" }}>
+              {hostUser ? `${hostUser.name} finished the live` : "This live has ended."}
+            </p>
+
+            {!isHost && (
+              <>
+                <p style={{ color: "#555", fontFamily: "monospace", fontSize: "0.6rem", letterSpacing: "0.2em", margin: "1rem 0 0" }}>RATE THIS LIVE</p>
+                <div style={{ display: "flex", gap: "0.4rem" }}>
+                  {[1, 2, 3, 4, 5].map(n => (
+                    <button
+                      key={n}
+                      onClick={() => setRating(n)}
+                      style={{ background: "none", border: "none", cursor: "pointer", fontSize: "1.7rem", lineHeight: 1, padding: 0, color: n <= rating ? "#d9a441" : "#444" }}
+                      aria-label={`Rate ${n} star${n > 1 ? "s" : ""}`}
+                    >{n <= rating ? "★" : "☆"}</button>
+                  ))}
+                </div>
+
+                {hostUser && (
+                  <button
+                    onClick={followHost}
+                    disabled={followed || followLoading}
+                    style={{ marginTop: "0.75rem", background: followed ? "rgba(74,154,74,0.15)" : "transparent", border: `1px solid ${followed ? "#4a9a4a" : "#4a7a9a"}`, color: followed ? "#4a9a4a" : "#4a7a9a", padding: "0.5rem 1.5rem", fontFamily: "monospace", fontSize: "0.7rem", letterSpacing: "0.1em", cursor: followed ? "default" : "pointer" }}
+                  >{followLoading ? "..." : followed ? "✓ Following" : `+ Follow ${hostUser.name}`}</button>
+                )}
+              </>
+            )}
+
+            <Link href="/live" style={{ marginTop: "1rem", background: "#1a2a1a", border: "1px solid #2a4a2a", color: "#4a9a4a", fontFamily: "monospace", fontSize: "0.7rem", padding: "0.6rem 2rem", textDecoration: "none", letterSpacing: "0.15em", textTransform: "uppercase" }}>Watch other lives</Link>
           </div>
         )}
 
@@ -446,6 +535,7 @@ function LiveRoomContent() {
 
         {/* Gift animations overlay */}
         <GiftAnimation />
+        <ReactionOverlay />
 
         {/* Chat overlay — TikTok style */}
         <LiveChat
@@ -459,8 +549,8 @@ function LiveRoomContent() {
 
         {/* Right action buttons */}
         <div style={{ position: "absolute", right: 12, bottom: 80, display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
-          <button style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
+          <button onClick={sendReaction} title="React" style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#ff4a6a", cursor: "pointer", fontSize: "1.2rem" }}>♥</button>
+          <button onClick={shareStream} title="Share" style={{ background: "rgba(0,0,0,0.5)", border: "none", borderRadius: "50%", width: 44, height: 44, color: "#fff", cursor: "pointer", fontSize: "1.2rem" }}>↗</button>
           {!isHost && (
             <GiftPanel
               roomName={room as string}
