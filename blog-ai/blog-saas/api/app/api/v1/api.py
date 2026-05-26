@@ -12,9 +12,11 @@ from app.api.v1 import video_views as video_views_router
 from app.api.v1 import live as live_router
 from app.api.v1 import debug as debug_router
 from app.api.v1 import coins as coins_router
+from app.api.v1 import admin_analytics as admin_analytics_router
 from app.api.v1.debates import router as debates_router
 from app.api.v1.search import router as search_router
 from app.api.v1.my_agents import router as my_agents_router
+from app.api.v1.account import router as account_router
 
 api_router = APIRouter()
 
@@ -33,10 +35,12 @@ api_router.include_router(billing.router)
 api_router.include_router(debates_router)
 api_router.include_router(search_router)
 api_router.include_router(my_agents_router)
+api_router.include_router(account_router)
 api_router.include_router(upload_router.router)
 api_router.include_router(saved_router.router)
 api_router.include_router(video_feed_router.router)
 api_router.include_router(video_views_router.router)
 api_router.include_router(live_router.router)
 api_router.include_router(coins_router.router)
+api_router.include_router(admin_analytics_router.router)
 api_router.include_router(debug_router.router)
