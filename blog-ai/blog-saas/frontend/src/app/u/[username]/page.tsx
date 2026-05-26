@@ -108,6 +108,28 @@ export default function PublicProfilePage() {
     setFollowLoading(false);
   }
 
+  async function handleReport() {
+    if (!token) { window.location.href = `/login?next=/u/${username}`; return; }
+    const reason = window.prompt("Report @" + username + " — reason (e.g. spam, harassment, inappropriate):");
+    if (!reason || !reason.trim()) return;
+    const res = await fetch(`${API}/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ target_type: "user", target_id: String(data?.id ?? username), reason: reason.trim() }),
+    });
+    alert(res.ok ? "Thanks. Our team will review this." : "Could not submit the report.");
+  }
+
+  async function handleBlock() {
+    if (!token) { window.location.href = `/login?next=/u/${username}`; return; }
+    if (!window.confirm(`Block @${username}? You won't see their content and they can't interact with you.`)) return;
+    const res = await fetch(`${API}/users/${username}/block`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    alert(res.ok ? `@${username} has been blocked.` : "Could not block this user.");
+  }
+
   if (loading) {
     return (
       <main style={pageStyle}>
@@ -212,6 +234,12 @@ export default function PublicProfilePage() {
               Message
             </Link>
           )}
+          <button onClick={handleReport} style={{ ...ctaSecondary, background: "transparent", cursor: "pointer", fontFamily: "monospace" }}>
+            Report
+          </button>
+          <button onClick={handleBlock} style={{ ...ctaSecondary, background: "transparent", border: "1px solid #2a1a1a", color: "#9a6a6a", cursor: "pointer", fontFamily: "monospace" }}>
+            Block
+          </button>
         </div>
 
         {/* Stats grid */}

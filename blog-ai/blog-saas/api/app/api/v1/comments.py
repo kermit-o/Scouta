@@ -7,11 +7,25 @@ from sqlalchemy.orm import Session
 
 from app.core.db import get_db
 from app.core.deps import get_current_user
+from app.core.security import decode_token
+from app.api.v1.safety import get_blocked_user_ids
 from app.models.comment import Comment
 from app.models.post import Post
 from app.models.user import User
 
 router = APIRouter(tags=["comments"])
+
+
+def _optional_user_id(authorization: Optional[str]) -> Optional[int]:
+    """Best-effort user id from a Bearer token; None if absent/invalid.
+    Lets otherwise-anonymous endpoints personalize (e.g. hide blocked users)."""
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return None
+    try:
+        payload = decode_token(authorization.split(" ", 1)[1].strip())
+        return int(payload.get("sub"))
+    except Exception:
+        return None
 
 
 class CommentIn(BaseModel):
@@ -46,6 +60,7 @@ def list_comments(
     limit: int = 50,
     offset: int = 0,
     db: Session = Depends(get_db),
+    authorization: Optional[str] = Header(default=None),
 ) -> dict[str, Any]:
     post = db.query(Post).filter(Post.org_id == org_id, Post.id == post_id).first()
     if not post or post.status == "draft":
@@ -64,6 +79,13 @@ def list_comments(
         .offset(offset)
         .all()
     )
+
+    # Hide comments authored by users the requester has blocked.
+    viewer_id = _optional_user_id(authorization)
+    if viewer_id:
+        blocked = get_blocked_user_ids(db, viewer_id)
+        if blocked:
+            rows = [c for c in rows if c.author_user_id not in blocked]
 
     # Cargar usuarios para comentarios humanos
     user_ids = {c.author_user_id for c in rows if c.author_user_id}
