@@ -175,6 +175,21 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
               <svg width="16" height="16" viewBox="0 0 24 24" fill={voted === -1 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
               {downvotes > 0 && <span>{downvotes}</span>}
             </button>
+
+            <button onClick={async () => {
+              if (!token) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
+              const reason = window.prompt("Report this comment — reason (e.g. spam, harassment, inappropriate):");
+              if (!reason || !reason.trim()) return;
+              const API = getApiBase();
+              const res = await fetch(`${API}/api/v1/report`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ target_type: "comment", target_id: String(comment.id), reason: reason.trim() }),
+              });
+              alert(res.ok ? "Thanks. Our team will review this." : "Could not submit the report.");
+            }} title="Report comment" style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", fontSize: "0.8rem", fontFamily: "monospace", color: "#3a3a3a", padding: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </button>
           </div>
 
           {replying && (
