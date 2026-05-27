@@ -31,3 +31,7 @@ from app.models.vip_list import VipList
 from app.models.user_subscription import UserSubscription
 from app.models.report import Report
 from app.models.user_block import UserBlock
+from app.models.user_event import UserEvent
+from app.models.live_block import LiveBlock
+from app.models.live_join_request import LiveJoinRequest
+from app.models.live_recording import LiveRecording
