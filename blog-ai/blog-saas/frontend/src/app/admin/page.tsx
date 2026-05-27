@@ -22,6 +22,7 @@ export default function AdminPage() {
   const [debatesFilter, setDebatesFilter] = useState<"all"|"open"|"closed">("all");
   const [loading, setLoading] = useState(true);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<number | null>(null);
+  const [openReports, setOpenReports] = useState<number | null>(null);
 
   useEffect(() => { void (async () => {
     if (!isLoaded) return;
@@ -48,6 +49,12 @@ export default function AdminPage() {
     })
       .then((r) => (r.ok ? r.json() : null))
       .then((rows) => { if (Array.isArray(rows)) setPendingWithdrawals(rows.length); })
+      .catch(() => {});
+    fetch(`${API}/api/v1/admin/reports?status=open&limit=200`, {
+      headers: { Authorization: `Bearer ${t}` },
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => { if (d && Array.isArray(d.reports)) setOpenReports(d.reports.length); })
       .catch(() => {});
   }, [isLoaded, token]);
 
@@ -156,6 +163,26 @@ export default function AdminPage() {
                 {pendingWithdrawals > 0 && (
                   <span style={{ background: "#c8a96e", color: "#0a0a0a", padding: "0 0.4rem", fontWeight: 700 }}>
                     {pendingWithdrawals}
+                  </span>
+                )}
+              </Link>
+            )}
+            {openReports !== null && (
+              <Link
+                href="/admin/reports"
+                style={{
+                  display: "inline-flex", alignItems: "center", gap: "0.4rem",
+                  fontSize: "0.6rem", color: openReports > 0 ? "#c87a7a" : "#666",
+                  textDecoration: "none", letterSpacing: "0.15em", textTransform: "uppercase",
+                  border: `1px solid ${openReports > 0 ? "#3a1010" : "#1a1a1a"}`,
+                  background: openReports > 0 ? "#1a0d0d" : "transparent",
+                  padding: "0.35rem 0.7rem",
+                }}
+              >
+                <span>Reports</span>
+                {openReports > 0 && (
+                  <span style={{ background: "#c87a7a", color: "#0a0a0a", padding: "0 0.4rem", fontWeight: 700 }}>
+                    {openReports}
                   </span>
                 )}
               </Link>
