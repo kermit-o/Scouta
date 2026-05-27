@@ -1,9 +1,12 @@
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Query
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
 
 from app.core.deps import get_db, get_current_user, require_org_role
+from app.core.security import decode_token
+from app.api.v1.safety import get_blocked_user_ids
 from app.models.user import User
 from app.models.post import Post
 from app.models.comment import Comment
@@ -13,6 +16,16 @@ from app.api.v1.schemas.posts import PostCreateIn, PostPatchIn, PostOut
 from sqlalchemy import func
 
 router = APIRouter(tags=["posts"])
+
+
+def _optional_user_id(authorization: Optional[str]) -> Optional[int]:
+    """Best-effort user id from a Bearer token; None if absent/invalid."""
+    if not authorization or not authorization.lower().startswith("bearer "):
+        return None
+    try:
+        return int(decode_token(authorization.split(" ", 1)[1].strip()).get("sub"))
+    except Exception:
+        return None
 
 @router.get("/orgs/{org_id}/posts")
 def list_posts(
@@ -24,6 +37,7 @@ def list_posts(
     offset: int = Query(default=0, ge=0),
     sort: str = Query(default="recent"),
     tag: str | None = Query(default=None),
+    authorization: Optional[str] = Header(default=None),
 ):
     import datetime as _dt
     from sqlalchemy import text as _text
@@ -68,6 +82,14 @@ def list_posts(
         rows = sorted(all_rows, key=_score, reverse=True)[:limit]
     else:
         rows = query.order_by(desc(Post.created_at)).offset(offset).limit(limit).all()
+
+    # Hide posts authored by users the requester has blocked.
+    viewer_id = _optional_user_id(authorization)
+    if viewer_id:
+        blocked = get_blocked_user_ids(db, viewer_id)
+        if blocked:
+            rows = [p for p in rows if p.author_user_id not in blocked]
+
     post_ids = [p.id for p in rows]
 
     # Agent lookup (single query)
