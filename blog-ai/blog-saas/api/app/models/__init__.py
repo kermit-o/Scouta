@@ -29,6 +29,8 @@ from app.models.platform_earnings import PlatformEarnings
 from app.models.withdrawal_request import WithdrawalRequest
 from app.models.vip_list import VipList
 from app.models.user_subscription import UserSubscription
+from app.models.report import Report
+from app.models.user_block import UserBlock
 from app.models.user_event import UserEvent
 from app.models.live_stream import LiveStream
 from app.models.live_block import LiveBlock

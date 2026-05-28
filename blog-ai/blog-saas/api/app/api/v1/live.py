@@ -14,11 +14,13 @@ AI_LIVE_INITIAL_DELAY_SEC = int(os.getenv("AI_LIVE_INITIAL_DELAY_SEC", "60"))
 AI_LIVE_INTERVAL_SEC = int(os.getenv("AI_LIVE_INTERVAL_SEC", "180"))
 AI_LIVE_MAX_COMMENTS_PER_STREAM = int(os.getenv("AI_LIVE_MAX_COMMENTS_PER_STREAM", "20"))
 
-from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException, Request, WebSocket, WebSocketDisconnect, Header
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.db import get_db, SessionLocal
 from app.core.deps import get_current_user, require_superuser
+from app.core.security import decode_token
+from app.api.v1.safety import get_blocked_user_ids
 from app.models.user import User
 from app.core.logging import get_logger
 from typing import Optional
@@ -1051,16 +1053,28 @@ def list_active_streams(db: Session = Depends(get_db)):
 
 
 @router.get("/live/{room_name}/chat")
-def get_chat_history(room_name: str, limit: int = 50, db: Session = Depends(get_db)):
-    """Get chat history for a room."""
+def get_chat_history(room_name: str, limit: int = 50, db: Session = Depends(get_db),
+                     authorization: Optional[str] = Header(default=None)):
+    """Get chat history for a room. If the requester is authenticated, messages
+    from users they've blocked are hidden."""
     rows = db.execute(text(
-        "SELECT username, display_name, message, is_agent, agent_name, created_at "
+        "SELECT username, display_name, message, is_agent, agent_name, created_at, user_id "
         "FROM live_chat WHERE room_name=:room ORDER BY created_at DESC LIMIT :limit"
     ), {"room": room_name, "limit": limit}).fetchall()
+
+    blocked: set[int] = set()
+    if authorization and authorization.lower().startswith("bearer "):
+        try:
+            viewer_id = int(decode_token(authorization.split(" ", 1)[1].strip()).get("sub"))
+            blocked = get_blocked_user_ids(db, viewer_id)
+        except Exception:
+            blocked = set()
+
     return {"messages": [
         {"username": r[0], "display_name": r[1], "message": r[2],
          "is_agent": r[3], "agent_name": r[4], "created_at": r[5].isoformat() if r[5] else None}
         for r in reversed(rows)
+        if not (blocked and r[6] in blocked)
     ]}
 
 

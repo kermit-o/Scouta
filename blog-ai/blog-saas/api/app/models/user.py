@@ -27,3 +27,8 @@ class User(Base):
     is_flagged: Mapped[bool] = mapped_column(default=False, server_default="false")
     ban_reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
     flag_reason: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    # Set when the user soft-deletes their account (App Store / Play store
+    # requirement). PII is anonymized in place; the row is kept to preserve
+    # referential integrity (posts, lives, transactions). A non-null value
+    # blocks authentication (see deps.get_current_user and auth.login).
+    deleted_at: Mapped[Optional["DateTime"]] = mapped_column(DateTime(timezone=True), nullable=True)

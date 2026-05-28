@@ -16,6 +16,9 @@ from app.api.v1 import admin_analytics as admin_analytics_router
 from app.api.v1.debates import router as debates_router
 from app.api.v1.search import router as search_router
 from app.api.v1.my_agents import router as my_agents_router
+from app.api.v1.account import router as account_router
+from app.api.v1.safety import router as safety_router
+from app.api.v1.iap import router as iap_router
 
 api_router = APIRouter()
 
@@ -34,6 +37,9 @@ api_router.include_router(billing.router)
 api_router.include_router(debates_router)
 api_router.include_router(search_router)
 api_router.include_router(my_agents_router)
+api_router.include_router(account_router)
+api_router.include_router(safety_router)
+api_router.include_router(iap_router)
 api_router.include_router(upload_router.router)
 api_router.include_router(saved_router.router)
 api_router.include_router(video_feed_router.router)

@@ -175,6 +175,21 @@ function CommentItem({ comment, orgId, postId, onRefresh, isReply = false }: {
               <svg width="16" height="16" viewBox="0 0 24 24" fill={voted === -1 ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
               {downvotes > 0 && <span>{downvotes}</span>}
             </button>
+
+            <button onClick={async () => {
+              if (!token) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
+              const reason = window.prompt("Report this comment — reason (e.g. spam, harassment, inappropriate):");
+              if (!reason || !reason.trim()) return;
+              const API = getApiBase();
+              const res = await fetch(`${API}/api/v1/report`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({ target_type: "comment", target_id: String(comment.id), reason: reason.trim() }),
+              });
+              alert(res.ok ? "Thanks. Our team will review this." : "Could not submit the report.");
+            }} title="Report comment" style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", fontSize: "0.8rem", fontFamily: "monospace", color: "#3a3a3a", padding: 0 }}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></svg>
+            </button>
           </div>
 
           {replying && (
@@ -623,6 +638,19 @@ export default function PostPage() {
     setPostVoted(data.action === "removed" ? 0 : value);
   }
 
+  async function handleReportPost() {
+    if (!activeToken) { window.location.href = `/login?next=${encodeURIComponent(window.location.pathname)}`; return; }
+    const reason = window.prompt("Report this post — reason (e.g. spam, harassment, inappropriate):");
+    if (!reason || !reason.trim()) return;
+    const API = getApiBase();
+    const res = await fetch(`${API}/api/v1/report`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": `Bearer ${activeToken}` },
+      body: JSON.stringify({ target_type: "post", target_id: String(postId), reason: reason.trim() }),
+    });
+    alert(res.ok ? "Thanks. Our team will review this." : "Could not submit the report.");
+  }
+
   // --- Renderizado ---
   if (loading) return (
     <main style={{ background: "#0a0a0a", minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -645,9 +673,14 @@ export default function PostPage() {
     <main style={{ minHeight: "100vh", background: "#0a0a0a", color: "#e8e0d0" }}>
       <div style={{ maxWidth: "640px", margin: "0 auto", padding: "0 clamp(1rem, 4vw, 1.5rem)" }}>
         <article style={{ padding: "2.5rem 0 2rem", borderBottom: "1px solid #141414" }}>
-          <p style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#444", marginBottom: "0.875rem", fontFamily: "monospace" }}>
-            {new Date(post.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-          </p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.875rem" }}>
+            <p style={{ fontSize: "0.65rem", letterSpacing: "0.25em", textTransform: "uppercase", color: "#444", margin: 0, fontFamily: "monospace" }}>
+              {new Date(post.created_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+            </p>
+            <button onClick={handleReportPost} title="Report post" style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: "0.6rem", fontFamily: "monospace", letterSpacing: "0.1em", textTransform: "uppercase" }}>
+              ⚑ Report
+            </button>
+          </div>
           <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 400, lineHeight: 1.2, color: "#f0e8d8", marginBottom: "1rem", fontFamily: "Georgia, serif", letterSpacing: "-0.01em" }}>{post.title}</h1>
           <HashtagRow title={post.title} body={post.body_md} />
           {post.excerpt && <p style={{ fontSize: "1rem", color: "#777", lineHeight: 1.7, fontStyle: "italic", fontFamily: "Georgia, serif" }}>{post.excerpt}</p>}

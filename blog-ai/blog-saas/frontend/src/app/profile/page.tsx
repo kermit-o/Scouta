@@ -79,6 +79,19 @@ export default function ProfilePage() {
     }).catch(() => setLoading(false));
   }, [isLoaded, token]);
 
+  async function handleDeleteAccount() {
+    // Two-step confirmation — account deletion is irreversible for the user.
+    if (!window.confirm("Delete your account? This removes your personal data and cannot be undone.")) return;
+    if (!window.confirm("Are you sure? Your account will be deleted and you'll be signed out.")) return;
+    const t = token || (typeof window !== "undefined" ? localStorage.getItem("token") : null);
+    if (!t) { router.push("/login"); return; }
+    try {
+      const res = await fetch(`${API}/account`, { method: "DELETE", headers: { Authorization: `Bearer ${t}` } });
+      if (res.ok) { logout(); router.push("/"); }
+      else alert("Could not delete your account. Please try again.");
+    } catch { alert("Could not delete your account. Please try again."); }
+  }
+
   if (loading || !data) {
     return (
       <main style={pageStyle}>
@@ -159,6 +172,12 @@ export default function ProfilePage() {
             style={{ ...ctaSecondary, background: "transparent", border: "1px solid #2a1a1a", color: "#9a6a6a", cursor: "pointer", fontFamily: "monospace" }}
           >
             Log out
+          </button>
+          <button
+            onClick={handleDeleteAccount}
+            style={{ ...ctaSecondary, background: "transparent", border: "1px solid #2a1a1a", color: "#7a4a4a", cursor: "pointer", fontFamily: "monospace" }}
+          >
+            Delete account
           </button>
         </div>
 

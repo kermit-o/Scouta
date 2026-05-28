@@ -41,6 +41,10 @@ def get_current_user(
     if not user:
         raise HTTPException(status_code=401, detail="User not found")
 
+    # A soft-deleted account must not authenticate, even with a still-valid JWT.
+    if getattr(user, "deleted_at", None):
+        raise HTTPException(status_code=401, detail="Account deleted")
+
     return user
 
 def require_org_role(

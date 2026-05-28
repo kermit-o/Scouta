@@ -5,6 +5,8 @@ from app.core.db import get_db
 from app.core.deps import get_current_user
 from app.models.user import User
 from app.models.message import Conversation, Message
+from app.models.user_block import UserBlock
+from app.api.v1.safety import get_blocked_user_ids
 from pydantic import BaseModel
 from typing import Dict, List
 import json
@@ -73,14 +75,32 @@ def _conv_dict(conv: Conversation, me_id: int, db: Session) -> dict:
     }
 
 
-# ── REST endpoints ──────────────────────────────────────────────
+def _blocked_between(db: Session, a_id: int, b_id: int) -> bool:
+    """True if either user has blocked the other."""
+    return db.query(UserBlock).filter(
+        or_(
+            and_(UserBlock.blocker_user_id == a_id, UserBlock.blocked_user_id == b_id),
+            and_(UserBlock.blocker_user_id == b_id, UserBlock.blocked_user_id == a_id),
+        )
+    ).first() is not None
+
+
+# ── REST endpoints ────────────────────────────────────
 
 @router.get("/messages/conversations")
 def list_conversations(db: Session = Depends(get_db), me: User = Depends(get_current_user)):
     convs = db.query(Conversation).filter(
         or_(Conversation.user1_id == me.id, Conversation.user2_id == me.id)
     ).order_by(Conversation.last_message_at.desc()).all()
-    return [_conv_dict(c, me.id, db) for c in convs]
+    # Hide conversations with users I've blocked.
+    blocked = get_blocked_user_ids(db, me.id)
+    out = []
+    for c in convs:
+        other_id = c.user2_id if c.user1_id == me.id else c.user1_id
+        if other_id in blocked:
+            continue
+        out.append(_conv_dict(c, me.id, db))
+    return out
 
 
 @router.get("/messages/conversations/{conv_id}/messages")
@@ -115,11 +135,13 @@ def start_conversation(username: str, db: Session = Depends(get_db), me: User = 
         raise HTTPException(status_code=404, detail="User not found")
     if other.id == me.id:
         raise HTTPException(status_code=400, detail="Cannot message yourself")
+    if _blocked_between(db, me.id, other.id):
+        raise HTTPException(status_code=403, detail="Cannot message this user")
     conv = _get_or_create_conversation(db, me.id, other.id)
     return _conv_dict(conv, me.id, db)
 
 
-# ── WebSocket ────────────────────────────────────────────────────
+# ── WebSocket ───────────────────────────────────────
 
 @router.websocket("/messages/ws/{conv_id}")
 async def websocket_chat(conv_id: int, ws: WebSocket, token: str = Query(...), db: Session = Depends(get_db)):
@@ -141,6 +163,9 @@ async def websocket_chat(conv_id: int, ws: WebSocket, token: str = Query(...), d
         return
 
     other_id = conv.user2_id if conv.user1_id == me.id else conv.user1_id
+    if _blocked_between(db, me.id, other_id):
+        await ws.close(code=4003)
+        return
     await manager.connect(me.id, ws)
 
     try:
