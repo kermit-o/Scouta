@@ -192,6 +192,12 @@ def google_login(redirect_mobile: str = ""):
         "scope": "openid email profile",
         "access_type": "offline",
         "state": state,
+        # Without prompt=select_account, Google Play Services on Android
+        # hijacks the OAuth flow inside Chrome Custom Tabs and shows the
+        # native "Add Google Account" dialog (asks for the device PIN).
+        # The scouta:// callback then never fires. Forcing the account
+        # chooser keeps the flow inside the Custom Tab.
+        "prompt": "select_account",
     }
     url = "https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params)
     from fastapi.responses import RedirectResponse
@@ -255,7 +261,18 @@ def google_callback(code: str, state: str = "web", db: Session = Depends(get_db)
 
     token = create_access_token(subject=str(user.id))
 
-    callback_params = f"token={token}&user_id={user.id}&username={user.username}&display_name={user.display_name or ''}&avatar_url={user.avatar_url or ''}"
+    # urlencode every value — display_name from Google routinely contains
+    # spaces ("Outman El Ouaryachi") and avatar_url is a URL with its own
+    # '=' and '&'. Raw interpolation breaks the callback parser on the
+    # other side.
+    import urllib.parse as _urllib_parse
+    callback_params = _urllib_parse.urlencode({
+        "token": token,
+        "user_id": user.id,
+        "username": user.username or "",
+        "display_name": user.display_name or "",
+        "avatar_url": user.avatar_url or "",
+    }, quote_via=_urllib_parse.quote)
 
     if state == "mobile":
         return RedirectResponse(f"scouta://auth/callback?{callback_params}")
